@@ -1,0 +1,67 @@
+# Codex command policy. Edit this file to change allow/ask/deny entries.
+# allow = allow; ask = prompt; deny = forbidden.
+# Patterns match argument prefixes, so ["git", "push"] covers git push with or without arguments.
+# No "*" suffix is needed. The strictest matching decision wins.
+# These rules govern commands requested outside the sandbox, not a universal tool allowlist.
+# Read/Edit/Write are configured through ../config.toml's workspace-write sandbox.
+# Loaded from a trusted project .codex layer at startup; restart Codex after changes.
+# Windows command shims/executables are included. Shell wrappers and PowerShell scripts
+# are not blanket-allowed; their matching depends on Codex's command parsing.
+# Official docs: https://learn.chatgpt.com/docs/agent-configuration/rules
+
+# ALLOW
+prefix_rule(
+    pattern = [["npm", "npm.cmd", "npx", "npx.cmd", "node", "node.exe"]],
+    decision = "allow",
+    justification = "Project owner permits npm, npx and Node commands.",
+    match = [
+        ["npm", "install"],
+        ["npm.cmd", "run", "build"],
+        ["npx", "playwright", "test"],
+        ["node.exe", "--version"],
+    ],
+    not_match = [["curl", "https://example.com"]],
+)
+
+prefix_rule(
+    pattern = [["git", "git.exe"], ["add", "commit", "diff", "log", "status", "branch", "checkout", "stash"]],
+    decision = "allow",
+    justification = "Project owner permits these local Git commands.",
+    match = [
+        ["git", "add", "."],
+        ["git.exe", "commit", "-m", "Update project"],
+        ["git", "diff"],
+        ["git", "log", "-1"],
+        ["git", "status", "--short"],
+        ["git", "branch"],
+        ["git", "checkout", "main"],
+        ["git", "stash", "list"],
+    ],
+    not_match = [["git", "push"], ["git", "fetch"]],
+)
+
+# ASK
+prefix_rule(
+    pattern = [["curl", "curl.exe", "wget", "wget.exe"]],
+    decision = "prompt",
+    justification = "Ask the project owner before running curl or wget.",
+    match = [["curl", "https://example.com"], ["wget.exe", "https://example.com"]],
+)
+
+prefix_rule(
+    pattern = [["git", "git.exe"], "push"],
+    decision = "prompt",
+    justification = "Ask the project owner before pushing changes to a remote.",
+    match = [["git", "push"], ["git.exe", "push", "origin", "main"]],
+    not_match = [["git", "status"]],
+)
+
+# DENY
+prefix_rule(
+    pattern = [["rm", "rm.exe"], ["-rf", "-fr"]],
+    decision = "forbidden",
+    justification = "The project owner forbids recursive forced removal with rm.",
+    match = [["rm", "-rf", "directory"], ["rm", "-fr", "directory"]],
+    not_match = [["rm", "single-file.txt"]],
+)
+

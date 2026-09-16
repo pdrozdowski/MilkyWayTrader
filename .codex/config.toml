@@ -1,0 +1,14 @@
+# Project defaults for Codex CLI and the IDE extension.
+# Loaded only when this project is trusted. Restart Codex after editing.
+# Command allow/prompt/forbidden entries are in rules/project.rules.
+# Official docs: https://learn.chatgpt.com/docs/config-file/config-basic
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+# Permit reading files and editing/creating files in the workspace.
+# Protected paths (such as .git and .codex) and managed restrictions still apply.
+# Network-dependent commands request escalation instead of enabling all network access.
+network_access = false
+
