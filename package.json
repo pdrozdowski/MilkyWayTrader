@@ -1,6 +1,6 @@
 {
   "name": "template-vite-ts",
-  "description": "A Phaser 3 TypeScript template using Vite.",
+  "description": "A Phaser 4 TypeScript template using Vite.",
   "version": "1.4.0",
   "repository": {
     "type": "git",
@@ -17,11 +17,17 @@
     "dev": "node log.js dev & vite --config vite/config.dev.mjs",
     "build": "node log.js build & vite build --config vite/config.prod.mjs",
     "dev-nolog": "vite --config vite/config.dev.mjs",
-    "build-nolog": "vite build --config vite/config.prod.mjs"
+    "build-nolog": "vite build --config vite/config.prod.mjs",
+    "typecheck": "tsc --noEmit",
+    "check:pages": "node scripts/check-pages-assets.mjs",
+    "validate:deployment": "npm run typecheck && npm audit --audit-level=high && npm run build-nolog && npm run check:pages",
+    "deploy:preview": "npm run validate:deployment && wrangler pages deploy dist --project-name=milky-way-trader --branch=staging --env-file .env.deploy.local",
+    "deploy:production": "npm run validate:deployment && wrangler pages deploy dist --project-name=milky-way-trader --branch=main --env-file .env.deploy.local"
   },
   "devDependencies": {
     "typescript": "~5.7.2",
-    "vite": "^6.3.1"
+    "vite": "^6.3.1",
+    "wrangler": "^4.133.0"
   },
   "dependencies": {
     "phaser": "4.0.0",
