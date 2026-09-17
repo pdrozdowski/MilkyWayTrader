@@ -1,15 +1,109 @@
+html,
 body {
+    width: 100%;
+    height: 100%;
     margin: 0;
     padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
     color: rgba(255, 255, 255, 0.87);
     background-color: #0f0f0f;
+    font-family: Arial, sans-serif;
 }
 
 #app {
+    position: relative;
+    box-sizing: border-box;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     overflow: hidden;
+    background-color: #0f0f0f;
+}
+
+#game-container {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+#game-container canvas {
+    display: block;
+    touch-action: none;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+#orientation-notice {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    padding: 24px;
+    background: #0b1529;
+    text-align: center;
+}
+
+#orientation-notice h1 {
+    margin: 12px 0;
+    font-size: clamp(24px, 6vw, 36px);
+}
+
+#orientation-notice p {
+    max-width: 32ch;
+    line-height: 1.5;
+}
+
+.rotate-icon {
+    font-size: 64px;
+    color: #8bdfff;
+}
+
+#mobile-controls {
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    left: max(12px, env(safe-area-inset-left));
+    z-index: 3;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-end;
+    pointer-events: none;
+}
+
+#fullscreen-toggle {
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 1px solid #8bdfff;
+    border-radius: 8px;
+    color: #fff;
+    background: #122541;
+    font: inherit;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+#fullscreen-toggle:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+}
+
+#fullscreen-toggle:disabled {
+    opacity: 0.6;
+}
+
+#display-status:not(:empty) {
+    max-width: 32ch;
+    margin: 8px 0 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #122541;
+    font-size: 14px;
+    line-height: 1.4;
 }

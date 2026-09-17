@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="stylesheet" href="/style.css">
     <title>Phaser - Template</title>
 </head>
@@ -11,6 +11,18 @@
 <body>
     <div id="app">
         <div id="game-container"></div>
+        <aside id="orientation-notice" aria-label="Orientacja ekranu" hidden>
+            <div>
+                <span class="rotate-icon" aria-hidden="true">↻</span>
+                <h1>Obróć telefon</h1>
+                <p>MilkyWayTrader — gramy w poziomie.</p>
+                <p id="orientation-help">Obróć urządzenie lub wybierz „Pełny ekran”.</p>
+            </div>
+        </aside>
+        <div id="mobile-controls" hidden>
+            <button id="fullscreen-toggle" type="button" aria-pressed="false">Pełny ekran</button>
+            <p id="display-status" role="status" aria-live="polite"></p>
+        </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
 </body>
