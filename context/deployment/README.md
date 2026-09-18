@@ -16,6 +16,14 @@ Pierwsza publikacja obejmuje demo Phaser. Supabase i Google OAuth przygotowujemy
 npx.cmd --no-install wrangler pages project create milky-way-trader --production-branch=main --env-file .env.deploy.local
 ```
 
+Wrangler 4.133.0 może w kontekście agenta automatycznie delegować tworzenie nowego projektu Pages do Workers. Jeśli API potwierdza brak projektu, a polecenie zgłasza delegację i błąd entry-point, utwórz wybrany w planie projekt Pages z jednorazowym `--force`:
+
+```powershell
+npx.cmd --no-install wrangler pages project create milky-way-trader --production-branch=main --env-file .env.deploy.local --force
+```
+
+W tej komendzie flaga wyłącza delegację do Workers; nie usuwa projektu. Dla istniejącego projektu kolejne `pages deploy` działają bez niej. Nie dodawaj `--force` do usuwania ani pobierania konfiguracji, gdzie ma inne znaczenie. Zachowanie sprawdzono w kodzie zainstalowanego Wranglera podczas pierwszego wdrożenia.
+
 Zawartość lokalnego pliku (zastąp przykładowe wartości, nie commituj pliku):
 
 ```dotenv

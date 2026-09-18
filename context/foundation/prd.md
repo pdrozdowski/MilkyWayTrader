@@ -32,7 +32,7 @@ Główna persona to gracz okazjonalny szukający krótkiej sesji w przeglądarce
 ### Primary
 
 - Gracz anonimowy może ukończyć kompletną sesję: eksploruj → kup → leć → sprzedaj → zarób → zobacz wynik. Wynik to suma gotówki, wartości przewożonych towarów wycenionych po 100% cen bazowych i wartości statku, pokazana wraz z rozbiciem na te trzy składniki.
-- Gracz może zalogować się przez Email OTP przed rozpoczęciem lub w trakcie gry i widzi status zalogowania oraz informację, czy autozapis gry jest aktywny. Zalogowany gracz może zapisać stan gry, odczytać go po ponownym otwarciu i aktualizować z każdą nową turą; zapis nigdy nie jest usuwany.
+- Gracz może zalogować się przez Google OAuth przed rozpoczęciem lub w trakcie gry i widzi status zalogowania oraz informację, czy autozapis gry jest aktywny. Zalogowany gracz może zapisać stan gry, odczytać go po ponownym otwarciu i aktualizować z każdą nową turą; zapis nigdy nie jest usuwany.
 
 ### Secondary
 
@@ -115,8 +115,8 @@ Cytaty Socrates dokumentują wcześniejszą dyskusję; aktualne wymagania i prio
 
 ### Session and map
 
-- FR-001: Gracz może rozpocząć grę z ekranu startowego, na którym widzi nazwę gry i może opcjonalnie zalogować się przez Email OTP. Priority: must-have
-  > Socrates: Counter-argument considered: "Ekran startowy może wydłużyć wejście do krótkiej sesji." Resolution: kept; ekran pokazuje nazwę gry, udostępnia opcjonalne logowanie Google, jest pierwszym kliknięciem potrzebnym do uruchomienia dźwięku, jeśli dźwięk zostanie dodany, oraz umożliwia rozpoczęcie nowej sesji.
+- FR-001: Gracz może rozpocząć grę z ekranu startowego, na którym widzi nazwę gry i może opcjonalnie zalogować się przez Google OAuth. Priority: must-have
+  > Socrates: Counter-argument considered: "Ekran startowy może wydłużyć wejście do krótkiej sesji." Resolution: kept; ekran pokazuje nazwę gry, udostępnia opcjonalne logowanie przez Google OAuth, jest pierwszym kliknięciem potrzebnym do uruchomienia dźwięku, jeśli dźwięk zostanie dodany, oraz umożliwia rozpoczęcie nowej sesji.
 - FR-002: Gracz może rozpocząć anonimową sesję. Priority: must-have
   > Socrates: Counter-argument considered: "Anonimowa sesja nie pozwoli od razu zapisać postępu ani wyniku." Resolution: kept; wymaganie logowania przed pierwszą rozgrywką może odrzucić graczy, którzy chcą najpierw sprawdzić, czy gra jest dla nich.
 - FR-003: Gracz może zobaczyć mapę z planetami. Priority: must-have
@@ -172,7 +172,7 @@ Koszt ulepszenia oznacza koszt osiągnięcia danego poziomu z poziomu poprzednie
 
 ### Account and persistence
 
-- FR-016: Gracz może zalogować się przez Google przed rozpoczęciem lub w trakcie gry. Priority: nice-to-have
+- FR-016: Gracz może zalogować się przez Google OAuth przed rozpoczęciem lub w trakcie gry; jest to jedyna metoda logowania. Priority: must-have
 - FR-017: Zalogowany gracz może utworzyć, odczytać i zaktualizować zapis swojej sesji obejmujący status `Running` lub `Finished`, numer tury `Turn` oraz `timestamp` oznaczający datę i czas danego zapisu; zapis nigdy nie jest usuwany, a z każdą nową turą jest aktualizowany wraz ze znacznikiem czasu. Priority: must-have
 - FR-018: Zalogowany gracz może po ponownym uruchomieniu gry wybrać „KONTYNUUJ”, aby wczytać zapisaną sesję o statusie `Running` i kontynuować od zapisanego numeru `Turn`, albo „NOWA GRA”, aby zakończyć poprzednią sesję i rozpocząć nową; sesja `Finished` nie może być wznowiona do dalszej rozgrywki. Priority: must-have
 - FR-019: Zalogowany gracz może zapisać wynik ukończonej sesji w tabeli wyników. Priority: nice-to-have
@@ -186,7 +186,6 @@ Koszt ulepszenia oznacza koszt osiągnięcia danego poziomu z poziomu poprzednie
 
 ### Authentication and save status
 
-- FR-024: Gracz może zalogować się przez Email OTP przed rozpoczęciem lub w trakcie gry. Priority: must-have
 - FR-025: Gracz widzi status zalogowania i informację, czy autozapis gry jest aktywny. Priority: must-have
 
 ### Planet Resource Economy
@@ -289,7 +288,7 @@ Player purchases shall decrease the planet's stock and player sales shall increa
 
 ## Access Control
 
-Gra jest dostępna anonimowo bez zakładania konta. Logowanie przez Email OTP jest dostępne przed rozpoczęciem lub w trakcie gry i odblokowuje zapis oraz wznowienie sesji. Logowanie przez Google jest dodatkową metodą nice-to-have. Tabela wyników pozostaje nice-to-have. Wszyscy zalogowani gracze mają ten sam zakres uprawnień; MVP nie wprowadza dodatkowych ról. Zalogowany gracz ma dostęp wyłącznie do własnego zapisu sesji. Wczytanie poprzedniej sesji przez „KONTYNUUJ” oraz zapis nowej sesji w turze 1 po wyborze „NOWA GRA” są dostępne wyłącznie po zalogowaniu.
+Gra jest dostępna anonimowo bez zakładania konta. Logowanie przez Google OAuth jest dostępne przed rozpoczęciem lub w trakcie gry i odblokowuje zapis oraz wznowienie sesji. Google OAuth jest jedyną metodą logowania i należy do must-have; logowanie pozostaje opcjonalne dla gracza rozpoczynającego anonimową sesję. Tabela wyników pozostaje nice-to-have. Wszyscy zalogowani gracze mają ten sam zakres uprawnień; MVP nie wprowadza dodatkowych ról. Zalogowany gracz ma dostęp wyłącznie do własnego zapisu sesji. Wczytanie poprzedniej sesji przez „KONTYNUUJ” oraz zapis nowej sesji w turze 1 po wyborze „NOWA GRA” są dostępne wyłącznie po zalogowaniu.
 Każdy gracz ma własny, niezależny stan sesji i danych. MVP nie obejmuje multiplayera ani wspólnego rynku.
 
 Globalne all-time-hi-score można odczytać anonimowo. Własne the-best-of są dostępne wyłącznie dla zalogowanego gracza. Autozapis po przylocie jest dostępny wyłącznie dla zalogowanego gracza.
@@ -302,7 +301,7 @@ Globalne all-time-hi-score można odczytać anonimowo. Własne the-best-of są d
 - MVP nie wymaga logowania przed pierwszą sesją, ponieważ anonimowy start zmniejsza próg wejścia.
 - MVP nie obejmuje zaawansowanych wydarzeń losowych, ponieważ utrudniłyby balans i testowanie pierwszej wersji.
 
-- FR-016, FR-019, FR-020 i FR-029 (logowanie Google oraz zapis i odczyt globalnych i własnych tabel wyników) mają priorytet nice-to-have i nie są warunkiem dostarczenia MVP. Logowanie Email OTP, status zalogowania i autozapisu oraz zapis i wznowienie sesji (FR-017, FR-018, FR-024, FR-025 i FR-028) należą do obowiązkowego MVP.
+- FR-019, FR-020 i FR-029 (zapis i odczyt globalnych i własnych tabel wyników) mają priorytet nice-to-have i nie są warunkiem dostarczenia MVP. Logowanie przez Google OAuth, status zalogowania i autozapisu oraz zapis i wznowienie sesji (FR-016, FR-017, FR-018, FR-025 i FR-028) należą do obowiązkowego MVP.
 
 ## Open Questions
 

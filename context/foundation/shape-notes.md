@@ -23,7 +23,7 @@ checkpoint:
     - topic: product differentiator
       decision: "Krowa astronauta nadaje grze rozpoznawalny humor i jest częścią świata gry."
     - topic: access strategy
-      decision: "Gra jest dostępna anonimowo; opcjonalne logowanie Google odblokowuje zapis gry i tabelę wyników."
+      decision: "Gra jest dostępna anonimowo; Google OAuth jest jedyną metodą logowania i funkcją must-have, odblokowującą zapis i wznowienie gry. Tabela wyników pozostaje nice-to-have."
     - topic: user roles
       decision: "Wszyscy zalogowani gracze mają ten sam zakres uprawnień; nie ma dodatkowych ról w MVP."
     - topic: MVP scope
@@ -50,7 +50,7 @@ Główna persona to gracz okazjonalny szukający krótkiej sesji w przeglądarce
 
 ## Access Control
 
-Gra jest dostępna anonimowo bez zakładania konta. Opcjonalne logowanie Google odblokowuje zapis gry i tabelę wyników. Wszyscy zalogowani gracze mają ten sam zakres uprawnień; MVP nie wprowadza dodatkowych ról.
+Gra jest dostępna anonimowo bez zakładania konta. Google OAuth jest jedyną metodą logowania i funkcją must-have; gracz nadal może grać anonimowo. Logowanie odblokowuje zapis i wznowienie gry, a tabela wyników pozostaje nice-to-have. Wszyscy zalogowani gracze mają ten sam zakres uprawnień; MVP nie wprowadza dodatkowych ról.
 Każdy gracz ma własny, niezależny stan sesji i danych. MVP nie obejmuje multiplayera ani wspólnego rynku.
 
 ## Success Criteria
@@ -114,7 +114,7 @@ Każdy gracz ma własny, niezależny stan sesji i danych. MVP nie obejmuje multi
 
 ### Optional account and persistence
 
-- FR-016: Gracz może zalogować się przez Google przed rozpoczęciem lub w trakcie gry. Priority: nice-to-have
+- FR-016: Gracz może zalogować się przez Google OAuth przed rozpoczęciem lub w trakcie gry; jest to jedyna metoda logowania. Priority: must-have
 - FR-017: Zalogowany gracz może utworzyć, odczytać, zaktualizować i usunąć zapis swojej sesji. Priority: nice-to-have
 - FR-018: Zalogowany gracz może wznowić zapisaną sesję po ponownym otwarciu gry. Priority: nice-to-have
 - FR-019: Zalogowany gracz może zapisać wynik ukończonej sesji w tabeli wyników. Priority: nice-to-have
