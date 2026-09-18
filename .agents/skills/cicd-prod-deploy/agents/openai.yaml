@@ -1,0 +1,4 @@
+interface:
+  display_name: "CI/CD production deploy"
+  short_description: "Prod deploy MilkyWayTrader ze skryptu i raportem"
+  default_prompt: "Użyj $cicd-prod-deploy, aby wdrożyć bieżącą wersję MilkyWayTrader na produkcję i sprawdzić wynik."
