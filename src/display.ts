@@ -21,7 +21,7 @@ export function setupDisplay(game: Game): void {
         notice.hidden = !(mobile && portrait.matches);
         button.hidden = !document.fullscreenEnabled || typeof app.requestFullscreen !== 'function';
         help.textContent = button.hidden ? 'Obróć urządzenie, aby grać.' : 'Obróć urządzenie lub wybierz „Pełny ekran”.';
-        button.textContent = document.fullscreenElement ? 'Wyjdź z pełnego ekranu' : 'Pełny ekran';
+        button.textContent = document.fullscreenElement ? 'X' : 'Pełny ekran';
         button.setAttribute('aria-pressed', String(Boolean(document.fullscreenElement)));
         if (!mobile) {
             status.textContent = '';
