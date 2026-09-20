@@ -1,9 +1,15 @@
-import { Boot } from './scenes/Boot';
-import { GameOver } from './scenes/GameOver';
-import { Game as MainGame } from './scenes/Game';
-import { MainMenu } from './scenes/MainMenu';
+import { Boot } from './scenes/bootScene';
+import { GameOver } from './scenes/gameOverScene';
+import { Game as MainGame } from './scenes/gameScene';
+import { MainMenu } from './scenes/mainMenuScene';
 import { AUTO, Game, Scale } from 'phaser';
-import { Preloader } from './scenes/Preloader';
+import { Preloader } from './scenes/preloaderScene';
+import { initializeGameAudio } from './audio/gameAudio';
+
+export interface GameBootstrapHooks
+{
+    onReady?(game: Game): void;
+}
 
 //  Find out more information about the Game Config at:
 //  https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
@@ -18,6 +24,12 @@ const config: Phaser.Types.Core.GameConfig = {
         fullscreenTarget: 'app'
     },
     backgroundColor: '#028af8',
+    // Canvas touch-action:none handles gesture capture, including non-cancelable touchcancel.
+    input: { touch: { capture: false } },
+    physics: {
+        default: 'arcade',
+        arcade: { gravity: { x: 0, y: 0 }, debug: false }
+    },
     scene: [
         Boot,
         Preloader,
@@ -27,9 +39,18 @@ const config: Phaser.Types.Core.GameConfig = {
     ]
 };
 
-const StartGame = (parent: string) => {
+const StartGame = (parent: string, hooks: GameBootstrapHooks = {}) => {
 
-    return new Game({ ...config, parent });
+    return new Game({
+        ...config,
+        parent,
+        callbacks: {
+            postBoot: game => {
+                initializeGameAudio(game);
+                hooks.onReady?.(game);
+            }
+        }
+    });
 
 }
 

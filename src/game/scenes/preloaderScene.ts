@@ -1,4 +1,6 @@
 import { Scene } from 'phaser';
+import { loadObjectAssets, registerObjectAnimations } from '../objects/_shared/registry';
+import { loadSoundAssets } from '../audio/registry';
 
 export class Preloader extends Scene
 {
@@ -34,10 +36,13 @@ export class Preloader extends Scene
 
         this.load.image('logo', 'logo.png');
         this.load.image('cow', 'cow_big.png');
+        loadObjectAssets(this);
+        loadSoundAssets(this);
     }
 
     create ()
     {
+        registerObjectAnimations(this);
         //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.
         //  For example, you can define global animations here, so we can use them in other scenes.
 

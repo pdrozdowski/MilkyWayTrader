@@ -1,0 +1,4 @@
+interface:
+  display_name: "Make code graph"
+  short_description: "Build an incremental TypeScript dependency graph"
+  default_prompt: "Use $arch-make-code-graph to create or incrementally update the TypeScript dependency graph for src."

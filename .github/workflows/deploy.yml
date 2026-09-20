@@ -24,7 +24,7 @@ concurrency:
 jobs:
   validate-and-deploy:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       WRANGLER_SEND_METRICS: 'false'
     steps:
@@ -42,8 +42,20 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Install Chromium for UI tests
+        run: npx --no-install playwright install --with-deps chromium
+
       - name: Validate production build
         run: npm run validate:deployment
+
+      - name: Upload UI failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-failure-${{ github.run_id }}
+          path: .cache/playwright/
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Select deployment target
         id: target

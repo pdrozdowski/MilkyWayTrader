@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+    <title>White and gray cow-pattern spaceship pointing up, engines off</title>
+    <defs>
+        <clipPath id="cow-hull">
+            <path d="M0-25 L10-5 L20 16 L8 12 L0 17 L-8 12 L-20 16 L-10-5Z"/>
+        </clipPath>
+    </defs>
+    <g transform="translate(32 32)">
+        <path d="M0-25 L10-5 L20 16 L8 12 L0 17 L-8 12 L-20 16 L-10-5Z" fill="#f4f3ef" stroke="#59616c" stroke-width="2"/>
+        <g clip-path="url(#cow-hull)">
+            <path d="M-10-22 Q-1-24 0-17 Q1-13-4-12 Q-8-9-12-14Z" fill="#949aa1"/>
+            <path d="M6-9 Q12-12 14-5 Q16 0 10 2 Q5 2 5-2 Q2-6 6-9Z" fill="#adb3b9"/>
+            <path d="M-19 4 Q-12-1-9 4 Q-6 8-10 11 Q-12 17-20 14Z" fill="#8b9299"/>
+            <path d="M4 8 Q9 5 12 9 Q15 12 20 10 L22 18 Q13 21 10 16 Q4 16 4 8Z" fill="#8f969d"/>
+            <path d="M-3 6 Q1 3 3 7 Q5 10 1 12 Q-3 13-4 10Z" fill="#bac0c5"/>
+        </g>
+        <path d="M0-17 L6-3 L0 3 L-6-3Z" fill="#38bcde"/>
+        <rect x="-10" y="10" width="6" height="8" rx="1" fill="#335777" stroke="#182e4b"/>
+        <rect x="4" y="10" width="6" height="8" rx="1" fill="#335777" stroke="#182e4b"/>
+        <path d="M-10 17 L-4 17 M4 17 L10 17" stroke="#9dcce4" stroke-width="1.5"/>
+    </g>
+</svg>

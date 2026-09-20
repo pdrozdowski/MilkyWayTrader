@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add object to scene"
+  short_description: "Add or refine reusable Phaser objects and scene behavior"
+  default_prompt: "Use $utils-add-object-to-scene to add or update an object in gameScene.ts, preserving camera and resource ownership."
