@@ -5,17 +5,17 @@ description: >
   the locked PRD schema. Auto-routes to greenfield (10 sections) or brownfield
   (11 sections) template based on context_type in shape-notes.md or cwd
   auto-detection. Use when the user has shaping notes ready and wants a
-  schema-conformant PRD written to disk. Trigger phrases: "write the PRD",
+  schema-conformant English, capability-based PRD written to disk. Trigger phrases: "write the PRD",
   "generate PRD", "create the PRD from notes", "stwórz PRD", "turn notes into a
   PRD", "PRD from shape-notes". Use AFTER /10x-shape, not in place of it.
 ---
 # PRD: Generowanie context/foundation/prd.md z shape-notes
 
-Ta umiejętność jest drugim ogniwem w łańcuchu bootstrap. Dla greenfield: `/10x-shape → /10x-prd → 10x-tech-stack-selector → bootstrapper`. Dla brownfield: `/10x-shape → /10x-prd → 10x-stack-assess → 10x-health-check`. Jej jedyne zadanie: pobrać plik ukształtowanych notatek i wygenerować `context/foundation/prd.md`, który jest zgodny z zablokowanym schematem PRD, kierując każdą lukę do `## Open Questions`, zamiast wymyślać treść.
+Ta umiejętność jest drugim ogniwem w łańcuchu bootstrap. Dla greenfield: `/10x-shape → /10x-prd → 10x-tech-stack-selector → bootstrapper`. Dla brownfield: `/10x-shape → /10x-prd → 10x-stack-assess → 10x-health-check`. Jej jedyne zadanie: pobrać plik ukształtowanych notatek i wygenerować angielski, oparty na zdolnościach produktu `context/foundation/prd.md`, który jest zgodny z zablokowanym schematem PRD, kierując każdą lukę do `## Open Questions`, zamiast wymyślać treść.
 
 Umiejętność automatycznie kieruje do właściwego szablonu na podstawie `context_type` w danych wejściowych:
-- **greenfield** → 11-sekcyjny szablon PRD (produkt budowany od zera)
-- **brownfield** → 12-sekcyjny szablon PRD (zmiana delta w istniejącym systemie)
+- **greenfield** → 10-sekcyjny szablon PRD (produkt budowany od zera)
+- **brownfield** → 11-sekcyjny szablon PRD (zmiana delta w istniejącym systemie)
 
 Ta umiejętność jest **generatorem dokumentów**, a nie moderatorem discovery. NIGDY nie wymyśla decyzji domenowych, reguł logiki biznesowej, kryteriów sukcesu ani historii użytkownika. Wszystko, czego brakuje w danych wejściowych, trafia dosłownie do `## Open Questions`, aby człowiek mógł to rozstrzygnąć.
 
@@ -30,6 +30,7 @@ Zablokowany schemat, z którym zgodna jest ta umiejętność, znajduje się w `.
 ## Relacja z innymi umiejętnościami
 
 - `/10x-shape` — generuje `shape-notes.md`, kanoniczne dane wejściowe. Zawsze preferowane upstream tej umiejętności.
+- `/10x-prd-en-capability` — obowiązkowa bramka po zapisie: waliduje angielski dokument i normalizuje FR do pojedynczych zdolności produktu przed przekazaniem PRD dalej.
 - `10x-tech-stack-selector` — downstreamowy konsument `prd.md` dla **greenfield**. Odczytuje frontmatter na poziomie produktu jako priory, a następnie przeprowadza własny pozostały wywiad dotyczący składu zespołu, preferencji językowych, wdrożenia i kształtu CI/CD.
 - `10x-stack-assess` — downstreamowy konsument `prd.md` dla **brownfield**. Oceni istniejący stack względem bramek jakości przyjaznych agentom.
 - `/10x-frame`, `/10x-plan` — niepowiązane; PRD jest artefaktem fundamentowym, a nie planem dla pojedynczej zmiany.
@@ -211,11 +212,12 @@ Wygeneruj dokładnie te 11 nagłówków poziomu `##`, w dokładnie tej kolejnoś
 
 Dla każdej sekcji:
 
-- **Jeśli dane wejściowe mają pasującą treść** — przepisz ją wiernie do sekcji. Zachowaj sformułowania użytkownika. Konwertuj formatowanie tylko wtedy, gdy schemat wymaga określonego kształtu (np. format FR-NNN, Given/When/Then dla historii użytkownika, trzy podsekcje Success Criteria). Nie parafrazuj, nie podsumowuj ani nie „ulepszaj” słów użytkownika.
+- **Jeśli dane wejściowe mają pasującą treść** — przełóż ją wiernie na angielski i umieść w sekcji. Zachowaj intencję, priorytety oraz niepewność użytkownika; nie wymyślaj nowych decyzji. Normalizuj format tylko wtedy, gdy wymaga tego schemat (np. format FR-NNN, Given/When/Then dla historii użytkownika, trzy podsekcje Success Criteria).
+- **Dla FR** — przekształć treść w dokładnie jedną zdolność produktu w formacie `[Actor] can [capability]`. Przenieś reguły, liczby, formuły, prezentację, kontrolki UI, dostawców i szczegóły implementacji do właściwych sekcji. Rozdziel wymaganie złożone tylko wtedy, gdy wejście jednoznacznie określa odrębne zdolności; jeśli wymagałoby to nowej decyzji produktowej, zatrzymaj się i skieruj pytanie do użytkownika.
 - **Jeśli dane wejściowe mają częściową treść** — przepisz to, co jest, a następnie zakończ `# TODO: <what's missing> — see Open Questions` wewnątrz sekcji i dodaj pasujący numerowany wpis pod `## Open Questions`.
 - **Jeśli dane wejściowe nie mają pasującej treści** — wygeneruj tylko nagłówek oraz `# TODO: <section name> — see Open Questions`, a następnie dodaj pasujący numerowany wpis pod `## Open Questions`.
 
-Jeśli `/10x-shape` zapisał cytaty blokowe Socrates pod FR, zachowaj je dosłownie — są nośne dla downstreamowego review.
+Jeśli `/10x-shape` zapisał cytaty blokowe Socrates pod FR, nie kopiuj ich do końcowej listy FR. Przełóż trwałe rozstrzygnięcia do właściwych sekcji, a nierozstrzygnięte kwestie do `## Open Questions`.
 
 Jeśli shape-notes.md zawierał blok `## Quality cross-check` (z Kroku 7 `/10x-shape`), odwzoruj każdą lukę w `## Open Questions` jako numerowany wpis nazywający brakujący element i jego konsekwencję.
 
@@ -240,10 +242,12 @@ Przed jakimkolwiek zapisem na dysk przeprowadź samokontrolę względem listy wy
 2. Porównaj z kanoniczną listą sekcji dla aktywnego `context_type` (10 dla greenfield, 11 dla brownfield). Sprawdź, czy WSZYSTKIE sekcje występują, w odpowiedniej kolejności, z dokładną pisownią. PRD NIE może zawierać `## Data Model` ani `## Data Model Changes` — te sekcje zostały wycofane.
 3. Sprawdź, czy frontmatter deklaruje wszystkie wymagane klucze zgodnie ze schematem (`project`, `version`, `status`, `created`, `context_type`, `product_type`, `target_scale`, `timeline_budget`).
 4. Sprawdź, czy `## Success Criteria` zawiera podsekcje `### Primary`, `### Secondary`, `### Guardrails` (lub, jeśli ich brakuje, że są oznaczone jako TODO z odpowiadającymi wpisami Open Questions).
+5. Sprawdź, czy cała treść przeznaczona dla czytelnika jest po angielsku.
+6. Dla greenfield sprawdź, czy każdy FR ma dokładny format `FR-NNN: [Actor] can [capability]. Priority: ...`, identyfikatory są unikalne i kolejne od `FR-001`, a każde zdanie opisuje jedną zdolność bez szczegółów rozwiązania.
 
 **Lint na poziomie treści pod kątem wycieku technicznego:**
 
-5. Przeskanuj wszystkie treści sekcji poziomu `##` (z wyłączeniem brownfield `## Current System Overview`, gdzie dozwolone jest nazywanie istniejącego stacka) pod kątem tokenów wskazujących, że szczegóły implementacyjne wyciekły do PRD. Traktuj każde trafienie jako wyciek, chyba że jest częścią dosłownego cytatu użytkownika jawnie kierowanego do Open Questions:
+7. Przeskanuj wszystkie treści sekcji poziomu `##` (z wyłączeniem brownfield `## Current System Overview`, gdzie dozwolone jest nazywanie istniejącego stacka) pod kątem tokenów wskazujących, że szczegóły implementacyjne wyciekły do PRD. Traktuj każde trafienie jako wyciek, chyba że jest częścią dosłownego cytatu użytkownika jawnie kierowanego do Open Questions albo jawnie wybranej, skierowanej do użytkownika metody uwierzytelniania opisanej w `## Access Control`:
 
    - **Nazwy dostawców / usług hostowanych**: `OpenRouter`, `Stripe`, `Auth0`, `Supabase`, `Firebase`, `Vercel`, `Cloudflare`, `AWS`, `GCP`, `Azure`, `OpenAI`, `Anthropic` itd. (dowolny produkt/usługa będąca nazwą własną).
    - **Notacja schematu / ORM**: `(FK)`, `nullable`, sufiksy kolumn `_hash`, `_at` przedstawiane jako listy pól, `password_hash`, `cascade`, `soft-delete`, `hard-delete`, `migration`, `backfill`.
@@ -305,6 +309,14 @@ Po wybraniu „Nadpisz prd.md”: zapisz zweryfikowaną treść w `context/found
 
 Po wybraniu „Przerwij”: ZATRZYMAJ się bez zapisu.
 
+### Krok 4.5: Obowiązkowa walidacja angielskich zdolności
+
+Po każdym zapisie przeczytaj i zastosuj `../10x-prd-en-capability/SKILL.md` do zapisanego pliku. Uruchom jego deterministyczny checker, a następnie wykonaj przegląd semantyczny wszystkich FR.
+
+Ponieważ generowanie PRD autoryzuje jego zmianę, napraw wykryte naruszenia bez zmiany uzgodnionej intencji i uruchamiaj walidację ponownie aż do sukcesu. Jeśli naprawa wymaga nowej decyzji produktowej, zatrzymaj się, opisz konkretną niejednoznaczność i poproś użytkownika o rozstrzygnięcie. Nie przechodź do przekazania z Kroku 5, dopóki obie kontrole nie przejdą.
+
+Ta bramka jest częścią generowania PRD, a nie automatycznym uruchomieniem kolejnego etapu produktowego.
+
 ### Krok 5: Przekaż dalej
 
 Po zapisaniu podsumuj, co zostało wygenerowane:
@@ -317,7 +329,7 @@ Po zapisaniu podsumuj, co zostało wygenerowane:
   Project:          [project from frontmatter]
   Context type:     [greenfield | brownfield]
   Path:             [context/foundation/prd.md | context/foundation/prd-vN.md]
-  Schema sections:  [11 / 11 | 12 / 12] present
+  Schema sections:  [10 / 10 | 11 / 11] present
   Frontmatter:      <K populated, M as TODO>  (8 keys total)
   Open Questions:   <count> entries
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Run all project tests"
+  short_description: "Run unit and UI tests with a diagnostic report"
+  default_prompt: "Use $cicd-run-tests to run every project test and produce a diagnostic report."

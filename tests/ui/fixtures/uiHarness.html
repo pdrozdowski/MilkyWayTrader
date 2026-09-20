@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>UI component harness</title></head>
+<body>
+    <main id="app">
+        <div id="orientation-notice" hidden><p id="orientation-help"></p></div>
+        <div id="mobile-controls" data-game-input="ignore" hidden>
+            <button id="fullscreen-toggle" type="button" aria-pressed="false">Fullscreen</button>
+            <p id="display-status" role="status"></p>
+        </div>
+        <div id="audio-controls" data-game-input="ignore">
+            <button id="audio-mute" type="button" aria-pressed="false">Mute</button>
+            <label for="audio-volume">Volume</label>
+            <input id="audio-volume" type="range" min="0" max="100" value="50">
+            <output id="audio-volume-value" for="audio-volume">50%</output>
+        </div>
+    </main>
+    <script type="module" src="/tests/ui/fixtures/uiHarness.ts"></script>
+</body>
+</html>

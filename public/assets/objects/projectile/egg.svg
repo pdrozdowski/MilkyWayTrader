@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="16" viewBox="0 0 12 16">
+    <title>Small glowing red projectile egg pointing up</title>
+    <path d="M6 0 C9 0 12 7 12 10 C12 18 0 18 0 10 C0 7 3 0 6 0Z" fill="#ff283f" opacity="0.22"/>
+    <path d="M6 2 C8 2 10 7 10 10 C10 15.33 2 15.33 2 10 C2 7 4 2 6 2Z" fill="#ff3349"/>
+    <ellipse cx="4.8" cy="6.5" rx="1.1" ry="2" fill="#ffabb2"/>
+</svg>

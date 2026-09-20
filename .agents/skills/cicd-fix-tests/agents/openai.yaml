@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fix failing project tests"
+  short_description: "Repair failures from a cicd-run-tests report"
+  default_prompt: "Use $cicd-fix-tests with the supplied results.md report, then rerun all tests."

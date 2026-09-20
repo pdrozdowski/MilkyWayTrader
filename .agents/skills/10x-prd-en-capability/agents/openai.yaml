@@ -1,0 +1,7 @@
+interface:
+  display_name: "English capability PRD"
+  short_description: "Validate English capability-based product requirements"
+  default_prompt: "Use $10x-prd-en-capability to validate and normalize context/foundation/prd.md."
+policy:
+  allow_implicit_invocation: true
+

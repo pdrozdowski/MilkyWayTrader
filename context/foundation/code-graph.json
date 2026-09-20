@@ -1,0 +1,1766 @@
+{
+  "schemaVersion": 1,
+  "generator": "arch-make-code-graph",
+  "sourceRoot": "src",
+  "nodes": [
+    {
+      "id": "asset:public/assets/audio/ship-booster/booster-loop.wav",
+      "name": "booster-loop.wav",
+      "layer": "asset",
+      "module": "public/assets/audio/ship-booster/booster-loop.wav",
+      "kind": "asset"
+    },
+    {
+      "id": "asset:public/assets/audio/ship-engine/engine-loop.wav",
+      "name": "engine-loop.wav",
+      "layer": "asset",
+      "module": "public/assets/audio/ship-engine/engine-loop.wav",
+      "kind": "asset"
+    },
+    {
+      "id": "asset:public/assets/audio/ship-laser/laser-shot.wav",
+      "name": "laser-shot.wav",
+      "layer": "asset",
+      "module": "public/assets/audio/ship-laser/laser-shot.wav",
+      "kind": "asset"
+    },
+    {
+      "id": "asset:public/assets/bg.png",
+      "name": "bg.png",
+      "layer": "asset",
+      "module": "public/assets/bg.png",
+      "kind": "asset"
+    },
+    {
+      "id": "asset:public/assets/cow_big.png",
+      "name": "cow_big.png",
+      "layer": "asset",
+      "module": "public/assets/cow_big.png",
+      "kind": "asset"
+    },
+    {
+      "id": "asset:public/assets/logo.png",
+      "name": "logo.png",
+      "layer": "asset",
+      "module": "public/assets/logo.png",
+      "kind": "asset"
+    },
+    {
+      "id": "asset:public/assets/objects/planet/spinning-surface.svg",
+      "name": "spinning-surface.svg",
+      "layer": "asset",
+      "module": "public/assets/objects/planet/spinning-surface.svg",
+      "kind": "asset"
+    },
+    {
+      "id": "asset:public/assets/objects/projectile/egg.svg",
+      "name": "egg.svg",
+      "layer": "asset",
+      "module": "public/assets/objects/projectile/egg.svg",
+      "kind": "asset"
+    },
+    {
+      "id": "asset:public/assets/objects/spaceship/engine-on-sequence.svg",
+      "name": "engine-on-sequence.svg",
+      "layer": "asset",
+      "module": "public/assets/objects/spaceship/engine-on-sequence.svg",
+      "kind": "asset"
+    },
+    {
+      "id": "asset:public/assets/objects/spaceship/engines-off.svg",
+      "name": "engines-off.svg",
+      "layer": "asset",
+      "module": "public/assets/objects/spaceship/engines-off.svg",
+      "kind": "asset"
+    },
+    {
+      "id": "asset:public/assets/objects/sun/surface.svg",
+      "name": "surface.svg",
+      "layer": "asset",
+      "module": "public/assets/objects/sun/surface.svg",
+      "kind": "asset"
+    },
+    {
+      "id": "src/game/audio/audioScope#AudioScope",
+      "name": "AudioScope",
+      "layer": "model",
+      "module": "src/game/audio/audioScope",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/audio/audioScope#bounded",
+      "name": "bounded",
+      "layer": "model",
+      "module": "src/game/audio/audioScope",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/audio/audioScope#Channel",
+      "name": "Channel",
+      "layer": "model",
+      "module": "src/game/audio/audioScope",
+      "kind": "type"
+    },
+    {
+      "id": "src/game/audio/audioScope#ENGINE_CROSSFADE_MS",
+      "name": "ENGINE_CROSSFADE_MS",
+      "layer": "model",
+      "module": "src/game/audio/audioScope",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/audio/audioScope#LoopEntry",
+      "name": "LoopEntry",
+      "layer": "model",
+      "module": "src/game/audio/audioScope",
+      "kind": "type"
+    },
+    {
+      "id": "src/game/audio/audioScope#VoiceSlot",
+      "name": "VoiceSlot",
+      "layer": "model",
+      "module": "src/game/audio/audioScope",
+      "kind": "type"
+    },
+    {
+      "id": "src/game/audio/audioService#AUDIO_SETTINGS_KEY",
+      "name": "AUDIO_SETTINGS_KEY",
+      "layer": "model",
+      "module": "src/game/audio/audioService",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/audio/audioService#AudioService",
+      "name": "AudioService",
+      "layer": "model",
+      "module": "src/game/audio/audioService",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/audio/audioService#DEFAULT_SETTINGS",
+      "name": "DEFAULT_SETTINGS",
+      "layer": "model",
+      "module": "src/game/audio/audioService",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/audio/definitions/shipBooster#definition",
+      "name": "definition",
+      "layer": "data",
+      "module": "src/game/audio/definitions/shipBooster",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/audio/definitions/shipEngine#definition",
+      "name": "definition",
+      "layer": "data",
+      "module": "src/game/audio/definitions/shipEngine",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/audio/definitions/shipLaser#definition",
+      "name": "definition",
+      "layer": "data",
+      "module": "src/game/audio/definitions/shipLaser",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/audio/gameAudio#getAudioService",
+      "name": "getAudioService",
+      "layer": "model",
+      "module": "src/game/audio/gameAudio",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/audio/gameAudio#initializeGameAudio",
+      "name": "initializeGameAudio",
+      "layer": "model",
+      "module": "src/game/audio/gameAudio",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/audio/gameAudio#SERVICE_KEY",
+      "name": "SERVICE_KEY",
+      "layer": "model",
+      "module": "src/game/audio/gameAudio",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/audio/registry#loadSoundAssets",
+      "name": "loadSoundAssets",
+      "layer": "data",
+      "module": "src/game/audio/registry",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/audio/registry#modules",
+      "name": "modules",
+      "layer": "data",
+      "module": "src/game/audio/registry",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/audio/registry#soundDefinitions",
+      "name": "soundDefinitions",
+      "layer": "data",
+      "module": "src/game/audio/registry",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/audio/shipAudio#updateShipAudio",
+      "name": "updateShipAudio",
+      "layer": "model",
+      "module": "src/game/audio/shipAudio",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/audio/types#AudioBackend",
+      "name": "AudioBackend",
+      "layer": "data",
+      "module": "src/game/audio/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/audio/types#AudioOwner",
+      "name": "AudioOwner",
+      "layer": "data",
+      "module": "src/game/audio/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/audio/types#AudioSettings",
+      "name": "AudioSettings",
+      "layer": "data",
+      "module": "src/game/audio/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/audio/types#AudioVoice",
+      "name": "AudioVoice",
+      "layer": "data",
+      "module": "src/game/audio/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/audio/types#LoopOptions",
+      "name": "LoopOptions",
+      "layer": "data",
+      "module": "src/game/audio/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/audio/types#SettingsStorage",
+      "name": "SettingsStorage",
+      "layer": "data",
+      "module": "src/game/audio/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/audio/types#SoundDefinition",
+      "name": "SoundDefinition",
+      "layer": "data",
+      "module": "src/game/audio/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/audio/validate#validateSoundDefinitions",
+      "name": "validateSoundDefinitions",
+      "layer": "model",
+      "module": "src/game/audio/validate",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/effects/starfield#Star",
+      "name": "Star",
+      "layer": "ui",
+      "module": "src/game/effects/starfield",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/effects/starfield#Starfield",
+      "name": "Starfield",
+      "layer": "ui",
+      "module": "src/game/effects/starfield",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/main#config",
+      "name": "config",
+      "layer": "ui",
+      "module": "src/game/main",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/main#GameBootstrapHooks",
+      "name": "GameBootstrapHooks",
+      "layer": "ui",
+      "module": "src/game/main",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/main#StartGame",
+      "name": "StartGame",
+      "layer": "ui",
+      "module": "src/game/main",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/mechanics/planet/proximity#canLandNearPlanet",
+      "name": "canLandNearPlanet",
+      "layer": "model",
+      "module": "src/game/mechanics/planet/proximity",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/planet/proximity#PLANET_LANDING_SURFACE_GAP",
+      "name": "PLANET_LANDING_SURFACE_GAP",
+      "layer": "model",
+      "module": "src/game/mechanics/planet/proximity",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/mechanics/planet/proximity#planetLandingRadius",
+      "name": "planetLandingRadius",
+      "layer": "model",
+      "module": "src/game/mechanics/planet/proximity",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/projectile/trajectory#Circle",
+      "name": "Circle",
+      "layer": "model",
+      "module": "src/game/mechanics/projectile/trajectory",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/mechanics/projectile/trajectory#Point",
+      "name": "Point",
+      "layer": "model",
+      "module": "src/game/mechanics/projectile/trajectory",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/mechanics/projectile/trajectory#segmentHitsCircle",
+      "name": "segmentHitsCircle",
+      "layer": "model",
+      "module": "src/game/mechanics/projectile/trajectory",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/projectile/trajectory#shotTrajectory",
+      "name": "shotTrajectory",
+      "layer": "model",
+      "module": "src/game/mechanics/projectile/trajectory",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/spaceship/fireCadence#FireCadence",
+      "name": "FireCadence",
+      "layer": "model",
+      "module": "src/game/mechanics/spaceship/fireCadence",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/mechanics/spaceship/flight#boostAccelerationRate",
+      "name": "boostAccelerationRate",
+      "layer": "model",
+      "module": "src/game/mechanics/spaceship/flight",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/spaceship/flight#directionRotation",
+      "name": "directionRotation",
+      "layer": "model",
+      "module": "src/game/mechanics/spaceship/flight",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/spaceship/flight#flightVelocity",
+      "name": "flightVelocity",
+      "layer": "model",
+      "module": "src/game/mechanics/spaceship/flight",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/objects/_shared/registry#loadObjectAssets",
+      "name": "loadObjectAssets",
+      "layer": "data",
+      "module": "src/game/objects/_shared/registry",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/objects/_shared/registry#modules",
+      "name": "modules",
+      "layer": "data",
+      "module": "src/game/objects/_shared/registry",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/_shared/registry#objectDefinitions",
+      "name": "objectDefinitions",
+      "layer": "data",
+      "module": "src/game/objects/_shared/registry",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/_shared/registry#registerObjectAnimations",
+      "name": "registerObjectAnimations",
+      "layer": "data",
+      "module": "src/game/objects/_shared/registry",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/objects/_shared/registry#validateDefinitions",
+      "name": "validateDefinitions",
+      "layer": "data",
+      "module": "src/game/objects/_shared/registry",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/objects/_shared/sceneObject#SceneObject",
+      "name": "SceneObject",
+      "layer": "model",
+      "module": "src/game/objects/_shared/sceneObject",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/objects/_shared/types#GameObjectDefinition",
+      "name": "GameObjectDefinition",
+      "layer": "data",
+      "module": "src/game/objects/_shared/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/objects/_shared/types#ObjectAnimation",
+      "name": "ObjectAnimation",
+      "layer": "data",
+      "module": "src/game/objects/_shared/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/objects/_shared/types#ObjectAsset",
+      "name": "ObjectAsset",
+      "layer": "data",
+      "module": "src/game/objects/_shared/types",
+      "kind": "type"
+    },
+    {
+      "id": "src/game/objects/_shared/types#ObjectPhysics",
+      "name": "ObjectPhysics",
+      "layer": "data",
+      "module": "src/game/objects/_shared/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/objects/_shared/types#ObjectVisual",
+      "name": "ObjectVisual",
+      "layer": "data",
+      "module": "src/game/objects/_shared/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/objects/_shared/types#SceneObjectOptions",
+      "name": "SceneObjectOptions",
+      "layer": "data",
+      "module": "src/game/objects/_shared/types",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/objects/planet/definition#definition",
+      "name": "definition",
+      "layer": "data",
+      "module": "src/game/objects/planet/definition",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/planet/planet#Planet",
+      "name": "Planet",
+      "layer": "model",
+      "module": "src/game/objects/planet/planet",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/objects/planet/planet#PlanetOptions",
+      "name": "PlanetOptions",
+      "layer": "model",
+      "module": "src/game/objects/planet/planet",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/objects/projectile/definition#definition",
+      "name": "definition",
+      "layer": "data",
+      "module": "src/game/objects/projectile/definition",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/projectile/definition#projectileTuning",
+      "name": "projectileTuning",
+      "layer": "data",
+      "module": "src/game/objects/projectile/definition",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/projectile/projectile#Projectile",
+      "name": "Projectile",
+      "layer": "model",
+      "module": "src/game/objects/projectile/projectile",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/objects/projectile/projectile#ProjectileOptions",
+      "name": "ProjectileOptions",
+      "layer": "model",
+      "module": "src/game/objects/projectile/projectile",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/objects/spaceship/boostEffects#BoostEffects",
+      "name": "BoostEffects",
+      "layer": "model",
+      "module": "src/game/objects/spaceship/boostEffects",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/objects/spaceship/boostEffects#WingSample",
+      "name": "WingSample",
+      "layer": "model",
+      "module": "src/game/objects/spaceship/boostEffects",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/objects/spaceship/definition#definition",
+      "name": "definition",
+      "layer": "data",
+      "module": "src/game/objects/spaceship/definition",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/spaceship/definition#shipBoostTuning",
+      "name": "shipBoostTuning",
+      "layer": "data",
+      "module": "src/game/objects/spaceship/definition",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/spaceship/definition#shipEngineAnimation",
+      "name": "shipEngineAnimation",
+      "layer": "data",
+      "module": "src/game/objects/spaceship/definition",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/spaceship/definition#shipFlameLengths",
+      "name": "shipFlameLengths",
+      "layer": "data",
+      "module": "src/game/objects/spaceship/definition",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/spaceship/definition#shipFrames",
+      "name": "shipFrames",
+      "layer": "data",
+      "module": "src/game/objects/spaceship/definition",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/spaceship/definition#shipTuning",
+      "name": "shipTuning",
+      "layer": "data",
+      "module": "src/game/objects/spaceship/definition",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
+      "name": "ShipWeapon",
+      "layer": "model",
+      "module": "src/game/objects/spaceship/shipWeapon",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/objects/spaceship/shipWeapon#weaponTuning",
+      "name": "weaponTuning",
+      "layer": "model",
+      "module": "src/game/objects/spaceship/shipWeapon",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/spaceship/spaceship#Spaceship",
+      "name": "Spaceship",
+      "layer": "model",
+      "module": "src/game/objects/spaceship/spaceship",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/objects/sun/definition#definition",
+      "name": "definition",
+      "layer": "data",
+      "module": "src/game/objects/sun/definition",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/sun/sun#Bubble",
+      "name": "Bubble",
+      "layer": "model",
+      "module": "src/game/objects/sun/sun",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/objects/sun/sun#BUBBLE_COUNT",
+      "name": "BUBBLE_COUNT",
+      "layer": "model",
+      "module": "src/game/objects/sun/sun",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/objects/sun/sun#pseudoRandom",
+      "name": "pseudoRandom",
+      "layer": "model",
+      "module": "src/game/objects/sun/sun",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/objects/sun/sun#Sun",
+      "name": "Sun",
+      "layer": "model",
+      "module": "src/game/objects/sun/sun",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/scenes/bootScene#Boot",
+      "name": "Boot",
+      "layer": "ui",
+      "module": "src/game/scenes/bootScene",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/scenes/gameObjects#gameObjectLayout",
+      "name": "gameObjectLayout",
+      "layer": "data",
+      "module": "src/game/scenes/gameObjects",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/scenes/gameObjects#gameWorldBounds",
+      "name": "gameWorldBounds",
+      "layer": "data",
+      "module": "src/game/scenes/gameObjects",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/scenes/gameObjects#gameWorldSize",
+      "name": "gameWorldSize",
+      "layer": "data",
+      "module": "src/game/scenes/gameObjects",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/scenes/gameObjects#PLANET_SIZE_MULTIPLIER",
+      "name": "PLANET_SIZE_MULTIPLIER",
+      "layer": "data",
+      "module": "src/game/scenes/gameObjects",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/scenes/gameObjects#SUN_RADIUS",
+      "name": "SUN_RADIUS",
+      "layer": "data",
+      "module": "src/game/scenes/gameObjects",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/scenes/gameOverScene#GameOver",
+      "name": "GameOver",
+      "layer": "ui",
+      "module": "src/game/scenes/gameOverScene",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/scenes/gameScene#Game",
+      "name": "Game",
+      "layer": "ui",
+      "module": "src/game/scenes/gameScene",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/scenes/mainMenuScene#MainMenu",
+      "name": "MainMenu",
+      "layer": "ui",
+      "module": "src/game/scenes/mainMenuScene",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/scenes/preloaderScene#Preloader",
+      "name": "Preloader",
+      "layer": "ui",
+      "module": "src/game/scenes/preloaderScene",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/visual/layers#ObjectDepth",
+      "name": "ObjectDepth",
+      "layer": "ui",
+      "module": "src/game/visual/layers",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/world/geometry#CircleObstacle",
+      "name": "CircleObstacle",
+      "layer": "model",
+      "module": "src/game/world/geometry",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/world/planetWorldState#PlanetWorldState",
+      "name": "PlanetWorldState",
+      "layer": "model",
+      "module": "src/game/world/planetWorldState",
+      "kind": "interface"
+    },
+    {
+      "id": "src/ui/adapters/audioSettingsAdapter#createAudioSettingsPort",
+      "name": "createAudioSettingsPort",
+      "layer": "ui",
+      "module": "src/ui/adapters/audioSettingsAdapter",
+      "kind": "function"
+    },
+    {
+      "id": "src/ui/adapters/displayAdapter#createDisplayPort",
+      "name": "createDisplayPort",
+      "layer": "ui",
+      "module": "src/ui/adapters/displayAdapter",
+      "kind": "function"
+    },
+    {
+      "id": "src/ui/adapters/displayAdapter#LockableOrientation",
+      "name": "LockableOrientation",
+      "layer": "ui",
+      "module": "src/ui/adapters/displayAdapter",
+      "kind": "type"
+    },
+    {
+      "id": "src/ui/components/audioControls#mountAudioControls",
+      "name": "mountAudioControls",
+      "layer": "ui",
+      "module": "src/ui/components/audioControls",
+      "kind": "function"
+    },
+    {
+      "id": "src/ui/components/audioControls#required",
+      "name": "required",
+      "layer": "ui",
+      "module": "src/ui/components/audioControls",
+      "kind": "function"
+    },
+    {
+      "id": "src/ui/components/displayControls#mountDisplayControls",
+      "name": "mountDisplayControls",
+      "layer": "ui",
+      "module": "src/ui/components/displayControls",
+      "kind": "function"
+    },
+    {
+      "id": "src/ui/components/displayControls#required",
+      "name": "required",
+      "layer": "ui",
+      "module": "src/ui/components/displayControls",
+      "kind": "function"
+    },
+    {
+      "id": "src/ui/contracts#AudioSettingsPort",
+      "name": "AudioSettingsPort",
+      "layer": "data",
+      "module": "src/ui/contracts",
+      "kind": "interface"
+    },
+    {
+      "id": "src/ui/contracts#AudioSettingsSnapshot",
+      "name": "AudioSettingsSnapshot",
+      "layer": "data",
+      "module": "src/ui/contracts",
+      "kind": "interface"
+    },
+    {
+      "id": "src/ui/contracts#DisplayPort",
+      "name": "DisplayPort",
+      "layer": "data",
+      "module": "src/ui/contracts",
+      "kind": "interface"
+    },
+    {
+      "id": "src/ui/contracts#DisplaySnapshot",
+      "name": "DisplaySnapshot",
+      "layer": "data",
+      "module": "src/ui/contracts",
+      "kind": "interface"
+    },
+    {
+      "id": "src/ui/contracts#FullscreenResult",
+      "name": "FullscreenResult",
+      "layer": "data",
+      "module": "src/ui/contracts",
+      "kind": "type"
+    },
+    {
+      "id": "src/ui/contracts#UiHandle",
+      "name": "UiHandle",
+      "layer": "data",
+      "module": "src/ui/contracts",
+      "kind": "interface"
+    },
+    {
+      "id": "src/ui/setupUi#setupApplicationUi",
+      "name": "setupApplicationUi",
+      "layer": "ui",
+      "module": "src/ui/setupUi",
+      "kind": "function"
+    }
+  ],
+  "edges": [
+    {
+      "from": "src/game/audio/audioScope#AudioScope",
+      "to": "src/game/audio/audioScope#bounded",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/audioScope#AudioScope",
+      "to": "src/game/audio/audioScope#Channel",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/audioScope#AudioScope",
+      "to": "src/game/audio/audioScope#ENGINE_CROSSFADE_MS",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/audioScope#AudioScope",
+      "to": "src/game/audio/audioScope#VoiceSlot",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/audioScope#AudioScope",
+      "to": "src/game/audio/audioService#AudioService",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioScope#AudioScope",
+      "to": "src/game/audio/types#AudioOwner",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioScope#AudioScope",
+      "to": "src/game/audio/types#LoopOptions",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioScope#AudioScope",
+      "to": "src/game/audio/types#SoundDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioScope#Channel",
+      "to": "src/game/audio/audioScope#LoopEntry",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/audioScope#Channel",
+      "to": "src/game/audio/types#LoopOptions",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioScope#LoopEntry",
+      "to": "src/game/audio/audioScope#VoiceSlot",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/audioScope#VoiceSlot",
+      "to": "src/game/audio/types#AudioVoice",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioService#AudioService",
+      "to": "src/game/audio/audioScope#AudioScope",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioService#AudioService",
+      "to": "src/game/audio/audioService#AUDIO_SETTINGS_KEY",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/audioService#AudioService",
+      "to": "src/game/audio/audioService#DEFAULT_SETTINGS",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/audioService#AudioService",
+      "to": "src/game/audio/types#AudioBackend",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioService#AudioService",
+      "to": "src/game/audio/types#AudioOwner",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioService#AudioService",
+      "to": "src/game/audio/types#AudioSettings",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioService#AudioService",
+      "to": "src/game/audio/types#AudioVoice",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioService#AudioService",
+      "to": "src/game/audio/types#SettingsStorage",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioService#AudioService",
+      "to": "src/game/audio/types#SoundDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioService#AudioService",
+      "to": "src/game/audio/validate#validateSoundDefinitions",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/audioService#DEFAULT_SETTINGS",
+      "to": "src/game/audio/types#AudioSettings",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/definitions/shipBooster#definition",
+      "to": "asset:public/assets/audio/ship-booster/booster-loop.wav",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/audio/definitions/shipBooster#definition",
+      "to": "src/game/audio/types#SoundDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/definitions/shipEngine#definition",
+      "to": "asset:public/assets/audio/ship-engine/engine-loop.wav",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/audio/definitions/shipEngine#definition",
+      "to": "src/game/audio/types#SoundDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/definitions/shipLaser#definition",
+      "to": "asset:public/assets/audio/ship-laser/laser-shot.wav",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/audio/definitions/shipLaser#definition",
+      "to": "src/game/audio/types#SoundDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/gameAudio#getAudioService",
+      "to": "src/game/audio/audioService#AudioService",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/gameAudio#getAudioService",
+      "to": "src/game/audio/gameAudio#SERVICE_KEY",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/gameAudio#initializeGameAudio",
+      "to": "src/game/audio/audioService#AudioService",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/gameAudio#initializeGameAudio",
+      "to": "src/game/audio/gameAudio#SERVICE_KEY",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/gameAudio#initializeGameAudio",
+      "to": "src/game/audio/registry#soundDefinitions",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/gameAudio#initializeGameAudio",
+      "to": "src/game/audio/types#AudioVoice",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/gameAudio#initializeGameAudio",
+      "to": "src/game/audio/types#SettingsStorage",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/registry#loadSoundAssets",
+      "to": "src/game/audio/registry#soundDefinitions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/registry#modules",
+      "to": "src/game/audio/definitions/shipBooster#definition",
+      "kind": "glob-imports"
+    },
+    {
+      "from": "src/game/audio/registry#modules",
+      "to": "src/game/audio/definitions/shipEngine#definition",
+      "kind": "glob-imports"
+    },
+    {
+      "from": "src/game/audio/registry#modules",
+      "to": "src/game/audio/definitions/shipLaser#definition",
+      "kind": "glob-imports"
+    },
+    {
+      "from": "src/game/audio/registry#modules",
+      "to": "src/game/audio/types#SoundDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/registry#soundDefinitions",
+      "to": "src/game/audio/registry#modules",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/shipAudio#updateShipAudio",
+      "to": "src/game/audio/audioScope#AudioScope",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/audio/types#AudioBackend",
+      "to": "src/game/audio/types#AudioSettings",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/types#AudioBackend",
+      "to": "src/game/audio/types#AudioVoice",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/audio/validate#validateSoundDefinitions",
+      "to": "src/game/audio/types#SoundDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/effects/starfield#Starfield",
+      "to": "src/game/effects/starfield#Star",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/effects/starfield#Starfield",
+      "to": "src/game/visual/layers#ObjectDepth",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/main#config",
+      "to": "src/game/scenes/bootScene#Boot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/main#config",
+      "to": "src/game/scenes/gameOverScene#GameOver",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/main#config",
+      "to": "src/game/scenes/gameScene#Game",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/main#config",
+      "to": "src/game/scenes/mainMenuScene#MainMenu",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/main#config",
+      "to": "src/game/scenes/preloaderScene#Preloader",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/main#StartGame",
+      "to": "src/game/audio/gameAudio#initializeGameAudio",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/main#StartGame",
+      "to": "src/game/main#config",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/main#StartGame",
+      "to": "src/game/main#GameBootstrapHooks",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/planet/proximity#canLandNearPlanet",
+      "to": "src/game/mechanics/planet/proximity#planetLandingRadius",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/planet/proximity#planetLandingRadius",
+      "to": "src/game/mechanics/planet/proximity#PLANET_LANDING_SURFACE_GAP",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/projectile/trajectory#Circle",
+      "to": "src/game/mechanics/projectile/trajectory#Point",
+      "kind": "extends"
+    },
+    {
+      "from": "src/game/mechanics/projectile/trajectory#segmentHitsCircle",
+      "to": "src/game/mechanics/projectile/trajectory#Circle",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/projectile/trajectory#segmentHitsCircle",
+      "to": "src/game/mechanics/projectile/trajectory#Point",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/projectile/trajectory#shotTrajectory",
+      "to": "src/game/mechanics/projectile/trajectory#Point",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/_shared/registry#loadObjectAssets",
+      "to": "src/game/objects/_shared/registry#objectDefinitions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/_shared/registry#loadObjectAssets",
+      "to": "src/game/objects/_shared/registry#validateDefinitions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/_shared/registry#modules",
+      "to": "src/game/objects/_shared/types#GameObjectDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/_shared/registry#modules",
+      "to": "src/game/objects/planet/definition#definition",
+      "kind": "glob-imports"
+    },
+    {
+      "from": "src/game/objects/_shared/registry#modules",
+      "to": "src/game/objects/projectile/definition#definition",
+      "kind": "glob-imports"
+    },
+    {
+      "from": "src/game/objects/_shared/registry#modules",
+      "to": "src/game/objects/spaceship/definition#definition",
+      "kind": "glob-imports"
+    },
+    {
+      "from": "src/game/objects/_shared/registry#modules",
+      "to": "src/game/objects/sun/definition#definition",
+      "kind": "glob-imports"
+    },
+    {
+      "from": "src/game/objects/_shared/registry#objectDefinitions",
+      "to": "src/game/objects/_shared/registry#modules",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/_shared/registry#registerObjectAnimations",
+      "to": "src/game/objects/_shared/registry#objectDefinitions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/_shared/registry#validateDefinitions",
+      "to": "src/game/objects/_shared/registry#objectDefinitions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/_shared/sceneObject#SceneObject",
+      "to": "src/game/objects/_shared/types#GameObjectDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/_shared/sceneObject#SceneObject",
+      "to": "src/game/objects/_shared/types#SceneObjectOptions",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/_shared/types#GameObjectDefinition",
+      "to": "src/game/objects/_shared/types#ObjectAnimation",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/_shared/types#GameObjectDefinition",
+      "to": "src/game/objects/_shared/types#ObjectAsset",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/_shared/types#GameObjectDefinition",
+      "to": "src/game/objects/_shared/types#ObjectPhysics",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/_shared/types#GameObjectDefinition",
+      "to": "src/game/objects/_shared/types#ObjectVisual",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/planet/definition#definition",
+      "to": "asset:public/assets/objects/planet/spinning-surface.svg",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/objects/planet/definition#definition",
+      "to": "src/game/objects/_shared/types#GameObjectDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/planet/definition#definition",
+      "to": "src/game/visual/layers#ObjectDepth",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/planet/planet#Planet",
+      "to": "src/game/mechanics/planet/proximity#canLandNearPlanet",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/planet/planet#Planet",
+      "to": "src/game/mechanics/planet/proximity#planetLandingRadius",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/planet/planet#Planet",
+      "to": "src/game/objects/_shared/sceneObject#SceneObject",
+      "kind": "extends"
+    },
+    {
+      "from": "src/game/objects/planet/planet#Planet",
+      "to": "src/game/objects/_shared/sceneObject#SceneObject",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/planet/planet#Planet",
+      "to": "src/game/objects/planet/definition#definition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/planet/planet#Planet",
+      "to": "src/game/objects/planet/planet#PlanetOptions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/planet/planet#Planet",
+      "to": "src/game/visual/layers#ObjectDepth",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/planet/planet#Planet",
+      "to": "src/game/world/planetWorldState#PlanetWorldState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/planet/planet#PlanetOptions",
+      "to": "src/game/objects/_shared/types#SceneObjectOptions",
+      "kind": "extends"
+    },
+    {
+      "from": "src/game/objects/planet/planet#PlanetOptions",
+      "to": "src/game/world/planetWorldState#PlanetWorldState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/projectile/definition#definition",
+      "to": "asset:public/assets/objects/projectile/egg.svg",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/objects/projectile/definition#definition",
+      "to": "src/game/objects/_shared/types#GameObjectDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/projectile/definition#definition",
+      "to": "src/game/visual/layers#ObjectDepth",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/projectile/projectile#Projectile",
+      "to": "src/game/mechanics/projectile/trajectory#segmentHitsCircle",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/projectile/projectile#Projectile",
+      "to": "src/game/objects/_shared/sceneObject#SceneObject",
+      "kind": "extends"
+    },
+    {
+      "from": "src/game/objects/projectile/projectile#Projectile",
+      "to": "src/game/objects/projectile/definition#definition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/projectile/projectile#Projectile",
+      "to": "src/game/objects/projectile/definition#projectileTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/projectile/projectile#Projectile",
+      "to": "src/game/objects/projectile/projectile#ProjectileOptions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/projectile/projectile#Projectile",
+      "to": "src/game/world/geometry#CircleObstacle",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/projectile/projectile#ProjectileOptions",
+      "to": "src/game/objects/_shared/types#SceneObjectOptions",
+      "kind": "extends"
+    },
+    {
+      "from": "src/game/objects/spaceship/boostEffects#BoostEffects",
+      "to": "src/game/objects/spaceship/boostEffects#WingSample",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/spaceship/boostEffects#BoostEffects",
+      "to": "src/game/objects/spaceship/definition#shipBoostTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/boostEffects#BoostEffects",
+      "to": "src/game/objects/spaceship/definition#shipFlameLengths",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/boostEffects#BoostEffects",
+      "to": "src/game/visual/layers#ObjectDepth",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/definition#definition",
+      "to": "asset:public/assets/objects/spaceship/engine-on-sequence.svg",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/objects/spaceship/definition#definition",
+      "to": "asset:public/assets/objects/spaceship/engines-off.svg",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/objects/spaceship/definition#definition",
+      "to": "src/game/objects/_shared/types#GameObjectDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/definition#definition",
+      "to": "src/game/objects/spaceship/definition#shipEngineAnimation",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/spaceship/definition#definition",
+      "to": "src/game/objects/spaceship/definition#shipFrames",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/spaceship/definition#definition",
+      "to": "src/game/visual/layers#ObjectDepth",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
+      "to": "src/game/mechanics/projectile/trajectory#shotTrajectory",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
+      "to": "src/game/mechanics/spaceship/fireCadence#FireCadence",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
+      "to": "src/game/objects/projectile/definition#projectileTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
+      "to": "src/game/objects/projectile/projectile#Projectile",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
+      "to": "src/game/objects/spaceship/shipWeapon#weaponTuning",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
+      "to": "src/game/objects/spaceship/spaceship#Spaceship",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
+      "to": "src/game/world/geometry#CircleObstacle",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/mechanics/spaceship/flight#boostAccelerationRate",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/mechanics/spaceship/flight#directionRotation",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/mechanics/spaceship/flight#flightVelocity",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/objects/_shared/sceneObject#SceneObject",
+      "kind": "extends"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/objects/_shared/types#SceneObjectOptions",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/objects/spaceship/boostEffects#BoostEffects",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/objects/spaceship/definition#definition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/objects/spaceship/definition#shipBoostTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/objects/spaceship/definition#shipEngineAnimation",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/objects/spaceship/definition#shipFrames",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/spaceship/spaceship#Spaceship",
+      "to": "src/game/objects/spaceship/definition#shipTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/sun/definition#definition",
+      "to": "asset:public/assets/objects/sun/surface.svg",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/objects/sun/definition#definition",
+      "to": "src/game/objects/_shared/types#GameObjectDefinition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/sun/definition#definition",
+      "to": "src/game/visual/layers#ObjectDepth",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/sun/sun#Sun",
+      "to": "src/game/objects/_shared/sceneObject#SceneObject",
+      "kind": "extends"
+    },
+    {
+      "from": "src/game/objects/sun/sun#Sun",
+      "to": "src/game/objects/_shared/types#SceneObjectOptions",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/sun/sun#Sun",
+      "to": "src/game/objects/sun/definition#definition",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/objects/sun/sun#Sun",
+      "to": "src/game/objects/sun/sun#BUBBLE_COUNT",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/sun/sun#Sun",
+      "to": "src/game/objects/sun/sun#Bubble",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/sun/sun#Sun",
+      "to": "src/game/objects/sun/sun#pseudoRandom",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/objects/sun/sun#Sun",
+      "to": "src/game/visual/layers#ObjectDepth",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/bootScene#Boot",
+      "to": "asset:public/assets/bg.png",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/scenes/gameObjects#gameObjectLayout",
+      "to": "src/game/objects/_shared/types#SceneObjectOptions",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameObjects#gameObjectLayout",
+      "to": "src/game/objects/planet/planet#PlanetOptions",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameObjects#gameObjectLayout",
+      "to": "src/game/scenes/gameObjects#PLANET_SIZE_MULTIPLIER",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/scenes/gameObjects#gameObjectLayout",
+      "to": "src/game/scenes/gameObjects#SUN_RADIUS",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/scenes/gameObjects#gameWorldBounds",
+      "to": "src/game/scenes/gameObjects#gameWorldSize",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/scenes/gameObjects#SUN_RADIUS",
+      "to": "src/game/scenes/gameObjects#PLANET_SIZE_MULTIPLIER",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/audio/audioScope#AudioScope",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/audio/gameAudio#getAudioService",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/audio/shipAudio#updateShipAudio",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/effects/starfield#Starfield",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/objects/planet/planet#Planet",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/objects/spaceship/definition#shipBoostTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/objects/spaceship/definition#shipTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/objects/spaceship/spaceship#Spaceship",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/objects/sun/sun#Sun",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/scenes/gameObjects#gameObjectLayout",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/scenes/gameObjects#gameWorldBounds",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/visual/layers#ObjectDepth",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/world/geometry#CircleObstacle",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/world/planetWorldState#PlanetWorldState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/preloaderScene#Preloader",
+      "to": "asset:public/assets/cow_big.png",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/scenes/preloaderScene#Preloader",
+      "to": "asset:public/assets/logo.png",
+      "kind": "asset"
+    },
+    {
+      "from": "src/game/scenes/preloaderScene#Preloader",
+      "to": "src/game/audio/registry#loadSoundAssets",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/preloaderScene#Preloader",
+      "to": "src/game/objects/_shared/registry#loadObjectAssets",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/preloaderScene#Preloader",
+      "to": "src/game/objects/_shared/registry#registerObjectAnimations",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/world/planetWorldState#PlanetWorldState",
+      "to": "src/game/world/geometry#CircleObstacle",
+      "kind": "extends"
+    },
+    {
+      "from": "src/ui/adapters/audioSettingsAdapter#createAudioSettingsPort",
+      "to": "src/game/audio/gameAudio#getAudioService",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/adapters/audioSettingsAdapter#createAudioSettingsPort",
+      "to": "src/ui/contracts#AudioSettingsPort",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/adapters/displayAdapter#createDisplayPort",
+      "to": "src/ui/adapters/displayAdapter#LockableOrientation",
+      "kind": "uses"
+    },
+    {
+      "from": "src/ui/adapters/displayAdapter#createDisplayPort",
+      "to": "src/ui/contracts#DisplayPort",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/adapters/displayAdapter#createDisplayPort",
+      "to": "src/ui/contracts#DisplaySnapshot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/adapters/displayAdapter#createDisplayPort",
+      "to": "src/ui/contracts#FullscreenResult",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/components/audioControls#mountAudioControls",
+      "to": "src/ui/components/audioControls#required",
+      "kind": "uses"
+    },
+    {
+      "from": "src/ui/components/audioControls#mountAudioControls",
+      "to": "src/ui/contracts#AudioSettingsPort",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/components/audioControls#mountAudioControls",
+      "to": "src/ui/contracts#UiHandle",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/components/displayControls#mountDisplayControls",
+      "to": "src/ui/components/displayControls#required",
+      "kind": "uses"
+    },
+    {
+      "from": "src/ui/components/displayControls#mountDisplayControls",
+      "to": "src/ui/contracts#DisplayPort",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/components/displayControls#mountDisplayControls",
+      "to": "src/ui/contracts#FullscreenResult",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/components/displayControls#mountDisplayControls",
+      "to": "src/ui/contracts#UiHandle",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/contracts#AudioSettingsPort",
+      "to": "src/ui/contracts#AudioSettingsSnapshot",
+      "kind": "uses"
+    },
+    {
+      "from": "src/ui/contracts#DisplayPort",
+      "to": "src/ui/contracts#DisplaySnapshot",
+      "kind": "uses"
+    },
+    {
+      "from": "src/ui/contracts#DisplayPort",
+      "to": "src/ui/contracts#FullscreenResult",
+      "kind": "uses"
+    },
+    {
+      "from": "src/ui/contracts#DisplayPort",
+      "to": "src/ui/contracts#UiHandle",
+      "kind": "extends"
+    },
+    {
+      "from": "src/ui/setupUi#setupApplicationUi",
+      "to": "src/ui/adapters/audioSettingsAdapter#createAudioSettingsPort",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/setupUi#setupApplicationUi",
+      "to": "src/ui/adapters/displayAdapter#createDisplayPort",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/setupUi#setupApplicationUi",
+      "to": "src/ui/components/audioControls#mountAudioControls",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/setupUi#setupApplicationUi",
+      "to": "src/ui/components/displayControls#mountDisplayControls",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/setupUi#setupApplicationUi",
+      "to": "src/ui/contracts#UiHandle",
+      "kind": "imports"
+    }
+  ]
+}

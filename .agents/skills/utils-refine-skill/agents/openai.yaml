@@ -1,0 +1,5 @@
+interface:
+  display_name: "Refine project skill"
+  short_description: "Audit and polish one project skill"
+  default_prompt: "Use $utils-refine-skill to audit and polish the specified project skill."
+

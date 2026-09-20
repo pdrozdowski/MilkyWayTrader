@@ -19,9 +19,15 @@
                 <p id="orientation-help">Obróć urządzenie lub wybierz „Pełny ekran”.</p>
             </div>
         </aside>
-        <div id="mobile-controls" hidden>
+        <div id="mobile-controls" data-game-input="ignore" hidden>
             <button id="fullscreen-toggle" type="button" aria-pressed="false">Pełny ekran</button>
             <p id="display-status" role="status" aria-live="polite"></p>
+        </div>
+        <div id="audio-controls" data-game-input="ignore" role="group" aria-label="Game audio">
+            <button id="audio-mute" type="button" aria-pressed="false">Mute</button>
+            <label for="audio-volume">Volume</label>
+            <input id="audio-volume" type="range" min="0" max="100" step="1" value="50" />
+            <output id="audio-volume-value" for="audio-volume">50%</output>
         </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

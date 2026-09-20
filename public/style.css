@@ -107,3 +107,44 @@ body {
     font-size: 14px;
     line-height: 1.4;
 }
+
+#audio-controls {
+    position: absolute;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border: 1px solid #406587;
+    border-radius: 10px;
+    background: #102039e8;
+    font-size: 14px;
+}
+
+#audio-mute {
+    min-width: 72px;
+    min-height: 44px;
+    border: 1px solid #8bdfff;
+    border-radius: 6px;
+    color: #fff;
+    background: #122541;
+    font: inherit;
+    cursor: pointer;
+}
+
+#audio-volume {
+    width: clamp(65px, 15vw, 120px);
+    min-height: 44px;
+    margin: 0;
+    accent-color: #8bdfff;
+}
+
+#audio-volume-value { min-width: 4ch; }
+
+#audio-controls :focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+@media (max-width: 420px) {
+    #audio-controls { gap: 6px; padding: 4px 6px; }
+}
