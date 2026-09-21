@@ -5,6 +5,7 @@ import { GameStateProvider } from '../../src/game/application/gameStateProvider.
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
 import { advanceGameClock, pauseGameClock, resumeGameClock } from '../../src/game/mechanics/clock/gameClock.ts';
 import { advanceGameSimulation } from '../../src/game/mechanics/gameSimulation.ts';
+import { projectRunStatus } from '../../src/game/application/runStatus.ts';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -170,4 +171,29 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
         target: null, boostRequested: false, firing: false
     }, 600_000));
     assert.equal(unchanged.clock.activeElapsedMs, 0);
+});
+
+test('run status projection derives clock, capacity and readable run values', () => {
+    const state = clone(initialGameState);
+    state.clock.activeElapsedMs = 0;
+    state.credits = 123_456;
+    state.cargo = [{ commodityId: 'ore', quantity: 2 }];
+    const initial = projectRunStatus(state, true);
+    assert.equal(initial.remainingSeconds, 1800);
+    assert.equal(initial.runState, 'RUNNING');
+    assert.equal(initial.cargoUsed, 2);
+    assert.equal(initial.cargoCapacity, 20);
+    assert.equal(initial.maximumHitPoints, 100);
+    assert.deepEqual(initial.cargo, [{ commodityId: 'ore', quantity: 2 }]);
+
+    state.clock.activeElapsedMs = 1;
+    assert.equal(projectRunStatus(state, true).remainingSeconds, 1800, 'ceil retains the current displayed second');
+    state.clock.activeElapsedMs = 1_000;
+    assert.equal(projectRunStatus(state, true).remainingSeconds, 1799);
+    state.clock.activeElapsedMs = 1_800_001;
+    state.clock.pauseReasons = ['background', 'landed'];
+    const finished = projectRunStatus(state, false);
+    assert.equal(finished.remainingSeconds, 0);
+    assert.equal(finished.runState, 'PAUSED');
+    assert.equal(finished.visible, false);
 });

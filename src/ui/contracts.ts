@@ -3,6 +3,15 @@ export interface UiHandle
     destroy(): void;
 }
 
+export type { RunStatusSnapshot } from '../game/application/runStatus';
+import type { RunStatusSnapshot } from '../game/application/runStatus';
+
+export interface RunStatusPort extends UiHandle
+{
+    getSnapshot(): Readonly<RunStatusSnapshot>;
+    subscribe(listener: (snapshot: Readonly<RunStatusSnapshot>) => void): () => void;
+}
+
 export interface AudioSettingsSnapshot
 {
     muted: boolean;

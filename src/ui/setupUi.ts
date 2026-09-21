@@ -1,8 +1,10 @@
 import type { Game } from 'phaser';
 import { createAudioSettingsPort } from './adapters/audioSettingsAdapter';
 import { createDisplayPort } from './adapters/displayAdapter';
+import { createRunStatusPort } from './adapters/runStatusAdapter';
 import { mountAudioControls } from './components/audioControls';
 import { mountDisplayControls } from './components/displayControls';
+import { mountRunStatus } from './components/runStatus';
 import type { UiHandle } from './contracts';
 
 export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
@@ -11,6 +13,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
     if (!container) throw new Error('Missing game container.');
     const audio = mountAudioControls(root, createAudioSettingsPort(game));
     const display = mountDisplayControls(root, createDisplayPort(game, root, container));
+    const runStatus = mountRunStatus(root, createRunStatusPort(game));
     const returnToGame = (): void => {
         const focused = document.activeElement;
         if (focused instanceof HTMLElement && focused.closest('[data-game-input="ignore"]')) focused.blur();
@@ -23,6 +26,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
             destroyed = true;
             audio.destroy();
             display.destroy();
+            runStatus.destroy();
             game.canvas.removeEventListener('pointerdown', returnToGame);
             game.events.off('destroy', handle.destroy);
         }

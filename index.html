@@ -11,6 +11,14 @@
 <body>
     <div id="app">
         <div id="game-container"></div>
+        <section id="run-status" data-game-input="ignore" aria-label="Run status" hidden>
+            <span id="run-status-clock"></span>
+            <button id="run-status-ship-toggle" type="button" aria-expanded="false" aria-controls="run-status-ship-details">Ship info</button>
+            <div id="run-status-primary"><span id="run-status-credits"></span><span id="run-status-cargo"></span><label id="run-status-hp-label" for="run-status-hp"></label><progress id="run-status-hp" value="0" max="100"></progress></div>
+            <button id="run-status-cargo-toggle" type="button" aria-expanded="false" aria-controls="run-status-cargo-details">Cargo</button>
+            <section id="run-status-ship-details" aria-label="Ship information" hidden><p id="run-status-cargo-system"></p><p id="run-status-engine-system"></p><p id="run-status-weapon-system"></p><p id="run-status-booster"></p></section>
+            <section id="run-status-cargo-details" aria-label="Cargo contents" hidden><p id="run-status-cargo-contents"></p></section>
+        </section>
         <aside id="orientation-notice" aria-label="Orientacja ekranu" hidden>
             <div>
                 <span class="rotate-icon" aria-hidden="true">↻</span>

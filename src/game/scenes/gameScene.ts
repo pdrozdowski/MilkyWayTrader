@@ -31,7 +31,6 @@ export class Game extends Scene
     private readonly shipVelocity = new PhaserMath.Vector2();
     private contact: Physics.Arcade.Collider;
     private landingPrompt: GameObjects.Text;
-    private clockStatus: GameObjects.Text;
     private uiCamera: Phaser.Cameras.Scene2D.Camera;
     private boostHeld = false;
     private fireHeld = false;
@@ -65,12 +64,9 @@ export class Game extends Scene
         this.camera.startFollow(this.ship.sprite, false, 1, 1, 0, 0);
         this.camera.centerOn(this.ship.sprite.x, this.ship.sprite.y);
         const ui = this.add.container(0, 0).setScrollFactor(0).setDepth(ObjectDepth.UI);
-        const help = this.add.text(24, 24, 'Hold / drag to fly · Left Ctrl: fire', {
+        const help = this.add.text(24, 96, 'Hold / drag to fly · Left Ctrl: fire', {
             fontFamily: 'Arial', fontSize: 18, color: '#ffffff', backgroundColor: '#102039', padding: { x: 12, y: 10 }
         }).setScrollFactor(0).setDepth(ObjectDepth.UI);
-        this.clockStatus = this.add.text(1000, 24, '', {
-            fontFamily: 'Arial', fontSize: 18, color: '#ffffff', backgroundColor: '#102039', padding: { x: 12, y: 10 }
-        }).setOrigin(1, 0).setScrollFactor(0).setDepth(ObjectDepth.UI);
         this.landingPrompt = this.add.text(512, 692, 'Press [SPACE] / Tap on planet\nto land', {
             fontFamily: 'Arial', fontSize: 20, color: '#d6efff', align: 'center',
             backgroundColor: '#102039', padding: { x: 18, y: 12 }
@@ -78,7 +74,7 @@ export class Game extends Scene
         const exit = this.add.text(1000, 744, 'Exit demo', {
             fontFamily: 'Arial', fontSize: 20, color: '#ffffff', backgroundColor: '#243952', padding: { x: 14, y: 10 }
         }).setOrigin(1, 1).setScrollFactor(0).setDepth(ObjectDepth.UI).setInteractive({ useHandCursor: true });
-        ui.add([help, this.clockStatus, this.landingPrompt, exit]);
+        ui.add([help, this.landingPrompt, exit]);
         this.camera.ignore(ui);
         this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height, false, 'UI');
         this.uiCamera.ignore(this.children.list.filter(child => child !== ui));
@@ -113,7 +109,6 @@ export class Game extends Scene
         });
         for (const planet of this.planets) planet.updateLandingIndicator(this.ship);
         this.updateLandingPrompt();
-        this.updateClockStatus(state.clock.budgetMs, false);
         this.background.update(this.time.now);
     }
 
@@ -166,14 +161,6 @@ export class Game extends Scene
         this.landingPrompt.setVisible(this.planets.some(planet => planet.indicator.visible));
     }
 
-    private updateClockStatus (remainingMs: number, paused: boolean): void
-    {
-        const totalSeconds = Math.ceil(remainingMs / 1000);
-        const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-        const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-        this.clockStatus.setText(`${minutes}:${seconds} · ${paused ? 'PAUSED' : 'RUNNING'}`);
-    }
-
     update (time: number, delta: number): void
     {
         const pointer = this.steeringPointer;
@@ -214,7 +201,6 @@ export class Game extends Scene
         }
         this.updateLandingPrompt();
         this.weapon.synchronize(state.projectiles);
-        this.updateClockStatus(state.clock.budgetMs - state.clock.activeElapsedMs, state.clock.pauseReasons.length > 0);
         this.background.update(time);
     }
 }

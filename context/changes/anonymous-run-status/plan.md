@@ -87,7 +87,7 @@ Introduce the schema-v3 run contract, migrate older snapshots, make new-game res
 
 ### Overview
 
-Project authoritative state into a deduplicated UI port and replace the canvas clock with an accessible, responsive DOM status panel.
+Project authoritative state into a deduplicated UI port and replace the canvas clock with an accessible, responsive, full-width DOM status toolbar.
 
 ### Changes Required
 
@@ -113,6 +113,8 @@ Project authoritative state into a deduplicated UI port and replace the canvas c
 
 **Intent**: Keep critical values continuously readable while allowing secondary detail to remain compact and accessible.
 
+**Layout clarification (supersedes the following single-details-control description)**: The English status UI is a full-width toolbar anchored at the top of the screen. The clock/state is at its far left. The center holds credits, cargo used/capacity, and an HP bar with a text label. A Ship info button on the left and a Cargo button on the right independently control their own initially collapsed detail regions; both use `aria-expanded`. Ship info contains Cargo/Engine/Weapon system levels and availability plus booster availability. Cargo contains cargo contents. Only these two buttons accept pointer input; the toolbar itself remains non-blocking.
+
 **Contract**: The English panel always displays clock/state, credits, cargo used/capacity, and HP. An initially collapsed button with `aria-expanded` reveals `Cargo contents: Empty`, Cargo/Engine/Weapon `Level 1 · Available`, and `Booster: Locked`. Expansion is presentation-only. The countdown is not `aria-live`; only the details button accepts pointer input. Remove the duplicate Phaser clock and avoid collisions with fullscreen, audio, exit, and landing controls in desktop and touch layouts.
 
 ### Success Criteria
@@ -120,13 +122,13 @@ Project authoritative state into a deduplicated UI port and replace the canvas c
 #### Automated Verification
 
 - Projection tests cover 30:00, millisecond boundaries, zero clamp, multiple pause reasons, credit formatting inputs, capacity, and empty cargo.
-- Component tests cover collapsed/expanded rendering, updates, visibility, cleanup, and listener stability.
+- Component tests cover independently collapsed/expanded Ship info and Cargo controls, toolbar rendering, HP-bar updates, visibility, cleanup, and listener stability.
 - Real-application tests pass in desktop and touch projects: `npm.cmd run test:ui`.
 - Production and test TypeScript projects compile: `npm.cmd run typecheck`.
 
 #### Manual Verification
 
-- The panel remains readable without blocking flight controls in desktop and touch layouts; blur shows `PAUSED` with stable time and focus resumes `RUNNING` countdown.
+- The full-width toolbar remains readable without blocking flight controls in desktop and touch layouts; Ship info and Cargo controls expand independently; blur shows `PAUSED` with stable time and focus resumes `RUNNING` countdown.
 
 **Implementation Note**: After automated checks pass, pause for human confirmation of the manual verification before treating this phase as fully complete.
 
@@ -178,13 +180,13 @@ Complete real-user acceptance coverage, regenerate architecture artifacts, and r
 
 ### Integration Tests
 
-- Use Playwright role and visible-text selectors for the run-status region and details control.
+- Use Playwright role and visible-text selectors for the run-status toolbar, separate Ship info and Cargo controls, and HP bar.
 - Verify desktop and touch projects, pause/resume behavior, scene visibility, and absence of browser errors.
 
 ### Manual Testing Steps
 
 1. Start from the menu and verify the exact initial critical values.
-2. Expand details and verify empty cargo, level-one systems, and locked booster.
+2. Independently expand Ship info and Cargo; verify level-one systems and locked booster in Ship info, then empty cargo in Cargo.
 3. Hold Shift during flight and confirm no boost effect.
 4. Blur and refocus the page; confirm time pauses and resumes.
 5. Check desktop and touch layouts alongside audio/fullscreen controls.
@@ -214,26 +216,26 @@ Schema v1 first follows the existing spatial-state migration to v2, then v2 rece
 
 #### Automated
 
-- [x] 1.1 Domain state tests cover schema v3, v1/v2 migration, round-trip serialization, invalid values, atomic restore, and immutability
-- [x] 1.2 Mechanics tests prove boost remains inactive while locked and works after unlock
-- [x] 1.3 Production and test TypeScript projects compile
+- [x] 1.1 Domain state tests cover schema v3, v1/v2 migration, round-trip serialization, invalid values, atomic restore, and immutability — 0355cc0
+- [x] 1.2 Mechanics tests prove boost remains inactive while locked and works after unlock — 0355cc0
+- [x] 1.3 Production and test TypeScript projects compile — 0355cc0
 
 #### Manual
 
-- [x] 1.4 Repeated New Game resets the run, ordinary Game entry does not reset implicitly, and Shift does not boost a new run
+- [x] 1.4 Repeated New Game resets the run, ordinary Game entry does not reset implicitly, and Shift does not boost a new run — 0355cc0
 
 ### Phase 2: Semantic DOM Run Status
 
 #### Automated
 
-- [ ] 2.1 Projection tests cover clock boundaries, pause reasons, credits, capacity, and empty cargo
-- [ ] 2.2 Component tests cover collapsed and expanded rendering, updates, visibility, cleanup, and listener stability
-- [ ] 2.3 Real-application tests pass in desktop and touch projects
-- [ ] 2.4 Production and test TypeScript projects compile
+- [x] 2.1 Projection tests cover clock boundaries, pause reasons, credits, capacity, and empty cargo
+- [x] 2.2 Component tests cover collapsed and expanded rendering, updates, visibility, cleanup, and listener stability
+- [x] 2.3 Real-application tests pass in desktop and touch projects
+- [x] 2.4 Production and test TypeScript projects compile
 
 #### Manual
 
-- [ ] 2.5 The panel is readable and non-blocking in both layouts, and blur/focus pauses and resumes the visible clock
+- [x] 2.5 The panel is readable and non-blocking in both layouts, and blur/focus pauses and resumes the visible clock
 
 ### Phase 3: End-to-End Validation and Architecture Artifacts
 
