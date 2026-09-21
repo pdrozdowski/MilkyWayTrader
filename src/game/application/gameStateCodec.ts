@@ -1,6 +1,6 @@
 import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
-import { initialCredits, maximumShipHitPoints } from '../definitions/runBalance.ts';
+import { maximumShipHitPoints } from '../domain/runBalance.ts';
 
 const PAUSE_REASONS: readonly GamePauseReason[] = ['background', 'landed', 'manual'];
 const keys = (value: object): string[] => Object.keys(value).sort();
@@ -61,69 +61,6 @@ function vector2 (value: unknown, path: string): Readonly<{ x: number; y: number
     return { x: finiteNumber(vector.x, `${path}.x`), y: finiteNumber(vector.y, `${path}.y`) };
 }
 
-function migrateV1 (candidate: unknown): unknown
-{
-    if (!isRecord(candidate) || candidate.schemaVersion !== 1) return candidate;
-    const root = requireRecord(candidate, 'state', ['schemaVersion', 'clock', 'ship', 'planets', 'weapon', 'projectiles']);
-    const ship = requireRecord(root.ship, 'state.ship', [
-        'x', 'y', 'velocityX', 'velocityY', 'rotation', 'enginesOn', 'boosting', 'boostAcceleration', 'coastDeceleration'
-    ]);
-    if (!Array.isArray(root.planets)) throw new Error('state.planets must be an array.');
-    if (!Array.isArray(root.projectiles)) throw new Error('state.projectiles must be an array.');
-    return {
-        schemaVersion: 2,
-        clock: root.clock,
-        ship: {
-            position: { x: ship.x, y: ship.y },
-            velocity: { x: ship.velocityX, y: ship.velocityY },
-            rotation: ship.rotation,
-            enginesOn: ship.enginesOn,
-            boosting: ship.boosting,
-            boostAcceleration: ship.boostAcceleration,
-            coastDeceleration: ship.coastDeceleration
-        },
-        planets: root.planets.map((candidatePlanet, index) => {
-            const path = `state.planets[${index}]`;
-            const planet = requireRecord(candidatePlanet, path, ['id', 'name', 'x', 'y', 'radius']);
-            return { id: planet.id, name: planet.name, position: { x: planet.x, y: planet.y }, radius: planet.radius };
-        }),
-        weapon: root.weapon,
-        projectiles: root.projectiles.map((candidateProjectile, index) => {
-            const path = `state.projectiles[${index}]`;
-            const projectile = requireRecord(candidateProjectile, path, ['id', 'x', 'y', 'velocityX', 'velocityY', 'bornAtActiveMs']);
-            return {
-                id: projectile.id,
-                position: { x: projectile.x, y: projectile.y },
-                velocity: { x: projectile.velocityX, y: projectile.velocityY },
-                bornAtActiveMs: projectile.bornAtActiveMs
-            };
-        })
-    };
-}
-
-function migrateV2 (candidate: unknown): unknown
-{
-    if (!isRecord(candidate) || candidate.schemaVersion !== 2) return candidate;
-    const root = requireRecord(candidate, 'state', ['schemaVersion', 'clock', 'ship', 'planets', 'weapon', 'projectiles']);
-    const ship = requireRecord(root.ship, 'state.ship', [
-        'position', 'velocity', 'rotation', 'enginesOn', 'boosting', 'boostAcceleration', 'coastDeceleration'
-    ]);
-    return {
-        ...root,
-        schemaVersion: 3,
-        credits: initialCredits,
-        cargo: [],
-        ship: { ...ship, boosting: false },
-        shipStatus: {
-            currentHitPoints: maximumShipHitPoints,
-            cargoLevel: 1,
-            engineLevel: 1,
-            weaponLevel: 1,
-            boosterUnlocked: false
-        }
-    };
-}
-
 function cloneAndFreeze<T> (value: T): T
 {
     if (Array.isArray(value)) {
@@ -144,7 +81,6 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         try { source = JSON.parse(source) as unknown; }
         catch { throw new Error('Game state is not valid JSON.'); }
     }
-    source = migrateV2(migrateV1(source));
     const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'ship', 'shipStatus', 'planets', 'weapon', 'projectiles']);
     if (root.schemaVersion !== 3) throw new Error('Unsupported game-state schema version.');
 
@@ -185,6 +121,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     const currentHitPoints = nonNegativeSafeInteger(shipStatus.currentHitPoints, 'state.shipStatus.currentHitPoints');
     if (currentHitPoints > maximumShipHitPoints) throw new Error('state.shipStatus.currentHitPoints exceeds the configured maximum.');
     if (typeof shipStatus.boosterUnlocked !== 'boolean') throw new Error('state.shipStatus.boosterUnlocked must be boolean.');
+    if (!shipStatus.boosterUnlocked && ship.boosting) throw new Error('state.ship.boosting requires an unlocked booster.');
 
     if (!Array.isArray(root.planets)) throw new Error('state.planets must be an array.');
     const planetIds = new Set<string>();

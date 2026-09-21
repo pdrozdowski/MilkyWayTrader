@@ -1,5 +1,5 @@
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
-import { initialCredits, maximumShipHitPoints } from './runBalance.ts';
+import { initialCredits, maximumShipHitPoints } from '../domain/runBalance.ts';
 
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
 

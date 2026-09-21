@@ -123,20 +123,6 @@
       "kind": "variable"
     },
     {
-      "id": "src/game/application/gameStateCodec#migrateV1",
-      "name": "migrateV1",
-      "layer": "model",
-      "module": "src/game/application/gameStateCodec",
-      "kind": "function"
-    },
-    {
-      "id": "src/game/application/gameStateCodec#migrateV2",
-      "name": "migrateV2",
-      "layer": "model",
-      "module": "src/game/application/gameStateCodec",
-      "kind": "function"
-    },
-    {
       "id": "src/game/application/gameStateCodec#nonEmptyString",
       "name": "nonEmptyString",
       "layer": "model",
@@ -212,6 +198,41 @@
       "layer": "model",
       "module": "src/game/application/gameStateProvider",
       "kind": "type"
+    },
+    {
+      "id": "src/game/application/runStatus#projectRunStatus",
+      "name": "projectRunStatus",
+      "layer": "model",
+      "module": "src/game/application/runStatus",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/runStatus#RunState",
+      "name": "RunState",
+      "layer": "model",
+      "module": "src/game/application/runStatus",
+      "kind": "type"
+    },
+    {
+      "id": "src/game/application/runStatus#RunStatusCargoStack",
+      "name": "RunStatusCargoStack",
+      "layer": "model",
+      "module": "src/game/application/runStatus",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/application/runStatus#RunStatusSnapshot",
+      "name": "RunStatusSnapshot",
+      "layer": "model",
+      "module": "src/game/application/runStatus",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/application/runStatus#RunStatusSystem",
+      "name": "RunStatusSystem",
+      "layer": "model",
+      "module": "src/game/application/runStatus",
+      "kind": "interface"
     },
     {
       "id": "src/game/audio/audioScope#AudioScope",
@@ -445,24 +466,24 @@
       "kind": "variable"
     },
     {
-      "id": "src/game/definitions/runBalance#cargoCapacityByLevel",
+      "id": "src/game/domain/runBalance#cargoCapacityByLevel",
       "name": "cargoCapacityByLevel",
-      "layer": "data",
-      "module": "src/game/definitions/runBalance",
+      "layer": "model",
+      "module": "src/game/domain/runBalance",
       "kind": "variable"
     },
     {
-      "id": "src/game/definitions/runBalance#initialCredits",
+      "id": "src/game/domain/runBalance#initialCredits",
       "name": "initialCredits",
-      "layer": "data",
-      "module": "src/game/definitions/runBalance",
+      "layer": "model",
+      "module": "src/game/domain/runBalance",
       "kind": "variable"
     },
     {
-      "id": "src/game/definitions/runBalance#maximumShipHitPoints",
+      "id": "src/game/domain/runBalance#maximumShipHitPoints",
       "name": "maximumShipHitPoints",
-      "layer": "data",
-      "module": "src/game/definitions/runBalance",
+      "layer": "model",
+      "module": "src/game/domain/runBalance",
       "kind": "variable"
     },
     {
@@ -1026,6 +1047,13 @@
       "kind": "type"
     },
     {
+      "id": "src/ui/adapters/runStatusAdapter#createRunStatusPort",
+      "name": "createRunStatusPort",
+      "layer": "ui",
+      "module": "src/ui/adapters/runStatusAdapter",
+      "kind": "function"
+    },
+    {
       "id": "src/ui/components/audioControls#mountAudioControls",
       "name": "mountAudioControls",
       "layer": "ui",
@@ -1051,6 +1079,27 @@
       "name": "required",
       "layer": "ui",
       "module": "src/ui/components/displayControls",
+      "kind": "function"
+    },
+    {
+      "id": "src/ui/components/runStatus#clock",
+      "name": "clock",
+      "layer": "ui",
+      "module": "src/ui/components/runStatus",
+      "kind": "function"
+    },
+    {
+      "id": "src/ui/components/runStatus#mountRunStatus",
+      "name": "mountRunStatus",
+      "layer": "ui",
+      "module": "src/ui/components/runStatus",
+      "kind": "function"
+    },
+    {
+      "id": "src/ui/components/runStatus#required",
+      "name": "required",
+      "layer": "ui",
+      "module": "src/ui/components/runStatus",
       "kind": "function"
     },
     {
@@ -1089,6 +1138,13 @@
       "kind": "type"
     },
     {
+      "id": "src/ui/contracts#RunStatusPort",
+      "name": "RunStatusPort",
+      "layer": "data",
+      "module": "src/ui/contracts",
+      "kind": "interface"
+    },
+    {
       "id": "src/ui/contracts#UiHandle",
       "name": "UiHandle",
       "layer": "data",
@@ -1117,16 +1173,6 @@
     {
       "from": "src/game/application/gameStateCodec#decodeGameState",
       "to": "src/game/application/gameStateCodec#finiteNumber",
-      "kind": "uses"
-    },
-    {
-      "from": "src/game/application/gameStateCodec#decodeGameState",
-      "to": "src/game/application/gameStateCodec#migrateV1",
-      "kind": "uses"
-    },
-    {
-      "from": "src/game/application/gameStateCodec#decodeGameState",
-      "to": "src/game/application/gameStateCodec#migrateV2",
       "kind": "uses"
     },
     {
@@ -1171,7 +1217,7 @@
     },
     {
       "from": "src/game/application/gameStateCodec#decodeGameState",
-      "to": "src/game/definitions/runBalance#maximumShipHitPoints",
+      "to": "src/game/domain/runBalance#maximumShipHitPoints",
       "kind": "imports"
     },
     {
@@ -1192,36 +1238,6 @@
     {
       "from": "src/game/application/gameStateCodec#encodeGameState",
       "to": "src/game/state/gameStateSnapshot#GameStateSnapshot",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/application/gameStateCodec#migrateV1",
-      "to": "src/game/application/gameStateCodec#isRecord",
-      "kind": "uses"
-    },
-    {
-      "from": "src/game/application/gameStateCodec#migrateV1",
-      "to": "src/game/application/gameStateCodec#requireRecord",
-      "kind": "uses"
-    },
-    {
-      "from": "src/game/application/gameStateCodec#migrateV2",
-      "to": "src/game/application/gameStateCodec#isRecord",
-      "kind": "uses"
-    },
-    {
-      "from": "src/game/application/gameStateCodec#migrateV2",
-      "to": "src/game/application/gameStateCodec#requireRecord",
-      "kind": "uses"
-    },
-    {
-      "from": "src/game/application/gameStateCodec#migrateV2",
-      "to": "src/game/definitions/runBalance#initialCredits",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/application/gameStateCodec#migrateV2",
-      "to": "src/game/definitions/runBalance#maximumShipHitPoints",
       "kind": "imports"
     },
     {
@@ -1303,6 +1319,41 @@
       "from": "src/game/application/gameStateProvider#GameStateReducer",
       "to": "src/game/state/gameStateSnapshot#GameStateSnapshot",
       "kind": "imports"
+    },
+    {
+      "from": "src/game/application/runStatus#projectRunStatus",
+      "to": "src/game/application/runStatus#RunStatusSnapshot",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/runStatus#projectRunStatus",
+      "to": "src/game/domain/runBalance#cargoCapacityByLevel",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/runStatus#projectRunStatus",
+      "to": "src/game/domain/runBalance#maximumShipHitPoints",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/runStatus#projectRunStatus",
+      "to": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/runStatus#RunStatusSnapshot",
+      "to": "src/game/application/runStatus#RunState",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/runStatus#RunStatusSnapshot",
+      "to": "src/game/application/runStatus#RunStatusCargoStack",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/runStatus#RunStatusSnapshot",
+      "to": "src/game/application/runStatus#RunStatusSystem",
+      "kind": "uses"
     },
     {
       "from": "src/game/audio/audioScope#AudioScope",
@@ -1541,12 +1592,12 @@
     },
     {
       "from": "src/game/definitions/initialGameState#initialGameState",
-      "to": "src/game/definitions/runBalance#initialCredits",
+      "to": "src/game/domain/runBalance#initialCredits",
       "kind": "imports"
     },
     {
       "from": "src/game/definitions/initialGameState#initialGameState",
-      "to": "src/game/definitions/runBalance#maximumShipHitPoints",
+      "to": "src/game/domain/runBalance#maximumShipHitPoints",
       "kind": "imports"
     },
     {
@@ -2355,6 +2406,26 @@
       "kind": "imports"
     },
     {
+      "from": "src/ui/adapters/runStatusAdapter#createRunStatusPort",
+      "to": "src/game/application/gameStateProvider#GameStateProvider",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/adapters/runStatusAdapter#createRunStatusPort",
+      "to": "src/game/application/runStatus#projectRunStatus",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/adapters/runStatusAdapter#createRunStatusPort",
+      "to": "src/game/application/runStatus#RunStatusSnapshot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/adapters/runStatusAdapter#createRunStatusPort",
+      "to": "src/ui/contracts#RunStatusPort",
+      "kind": "imports"
+    },
+    {
       "from": "src/ui/components/audioControls#mountAudioControls",
       "to": "src/ui/components/audioControls#required",
       "kind": "uses"
@@ -2390,6 +2461,31 @@
       "kind": "imports"
     },
     {
+      "from": "src/ui/components/runStatus#mountRunStatus",
+      "to": "src/game/application/runStatus#RunStatusSnapshot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/components/runStatus#mountRunStatus",
+      "to": "src/ui/components/runStatus#clock",
+      "kind": "uses"
+    },
+    {
+      "from": "src/ui/components/runStatus#mountRunStatus",
+      "to": "src/ui/components/runStatus#required",
+      "kind": "uses"
+    },
+    {
+      "from": "src/ui/components/runStatus#mountRunStatus",
+      "to": "src/ui/contracts#RunStatusPort",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/components/runStatus#mountRunStatus",
+      "to": "src/ui/contracts#UiHandle",
+      "kind": "imports"
+    },
+    {
       "from": "src/ui/contracts#AudioSettingsPort",
       "to": "src/ui/contracts#AudioSettingsSnapshot",
       "kind": "uses"
@@ -2410,6 +2506,16 @@
       "kind": "extends"
     },
     {
+      "from": "src/ui/contracts#RunStatusPort",
+      "to": "src/game/application/runStatus#RunStatusSnapshot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/contracts#RunStatusPort",
+      "to": "src/ui/contracts#UiHandle",
+      "kind": "extends"
+    },
+    {
       "from": "src/ui/setupUi#setupApplicationUi",
       "to": "src/ui/adapters/audioSettingsAdapter#createAudioSettingsPort",
       "kind": "imports"
@@ -2421,12 +2527,22 @@
     },
     {
       "from": "src/ui/setupUi#setupApplicationUi",
+      "to": "src/ui/adapters/runStatusAdapter#createRunStatusPort",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/setupUi#setupApplicationUi",
       "to": "src/ui/components/audioControls#mountAudioControls",
       "kind": "imports"
     },
     {
       "from": "src/ui/setupUi#setupApplicationUi",
       "to": "src/ui/components/displayControls#mountDisplayControls",
+      "kind": "imports"
+    },
+    {
+      "from": "src/ui/setupUi#setupApplicationUi",
+      "to": "src/ui/components/runStatus#mountRunStatus",
       "kind": "imports"
     },
     {
