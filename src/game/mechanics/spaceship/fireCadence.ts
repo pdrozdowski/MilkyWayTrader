@@ -1,28 +1,21 @@
-// Keep held fire on a fixed beat, independent of render-frame lateness.
-export class FireCadence
+import type { WeaponState } from '../../state/weaponState';
+
+export interface FireCadenceResult
 {
-    private nextShotAt: number | null = null;
-    private lastShotAt = Number.NEGATIVE_INFINITY;
+    readonly weapon: WeaponState;
+    readonly fired: boolean;
+}
 
-    private readonly interval: number;
-
-    constructor (interval: number)
-    {
-        this.interval = interval;
-    }
-
-    shouldFire (time: number, enabled: boolean): boolean
-    {
-        if (!enabled) {
-            this.nextShotAt = null;
-            return false;
-        }
-        if (this.nextShotAt === null) this.nextShotAt = Math.max(time, this.lastShotAt + this.interval);
-        if (time < this.nextShotAt) return false;
-        this.nextShotAt += this.interval;
-        // After a long stall, resume normally instead of replaying missed shots.
-        if (this.nextShotAt - time < this.interval / 2) this.nextShotAt = time + this.interval;
-        this.lastShotAt = time;
-        return true;
-    }
+// Keep held fire on a fixed active-time beat without replaying missed shots.
+export function advanceFireCadence (weapon: WeaponState, activeTimeMs: number, enabled: boolean, intervalMs: number): FireCadenceResult
+{
+    if (!enabled) return { weapon: { ...weapon, nextShotAtMs: null }, fired: false };
+    const nextShotAtMs = weapon.nextShotAtMs ?? Math.max(activeTimeMs, (weapon.lastShotAtMs ?? activeTimeMs - intervalMs) + intervalMs);
+    if (activeTimeMs < nextShotAtMs) return { weapon: { ...weapon, nextShotAtMs }, fired: false };
+    let followingShotAtMs = nextShotAtMs + intervalMs;
+    if (followingShotAtMs - activeTimeMs < intervalMs / 2) followingShotAtMs = activeTimeMs + intervalMs;
+    return {
+        weapon: { ...weapon, nextShotAtMs: followingShotAtMs, lastShotAtMs: activeTimeMs },
+        fired: true
+    };
 }

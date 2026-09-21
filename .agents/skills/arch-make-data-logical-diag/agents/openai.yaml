@@ -1,0 +1,6 @@
+interface:
+  display_name: "Logical State Diagram"
+  short_description: "Generate the authoritative game-state diagram"
+  default_prompt: "Use $arch-make-data-logical-diag to refresh and validate the logical game-state diagram."
+policy:
+  allow_implicit_invocation: true

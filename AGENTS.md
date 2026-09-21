@@ -29,6 +29,8 @@ Command rules: [.codex/rules/project.rules](.codex/rules/project.rules).
 - Tokeny: tylko potrzebne operacje/projekt; bez administracji/rozliczeń. Sekrety: zmienne środowiskowe, nigdy repozytorium, commitowany `.mcp.json` ani rozmowa.
 - Produkcję zmieniaj po zatwierdzeniu planu. Produkcyjne bazy/projekty usuwa i główny sekret rotuje użytkownik ręcznie.
 
+- Every authoritative game-state, clock, timer, lifecycle, snapshot, save, or restore change requires @.agents/skills/utils-add-state/SKILL.md and refreshed code/data graphs with no `REFACTOR_REQUIRED` findings.
+
 ## Lessons learned
 
 Zobacz: `context/foundation/lessons.md`. Czytaj przed planowaniem/implementacją. Nowe wpisy dopisuj na końcu; istniejących nie zmieniaj ani nie usuwaj.
@@ -53,6 +55,8 @@ Warstwy: domena/aplikacja/świat/mechanika są niezależne od Phaser i DOM; scen
 
 Obiekty: `src/game/objects/<id>/` (klasa i `definition.ts`); grafiki: `public/assets/objects/<id>/`; współdzielone kontrakty: `src/game/objects/_shared/`. Preloader odkrywa definicje automatycznie. Rozmieszczenie demo: @src/game/scenes/gameObjects.ts. Dodawanie: @.agents/skills/utils-add-object-to-scene/SKILL.md; domyślna scena `gameScene.ts`. Statek jest celem kamery; obiekty świata pozostają we współrzędnych świata.
 
+- Spatial state uses JSON-safe `Vector2State` fields. In Phaser scenes and objects, use `Phaser.Math.Vector2` arithmetic for positions, velocities, offsets and directions instead of parallel `x`/`y` variables; never persist Phaser instances.
+
 ## Stack gaps
 
 Demo; brak logowania Google OAuth/zapisów/ekonomii/backendu. Konfiguracja Cloudflare Pages/GitHub Actions przygotowana; status publikacji: @context/deployment/verification.md. ESLint pozostaje planem; Playwright obsługuje testy UI. API Phaser 4. Historyczny audyt/obejścia certyfikatów: @context/changes/bootstrap-verification/verification-v2.md.
@@ -70,5 +74,7 @@ Czytaj `SKILL.md` w `.agents/skills/<nazwa>/`:
 
 Wdrożenie: plan `context/deployment/deploy-plan.md` na podstawie `context/foundation/infrastructure.md` i `context/foundation/tech-stack.md`; wykonanie po zatwierdzeniu. Plan Mode to tryb hosta.
 Dokumentacja: @docs/reference/10x-agent-workflow.md; lekcja 5: @docs/reference/10x-infrastructure-workflow.md.
+
+- Architecture: `/arch-make-code-graph`, `/arch-make-data-logical-diag`; game state: `/utils-add-state`; scene objects: `/utils-add-object-to-scene`.
 
 <!-- END @przeprogramowani/10x-cli -->

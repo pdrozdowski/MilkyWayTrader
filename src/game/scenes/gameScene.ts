@@ -1,17 +1,20 @@
 import { GameObjects, Input, Math as PhaserMath, Physics, Scene } from 'phaser';
-import { ObjectDepth } from '../visual/layers';
-import { Spaceship } from '../objects/spaceship/spaceship';
-import { ShipWeapon } from '../objects/spaceship/shipWeapon';
-import { shipBoostTuning, shipTuning } from '../objects/spaceship/definition';
-import { Planet } from '../objects/planet/planet';
-import type { PlanetWorldState } from '../world/planetWorldState';
-import type { CircleObstacle } from '../world/geometry';
-import { Starfield } from '../effects/starfield';
-import { gameObjectLayout, gameWorldBounds } from './gameObjects';
-import { getAudioService } from '../audio/gameAudio';
+import type { GameStateProvider } from '../application/gameStateProvider';
 import type { AudioScope } from '../audio/audioScope';
+import { getAudioService } from '../audio/gameAudio';
 import { updateShipAudio } from '../audio/shipAudio';
+import { initialGameState } from '../definitions/initialGameState';
+import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
+import { Starfield } from '../effects/starfield';
+import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
+import { advanceGameSimulation } from '../mechanics/gameSimulation';
+import { Planet } from '../objects/planet/planet';
+import { ShipWeapon } from '../objects/spaceship/shipWeapon';
+import { Spaceship } from '../objects/spaceship/spaceship';
 import { Sun } from '../objects/sun/sun';
+import { ObjectDepth } from '../visual/layers';
+import type { CircleObstacle } from '../world/geometry';
+import { gameObjectLayout, gameWorldBounds } from './gameObjects';
 
 export class Game extends Scene
 {
@@ -20,13 +23,16 @@ export class Game extends Scene
     sun: Sun;
     ship: Spaceship;
     planets: Planet[];
-    planetModels: PlanetWorldState[];
     weapon: ShipWeapon;
+    private stateProvider: GameStateProvider;
     private audio: AudioScope;
     private steeringPointer: Input.Pointer | null = null;
     private readonly pointerWorld = new PhaserMath.Vector2();
+    private readonly cameraDisplacement = new PhaserMath.Vector2();
+    private readonly shipVelocity = new PhaserMath.Vector2();
     private contact: Physics.Arcade.Collider;
     private landingPrompt: GameObjects.Text;
+    private clockStatus: GameObjects.Text;
     private uiCamera: Phaser.Cameras.Scene2D.Camera;
     private boostHeld = false;
     private fireHeld = false;
@@ -42,19 +48,17 @@ export class Game extends Scene
         this.boostHeld = false;
         this.fireHeld = false;
         this.audio = getAudioService(this.game).createScope(this);
+        this.stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
+        const state = this.stateProvider.reset(initialGameState);
         this.camera = this.cameras.main;
         this.camera.setZoom(1).removeBounds();
         this.camera.setBackgroundColor('#000000');
         this.physics.world.setBounds(gameWorldBounds.x, gameWorldBounds.y, gameWorldBounds.width, gameWorldBounds.height);
         this.background = new Starfield(this, gameWorldBounds.width, gameWorldBounds.height, gameWorldBounds.x, gameWorldBounds.y);
         this.sun = new Sun(this, gameObjectLayout.sun);
-        this.ship = new Spaceship(this, gameObjectLayout.ship);
-        this.planetModels = gameObjectLayout.planets.map(options => ({ ...options.model }));
-        this.planets = gameObjectLayout.planets.map((options, index) => new Planet(this, { ...options, model: this.planetModels[index] }));
-        const projectileObstacles: CircleObstacle[] = [...this.planetModels, {
-            x: this.sun.sprite.x, y: this.sun.sprite.y, radius: this.sun.radius
-        }];
-        this.weapon = new ShipWeapon(this, this.ship, projectileObstacles, projectile => {
+        this.ship = new Spaceship(this, state.ship);
+        this.planets = gameObjectLayout.planets.map((options, index) => new Planet(this, { ...options, model: state.planets[index] }));
+        this.weapon = new ShipWeapon(this, projectile => {
             this.uiCamera.ignore(projectile.sprite);
             this.audio.play('ship-laser');
         });
@@ -65,6 +69,9 @@ export class Game extends Scene
         const help = this.add.text(24, 24, 'Hold / drag to fly · Left Shift: 5× boost · Left Ctrl: fire', {
             fontFamily: 'Arial', fontSize: 18, color: '#ffffff', backgroundColor: '#102039', padding: { x: 12, y: 10 }
         }).setScrollFactor(0).setDepth(ObjectDepth.UI);
+        this.clockStatus = this.add.text(1000, 24, '', {
+            fontFamily: 'Arial', fontSize: 18, color: '#ffffff', backgroundColor: '#102039', padding: { x: 12, y: 10 }
+        }).setOrigin(1, 0).setScrollFactor(0).setDepth(ObjectDepth.UI);
         this.landingPrompt = this.add.text(512, 692, 'Press [SPACE] / Tap on planet\nto land', {
             fontFamily: 'Arial', fontSize: 20, color: '#d6efff', align: 'center',
             backgroundColor: '#102039', padding: { x: 18, y: 12 }
@@ -72,7 +79,7 @@ export class Game extends Scene
         const exit = this.add.text(1000, 744, 'Exit demo', {
             fontFamily: 'Arial', fontSize: 20, color: '#ffffff', backgroundColor: '#243952', padding: { x: 14, y: 10 }
         }).setOrigin(1, 1).setScrollFactor(0).setDepth(ObjectDepth.UI).setInteractive({ useHandCursor: true });
-        ui.add([help, this.landingPrompt, exit]);
+        ui.add([help, this.clockStatus, this.landingPrompt, exit]);
         this.camera.ignore(ui);
         this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height, false, 'UI');
         this.uiCamera.ignore(this.children.list.filter(child => child !== ui));
@@ -86,6 +93,7 @@ export class Game extends Scene
         this.input.on('pointerupoutside', this.endSteering, this);
         this.game.events.on('blur', this.loseFocus, this);
         window.addEventListener('blur', this.loseFocus);
+        window.addEventListener('focus', this.gainFocus);
         window.addEventListener('touchcancel', this.cancelTouch);
         window.addEventListener('keydown', this.flightKeyDown);
         window.addEventListener('keyup', this.flightKeyUp);
@@ -96,6 +104,7 @@ export class Game extends Scene
             this.input.off('pointerupoutside', this.endSteering, this);
             this.game.events.off('blur', this.loseFocus, this);
             window.removeEventListener('blur', this.loseFocus);
+            window.removeEventListener('focus', this.gainFocus);
             window.removeEventListener('touchcancel', this.cancelTouch);
             window.removeEventListener('keydown', this.flightKeyDown);
             window.removeEventListener('keyup', this.flightKeyUp);
@@ -105,6 +114,7 @@ export class Game extends Scene
         });
         for (const planet of this.planets) planet.updateLandingIndicator(this.ship);
         this.updateLandingPrompt();
+        this.updateClockStatus(state.clock.budgetMs, false);
         this.background.update(this.time.now);
     }
 
@@ -125,8 +135,6 @@ export class Game extends Scene
 
     private readonly releaseSteering = (): void => {
         this.steeringPointer = null;
-        this.ship?.setTarget(null);
-        this.ship?.setBoostRequested(false);
     };
 
     private readonly flightKeyDown = (event: KeyboardEvent): void => {
@@ -146,13 +154,25 @@ export class Game extends Scene
     private readonly loseFocus = (): void => {
         this.boostHeld = false;
         this.fireHeld = false;
-        this.weapon?.setFiring(false);
         this.releaseSteering();
+        if (this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: pauseGameClock(state.clock, 'background') }));
+    };
+
+    private readonly gainFocus = (): void => {
+        if (this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: resumeGameClock(state.clock, 'background') }));
     };
 
     private updateLandingPrompt (): void
     {
         this.landingPrompt.setVisible(this.planets.some(planet => planet.indicator.visible));
+    }
+
+    private updateClockStatus (remainingMs: number, paused: boolean): void
+    {
+        const totalSeconds = Math.ceil(remainingMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+        const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+        this.clockStatus.setText(`${minutes}:${seconds} · ${paused ? 'PAUSED' : 'RUNNING'}`);
     }
 
     update (time: number, delta: number): void
@@ -161,26 +181,41 @@ export class Game extends Scene
         if (pointer?.isDown && (pointer.wasTouch || pointer.leftButtonDown())) {
             this.camera.getWorldPoint(pointer.x, pointer.y, this.pointerWorld);
             // Phaser 4's inverse camera matrix describes the last rendered frame.
-            // Compensate for this frame's physics movement before camera follow renders.
-            this.pointerWorld.x += this.ship.sprite.x - this.camera.midPoint.x;
-            this.pointerWorld.y += this.ship.sprite.y - this.camera.midPoint.y;
-            this.ship.setTarget(this.pointerWorld);
+            this.cameraDisplacement.set(this.ship.sprite.x, this.ship.sprite.y).subtract(this.camera.midPoint);
+            this.pointerWorld.add(this.cameraDisplacement);
         } else this.releaseSteering();
-        this.ship.setBoostRequested(this.boostHeld && this.steeringPointer !== null);
-        this.ship.update(time, delta);
+        const before = this.stateProvider.snapshot();
+        const obstacles: CircleObstacle[] = [
+            ...before.planets.map(planet => ({ ...planet.position, radius: planet.radius })),
+            { x: this.sun.sprite.x, y: this.sun.sprite.y, radius: this.sun.radius }
+        ];
+        const state = this.stateProvider.update(current => advanceGameSimulation(current, {
+            target: pointer?.isDown ? this.pointerWorld : null,
+            boostRequested: this.boostHeld && this.steeringPointer !== null,
+            firing: this.fireHeld
+        }, delta, {
+            obstacles,
+            projectileLifetimeMs: projectileTuning.lifetime,
+            projectileRadius: projectileTuning.radius,
+            projectileSpeed: weaponTuning.projectileSpeed,
+            shotIntervalMs: 1000 / weaponTuning.shotsPerSecond,
+            muzzleOffset: weaponTuning.noseOffset * this.ship.sprite.scaleX
+        }));
+        this.ship.synchronize(state.ship, time);
         this.sun.update(time, delta);
-        updateShipAudio(this.audio, this.ship, this.ship.body.velocity.length(),
+        this.shipVelocity.copy(state.ship.velocity);
+        updateShipAudio(this.audio, state.ship, this.shipVelocity.length(),
             shipTuning.maxSpeed, shipBoostTuning.speedMultiplier, delta);
-        const zoomTarget = this.ship.boosting ? shipBoostTuning.cameraZoom : 1;
+        const zoomTarget = state.ship.boosting ? shipBoostTuning.cameraZoom : 1;
         const zoomBlend = 1 - Math.exp(-delta / (shipBoostTuning.cameraTransitionSeconds * 1000));
         this.camera.setZoom(this.camera.zoom + (zoomTarget - this.camera.zoom) * zoomBlend);
-        for (const planet of this.planets) {
-            planet.update(time, delta);
+        for (const [index, planet] of this.planets.entries()) {
+            planet.synchronize(state.planets[index]);
             planet.updateLandingIndicator(this.ship);
         }
         this.updateLandingPrompt();
-        this.weapon.setFiring(this.fireHeld);
-        this.weapon.update(time, delta);
+        this.weapon.synchronize(state.projectiles);
+        this.updateClockStatus(state.clock.budgetMs - state.clock.activeElapsedMs, state.clock.pauseReasons.length > 0);
         this.background.update(time);
     }
 }

@@ -23,7 +23,7 @@
     "test:mechanics": "node --test tests/game-mechanics.test.mjs",
     "test:objects": "node --test tests/object-scaffold.test.mjs",
     "test:audio": "node --test tests/game-audio.test.mjs",
-    "test:skills": "node --test tests/skills.test.mjs .agents/skills/arch-make-code-graph/scripts/build-code-graph.test.mjs",
+    "test:skills": "node --test tests/skills.test.mjs .agents/skills/arch-make-code-graph/scripts/build-code-graph.test.mjs .agents/skills/arch-make-data-logical-diag/scripts/build-data-logical-diag.test.mjs",
     "test:architecture": "node --test tests/architecture.test.mjs",
     "test:unit": "npm run test:domain && npm run test:mechanics && npm run test:objects && npm run test:audio && npm run test:skills",
     "test:ui": "playwright test --config=playwrightConfig.ts",

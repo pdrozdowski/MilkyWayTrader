@@ -45,6 +45,7 @@ async function fixture()
         ''
     ].join('\n'));
     await put(root, 'src/data/types.ts', 'export interface Stored { id: string }\n');
+    await put(root, 'src/game/state/runState.ts', 'export interface RunState { readonly score: number }\n');
     await put(root, 'src/game/scenes/gameObjects.ts', 'export const layout = { x: 1 };\n');
     await put(root, 'src/game/scenes/screen.ts', 'export class Screen {}\n');
     await put(root, 'src/game/objects/ship.ts', 'export class Ship {}\n');
@@ -66,7 +67,7 @@ test('builds deterministic declaration, layer, dependency, glob and asset nodes'
     const root = await fixture();
     const first = run(root);
     assert.equal(first.status, 0, first.stderr);
-    assert.match(first.stdout, /Graph CREATED .* parsed 8, reused 0, deleted 0/);
+    assert.match(first.stdout, /Graph CREATED .* parsed 9, reused 0, deleted 0/);
 
     const output = join(root, 'context/foundation/code-graph.json');
     const graph = JSON.parse(await readFile(output, 'utf8'));
@@ -74,6 +75,7 @@ test('builds deterministic declaration, layer, dependency, glob and asset nodes'
         new Set(['interface', 'type', 'enum', 'variable', 'function', 'class']));
     assert.equal(graph.nodes.find(node => node.id === 'src/ui/view#View').layer, 'ui');
     assert.equal(graph.nodes.find(node => node.id === 'src/data/types#Stored').layer, 'data');
+    assert.equal(graph.nodes.find(node => node.id === 'src/game/state/runState#RunState').layer, 'data');
     assert.equal(graph.nodes.find(node => node.id === 'src/game/scenes/gameObjects#layout').layer, 'data');
     assert.equal(graph.nodes.find(node => node.id === 'src/game/scenes/screen#Screen').layer, 'ui');
     assert.equal(graph.nodes.find(node => node.id === 'src/game/objects/ship#Ship').layer, 'model');
@@ -91,7 +93,7 @@ test('builds deterministic declaration, layer, dependency, glob and asset nodes'
     const modified = (await stat(output)).mtimeMs;
     const second = run(root);
     assert.equal(second.status, 0, second.stderr);
-    assert.match(second.stdout, /Graph UNCHANGED .* parsed 0, reused 8, deleted 0/);
+    assert.match(second.stdout, /Graph UNCHANGED .* parsed 0, reused 9, deleted 0/);
     assert.equal((await stat(output)).mtimeMs, modified);
     const checked = run(root, '--check');
     assert.equal(checked.status, 0, checked.stderr);
@@ -105,20 +107,20 @@ test('updates incrementally and preserves graph and cache on stale checks or syn
     await writeFile(model, `${await readFile(model, 'utf8')}export const changed = settings;\n`);
     const changed = run(root);
     assert.equal(changed.status, 0, changed.stderr);
-    assert.match(changed.stdout, /parsed 1, reused 7, deleted 0/);
+    assert.match(changed.stdout, /parsed 1, reused 8, deleted 0/);
     let graph = JSON.parse(await readFile(join(root, 'context/foundation/code-graph.json'), 'utf8'));
     assert(graph.nodes.some(node => node.id === 'src/model#changed'));
 
     await unlink(join(root, 'src/data/types.ts'));
     const deleted = run(root);
     assert.equal(deleted.status, 0, deleted.stderr);
-    assert.match(deleted.stdout, /parsed 0, reused 7, deleted 1/);
+    assert.match(deleted.stdout, /parsed 0, reused 8, deleted 1/);
 
     const cache = join(root, '.cache/arch-make-code-graph/cache-v1.json');
     await writeFile(cache, '{invalid');
     const rebuilt = run(root);
     assert.equal(rebuilt.status, 0, rebuilt.stderr);
-    assert.match(rebuilt.stdout, /parsed 7, reused 0, deleted 0/);
+    assert.match(rebuilt.stdout, /parsed 8, reused 0, deleted 0/);
 
     await writeFile(model, `${await readFile(model, 'utf8')}export const stale = changed;\n`);
     const output = join(root, 'context/foundation/code-graph.json');
@@ -126,7 +128,7 @@ test('updates incrementally and preserves graph and cache on stale checks or syn
     const cacheBeforeCheck = await readFile(cache, 'utf8');
     const stale = run(root, '--check');
     assert.equal(stale.status, 1, stale.stderr);
-    assert.match(stale.stdout, /Graph STALE .* parsed 1, reused 6/);
+    assert.match(stale.stdout, /Graph STALE .* parsed 1, reused 7/);
     assert.equal(await readFile(output, 'utf8'), graphBeforeCheck);
     assert.equal(await readFile(cache, 'utf8'), cacheBeforeCheck);
 

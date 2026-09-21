@@ -81,6 +81,118 @@
       "kind": "asset"
     },
     {
+      "id": "src/game/application/gameStateCodec#cloneAndFreeze",
+      "name": "cloneAndFreeze",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#decodeGameState",
+      "name": "decodeGameState",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#encodeGameState",
+      "name": "encodeGameState",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#finiteNumber",
+      "name": "finiteNumber",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#isRecord",
+      "name": "isRecord",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#keys",
+      "name": "keys",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#migrateV1",
+      "name": "migrateV1",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#nonEmptyString",
+      "name": "nonEmptyString",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#nonNegativeNumber",
+      "name": "nonNegativeNumber",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#nullableTime",
+      "name": "nullableTime",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#PAUSE_REASONS",
+      "name": "PAUSE_REASONS",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#requireRecord",
+      "name": "requireRecord",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#vector2",
+      "name": "vector2",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateProvider#GameStateListener",
+      "name": "GameStateListener",
+      "layer": "model",
+      "module": "src/game/application/gameStateProvider",
+      "kind": "type"
+    },
+    {
+      "id": "src/game/application/gameStateProvider#GameStateProvider",
+      "name": "GameStateProvider",
+      "layer": "model",
+      "module": "src/game/application/gameStateProvider",
+      "kind": "class"
+    },
+    {
+      "id": "src/game/application/gameStateProvider#GameStateReducer",
+      "name": "GameStateReducer",
+      "layer": "model",
+      "module": "src/game/application/gameStateProvider",
+      "kind": "type"
+    },
+    {
       "id": "src/game/audio/audioScope#AudioScope",
       "name": "AudioScope",
       "layer": "model",
@@ -270,6 +382,48 @@
       "kind": "function"
     },
     {
+      "id": "src/game/definitions/gameplayTuning#projectileTuning",
+      "name": "projectileTuning",
+      "layer": "data",
+      "module": "src/game/definitions/gameplayTuning",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/definitions/gameplayTuning#shipBoostTuning",
+      "name": "shipBoostTuning",
+      "layer": "data",
+      "module": "src/game/definitions/gameplayTuning",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/definitions/gameplayTuning#shipTuning",
+      "name": "shipTuning",
+      "layer": "data",
+      "module": "src/game/definitions/gameplayTuning",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/definitions/gameplayTuning#weaponTuning",
+      "name": "weaponTuning",
+      "layer": "data",
+      "module": "src/game/definitions/gameplayTuning",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/definitions/initialGameState#ACTIVE_TIME_BUDGET_MS",
+      "name": "ACTIVE_TIME_BUDGET_MS",
+      "layer": "data",
+      "module": "src/game/definitions/initialGameState",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/definitions/initialGameState#initialGameState",
+      "name": "initialGameState",
+      "layer": "data",
+      "module": "src/game/definitions/initialGameState",
+      "kind": "variable"
+    },
+    {
       "id": "src/game/effects/starfield#Star",
       "name": "Star",
       "layer": "ui",
@@ -303,6 +457,62 @@
       "layer": "ui",
       "module": "src/game/main",
       "kind": "variable"
+    },
+    {
+      "id": "src/game/mechanics/clock/gameClock#advanceGameClock",
+      "name": "advanceGameClock",
+      "layer": "model",
+      "module": "src/game/mechanics/clock/gameClock",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/clock/gameClock#pauseGameClock",
+      "name": "pauseGameClock",
+      "layer": "model",
+      "module": "src/game/mechanics/clock/gameClock",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/clock/gameClock#resumeGameClock",
+      "name": "resumeGameClock",
+      "layer": "model",
+      "module": "src/game/mechanics/clock/gameClock",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "name": "advanceGameSimulation",
+      "layer": "model",
+      "module": "src/game/mechanics/gameSimulation",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/gameSimulation#advanceProjectiles",
+      "name": "advanceProjectiles",
+      "layer": "model",
+      "module": "src/game/mechanics/gameSimulation",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/gameSimulation#defaultGameSimulationOptions",
+      "name": "defaultGameSimulationOptions",
+      "layer": "model",
+      "module": "src/game/mechanics/gameSimulation",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/mechanics/gameSimulation#GameSimulationInput",
+      "name": "GameSimulationInput",
+      "layer": "model",
+      "module": "src/game/mechanics/gameSimulation",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/mechanics/gameSimulation#GameSimulationOptions",
+      "name": "GameSimulationOptions",
+      "layer": "model",
+      "module": "src/game/mechanics/gameSimulation",
+      "kind": "interface"
     },
     {
       "id": "src/game/mechanics/planet/proximity#canLandNearPlanet",
@@ -354,11 +564,18 @@
       "kind": "function"
     },
     {
-      "id": "src/game/mechanics/spaceship/fireCadence#FireCadence",
-      "name": "FireCadence",
+      "id": "src/game/mechanics/spaceship/fireCadence#advanceFireCadence",
+      "name": "advanceFireCadence",
       "layer": "model",
       "module": "src/game/mechanics/spaceship/fireCadence",
-      "kind": "class"
+      "kind": "function"
+    },
+    {
+      "id": "src/game/mechanics/spaceship/fireCadence#FireCadenceResult",
+      "name": "FireCadenceResult",
+      "layer": "model",
+      "module": "src/game/mechanics/spaceship/fireCadence",
+      "kind": "interface"
     },
     {
       "id": "src/game/mechanics/spaceship/flight#boostAccelerationRate",
@@ -494,25 +711,11 @@
       "kind": "variable"
     },
     {
-      "id": "src/game/objects/projectile/definition#projectileTuning",
-      "name": "projectileTuning",
-      "layer": "data",
-      "module": "src/game/objects/projectile/definition",
-      "kind": "variable"
-    },
-    {
       "id": "src/game/objects/projectile/projectile#Projectile",
       "name": "Projectile",
       "layer": "model",
       "module": "src/game/objects/projectile/projectile",
       "kind": "class"
-    },
-    {
-      "id": "src/game/objects/projectile/projectile#ProjectileOptions",
-      "name": "ProjectileOptions",
-      "layer": "model",
-      "module": "src/game/objects/projectile/projectile",
-      "kind": "interface"
     },
     {
       "id": "src/game/objects/spaceship/boostEffects#BoostEffects",
@@ -531,13 +734,6 @@
     {
       "id": "src/game/objects/spaceship/definition#definition",
       "name": "definition",
-      "layer": "data",
-      "module": "src/game/objects/spaceship/definition",
-      "kind": "variable"
-    },
-    {
-      "id": "src/game/objects/spaceship/definition#shipBoostTuning",
-      "name": "shipBoostTuning",
       "layer": "data",
       "module": "src/game/objects/spaceship/definition",
       "kind": "variable"
@@ -564,25 +760,11 @@
       "kind": "variable"
     },
     {
-      "id": "src/game/objects/spaceship/definition#shipTuning",
-      "name": "shipTuning",
-      "layer": "data",
-      "module": "src/game/objects/spaceship/definition",
-      "kind": "variable"
-    },
-    {
       "id": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
       "name": "ShipWeapon",
       "layer": "model",
       "module": "src/game/objects/spaceship/shipWeapon",
       "kind": "class"
-    },
-    {
-      "id": "src/game/objects/spaceship/shipWeapon#weaponTuning",
-      "name": "weaponTuning",
-      "layer": "model",
-      "module": "src/game/objects/spaceship/shipWeapon",
-      "kind": "variable"
     },
     {
       "id": "src/game/objects/spaceship/spaceship#Spaceship",
@@ -697,6 +879,62 @@
       "kind": "class"
     },
     {
+      "id": "src/game/state/gameClockState#GameClockState",
+      "name": "GameClockState",
+      "layer": "data",
+      "module": "src/game/state/gameClockState",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/state/gameClockState#GamePauseReason",
+      "name": "GamePauseReason",
+      "layer": "data",
+      "module": "src/game/state/gameClockState",
+      "kind": "type"
+    },
+    {
+      "id": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "name": "GameStateSnapshot",
+      "layer": "data",
+      "module": "src/game/state/gameStateSnapshot",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/state/planetState#PlanetState",
+      "name": "PlanetState",
+      "layer": "data",
+      "module": "src/game/state/planetState",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/state/projectileState#ProjectileState",
+      "name": "ProjectileState",
+      "layer": "data",
+      "module": "src/game/state/projectileState",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/state/shipState#ShipState",
+      "name": "ShipState",
+      "layer": "data",
+      "module": "src/game/state/shipState",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/state/vector2State#Vector2State",
+      "name": "Vector2State",
+      "layer": "data",
+      "module": "src/game/state/vector2State",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/state/weaponState#WeaponState",
+      "name": "WeaponState",
+      "layer": "data",
+      "module": "src/game/state/weaponState",
+      "kind": "interface"
+    },
+    {
       "id": "src/game/visual/layers#ObjectDepth",
       "name": "ObjectDepth",
       "layer": "ui",
@@ -708,13 +946,6 @@
       "name": "CircleObstacle",
       "layer": "model",
       "module": "src/game/world/geometry",
-      "kind": "interface"
-    },
-    {
-      "id": "src/game/world/planetWorldState#PlanetWorldState",
-      "name": "PlanetWorldState",
-      "layer": "model",
-      "module": "src/game/world/planetWorldState",
       "kind": "interface"
     },
     {
@@ -817,6 +1048,156 @@
     }
   ],
   "edges": [
+    {
+      "from": "src/game/application/gameStateCodec#cloneAndFreeze",
+      "to": "src/game/application/gameStateCodec#isRecord",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#cloneAndFreeze",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#finiteNumber",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#migrateV1",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#nonEmptyString",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#nonNegativeNumber",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#nullableTime",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#PAUSE_REASONS",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#requireRecord",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#vector2",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/state/gameClockState#GamePauseReason",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#encodeGameState",
+      "to": "src/game/application/gameStateCodec#decodeGameState",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#encodeGameState",
+      "to": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#migrateV1",
+      "to": "src/game/application/gameStateCodec#isRecord",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#migrateV1",
+      "to": "src/game/application/gameStateCodec#requireRecord",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#nonNegativeNumber",
+      "to": "src/game/application/gameStateCodec#finiteNumber",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#nullableTime",
+      "to": "src/game/application/gameStateCodec#nonNegativeNumber",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#PAUSE_REASONS",
+      "to": "src/game/state/gameClockState#GamePauseReason",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#requireRecord",
+      "to": "src/game/application/gameStateCodec#isRecord",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#requireRecord",
+      "to": "src/game/application/gameStateCodec#keys",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#vector2",
+      "to": "src/game/application/gameStateCodec#finiteNumber",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#vector2",
+      "to": "src/game/application/gameStateCodec#requireRecord",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateProvider#GameStateListener",
+      "to": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/gameStateProvider#GameStateProvider",
+      "to": "src/game/application/gameStateCodec#decodeGameState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/gameStateProvider#GameStateProvider",
+      "to": "src/game/application/gameStateCodec#encodeGameState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/gameStateProvider#GameStateProvider",
+      "to": "src/game/application/gameStateProvider#GameStateListener",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateProvider#GameStateProvider",
+      "to": "src/game/application/gameStateProvider#GameStateReducer",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateProvider#GameStateProvider",
+      "to": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/gameStateProvider#GameStateReducer",
+      "to": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "kind": "imports"
+    },
     {
       "from": "src/game/audio/audioScope#AudioScope",
       "to": "src/game/audio/audioScope#bounded",
@@ -1048,6 +1429,16 @@
       "kind": "imports"
     },
     {
+      "from": "src/game/definitions/initialGameState#initialGameState",
+      "to": "src/game/definitions/initialGameState#ACTIVE_TIME_BUDGET_MS",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/definitions/initialGameState#initialGameState",
+      "to": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "kind": "imports"
+    },
+    {
       "from": "src/game/effects/starfield#Starfield",
       "to": "src/game/effects/starfield#Star",
       "kind": "uses"
@@ -1084,7 +1475,17 @@
     },
     {
       "from": "src/game/main#StartGame",
+      "to": "src/game/application/gameStateProvider#GameStateProvider",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/main#StartGame",
       "to": "src/game/audio/gameAudio#initializeGameAudio",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/main#StartGame",
+      "to": "src/game/definitions/initialGameState#initialGameState",
       "kind": "imports"
     },
     {
@@ -1096,6 +1497,131 @@
       "from": "src/game/main#StartGame",
       "to": "src/game/main#GameBootstrapHooks",
       "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/clock/gameClock#advanceGameClock",
+      "to": "src/game/state/gameClockState#GameClockState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/clock/gameClock#pauseGameClock",
+      "to": "src/game/state/gameClockState#GameClockState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/clock/gameClock#pauseGameClock",
+      "to": "src/game/state/gameClockState#GamePauseReason",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/clock/gameClock#resumeGameClock",
+      "to": "src/game/state/gameClockState#GameClockState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/clock/gameClock#resumeGameClock",
+      "to": "src/game/state/gameClockState#GamePauseReason",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/definitions/gameplayTuning#shipBoostTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/definitions/gameplayTuning#shipTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/mechanics/clock/gameClock#advanceGameClock",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/mechanics/gameSimulation#advanceProjectiles",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/mechanics/gameSimulation#defaultGameSimulationOptions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/mechanics/gameSimulation#GameSimulationInput",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/mechanics/gameSimulation#GameSimulationOptions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/mechanics/projectile/trajectory#shotTrajectory",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/mechanics/spaceship/fireCadence#advanceFireCadence",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/mechanics/spaceship/flight#boostAccelerationRate",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/mechanics/spaceship/flight#directionRotation",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/mechanics/spaceship/flight#flightVelocity",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "to": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceProjectiles",
+      "to": "src/game/mechanics/gameSimulation#GameSimulationOptions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceProjectiles",
+      "to": "src/game/mechanics/projectile/trajectory#segmentHitsCircle",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#advanceProjectiles",
+      "to": "src/game/state/projectileState#ProjectileState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#defaultGameSimulationOptions",
+      "to": "src/game/definitions/gameplayTuning#projectileTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#defaultGameSimulationOptions",
+      "to": "src/game/definitions/gameplayTuning#weaponTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#defaultGameSimulationOptions",
+      "to": "src/game/mechanics/gameSimulation#GameSimulationOptions",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/gameSimulation#GameSimulationOptions",
+      "to": "src/game/world/geometry#CircleObstacle",
+      "kind": "imports"
     },
     {
       "from": "src/game/mechanics/planet/proximity#canLandNearPlanet",
@@ -1126,6 +1652,21 @@
       "from": "src/game/mechanics/projectile/trajectory#shotTrajectory",
       "to": "src/game/mechanics/projectile/trajectory#Point",
       "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/spaceship/fireCadence#advanceFireCadence",
+      "to": "src/game/mechanics/spaceship/fireCadence#FireCadenceResult",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/mechanics/spaceship/fireCadence#advanceFireCadence",
+      "to": "src/game/state/weaponState#WeaponState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/mechanics/spaceship/fireCadence#FireCadenceResult",
+      "to": "src/game/state/weaponState#WeaponState",
+      "kind": "imports"
     },
     {
       "from": "src/game/objects/_shared/registry#loadObjectAssets",
@@ -1254,12 +1795,12 @@
     },
     {
       "from": "src/game/objects/planet/planet#Planet",
-      "to": "src/game/visual/layers#ObjectDepth",
+      "to": "src/game/state/planetState#PlanetState",
       "kind": "imports"
     },
     {
       "from": "src/game/objects/planet/planet#Planet",
-      "to": "src/game/world/planetWorldState#PlanetWorldState",
+      "to": "src/game/visual/layers#ObjectDepth",
       "kind": "imports"
     },
     {
@@ -1269,7 +1810,7 @@
     },
     {
       "from": "src/game/objects/planet/planet#PlanetOptions",
-      "to": "src/game/world/planetWorldState#PlanetWorldState",
+      "to": "src/game/state/planetState#PlanetState",
       "kind": "imports"
     },
     {
@@ -1289,11 +1830,6 @@
     },
     {
       "from": "src/game/objects/projectile/projectile#Projectile",
-      "to": "src/game/mechanics/projectile/trajectory#segmentHitsCircle",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/projectile/projectile#Projectile",
       "to": "src/game/objects/_shared/sceneObject#SceneObject",
       "kind": "extends"
     },
@@ -1304,33 +1840,18 @@
     },
     {
       "from": "src/game/objects/projectile/projectile#Projectile",
-      "to": "src/game/objects/projectile/definition#projectileTuning",
+      "to": "src/game/state/projectileState#ProjectileState",
       "kind": "imports"
     },
     {
-      "from": "src/game/objects/projectile/projectile#Projectile",
-      "to": "src/game/objects/projectile/projectile#ProjectileOptions",
-      "kind": "uses"
-    },
-    {
-      "from": "src/game/objects/projectile/projectile#Projectile",
-      "to": "src/game/world/geometry#CircleObstacle",
+      "from": "src/game/objects/spaceship/boostEffects#BoostEffects",
+      "to": "src/game/definitions/gameplayTuning#shipBoostTuning",
       "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/projectile/projectile#ProjectileOptions",
-      "to": "src/game/objects/_shared/types#SceneObjectOptions",
-      "kind": "extends"
     },
     {
       "from": "src/game/objects/spaceship/boostEffects#BoostEffects",
       "to": "src/game/objects/spaceship/boostEffects#WingSample",
       "kind": "uses"
-    },
-    {
-      "from": "src/game/objects/spaceship/boostEffects#BoostEffects",
-      "to": "src/game/objects/spaceship/definition#shipBoostTuning",
-      "kind": "imports"
     },
     {
       "from": "src/game/objects/spaceship/boostEffects#BoostEffects",
@@ -1374,52 +1895,12 @@
     },
     {
       "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
-      "to": "src/game/mechanics/projectile/trajectory#shotTrajectory",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
-      "to": "src/game/mechanics/spaceship/fireCadence#FireCadence",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
-      "to": "src/game/objects/projectile/definition#projectileTuning",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
       "to": "src/game/objects/projectile/projectile#Projectile",
       "kind": "imports"
     },
     {
       "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
-      "to": "src/game/objects/spaceship/shipWeapon#weaponTuning",
-      "kind": "uses"
-    },
-    {
-      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
-      "to": "src/game/objects/spaceship/spaceship#Spaceship",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/spaceship/shipWeapon#ShipWeapon",
-      "to": "src/game/world/geometry#CircleObstacle",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/spaceship/spaceship#Spaceship",
-      "to": "src/game/mechanics/spaceship/flight#boostAccelerationRate",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/spaceship/spaceship#Spaceship",
-      "to": "src/game/mechanics/spaceship/flight#directionRotation",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/spaceship/spaceship#Spaceship",
-      "to": "src/game/mechanics/spaceship/flight#flightVelocity",
+      "to": "src/game/state/projectileState#ProjectileState",
       "kind": "imports"
     },
     {
@@ -1429,22 +1910,12 @@
     },
     {
       "from": "src/game/objects/spaceship/spaceship#Spaceship",
-      "to": "src/game/objects/_shared/types#SceneObjectOptions",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/spaceship/spaceship#Spaceship",
       "to": "src/game/objects/spaceship/boostEffects#BoostEffects",
       "kind": "imports"
     },
     {
       "from": "src/game/objects/spaceship/spaceship#Spaceship",
       "to": "src/game/objects/spaceship/definition#definition",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/objects/spaceship/spaceship#Spaceship",
-      "to": "src/game/objects/spaceship/definition#shipBoostTuning",
       "kind": "imports"
     },
     {
@@ -1459,7 +1930,7 @@
     },
     {
       "from": "src/game/objects/spaceship/spaceship#Spaceship",
-      "to": "src/game/objects/spaceship/definition#shipTuning",
+      "to": "src/game/state/shipState#ShipState",
       "kind": "imports"
     },
     {
@@ -1519,6 +1990,11 @@
     },
     {
       "from": "src/game/scenes/gameObjects#gameObjectLayout",
+      "to": "src/game/definitions/initialGameState#initialGameState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameObjects#gameObjectLayout",
       "to": "src/game/objects/_shared/types#SceneObjectOptions",
       "kind": "imports"
     },
@@ -1526,11 +2002,6 @@
       "from": "src/game/scenes/gameObjects#gameObjectLayout",
       "to": "src/game/objects/planet/planet#PlanetOptions",
       "kind": "imports"
-    },
-    {
-      "from": "src/game/scenes/gameObjects#gameObjectLayout",
-      "to": "src/game/scenes/gameObjects#PLANET_SIZE_MULTIPLIER",
-      "kind": "uses"
     },
     {
       "from": "src/game/scenes/gameObjects#gameObjectLayout",
@@ -1549,6 +2020,11 @@
     },
     {
       "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/application/gameStateProvider#GameStateProvider",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
       "to": "src/game/audio/audioScope#AudioScope",
       "kind": "imports"
     },
@@ -1564,22 +2040,52 @@
     },
     {
       "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/definitions/gameplayTuning#projectileTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/definitions/gameplayTuning#shipBoostTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/definitions/gameplayTuning#shipTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/definitions/gameplayTuning#weaponTuning",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/definitions/initialGameState#initialGameState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
       "to": "src/game/effects/starfield#Starfield",
       "kind": "imports"
     },
     {
       "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/mechanics/clock/gameClock#pauseGameClock",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/mechanics/clock/gameClock#resumeGameClock",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
+      "to": "src/game/mechanics/gameSimulation#advanceGameSimulation",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/gameScene#Game",
       "to": "src/game/objects/planet/planet#Planet",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/scenes/gameScene#Game",
-      "to": "src/game/objects/spaceship/definition#shipBoostTuning",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/scenes/gameScene#Game",
-      "to": "src/game/objects/spaceship/definition#shipTuning",
       "kind": "imports"
     },
     {
@@ -1618,11 +2124,6 @@
       "kind": "imports"
     },
     {
-      "from": "src/game/scenes/gameScene#Game",
-      "to": "src/game/world/planetWorldState#PlanetWorldState",
-      "kind": "imports"
-    },
-    {
       "from": "src/game/scenes/preloaderScene#Preloader",
       "to": "asset:public/assets/cow_big.png",
       "kind": "asset"
@@ -1648,9 +2149,49 @@
       "kind": "imports"
     },
     {
-      "from": "src/game/world/planetWorldState#PlanetWorldState",
-      "to": "src/game/world/geometry#CircleObstacle",
-      "kind": "extends"
+      "from": "src/game/state/gameClockState#GameClockState",
+      "to": "src/game/state/gameClockState#GamePauseReason",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "to": "src/game/state/gameClockState#GameClockState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "to": "src/game/state/planetState#PlanetState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "to": "src/game/state/projectileState#ProjectileState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "to": "src/game/state/shipState#ShipState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "to": "src/game/state/weaponState#WeaponState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/state/planetState#PlanetState",
+      "to": "src/game/state/vector2State#Vector2State",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/state/projectileState#ProjectileState",
+      "to": "src/game/state/vector2State#Vector2State",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/state/shipState#ShipState",
+      "to": "src/game/state/vector2State#Vector2State",
+      "kind": "imports"
     },
     {
       "from": "src/ui/adapters/audioSettingsAdapter#createAudioSettingsPort",

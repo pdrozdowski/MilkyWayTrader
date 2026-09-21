@@ -1,57 +1,41 @@
 import { Scene } from 'phaser';
-import type { CircleObstacle } from '../../world/geometry';
 import { Projectile } from '../projectile/projectile';
-import { projectileTuning } from '../projectile/definition';
-import { shotTrajectory } from '../../mechanics/projectile/trajectory';
-import type { Spaceship } from './spaceship';
-import { FireCadence } from '../../mechanics/spaceship/fireCadence';
-
-export const weaponTuning = {
-    shotsPerSecond: 3,
-    projectileSpeed: 400,
-    noseOffset: 25
-};
+import type { ProjectileState } from '../../state/projectileState';
+export { weaponTuning } from '../../definitions/gameplayTuning';
 
 export class ShipWeapon
 {
-    readonly projectiles = new Set<Projectile>();
-    private firing = false;
-    private readonly cadence = new FireCadence(1000 / weaponTuning.shotsPerSecond);
+    private readonly projectiles = new Map<string, Projectile>();
 
     constructor (
         private readonly scene: Scene,
-        private readonly ship: Spaceship,
-        private readonly obstacles: readonly CircleObstacle[],
         private readonly onSpawn: (projectile: Projectile) => void
     )
     {
         scene.events.once('shutdown', this.destroy, this);
     }
 
-    setFiring (firing: boolean): void
+    synchronize (states: readonly ProjectileState[]): void
     {
-        this.firing = firing;
-    }
-
-    update (time: number, delta: number): void
-    {
-        for (const projectile of this.projectiles) projectile.advance(time, delta, this.obstacles);
-        if (!this.cadence.shouldFire(time, this.firing && !this.ship.boosting)) return;
-        const trajectory = shotTrajectory(this.ship.sprite, this.ship.sprite.rotation,
-            weaponTuning.noseOffset * this.ship.sprite.scaleX + projectileTuning.radius + 1, weaponTuning.projectileSpeed);
-        const projectile = new Projectile(this.scene, {
-            ...trajectory.start, velocity: trajectory.velocity, bornAt: time,
-            onDestroy: () => this.projectiles.delete(projectile)
-        });
-        this.projectiles.add(projectile);
-        this.onSpawn(projectile);
-        projectile.advance(time, 0, this.obstacles);
+        const activeIds = new Set(states.map(state => state.id));
+        for (const [id, projectile] of this.projectiles) if (!activeIds.has(id)) {
+            projectile.destroy();
+            this.projectiles.delete(id);
+        }
+        for (const state of states) {
+            let projectile = this.projectiles.get(state.id);
+            if (!projectile) {
+                projectile = new Projectile(this.scene, state);
+                this.projectiles.set(state.id, projectile);
+                this.onSpawn(projectile);
+            }
+            projectile.synchronize(state);
+        }
     }
 
     destroy (): void
     {
-        this.firing = false;
-        for (const projectile of this.projectiles) projectile.destroy();
+        for (const projectile of this.projectiles.values()) projectile.destroy();
         this.projectiles.clear();
         this.scene.events.off('shutdown', this.destroy, this);
     }
