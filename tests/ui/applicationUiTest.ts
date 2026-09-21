@@ -19,15 +19,38 @@ test('application boots and persists accessible audio controls without consuming
     expect(pageErrors).toEqual([]);
 });
 
-test('a run accepts flight, boost and fire input and survives focus and scene transitions', async ({ page }) => {
+test('a new run exposes status, accepts flight input, and survives focus and scene transitions', async ({ page }) => {
     test.setTimeout(60_000);
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     const canvas = page.locator('#game-container canvas');
+    const runStatus = page.getByLabel('Run status');
     await expect(canvas).toBeVisible();
+    await expect(runStatus).toBeHidden();
     const menu = await canvas.screenshot();
     await canvas.click({ position: { x: 100, y: 100 } });
+    await expect(runStatus).toBeVisible();
+    await expect(page.locator('#run-status-clock')).toHaveText('30:00 · RUNNING');
+    await expect(page.locator('#run-status-credits')).toHaveText('100,000 cr');
+    await expect(page.locator('#run-status-cargo')).toHaveText('Cargo 0 / 20');
+    await expect(page.locator('#run-status-hp-label')).toHaveText('HP 100 / 100');
+    await expect(page.locator('#run-status-hp')).toHaveJSProperty('value', 100);
+    await expect(page.locator('#run-status-hp')).toHaveJSProperty('max', 100);
+    const shipInfo = page.getByRole('button', { name: 'Ship info' });
+    const cargo = page.getByRole('button', { name: 'Cargo' });
+    await expect(shipInfo).toHaveAttribute('aria-expanded', 'false');
+    await expect(cargo).toHaveAttribute('aria-expanded', 'false');
+    await shipInfo.click();
+    await expect(shipInfo).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByLabel('Ship information')).toContainText('Cargo: Level 1 · Available');
+    await expect(page.getByLabel('Ship information')).toContainText('Engine: Level 1 · Available');
+    await expect(page.getByLabel('Ship information')).toContainText('Weapon: Level 1 · Available');
+    await expect(page.getByLabel('Ship information')).toContainText('Booster: Locked');
+    await expect(page.getByLabel('Cargo contents')).toBeHidden();
+    await cargo.click();
+    await expect(cargo).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByLabel('Cargo contents')).toHaveText('Cargo contents: Empty');
     await page.waitForTimeout(500);
     const running = await canvas.screenshot();
     expect(running.equals(menu)).toBe(false);
@@ -45,13 +68,17 @@ test('a run accepts flight, boost and fire input and survives focus and scene tr
     await page.keyboard.up('ControlLeft');
     await page.mouse.up();
     await page.evaluate(() => window.dispatchEvent(new Event('blur')));
-    await page.waitForTimeout(100);
+    await expect(page.locator('#run-status-clock')).toContainText('PAUSED');
+    const pausedClock = await page.locator('#run-status-clock').textContent();
+    await page.waitForTimeout(250);
+    await expect(page.locator('#run-status-clock')).toHaveText(pausedClock ?? '');
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-    await page.waitForTimeout(100);
+    await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
 
     await canvas.click({ position: { x: bounds.width * 0.97, y: bounds.height * 0.96 } });
     await page.waitForTimeout(250);
     const gameOver = await canvas.screenshot();
     expect(gameOver.equals(running)).toBe(false);
+    await expect(runStatus).toBeHidden();
     expect(pageErrors).toEqual([]);
 });

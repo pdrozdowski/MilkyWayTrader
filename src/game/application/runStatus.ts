@@ -1,4 +1,4 @@
-import { cargoCapacityByLevel, maximumShipHitPoints } from '../definitions/runBalance.ts';
+import { cargoCapacityByLevel, maximumShipHitPoints } from '../domain/runBalance.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 
 export type RunState = 'RUNNING' | 'PAUSED';

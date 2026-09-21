@@ -62,6 +62,11 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
         { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: -1 }] },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), currentHitPoints: 101 } },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), cargoLevel: 0 } },
+        {
+            ...clone(advanced),
+            ship: { ...clone(advanced.ship), boosting: true },
+            shipStatus: { ...clone(advanced.shipStatus), boosterUnlocked: false }
+        },
         { ...clone(advanced), clock: { ...clone(advanced.clock), pauseReasons: ['unknown'] } },
         { ...clone(advanced), clock: { ...clone(advanced.clock), pauseReasons: ['landed', 'landed'] } },
         { ...clone(advanced), ship: { ...clone(advanced.ship), position: { ...clone(advanced.ship.position), x: Number.NaN } } },
@@ -78,7 +83,7 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
     assert.deepEqual(provider.snapshot(), advanced);
 });
 
-test('codec migrates v1 scalar coordinates and v2 snapshots into the v3 run contract', () => {
+test('codec rejects retired schemas and permits active boost only for an unlocked v3 booster', () => {
     const current = decodeGameState(advanceGameSimulation(initialGameState, {
         target: null, boostRequested: false, firing: true
     }, 16));
@@ -108,7 +113,7 @@ test('codec migrates v1 scalar coordinates and v2 snapshots into the v3 run cont
             bornAtActiveMs: projectile.bornAtActiveMs
         }))
     };
-    assert.deepEqual(decodeGameState(legacy), current);
+    assert.throws(() => decodeGameState(legacy));
 
     const v2 = clone(current);
     v2.schemaVersion = 2;
@@ -116,12 +121,12 @@ test('codec migrates v1 scalar coordinates and v2 snapshots into the v3 run cont
     delete v2.cargo;
     delete v2.shipStatus;
     v2.ship.boosting = true;
-    const migrated = decodeGameState(v2);
-    assert.equal(migrated.schemaVersion, 3);
-    assert.equal(migrated.credits, 100_000);
-    assert.deepEqual(migrated.cargo, []);
-    assert.equal(migrated.shipStatus.boosterUnlocked, false);
-    assert.equal(migrated.ship.boosting, false);
+    assert.throws(() => decodeGameState(v2));
+
+    const activeBoost = clone(current);
+    activeBoost.ship.boosting = true;
+    activeBoost.shipStatus.boosterUnlocked = true;
+    assert.equal(decodeGameState(activeBoost).ship.boosting, true);
 });
 
 test('clock uses unique overlapping pause reasons and advances only active time', () => {

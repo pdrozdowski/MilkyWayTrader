@@ -228,23 +228,23 @@ Schema v1 first follows the existing spatial-state migration to v2, then v2 rece
 
 #### Automated
 
-- [x] 2.1 Projection tests cover clock boundaries, pause reasons, credits, capacity, and empty cargo
-- [x] 2.2 Component tests cover collapsed and expanded rendering, updates, visibility, cleanup, and listener stability
-- [x] 2.3 Real-application tests pass in desktop and touch projects
-- [x] 2.4 Production and test TypeScript projects compile
+- [x] 2.1 Projection tests cover clock boundaries, pause reasons, credits, capacity, and empty cargo â€” b4ce6f5
+- [x] 2.2 Component tests cover collapsed and expanded rendering, updates, visibility, cleanup, and listener stability â€” b4ce6f5
+- [x] 2.3 Real-application tests pass in desktop and touch projects â€” b4ce6f5
+- [x] 2.4 Production and test TypeScript projects compile â€” b4ce6f5
 
 #### Manual
 
-- [x] 2.5 The panel is readable and non-blocking in both layouts, and blur/focus pauses and resumes the visible clock
+- [x] 2.5 The panel is readable and non-blocking in both layouts, and blur/focus pauses and resumes the visible clock â€” b4ce6f5
 
 ### Phase 3: End-to-End Validation and Architecture Artifacts
 
 #### Automated
 
-- [ ] 3.1 Code graph and logical data diagram regenerate and validate without REFACTOR_REQUIRED
-- [ ] 3.2 Full unit, architecture, and Playwright suite passes
-- [ ] 3.3 Production build and both TypeScript projects pass
+- [x] 3.1 Code graph and logical data diagram regenerate and validate without REFACTOR_REQUIRED
+- [x] 3.2 Full unit, architecture, and Playwright suite passes
+- [x] 3.3 Production build and both TypeScript projects pass
 
 #### Manual
 
-- [ ] 3.4 Complete menu-to-status interaction works without regressions to flight, audio, or fullscreen
+- [x] 3.4 Complete menu-to-status interaction works without regressions to flight, audio, or fullscreen
