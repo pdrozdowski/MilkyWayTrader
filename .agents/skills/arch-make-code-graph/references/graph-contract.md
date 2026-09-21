@@ -35,7 +35,7 @@ Edges use `uses`, `extends`, `implements`, `imports`, `glob-imports`, or `asset`
 Rules are applied in this order:
 
 1. `asset`: resolved static files and declarations under `src/assets/`.
-2. `data`: `src/data/`, `definitions/`, declaration files, and modules named `definition.ts`, `types.ts`, `contracts.ts`, `registry.ts`, or `gameObjects.ts`.
+2. `data`: `src/data/`, `src/game/state/`, `definitions/`, declaration files, and modules named `definition.ts`, `types.ts`, `contracts.ts`, `registry.ts`, or `gameObjects.ts`.
 3. `ui`: `src/ui/`, `src/main.ts`, `src/game/main.ts`, and modules under `src/game/scenes/`, `src/game/effects/`, or `src/game/visual/`.
 4. `model`: every remaining TypeScript declaration.
 

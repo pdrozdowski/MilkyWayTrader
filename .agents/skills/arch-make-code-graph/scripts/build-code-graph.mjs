@@ -7,8 +7,8 @@ import ts from 'typescript';
 const GENERATOR = 'arch-make-code-graph';
 const GENERATOR_VERSION = 1;
 const SCHEMA_VERSION = 1;
-const CACHE_VERSION = 1;
-const RULES_VERSION = 1;
+const CACHE_VERSION = 2;
+const RULES_VERSION = 2;
 const DATA_MODULES = new Set(['definition.ts', 'types.ts', 'contracts.ts', 'registry.ts', 'gameobjects.ts']);
 const ASSET_EXTENSIONS = new Set(['.avif', '.gif', '.jpeg', '.jpg', '.mp3', '.ogg', '.png', '.svg', '.wav', '.webp', '.woff', '.woff2']);
 
@@ -80,7 +80,7 @@ function layerOf(root, file)
     const path = slash(relative(root, file)).toLowerCase();
     const name = basename(path);
     if (path.startsWith('src/assets/')) return 'asset';
-    if (path.startsWith('src/data/') || path.includes('/definitions/') || path.endsWith('.d.ts') || DATA_MODULES.has(name)) return 'data';
+    if (path.startsWith('src/data/') || path.startsWith('src/game/state/') || path.includes('/definitions/') || path.endsWith('.d.ts') || DATA_MODULES.has(name)) return 'data';
     if (path === 'src/main.ts' || path === 'src/game/main.ts' || path.startsWith('src/ui/') ||
         ['src/game/scenes/', 'src/game/effects/', 'src/game/visual/'].some(prefix => path.startsWith(prefix))) return 'ui';
     return 'model';

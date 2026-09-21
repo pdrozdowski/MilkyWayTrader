@@ -1,13 +1,13 @@
-import { GameObjects, Scene } from 'phaser';
+import { GameObjects, Math as PhaserMath, Scene } from 'phaser';
 import { SceneObject } from '../_shared/sceneObject';
 import { ObjectDepth } from '../../visual/layers';
 import type { SceneObjectOptions } from '../_shared/types';
-import type { PlanetWorldState } from '../../world/planetWorldState';
+import type { PlanetState } from '../../state/planetState';
 import { definition } from './definition';
 import { canLandNearPlanet, planetLandingRadius } from '../../mechanics/planet/proximity';
 
 export interface PlanetOptions extends Omit<SceneObjectOptions, 'x' | 'y' | 'size'> {
-    model: PlanetWorldState;
+    model: PlanetState;
     spinSpeed?: number;
     debugInfo?: boolean;
 }
@@ -17,25 +17,26 @@ export class Planet extends SceneObject
     readonly indicator: GameObjects.Arc;
     readonly landingZone: GameObjects.Arc;
     readonly atmosphere: GameObjects.Graphics;
-    readonly model: PlanetWorldState;
+    readonly id: string;
     readonly debugLabel: GameObjects.Text;
+    private readonly shipOffset = new PhaserMath.Vector2();
 
     constructor (scene: Scene, options: PlanetOptions)
     {
-        super(scene, definition, { x: options.model.x, y: options.model.y, depth: options.depth, variant: options.variant });
-        this.model = options.model;
-        this.sprite.setData('planetModel', this.model);
-        this.setSize(this.model.radius * 2);
+        super(scene, definition, { ...options.model.position, depth: options.depth, variant: options.variant });
+        this.id = options.model.id;
+        this.sprite.setData('planetId', this.id);
+        this.setSize(options.model.radius * 2);
         const tints: Record<string, number> = { blue: 0x7acfff, green: 0x99e8ab, amber: 0xffcb80 };
         this.sprite.setTint(tints[options.variant ?? 'blue']);
         this.sprite.anims.timeScale = options.spinSpeed ?? 1;
-        this.indicator = scene.add.circle(this.model.x, this.model.y, this.radius + 6)
+        this.indicator = scene.add.circle(options.model.position.x, options.model.position.y, this.radius + 6)
             .setStrokeStyle(2, 0x9be0ff).setDepth(ObjectDepth.Indicator).setVisible(false);
-        this.landingZone = scene.add.circle(this.model.x, this.model.y, 1)
+        this.landingZone = scene.add.circle(options.model.position.x, options.model.position.y, 1)
             .setFillStyle(0x4e9bd9, 0.035).setStrokeStyle(1.5, 0x78c9fa, 0.4)
             .setDepth(ObjectDepth.Planet - 2).setVisible(false);
         this.atmosphere = scene.add.graphics().setDepth(ObjectDepth.Planet - 1);
-        this.debugLabel = scene.add.text(this.model.x, this.model.y, '', {
+        this.debugLabel = scene.add.text(options.model.position.x, options.model.position.y, '', {
             fontFamily: 'monospace', fontSize: 14, color: '#bee0ff', align: 'center',
             backgroundColor: '#091421', padding: { x: 6, y: 4 }
         }).setOrigin(0.5, 1).setDepth(ObjectDepth.Indicator).setVisible(options.debugInfo ?? true);
@@ -44,36 +45,21 @@ export class Planet extends SceneObject
         this.ownCleanup(() => this.atmosphere.destroy());
         this.ownCleanup(() => this.debugLabel.destroy());
         this.drawAtmosphere();
-        this.updateDebugLabel();
+        this.synchronize(options.model);
     }
 
-    setPosition (x: number, y: number): this
+    synchronize (state: PlanetState): void
     {
-        super.setPosition(x, y);
-        this.model.x = x;
-        this.model.y = y;
-        return this;
+        super.setPosition(state.position.x, state.position.y);
+        if (this.radius !== state.radius) super.setSize(state.radius * 2);
+        this.updateDebugLabel(state);
     }
 
-    setSize (size: number): this
+    private updateDebugLabel (state: PlanetState): void
     {
-        super.setSize(size);
-        this.model.radius = this.radius;
-        return this;
-    }
-
-    update (_time: number, _delta: number): void
-    {
-        if (this.sprite.x !== this.model.x || this.sprite.y !== this.model.y) super.setPosition(this.model.x, this.model.y);
-        if (this.radius !== this.model.radius) super.setSize(this.model.radius * 2);
-        this.updateDebugLabel();
-    }
-
-    private updateDebugLabel (): void
-    {
-        const text = `${this.model.name}\nx: ${Math.round(this.model.x)}  y: ${Math.round(this.model.y)}`;
+        const text = `${state.name}\nx: ${Math.round(state.position.x)}  y: ${Math.round(state.position.y)}`;
         if (this.debugLabel.text !== text) this.debugLabel.setText(text);
-        this.debugLabel.setPosition(this.model.x, this.model.y - this.radius - 16);
+        this.debugLabel.setPosition(state.position.x, state.position.y - this.radius - 16);
     }
 
     private drawAtmosphere (): void
@@ -88,7 +74,7 @@ export class Planet extends SceneObject
     updateLandingIndicator (ship: SceneObject): void
     {
         this.indicator.setPosition(this.sprite.x, this.sprite.y).setRadius(this.radius + 6);
-        const distance = Math.hypot(ship.sprite.x - this.sprite.x, ship.sprite.y - this.sprite.y);
+        const distance = this.shipOffset.set(ship.sprite.x, ship.sprite.y).subtract(this.sprite).length();
         const available = canLandNearPlanet(distance, ship.radius, this.radius);
         this.indicator.setVisible(available);
         this.landingZone.setPosition(this.sprite.x, this.sprite.y)

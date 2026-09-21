@@ -37,3 +37,14 @@ test('scaffold dry-run, validation, overwrite refusal and generated TypeScript i
     await writeFile(join(fixture,'tsconfig.json'), JSON.stringify({ extends: join(root,'tsconfig.json'), include: ['src'] }));
     execFileSync(process.execPath, [join(root,'node_modules/typescript/bin/tsc'),'--noEmit','-p',join(fixture,'tsconfig.json')], { encoding:'utf8', windowsHide:true });
 });
+
+test('object workflow routes stateful projections through the central state skill', async () => {
+    const skill = await readFile('.agents/skills/utils-add-object-to-scene/SKILL.md', 'utf8');
+    const contract = await readFile('.agents/skills/utils-add-object-to-scene/references/objects.md', 'utf8');
+    assert.match(skill, /Visual-only objects use this workflow directly/);
+    assert.match(skill, /\$utils-add-state/);
+    assert.match(skill, /authoritative position, health, inventory, lifecycle, timer/);
+    assert.match(skill, /arch-make-data-logical-diag/);
+    assert.match(contract, /GameStateProvider/);
+    assert.match(contract, /synchronize their sprites and bodies/);
+});

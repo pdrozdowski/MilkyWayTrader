@@ -13,6 +13,12 @@ Place business tests under `tests/domain/`. Every new or changed rule must cover
 
 Treat the PRD and accepted architecture as the contract. Fix implementation defects first. Change an assertion only when the test contradicts an authoritative requirement; never skip, weaken or add arbitrary retries to obtain a pass.
 
+## Authoritative state
+
+State changes use `$utils-add-state`. Provider and codec tests cover detached immutable snapshots, schema and shape rejection, migrations, atomic failure, duplicate IDs, reset, subscriptions, and JSON round trips. Reducer tests cover transition boundaries and input immutability. Clock tests cover overlapping pause reasons, idempotent pause/resume, long active frames, and no progress while paused or closed. Serialization tests compare uninterrupted and restored simulation results while excluding held input and presentation effects.
+
+After a state change, refresh `code-graph.json`, generate `data-logical-diagram.md`, and run the diagram checker. A `REFACTOR_REQUIRED` finding fails the state change even when runtime tests pass.
+
 ## UI behavior
 
 Prefer roles, labels and visible text as selectors. Use IDs only for stable component-owned elements and `data-*` attributes for cross-layer contracts such as ignored gameplay input. Component tests verify rendering, actions, subscriptions and idempotent cleanup. Application smoke tests verify boot, persistence, browser errors and representative adapter behavior.
@@ -21,7 +27,7 @@ Playwright runs desktop and touch-sized Chromium projects. Fullscreen success is
 
 ## Commands and failures
 
-- `npm.cmd run test:unit`: domain, mechanics, object scaffolding and audio.
+- `npm.cmd run test:unit`: domain/state, mechanics, object scaffolding, audio and skill scripts.
 - `npm.cmd run test:architecture`: dependency and layout enforcement.
 - `npm.cmd run test:ui`: Playwright UI tests.
 - `npm.cmd run test:project`: every automated test.

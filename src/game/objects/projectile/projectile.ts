@@ -1,47 +1,24 @@
-import { Scene } from 'phaser';
+import { Math as PhaserMath, Scene } from 'phaser';
 import { SceneObject } from '../_shared/sceneObject';
-import type { SceneObjectOptions } from '../_shared/types';
-import type { CircleObstacle } from '../../world/geometry';
-import { definition, projectileTuning } from './definition';
-import { segmentHitsCircle } from '../../mechanics/projectile/trajectory';
-
-interface ProjectileOptions extends SceneObjectOptions {
-    velocity: { x: number; y: number };
-    bornAt: number;
-    onDestroy: () => void;
-}
+import type { ProjectileState } from '../../state/projectileState';
+import { definition } from './definition';
 
 export class Projectile extends SceneObject
 {
-    alive = true;
-    readonly velocity: Readonly<{ x: number; y: number }>;
-    readonly bornAt: number;
+    readonly id: string;
+    private readonly velocity = new PhaserMath.Vector2();
 
-    constructor (scene: Scene, options: ProjectileOptions)
+    constructor (scene: Scene, state: ProjectileState)
     {
-        super(scene, definition, options);
-        this.velocity = Object.freeze({ ...options.velocity });
-        this.bornAt = options.bornAt;
-        this.sprite.setRotation(Math.atan2(this.velocity.y, this.velocity.x) + Math.PI / 2);
-        this.ownCleanup(options.onDestroy);
+        super(scene, definition, { ...state.position });
+        this.id = state.id;
+        this.synchronize(state);
     }
 
-    advance (time: number, delta: number, obstacles: readonly CircleObstacle[]): void
+    synchronize (state: ProjectileState): void
     {
-        if (!this.alive) return;
-        if (time - this.bornAt >= projectileTuning.lifetime) {
-            this.destroy();
-            return;
-        }
-        const next = { x: this.sprite.x + this.velocity.x * delta / 1000, y: this.sprite.y + this.velocity.y * delta / 1000 };
-        if (obstacles.some(obstacle => segmentHitsCircle(this.sprite, next, obstacle, projectileTuning.radius))) this.destroy();
-        else this.sprite.setPosition(next.x, next.y);
-    }
-
-    destroy (): void
-    {
-        if (!this.alive) return;
-        this.alive = false;
-        super.destroy();
+        super.setPosition(state.position.x, state.position.y);
+        this.velocity.set(state.velocity.x, state.velocity.y);
+        this.sprite.setRotation(this.velocity.angle() + Math.PI / 2);
     }
 }

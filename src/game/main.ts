@@ -5,6 +5,8 @@ import { MainMenu } from './scenes/mainMenuScene';
 import { AUTO, Game, Scale } from 'phaser';
 import { Preloader } from './scenes/preloaderScene';
 import { initializeGameAudio } from './audio/gameAudio';
+import { GameStateProvider } from './application/gameStateProvider';
+import { initialGameState } from './definitions/initialGameState';
 
 export interface GameBootstrapHooks
 {
@@ -47,6 +49,7 @@ const StartGame = (parent: string, hooks: GameBootstrapHooks = {}) => {
         callbacks: {
             postBoot: game => {
                 initializeGameAudio(game);
+                game.registry.set('gameStateProvider', new GameStateProvider(initialGameState));
                 hooks.onReady?.(game);
             }
         }

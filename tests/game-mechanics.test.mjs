@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { boostAccelerationRate, flightVelocity, directionRotation } from '../src/game/mechanics/spaceship/flight.ts';
 import { canLandNearPlanet, planetLandingRadius, PLANET_LANDING_SURFACE_GAP } from '../src/game/mechanics/planet/proximity.ts';
 import { segmentHitsCircle, shotTrajectory } from '../src/game/mechanics/projectile/trajectory.ts';
-import { FireCadence } from '../src/game/mechanics/spaceship/fireCadence.ts';
+import { advanceFireCadence } from '../src/game/mechanics/spaceship/fireCadence.ts';
 import { gameObjectLayout, PLANET_SIZE_MULTIPLIER, SUN_RADIUS } from '../src/game/scenes/gameObjects.ts';
 
 const tuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5 };
@@ -81,7 +81,7 @@ test('the sun is five times the largest 3x planet and the starting layout has no
     assert.deepEqual({ x: gameObjectLayout.sun.x, y: gameObjectLayout.sun.y, radius: gameObjectLayout.sun.size / 2 }, { x: 0, y: 0, radius: SUN_RADIUS });
     const bodies = [
         { id: 'sun', x: gameObjectLayout.sun.x, y: gameObjectLayout.sun.y, radius: SUN_RADIUS },
-        ...gameObjectLayout.planets.map(planet => planet.model)
+        ...gameObjectLayout.planets.map(planet => ({ id: planet.model.id, ...planet.model.position, radius: planet.model.radius }))
     ];
     for (let index = 0; index < bodies.length; index++) for (const other of bodies.slice(index + 1)) {
         assert(Math.hypot(bodies[index].x - other.x, bodies[index].y - other.y) > bodies[index].radius + other.radius,
@@ -108,26 +108,31 @@ test('fast projectile paths detect crossed planets, tangent hits and endpoints w
 });
 
 test('held fire keeps a half-second beat despite late frames, without booster backlogs or rapid taps', () => {
-    const cadence = new FireCadence(500);
+    let weapon = { nextShotAtMs: null, lastShotAtMs: null, projectileSequence: 0 };
+    const fire = (time, enabled) => {
+        const result = advanceFireCadence(weapon, time, enabled, 500);
+        weapon = result.weapon;
+        return result.fired;
+    };
     for (const time of [0, 510, 1005, 1515, 2000, 2510, 3000]) {
-        assert(cadence.shouldFire(time, true), `shot due at ${time}`);
-        assert(!cadence.shouldFire(time + 1, true), 'key repeats and consecutive frames cannot add shots');
+        assert(fire(time, true), `shot due at ${time}`);
+        assert(!fire(time + 1, true), 'key repeats and consecutive frames cannot add shots');
     }
-    assert(!cadence.shouldFire(3200, false), 'release or boost suppresses fire');
-    assert(!cadence.shouldFire(3201, true), 'rapid re-press still respects cooldown');
-    assert(cadence.shouldFire(3500, true));
-    assert(!cadence.shouldFire(4000, false));
-    assert(!cadence.shouldFire(10000, false));
-    assert(cadence.shouldFire(10000, true), 'boost ends with one immediate shot');
-    assert(!cadence.shouldFire(10001, true), 'no buffered booster shots');
-    assert(cadence.shouldFire(10500, true));
-    assert(cadence.shouldFire(20000, true), 'a stalled frame resumes firing once');
-    assert(!cadence.shouldFire(20001, true), 'a long stall never causes a catch-up burst');
-    assert(cadence.shouldFire(20500, true));
-    const stalled = new FireCadence(500);
-    assert(stalled.shouldFire(0, true));
-    assert(stalled.shouldFire(999, true));
-    assert(!stalled.shouldFire(1000, true), 'a late shot cannot be followed by a second shot one millisecond later');
-    assert(stalled.shouldFire(1499, true));
+    assert(!fire(3200, false), 'release or boost suppresses fire');
+    assert(!fire(3201, true), 'rapid re-press still respects cooldown');
+    assert(fire(3500, true));
+    assert(!fire(4000, false));
+    assert(!fire(10000, false));
+    assert(fire(10000, true), 'boost ends with one immediate shot');
+    assert(!fire(10001, true), 'no buffered booster shots');
+    assert(fire(10500, true));
+    assert(fire(20000, true), 'a stalled frame resumes firing once');
+    assert(!fire(20001, true), 'a long stall never causes a catch-up burst');
+    assert(fire(20500, true));
+    weapon = { nextShotAtMs: null, lastShotAtMs: null, projectileSequence: 0 };
+    assert(fire(0, true));
+    assert(fire(999, true));
+    assert(!fire(1000, true), 'a late shot cannot be followed by a second shot one millisecond later');
+    assert(fire(1499, true));
 });
 

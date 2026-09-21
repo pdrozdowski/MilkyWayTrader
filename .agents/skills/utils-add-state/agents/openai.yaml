@@ -1,0 +1,6 @@
+interface:
+  display_name: "Add Game State"
+  short_description: "Add authoritative persistable game state"
+  default_prompt: "Use $utils-add-state to add this gameplay state through the central snapshot."
+policy:
+  allow_implicit_invocation: true

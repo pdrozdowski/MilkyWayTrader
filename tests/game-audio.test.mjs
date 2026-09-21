@@ -12,8 +12,6 @@ import { validateSoundDefinitions } from '../src/game/audio/validate.ts';
 import { definition as laser } from '../src/game/audio/definitions/shipLaser.ts';
 import { definition as engine } from '../src/game/audio/definitions/shipEngine.ts';
 import { definition as booster } from '../src/game/audio/definitions/shipBooster.ts';
-import { FireCadence } from '../src/game/mechanics/spaceship/fireCadence.ts';
-import { shotTrajectory } from '../src/game/mechanics/projectile/trajectory.ts';
 import { validateWav } from '../.agents/skills/utils-add-sound/scripts/scaffold.mjs';
 import { generateEffects } from '../scripts/generate-demo-audio.mjs';
 
@@ -192,28 +190,26 @@ test('actual weapon spawns produce one laser event each; booster-blocked actions
     const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText;
     // Test the real weapon with inert scene/projectile adapters rather than loading a browser renderer.
     class Projectile {
-        constructor(_scene, options) { this.options = options; this.sprite = {}; }
-        advance() {}
-        destroy() { this.options.onDestroy(); }
+        constructor(_scene, state) { this.id = state.id; this.sprite = {}; }
+        synchronize() {}
+        destroy() {}
     }
-    const imports = {
-        '../projectile/projectile': { Projectile }, '../projectile/definition': { projectileTuning: { radius: 6 } },
-        '../../mechanics/projectile/trajectory': { shotTrajectory }, '../../mechanics/spaceship/fireCadence': { FireCadence }
-    };
+    const imports = { '../projectile/projectile': { Projectile }, '../../definitions/gameplayTuning': { weaponTuning: {} } };
     const module = { exports: {} };
     new Function('require', 'module', 'exports', compiled)(name => imports[name], module, module.exports);
     const { scope, voices } = fixture();
-    const ship = { boosting: false, sprite: { x: 0, y: 0, rotation: 0, scaleX: 1 } };
-    const weapon = new module.exports.ShipWeapon({ events: new EventEmitter() }, ship, [], () => scope.play(laser.id));
-    weapon.setFiring(true);
-    for (let time = 0; time <= 1000; time += 10) {
+    const weapon = new module.exports.ShipWeapon({ events: new EventEmitter() }, () => scope.play(laser.id));
+    for (let sequence = 1; sequence <= 4; sequence++) {
         for (const voice of voices) voice.isPlaying = false;
-        weapon.update(time, 10);
+        weapon.synchronize(Array.from({ length: sequence }, (_, index) => ({
+            id: `projectile-${index + 1}`, position: { x: 0, y: 0 }, velocity: { x: 0, y: -1 }, bornAtActiveMs: 0
+        })));
     }
     assert.equal(weapon.projectiles.size, 4);
     assert.equal(voices.reduce((sum, voice) => sum + voice.plays.length, 0), 4);
-    ship.boosting = true;
-    for (let time = 1010; time < 2000; time += 10) weapon.update(time, 10);
+    weapon.synchronize(Array.from({ length: 4 }, (_, index) => ({
+        id: `projectile-${index + 1}`, position: { x: 10, y: 0 }, velocity: { x: 0, y: -1 }, bornAtActiveMs: 0
+    })));
     assert.equal(voices.reduce((sum, voice) => sum + voice.plays.length, 0), 4);
     weapon.destroy();
 });
