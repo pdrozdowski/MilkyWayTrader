@@ -37,8 +37,6 @@ starters:
     cwd_strategy: subdir-then-move
   10x-astro-starter:
     cwd_strategy: git-clone
-  phaser-vite-ts:
-    cwd_strategy: git-clone
   django:
     cwd_strategy: native-cwd
   fastapi:

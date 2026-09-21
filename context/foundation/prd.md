@@ -2,7 +2,7 @@
 project: MilkyWayTrader
 version: 1
 status: draft
-created: 2026-09-16
+created: 2026-09-21
 context_type: greenfield
 product_type: web-app
 target_scale:
@@ -208,7 +208,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 ## Non-Functional Requirements
 
-- The game remains usable in current Chrome and Edge releases on supported desktop and mobile layouts.
+- The game remains usable in currently supported desktop and mobile browser releases.
 - The player sees acknowledgement of an interaction within one second.
 - The displayed countdown remains accurate to active elapsed game time within one second over a complete run.
 - Clock state, remaining time, credits, cargo capacity, and HP remain readable during flight without obscuring direct control.
