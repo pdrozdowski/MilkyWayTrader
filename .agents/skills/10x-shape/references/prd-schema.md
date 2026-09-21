@@ -11,8 +11,6 @@ Renames or restructurings of either contract are load-bearing. Update this doc *
 
 PRD frontmatter captures only **product-level priors** — what the product is, who it's for, when it ships. Fields that depend on team composition, runtime, or deployment target belong to a separate downstream tech-stack-selection step, not to PRD. Frame the PRD as the product's identity, not its architecture.
 
-All reader-facing PRD prose is written in English, even when the source notes or discovery conversation use another language. Translation must preserve product intent and unresolved uncertainty.
-
 # Frontmatter fields
 
 Every PRD declares this YAML frontmatter block. Field order is suggested, not load-bearing; key names ARE load-bearing.
@@ -124,13 +122,9 @@ Each FR is a single line in this exact format:
 
 `NNN` is a zero-padded three-digit index. Group thematically with `###` subheadings (e.g., `### Authentication`, `### Recipe matching`) when there are more than ~6 FRs.
 
-Each FR states exactly one actor-visible, solution-independent product capability. It must not encode presentation details, UI controls, formulas, thresholds, configuration fields, provider names, schemas, protocols, or implementation mechanisms. Put those details in User Stories, Business Logic, Access Control, Non-Functional Requirements, or Open Questions as appropriate.
-
-FR identifiers are unique and sequential from `FR-001` without gaps. Compound capabilities must be split unless they describe one inseparable outcome.
-
 `must-have` is binding for the MVP; `nice-to-have` is explicitly out of MVP scope and noted as such in `## Non-Goals` if it would otherwise be assumed.
 
-If `/10x-shape` ran a Socratic round, do not copy its blockquotes into the final FR list. Translate enduring decisions into the appropriate PRD section and route unresolved decisions to `## Open Questions`.
+If `/10x-shape` ran a Socratic round, each FR may carry a `> Socratic:` blockquote underneath capturing the strongest counter-argument and the user's resolution.
 
 ## Non-Functional Requirements
 
