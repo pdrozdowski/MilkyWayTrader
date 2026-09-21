@@ -4,6 +4,8 @@ import { boostAccelerationRate, flightVelocity, directionRotation } from '../src
 import { canLandNearPlanet, planetLandingRadius, PLANET_LANDING_SURFACE_GAP } from '../src/game/mechanics/planet/proximity.ts';
 import { segmentHitsCircle, shotTrajectory } from '../src/game/mechanics/projectile/trajectory.ts';
 import { advanceFireCadence } from '../src/game/mechanics/spaceship/fireCadence.ts';
+import { initialGameState } from '../src/game/definitions/initialGameState.ts';
+import { advanceGameSimulation } from '../src/game/mechanics/gameSimulation.ts';
 import { gameObjectLayout, PLANET_SIZE_MULTIPLIER, SUN_RADIUS } from '../src/game/scenes/gameObjects.ts';
 
 const tuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5 };
@@ -134,5 +136,16 @@ test('held fire keeps a half-second beat despite late frames, without booster ba
     assert(fire(999, true));
     assert(!fire(1000, true), 'a late shot cannot be followed by a second shot one millisecond later');
     assert(fire(1499, true));
+});
+
+test('simulation only activates boost after the authoritative booster unlock', () => {
+    const input = { target: { x: 10_000, y: 600 }, boostRequested: true, firing: false };
+    const locked = advanceGameSimulation(initialGameState, input, 100);
+    assert.equal(locked.ship.boosting, false);
+    const unlocked = advanceGameSimulation({
+        ...initialGameState,
+        shipStatus: { ...initialGameState.shipStatus, boosterUnlocked: true }
+    }, input, 100);
+    assert.equal(unlocked.ship.boosting, true);
 });
 

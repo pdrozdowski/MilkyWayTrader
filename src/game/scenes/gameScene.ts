@@ -3,7 +3,6 @@ import type { GameStateProvider } from '../application/gameStateProvider';
 import type { AudioScope } from '../audio/audioScope';
 import { getAudioService } from '../audio/gameAudio';
 import { updateShipAudio } from '../audio/shipAudio';
-import { initialGameState } from '../definitions/initialGameState';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { Starfield } from '../effects/starfield';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
@@ -49,7 +48,7 @@ export class Game extends Scene
         this.fireHeld = false;
         this.audio = getAudioService(this.game).createScope(this);
         this.stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
-        const state = this.stateProvider.reset(initialGameState);
+        const state = this.stateProvider.snapshot();
         this.camera = this.cameras.main;
         this.camera.setZoom(1).removeBounds();
         this.camera.setBackgroundColor('#000000');
@@ -66,7 +65,7 @@ export class Game extends Scene
         this.camera.startFollow(this.ship.sprite, false, 1, 1, 0, 0);
         this.camera.centerOn(this.ship.sprite.x, this.ship.sprite.y);
         const ui = this.add.container(0, 0).setScrollFactor(0).setDepth(ObjectDepth.UI);
-        const help = this.add.text(24, 24, 'Hold / drag to fly · Left Shift: 5× boost · Left Ctrl: fire', {
+        const help = this.add.text(24, 24, 'Hold / drag to fly · Left Ctrl: fire', {
             fontFamily: 'Arial', fontSize: 18, color: '#ffffff', backgroundColor: '#102039', padding: { x: 12, y: 10 }
         }).setScrollFactor(0).setDepth(ObjectDepth.UI);
         this.clockStatus = this.add.text(1000, 24, '', {

@@ -1,7 +1,7 @@
 ---
 change_id: anonymous-run-status
 title: Anonymous run status
-status: planned
+status: implementing
 created: 2026-09-21
 updated: 2026-09-21
 archived_at: null

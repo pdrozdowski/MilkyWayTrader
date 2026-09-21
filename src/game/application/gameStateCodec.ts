@@ -1,5 +1,6 @@
 import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
+import { initialCredits, maximumShipHitPoints } from '../definitions/runBalance.ts';
 
 const PAUSE_REASONS: readonly GamePauseReason[] = ['background', 'landed', 'manual'];
 const keys = (value: object): string[] => Object.keys(value).sort();
@@ -26,6 +27,20 @@ function nonNegativeNumber (value: unknown, path: string): number
 {
     const number = finiteNumber(value, path);
     if (number < 0) throw new Error(`${path} must not be negative.`);
+    return number;
+}
+
+function nonNegativeSafeInteger (value: unknown, path: string): number
+{
+    const number = nonNegativeNumber(value, path);
+    if (!Number.isSafeInteger(number)) throw new Error(`${path} must be a safe integer.`);
+    return number;
+}
+
+function positiveSafeInteger (value: unknown, path: string): number
+{
+    const number = nonNegativeSafeInteger(value, path);
+    if (number === 0) throw new Error(`${path} must be positive.`);
     return number;
 }
 
@@ -86,6 +101,29 @@ function migrateV1 (candidate: unknown): unknown
     };
 }
 
+function migrateV2 (candidate: unknown): unknown
+{
+    if (!isRecord(candidate) || candidate.schemaVersion !== 2) return candidate;
+    const root = requireRecord(candidate, 'state', ['schemaVersion', 'clock', 'ship', 'planets', 'weapon', 'projectiles']);
+    const ship = requireRecord(root.ship, 'state.ship', [
+        'position', 'velocity', 'rotation', 'enginesOn', 'boosting', 'boostAcceleration', 'coastDeceleration'
+    ]);
+    return {
+        ...root,
+        schemaVersion: 3,
+        credits: initialCredits,
+        cargo: [],
+        ship: { ...ship, boosting: false },
+        shipStatus: {
+            currentHitPoints: maximumShipHitPoints,
+            cargoLevel: 1,
+            engineLevel: 1,
+            weaponLevel: 1,
+            boosterUnlocked: false
+        }
+    };
+}
+
 function cloneAndFreeze<T> (value: T): T
 {
     if (Array.isArray(value)) {
@@ -106,9 +144,21 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         try { source = JSON.parse(source) as unknown; }
         catch { throw new Error('Game state is not valid JSON.'); }
     }
-    source = migrateV1(source);
-    const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'ship', 'planets', 'weapon', 'projectiles']);
-    if (root.schemaVersion !== 2) throw new Error('Unsupported game-state schema version.');
+    source = migrateV2(migrateV1(source));
+    const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'ship', 'shipStatus', 'planets', 'weapon', 'projectiles']);
+    if (root.schemaVersion !== 3) throw new Error('Unsupported game-state schema version.');
+
+    const credits = nonNegativeSafeInteger(root.credits, 'state.credits');
+    if (!Array.isArray(root.cargo)) throw new Error('state.cargo must be an array.');
+    const commodityIds = new Set<string>();
+    const cargo = root.cargo.map((candidateCargo, index) => {
+        const path = `state.cargo[${index}]`;
+        const stack = requireRecord(candidateCargo, path, ['commodityId', 'quantity']);
+        const commodityId = nonEmptyString(stack.commodityId, `${path}.commodityId`);
+        if (commodityIds.has(commodityId)) throw new Error(`Duplicate commodity id: ${commodityId}.`);
+        commodityIds.add(commodityId);
+        return { commodityId, quantity: nonNegativeSafeInteger(stack.quantity, `${path}.quantity`) };
+    });
 
     const clock = requireRecord(root.clock, 'state.clock', ['budgetMs', 'activeElapsedMs', 'pauseReasons']);
     const budgetMs = nonNegativeNumber(clock.budgetMs, 'state.clock.budgetMs');
@@ -128,6 +178,13 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         'position', 'velocity', 'rotation', 'enginesOn', 'boosting', 'boostAcceleration', 'coastDeceleration'
     ]);
     if (typeof ship.enginesOn !== 'boolean' || typeof ship.boosting !== 'boolean') throw new Error('Ship activity flags must be boolean.');
+
+    const shipStatus = requireRecord(root.shipStatus, 'state.shipStatus', [
+        'currentHitPoints', 'cargoLevel', 'engineLevel', 'weaponLevel', 'boosterUnlocked'
+    ]);
+    const currentHitPoints = nonNegativeSafeInteger(shipStatus.currentHitPoints, 'state.shipStatus.currentHitPoints');
+    if (currentHitPoints > maximumShipHitPoints) throw new Error('state.shipStatus.currentHitPoints exceeds the configured maximum.');
+    if (typeof shipStatus.boosterUnlocked !== 'boolean') throw new Error('state.shipStatus.boosterUnlocked must be boolean.');
 
     if (!Array.isArray(root.planets)) throw new Error('state.planets must be an array.');
     const planetIds = new Set<string>();
@@ -163,8 +220,10 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 2,
+        schemaVersion: 3,
         clock: { budgetMs, activeElapsedMs, pauseReasons },
+        credits,
+        cargo,
         ship: {
             position: vector2(ship.position, 'state.ship.position'),
             velocity: vector2(ship.velocity, 'state.ship.velocity'),
@@ -173,6 +232,13 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
             boosting: ship.boosting,
             boostAcceleration: nonNegativeNumber(ship.boostAcceleration, 'state.ship.boostAcceleration'),
             coastDeceleration: nonNegativeNumber(ship.coastDeceleration, 'state.ship.coastDeceleration')
+        },
+        shipStatus: {
+            currentHitPoints,
+            cargoLevel: positiveSafeInteger(shipStatus.cargoLevel, 'state.shipStatus.cargoLevel'),
+            engineLevel: positiveSafeInteger(shipStatus.engineLevel, 'state.shipStatus.engineLevel'),
+            weaponLevel: positiveSafeInteger(shipStatus.weaponLevel, 'state.shipStatus.weaponLevel'),
+            boosterUnlocked: shipStatus.boosterUnlocked
         },
         planets,
         weapon: {

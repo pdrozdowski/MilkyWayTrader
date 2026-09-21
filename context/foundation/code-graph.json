@@ -130,6 +130,13 @@
       "kind": "function"
     },
     {
+      "id": "src/game/application/gameStateCodec#migrateV2",
+      "name": "migrateV2",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
       "id": "src/game/application/gameStateCodec#nonEmptyString",
       "name": "nonEmptyString",
       "layer": "model",
@@ -139,6 +146,13 @@
     {
       "id": "src/game/application/gameStateCodec#nonNegativeNumber",
       "name": "nonNegativeNumber",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#nonNegativeSafeInteger",
+      "name": "nonNegativeSafeInteger",
       "layer": "model",
       "module": "src/game/application/gameStateCodec",
       "kind": "function"
@@ -156,6 +170,13 @@
       "layer": "model",
       "module": "src/game/application/gameStateCodec",
       "kind": "variable"
+    },
+    {
+      "id": "src/game/application/gameStateCodec#positiveSafeInteger",
+      "name": "positiveSafeInteger",
+      "layer": "model",
+      "module": "src/game/application/gameStateCodec",
+      "kind": "function"
     },
     {
       "id": "src/game/application/gameStateCodec#requireRecord",
@@ -421,6 +442,27 @@
       "name": "initialGameState",
       "layer": "data",
       "module": "src/game/definitions/initialGameState",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/definitions/runBalance#cargoCapacityByLevel",
+      "name": "cargoCapacityByLevel",
+      "layer": "data",
+      "module": "src/game/definitions/runBalance",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/definitions/runBalance#initialCredits",
+      "name": "initialCredits",
+      "layer": "data",
+      "module": "src/game/definitions/runBalance",
+      "kind": "variable"
+    },
+    {
+      "id": "src/game/definitions/runBalance#maximumShipHitPoints",
+      "name": "maximumShipHitPoints",
+      "layer": "data",
+      "module": "src/game/definitions/runBalance",
       "kind": "variable"
     },
     {
@@ -879,6 +921,13 @@
       "kind": "class"
     },
     {
+      "id": "src/game/state/cargoState#CargoState",
+      "name": "CargoState",
+      "layer": "data",
+      "module": "src/game/state/cargoState",
+      "kind": "interface"
+    },
+    {
       "id": "src/game/state/gameClockState#GameClockState",
       "name": "GameClockState",
       "layer": "data",
@@ -918,6 +967,13 @@
       "name": "ShipState",
       "layer": "data",
       "module": "src/game/state/shipState",
+      "kind": "interface"
+    },
+    {
+      "id": "src/game/state/shipStatusState#ShipStatusState",
+      "name": "ShipStatusState",
+      "layer": "data",
+      "module": "src/game/state/shipStatusState",
       "kind": "interface"
     },
     {
@@ -1070,12 +1126,22 @@
     },
     {
       "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#migrateV2",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
       "to": "src/game/application/gameStateCodec#nonEmptyString",
       "kind": "uses"
     },
     {
       "from": "src/game/application/gameStateCodec#decodeGameState",
       "to": "src/game/application/gameStateCodec#nonNegativeNumber",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#nonNegativeSafeInteger",
       "kind": "uses"
     },
     {
@@ -1090,6 +1156,11 @@
     },
     {
       "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/application/gameStateCodec#positiveSafeInteger",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
       "to": "src/game/application/gameStateCodec#requireRecord",
       "kind": "uses"
     },
@@ -1097,6 +1168,11 @@
       "from": "src/game/application/gameStateCodec#decodeGameState",
       "to": "src/game/application/gameStateCodec#vector2",
       "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#decodeGameState",
+      "to": "src/game/definitions/runBalance#maximumShipHitPoints",
+      "kind": "imports"
     },
     {
       "from": "src/game/application/gameStateCodec#decodeGameState",
@@ -1129,8 +1205,33 @@
       "kind": "uses"
     },
     {
+      "from": "src/game/application/gameStateCodec#migrateV2",
+      "to": "src/game/application/gameStateCodec#isRecord",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#migrateV2",
+      "to": "src/game/application/gameStateCodec#requireRecord",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#migrateV2",
+      "to": "src/game/definitions/runBalance#initialCredits",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#migrateV2",
+      "to": "src/game/definitions/runBalance#maximumShipHitPoints",
+      "kind": "imports"
+    },
+    {
       "from": "src/game/application/gameStateCodec#nonNegativeNumber",
       "to": "src/game/application/gameStateCodec#finiteNumber",
+      "kind": "uses"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#nonNegativeSafeInteger",
+      "to": "src/game/application/gameStateCodec#nonNegativeNumber",
       "kind": "uses"
     },
     {
@@ -1142,6 +1243,11 @@
       "from": "src/game/application/gameStateCodec#PAUSE_REASONS",
       "to": "src/game/state/gameClockState#GamePauseReason",
       "kind": "imports"
+    },
+    {
+      "from": "src/game/application/gameStateCodec#positiveSafeInteger",
+      "to": "src/game/application/gameStateCodec#nonNegativeSafeInteger",
+      "kind": "uses"
     },
     {
       "from": "src/game/application/gameStateCodec#requireRecord",
@@ -1432,6 +1538,16 @@
       "from": "src/game/definitions/initialGameState#initialGameState",
       "to": "src/game/definitions/initialGameState#ACTIVE_TIME_BUDGET_MS",
       "kind": "uses"
+    },
+    {
+      "from": "src/game/definitions/initialGameState#initialGameState",
+      "to": "src/game/definitions/runBalance#initialCredits",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/definitions/initialGameState#initialGameState",
+      "to": "src/game/definitions/runBalance#maximumShipHitPoints",
+      "kind": "imports"
     },
     {
       "from": "src/game/definitions/initialGameState#initialGameState",
@@ -2060,11 +2176,6 @@
     },
     {
       "from": "src/game/scenes/gameScene#Game",
-      "to": "src/game/definitions/initialGameState#initialGameState",
-      "kind": "imports"
-    },
-    {
-      "from": "src/game/scenes/gameScene#Game",
       "to": "src/game/effects/starfield#Starfield",
       "kind": "imports"
     },
@@ -2124,6 +2235,16 @@
       "kind": "imports"
     },
     {
+      "from": "src/game/scenes/mainMenuScene#MainMenu",
+      "to": "src/game/application/gameStateProvider#GameStateProvider",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/scenes/mainMenuScene#MainMenu",
+      "to": "src/game/definitions/initialGameState#initialGameState",
+      "kind": "imports"
+    },
+    {
       "from": "src/game/scenes/preloaderScene#Preloader",
       "to": "asset:public/assets/cow_big.png",
       "kind": "asset"
@@ -2155,6 +2276,11 @@
     },
     {
       "from": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "to": "src/game/state/cargoState#CargoState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/state/gameStateSnapshot#GameStateSnapshot",
       "to": "src/game/state/gameClockState#GameClockState",
       "kind": "imports"
     },
@@ -2171,6 +2297,11 @@
     {
       "from": "src/game/state/gameStateSnapshot#GameStateSnapshot",
       "to": "src/game/state/shipState#ShipState",
+      "kind": "imports"
+    },
+    {
+      "from": "src/game/state/gameStateSnapshot#GameStateSnapshot",
+      "to": "src/game/state/shipStatusState#ShipStatusState",
       "kind": "imports"
     },
     {

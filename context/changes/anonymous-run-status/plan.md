@@ -214,13 +214,13 @@ Schema v1 first follows the existing spatial-state migration to v2, then v2 rece
 
 #### Automated
 
-- [ ] 1.1 Domain state tests cover schema v3, v1/v2 migration, round-trip serialization, invalid values, atomic restore, and immutability
-- [ ] 1.2 Mechanics tests prove boost remains inactive while locked and works after unlock
-- [ ] 1.3 Production and test TypeScript projects compile
+- [x] 1.1 Domain state tests cover schema v3, v1/v2 migration, round-trip serialization, invalid values, atomic restore, and immutability
+- [x] 1.2 Mechanics tests prove boost remains inactive while locked and works after unlock
+- [x] 1.3 Production and test TypeScript projects compile
 
 #### Manual
 
-- [ ] 1.4 Repeated New Game resets the run, ordinary Game entry does not reset implicitly, and Shift does not boost a new run
+- [x] 1.4 Repeated New Game resets the run, ordinary Game entry does not reset implicitly, and Shift does not boost a new run
 
 ### Phase 2: Semantic DOM Run Status
 

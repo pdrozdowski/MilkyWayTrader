@@ -17,6 +17,10 @@ Authoritative, persistable state reachable from `GameStateSnapshot`.
 
 ```mermaid
 classDiagram
+    class CargoState {
+        +string commodityId
+        +number quantity
+    }
     class GameClockState {
         +number budgetMs
         +number activeElapsedMs
@@ -26,9 +30,12 @@ classDiagram
         <<type>>
     }
     class GameStateSnapshot {
-        +2 schemaVersion
+        +3 schemaVersion
         +GameClockState clock
+        +number credits
+        +CargoStateArray cargo
         +ShipState ship
+        +ShipStatusState shipStatus
         +PlanetStateArray planets
         +WeaponState weapon
         +ProjectileStateArray projectiles
@@ -54,6 +61,13 @@ classDiagram
         +number boostAcceleration
         +number coastDeceleration
     }
+    class ShipStatusState {
+        +number currentHitPoints
+        +number cargoLevel
+        +number engineLevel
+        +number weaponLevel
+        +boolean boosterUnlocked
+    }
     class Vector2State {
         +number x
         +number y
@@ -65,7 +79,9 @@ classDiagram
     }
     GameClockState "1" *-- "*" GamePauseReason : pauseReasons
     GameStateSnapshot "1" *-- "1" GameClockState : clock
+    GameStateSnapshot "1" *-- "*" CargoState : cargo
     GameStateSnapshot "1" *-- "1" ShipState : ship
+    GameStateSnapshot "1" *-- "1" ShipStatusState : shipStatus
     GameStateSnapshot "1" *-- "*" PlanetState : planets
     GameStateSnapshot "1" *-- "1" WeaponState : weapon
     GameStateSnapshot "1" *-- "*" ProjectileState : projectiles
@@ -80,12 +96,14 @@ classDiagram
 
 | Entity | Classification | Source |
 | --- | --- | --- |
+| CargoState | Persisted | [cargoState.ts](../../src/game/state/cargoState.ts#L1) |
 | GameClockState | Persisted | [gameClockState.ts](../../src/game/state/gameClockState.ts#L3) |
 | GamePauseReason | Persisted | [gameClockState.ts](../../src/game/state/gameClockState.ts#L1) |
-| GameStateSnapshot | Persisted | [gameStateSnapshot.ts](../../src/game/state/gameStateSnapshot.ts#L7) |
+| GameStateSnapshot | Persisted | [gameStateSnapshot.ts](../../src/game/state/gameStateSnapshot.ts#L9) |
 | PlanetState | Persisted | [planetState.ts](../../src/game/state/planetState.ts#L3) |
 | ProjectileState | Persisted | [projectileState.ts](../../src/game/state/projectileState.ts#L3) |
 | ShipState | Persisted | [shipState.ts](../../src/game/state/shipState.ts#L3) |
+| ShipStatusState | Persisted | [shipStatusState.ts](../../src/game/state/shipStatusState.ts#L1) |
 | Vector2State | Persisted | [vector2State.ts](../../src/game/state/vector2State.ts#L1) |
 | WeaponState | Persisted | [weaponState.ts](../../src/game/state/weaponState.ts#L1) |
 
@@ -93,13 +111,18 @@ classDiagram
 
 | Entity | Field | Type | Cardinality |
 | --- | --- | --- | --- |
+| CargoState | commodityId | `string` | 1 |
+| CargoState | quantity | `number` | 1 |
 | GameClockState | budgetMs | `number` | 1 |
 | GameClockState | activeElapsedMs | `number` | 1 |
 | GameClockState | pauseReasons | `readonly GamePauseReason[]` | 0..* |
 | GamePauseReason | value | `'background' \| 'landed' \| 'manual'` | 1 |
-| GameStateSnapshot | schemaVersion | `2` | 1 |
+| GameStateSnapshot | schemaVersion | `3` | 1 |
 | GameStateSnapshot | clock | `GameClockState` | 1 |
+| GameStateSnapshot | credits | `number` | 1 |
+| GameStateSnapshot | cargo | `readonly CargoState[]` | 0..* |
 | GameStateSnapshot | ship | `ShipState` | 1 |
+| GameStateSnapshot | shipStatus | `ShipStatusState` | 1 |
 | GameStateSnapshot | planets | `readonly PlanetState[]` | 0..* |
 | GameStateSnapshot | weapon | `WeaponState` | 1 |
 | GameStateSnapshot | projectiles | `readonly ProjectileState[]` | 0..* |
@@ -118,6 +141,11 @@ classDiagram
 | ShipState | boosting | `boolean` | 1 |
 | ShipState | boostAcceleration | `number` | 1 |
 | ShipState | coastDeceleration | `number` | 1 |
+| ShipStatusState | currentHitPoints | `number` | 1 |
+| ShipStatusState | cargoLevel | `number` | 1 |
+| ShipStatusState | engineLevel | `number` | 1 |
+| ShipStatusState | weaponLevel | `number` | 1 |
+| ShipStatusState | boosterUnlocked | `boolean` | 1 |
 | Vector2State | x | `number` | 1 |
 | Vector2State | y | `number` | 1 |
 | WeaponState | nextShotAtMs | `number \| null` | 0..1 |
