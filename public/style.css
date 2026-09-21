@@ -34,6 +34,17 @@ body {
     touch-action: none;
 }
 
+#run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }
+#run-status-clock, #run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
+#run-status-clock { padding: 10px 12px; white-space: nowrap; }
+#run-status-primary { display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); min-width: 0; padding: 10px 12px; }
+#run-status-primary > span, #run-status-hp-label, #run-status p { white-space: nowrap; }
+#run-status-hp { width: clamp(70px, 14vw, 150px); height: 12px; accent-color: #8bdfff; }
+#run-status button { min-height: 38px; padding: 8px 10px; color: #fff; font: inherit; cursor: pointer; pointer-events: auto; }
+#run-status :focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+#run-status-ship-details, #run-status-cargo-details { position: absolute; top: calc(100% + 6px); padding: 8px 12px; line-height: 1.4; }
+#run-status-ship-details { left: 0; } #run-status-cargo-details { right: 0; } #run-status p { margin: 0; }
+
 [hidden] {
     display: none !important;
 }
@@ -67,7 +78,7 @@ body {
 
 #mobile-controls {
     position: absolute;
-    top: max(12px, env(safe-area-inset-top));
+    top: max(64px, calc(env(safe-area-inset-top) + 56px));
     right: max(12px, env(safe-area-inset-right));
     left: max(12px, env(safe-area-inset-left));
     z-index: 3;
@@ -147,4 +158,5 @@ body {
 
 @media (max-width: 420px) {
     #audio-controls { gap: 6px; padding: 4px 6px; }
+    #run-status { gap: 4px; font-size: 11px; } #run-status-primary { gap: 5px; padding: 8px; } #run-status-hp { width: 54px; } #run-status-clock { padding: 8px; } #run-status button { min-height: 36px; padding: 7px; }
 }
