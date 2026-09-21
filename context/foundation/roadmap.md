@@ -41,7 +41,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 | --- | --- | --- | --- | --- | --- |
-| S-01 | anonymous-run-status | User can start an anonymous run and read its essential state. | — | US-01, FR-001, FR-002, FR-003, FR-004, FR-027, FR-028, FR-029, FR-030 | ready |
+| S-01 | anonymous-run-status | User can start an anonymous run and read its essential state. | — | US-01, FR-001, FR-002, FR-003, FR-004, FR-027, FR-028, FR-029, FR-030 | planning |
 | S-02 | direct-moving-system-flight | User can fly directly through a moving, identifiable solar system. | S-01 | US-02, FR-010, FR-012, FR-014 | proposed |
 | S-03 | guided-orbit-and-landing | User can follow route guidance, enter and leave orbit, land, and launch. | S-02 | US-02, FR-011, FR-015, FR-016, FR-017, FR-018 | proposed |
 | S-04 | first-planetary-trade | User can inspect a landed market and complete a commodity trade. | S-03 | US-03, FR-019, FR-020, FR-021, FR-022, FR-023 | proposed |
@@ -82,7 +82,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** The existing demo exposes parts of this state, but treating the full run state as one coherent user contract is necessary before later slices extend it.
-- **Status:** ready
+- **Status:** planning
 
 ### S-02: Fly through the moving solar system
 
