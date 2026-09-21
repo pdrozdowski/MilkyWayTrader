@@ -1,4 +1,6 @@
 import { Scene, GameObjects, Math as PhaserMath } from 'phaser';
+import type { GameStateProvider } from '../application/gameStateProvider';
+import { initialGameState } from '../definitions/initialGameState';
 
 export class MainMenu extends Scene
 {
@@ -29,9 +31,9 @@ export class MainMenu extends Scene
         this.flyCow(true);
 
         this.input.once('pointerdown', () => {
-
+            const stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
+            stateProvider.reset(initialGameState);
             this.scene.start('Game');
-
         });
     }
 

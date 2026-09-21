@@ -68,7 +68,8 @@ export function advanceGameSimulation (
         y: input.target.y - state.ship.position.y
     } : null;
     const currentSpeed = Math.hypot(state.ship.velocity.x, state.ship.velocity.y);
-    const wantsBoost = input.boostRequested && !!targetDelta && Math.hypot(targetDelta.x, targetDelta.y) > 2;
+    const wantsBoost = state.shipStatus.boosterUnlocked && input.boostRequested
+        && !!targetDelta && Math.hypot(targetDelta.x, targetDelta.y) > 2;
     const boostAcceleration = wantsBoost && !state.ship.boosting
         ? boostAccelerationRate(currentSpeed, shipTuning.maxSpeed, shipBoostTuning.speedMultiplier, shipBoostTuning.accelerationSeconds)
             || shipTuning.maxSpeed * (shipBoostTuning.speedMultiplier - 1) / shipBoostTuning.accelerationSeconds

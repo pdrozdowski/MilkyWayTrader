@@ -1,14 +1,17 @@
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
+import { initialCredits, maximumShipHitPoints } from './runBalance.ts';
 
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
 
 export const initialGameState: GameStateSnapshot = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     clock: {
         budgetMs: ACTIVE_TIME_BUDGET_MS,
         activeElapsedMs: 0,
         pauseReasons: []
     },
+    credits: initialCredits,
+    cargo: [],
     ship: {
         position: { x: 1950, y: 600 },
         velocity: { x: 0, y: 0 },
@@ -17,6 +20,13 @@ export const initialGameState: GameStateSnapshot = {
         boosting: false,
         boostAcceleration: 0,
         coastDeceleration: 480
+    },
+    shipStatus: {
+        currentHitPoints: maximumShipHitPoints,
+        cargoLevel: 1,
+        engineLevel: 1,
+        weaponLevel: 1,
+        boosterUnlocked: false
     },
     planets: [
         { id: 'seroton', name: 'Seroton', position: { x: 2300, y: 200 }, radius: 144 },
