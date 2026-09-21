@@ -241,10 +241,10 @@ Schema v1 first follows the existing spatial-state migration to v2, then v2 rece
 
 #### Automated
 
-- [x] 3.1 Code graph and logical data diagram regenerate and validate without REFACTOR_REQUIRED
-- [x] 3.2 Full unit, architecture, and Playwright suite passes
-- [x] 3.3 Production build and both TypeScript projects pass
+- [x] 3.1 Code graph and logical data diagram regenerate and validate without REFACTOR_REQUIRED â€” f2766b5
+- [x] 3.2 Full unit, architecture, and Playwright suite passes â€” f2766b5
+- [x] 3.3 Production build and both TypeScript projects pass â€” f2766b5
 
 #### Manual
 
-- [x] 3.4 Complete menu-to-status interaction works without regressions to flight, audio, or fullscreen
+- [x] 3.4 Complete menu-to-status interaction works without regressions to flight, audio, or fullscreen â€” f2766b5
