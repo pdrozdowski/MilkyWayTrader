@@ -2,154 +2,136 @@
 
 ## Overview
 
-Deliver roadmap slice S-02: the player flies directly through a readable moving solar system. MOO-2187 "Moolaris" remains fixed at the origin, while the three planets follow configurable counter-clockwise orbits. The slice also replaces touch-to-steer with a left-side joystick, makes the Phaser canvas occupy the full viewport without scaling world objects, corrects portrait-orientation blocking, and reorganizes the run toolbar around an accessible paused menu.
+Deliver S-02: readable direct flight through a moving solar system. Moolaris remains fixed at the origin; three planets and a visual-only asteroid band follow distinct counter-clockwise orbital bands. The slice also delivers viewport, touch-control, orientation, and menu improvements, with each dependency placed in its owning phase.
 
 ## Current State Analysis
 
-The game already has an immutable, codec-validated game-state aggregate, direct pointer flight, ship-following camera, three named but static planets, and a static visual sun. `GameScene` drives the pure simulation, then reconciles Phaser projections. The canvas currently uses `Scale.FIT` at a fixed 1024 x 768 logical size. Touch input uses the same whole-canvas steering path as desktop pointer input. The DOM status panel has a single horizontal control arrangement; separate floating audio and fullscreen controls sit outside it. The existing portrait notice is Polish, does not pause the active clock, and has a lower z-index than the toolbar.
+The game currently has three static planets, a static sun, and an Arcade collider whose response is overwritten by authoritative scene synchronization. The simulation owns active time, ship state, and projectiles. Orientation and menu UI producers do not exist yet, so Phase 1 cannot safely own their pause lifecycle.
 
 ## Desired End State
 
-In an active run, MOO-2187 "Moolaris" is visibly named and stationary at `(0, 0)`. Seroton, Lactozis-7C, and Maslo-Prime move visibly on separately configured circular CCW orbits that pause with active game time. A player can fly through planets, while contact with Moolaris deterministically pushes the ship outside it without damage. Desktop keeps pointer flight; a touch device shows only a left-centre analog direction joystick. The canvas fills every viewport with an unscaled world. The toolbar places Menu and Anonymous at top-left, clock and HP at top-centre, and cash/load/Cargo details/Ship info at top-right. Portrait touch layouts show a topmost English blocking notice and pause the game.
+Seroton, Lactozis-7C, Maslo-Prime, and the outer asteroid band visibly occupy separate CCW orbits. Smaller Moolaris has a readable ship-facing label and deterministically pushes a contacting ship to a visible clearance, then stops it without damage. Touch, orientation, and menu pauses are implemented together with their UI producers.
 
-### Key Discoveries:
+### Key Discoveries
 
-- `advanceGameSimulation` owns the active clock, ship and projectile updates, but currently leaves `state.planets` unchanged (`src/game/mechanics/gameSimulation.ts:54`).
-- `GameScene` converts pointer coordinates to world coordinates while preserving a Phaser 4 camera compensation; its camera follows the ship (`src/game/scenes/gameScene.ts:164`).
-- `Planet.synchronize` already projects authoritative positions into static Arcade bodies (`src/game/objects/planet/planet.ts:51`), while current planet collision and projectile obstacles are wired by `GameScene`.
-- Phaser uses `Scale.FIT` with fixed dimensions (`src/game/main.ts:19`); `#app` padding currently prevents the canvas itself from reaching the complete viewport (`public/style.css:12`).
-- The state architecture requires JSON-safe authoritative spatial values, pure reducers, the central provider boundary, and refreshed dependency/data graphs (`context/foundation/architecture.md`).
+- Phaser collision cannot be authoritative because `GameScene` replaces it with the next simulation snapshot.
+- Current Moolaris geometry is hard-coded at 1650 world units; accepted geometry is 70%, or 1155.
+- Phase 2 first introduces the orientation notice, joystick, UI contracts, and menu, so it must also own their pause-state wiring.
 
 ## What We're NOT Doing
 
-- Orbit capture, guidance, landing, launch, market access, or any landing behavior from S-03.
-- Damage, death, asteroid hazards, or terminal run outcomes from S-06/S-07.
-- Planet collisions, projectile-planet impacts, planet damage, or planetary physics.
-- Analog speed control, touch firing controls, configurable input preferences, or a new settings system.
-- Snapshot migrations: the persisted state shape remains schema v3; current planet positions are derived from existing IDs and the active clock.
+- Asteroid colliders, damage, projectile interception, harvesting, or any other S-07 hazard behavior.
+- Orbit capture, landing, market access, or launch behavior from S-03.
+- Snapshot migration or a schema-version change.
+- Analog speed controls, touch firing, or input preferences.
 
 ## Implementation Approach
 
-Keep orbital parameters as static, pure definition data and derive positions from the existing active clock, then commit those projected positions through the existing simulation/provider flow. Keep all world-state calculations outside Phaser. Compose touch controls inside the scene UI camera, while the semantic toolbar and modal menu remain DOM UI components connected through typed ports. Use Phaser `RESIZE` to make the canvas physical viewport-sized and re-anchor transient scene HUD on resize; keep normal camera zoom at one so objects are not stretched. Treat portrait orientation and the menu as unique composable pause reasons so visual blocking and authoritative clock state cannot diverge.
+Celestial tuning, orbit projection, and Moolaris contact stay pure. The simulation commits planet positions from active elapsed time and resolves contact before Phaser synchronization. Phaser presentation samples the same pure orbital projection at consecutive 100 ms active-time boundaries and linearly interpolates with `activeElapsedMs % 100 / 100`; no raw Phaser delta participates, so paused active time freezes every celestial visual and resuming starts from the matching segment without a jump. The asteroid band is deterministic scene presentation only, so it is neither persisted nor an obstacle. Phase 2 owns the UI ports and pause reasons that its controls produce.
 
 ## Critical Implementation Details
 
-`GameScene` currently forms projectile obstacles from a pre-update snapshot. Once worlds move, planet obstacles must be removed by the settled product decision, while Moolaris’s obstacle and the ship push-out must be calculated from the same simulation state that is projected that frame. Do not reintroduce a Phaser sun collider that can conflict with the pure push-out result.
+Remove the ship Arcade collider completely. Resolve Moolaris contact after ship motion: place the ship beyond configured visible clearance and zero its velocity. `GameScene` owns the `orientation` reason and input clearing only; the modal-menu adapter owns `menu` pause/resume only.
 
 ## Phase 1: Deterministic Solar System and Direct Flight
 
 ### Overview
 
-Create a configurable solar-system definition and pure orbital/collision mechanics, then wire post-tick state into scene projections without expanding gameplay scope into hazards or landing.
+Create the self-contained moving-system simulation and presentation without depending on Phase 2 UI components.
 
-### Changes Required:
+### Changes Required
 
-#### 1. Solar-system tuning and deterministic orbit projection
+#### 1. Solar-system tuning and authoritative orbit projection
 
-**Files**: new `src/game/definitions/solarSystemTuning.ts`, new `src/game/mechanics/planet/orbits.ts`, `src/game/definitions/initialGameState.ts`, `src/game/mechanics/gameSimulation.ts`, `src/game/scenes/gameObjects.ts`, `src/game/scenes/gameScene.ts`, `tests/game-mechanics.test.mjs`, `tests/domain/gameState.test.mjs`
+**Files**: new `src/game/definitions/solarSystemTuning.ts`, new `src/game/mechanics/planet/orbits.ts`, `src/game/definitions/initialGameState.ts`, `src/game/mechanics/gameSimulation.ts`, `src/game/application/gameStateCodec.ts`, `src/game/application/gameStateProvider.ts`, `src/game/scenes/gameObjects.ts`, `src/game/scenes/gameScene.ts`, `tests/game-mechanics.test.mjs`, `tests/domain/gameState.test.mjs`
 
-**Intent**: Make all celestial visual/physical sizes and planet orbit parameters balance/configuration data, while producing reproducible positions only from active elapsed time.
+**Intent**: Make celestial geometry configurable and derive persisted planet positions deterministically from active time.
 
-**Contract**: Define Moolaris at `{ position: { x: 0, y: 0 } }` with configurable rendered/collision radius. Define each planet by stable ID, name, configured body radius, orbital radius, initial phase, and CCW period; defaults use 180 s, 240 s, and 300 s periods. `solarSystemTuning.ts` is the single source of truth for celestial dimensions and layout limits: `gameObjects.ts` derives Moolaris visual size and world bounds from it, and geometry tests assert those derivations rather than duplicating numeric constants. The pure projection returns the `PlanetState` list for an active-clock value. The tuning order is the canonical state/projection order. `orbits.ts` exports a deterministic canonical-order assertion; `GameScene` calls it before its index-based creation/synchronization projections and the simulation calls it before returning projected planets. It throws a descriptive v3-invariant error if snapshot IDs/order differ from tuning; tests cover a codec-valid permutation or substitution. The zero-time projection must reproduce the initial snapshot positions, preventing a first-tick teleport. `advanceGameSimulation` advances the clock, projects planets at the resulting elapsed time, and returns them in the v3 snapshot. Paused frames retain the planet list unchanged.
+**Contract**: Define Moolaris at `(0, 0)` with radius `1155`; planet radii `96`, `144`, `192`; orbital radii `2000`, `3000`, `4000`; and CCW periods `180`, `240`, `300` seconds. Define explicit initial phases, and derive `initialGameState.planets` from the resulting zero-active-time projection. Define a deterministic visual asteroid annulus from `4650` to `5050` plus a navigation margin. Tuning order and each planet's static ID/name/radius fields are canonical. The codec validates that contract during restore and rejects a reordered or substituted v3 list atomically with a descriptive invariant error. Projection reproduces the new initial snapshot at zero time and leaves paused planet positions unchanged. Derive bounds from the asteroid outer radius and margin.
 
-#### 2. Sun contact and existing collision boundaries
+#### 2. Moolaris contact and pass-through boundaries
 
 **Files**: `src/game/mechanics/gameSimulation.ts`, `src/game/scenes/gameScene.ts`, `src/game/scenes/gameObjects.ts`, `src/game/objects/sun/definition.ts`
 
-**Intent**: Preserve a meaningful collision with stationary Moolaris without allowing Phaser physics to override authoritative flight state, and explicitly allow direct flight/projectiles through planets.
+**Intent**: Make Moolaris contact authoritative and obvious, while planets and asteroids stay non-interactive.
 
-**Contract**: After ship movement, a pure resolver pushes any ship overlapping Moolaris to the sum of configured Moolaris and ship radii; it preserves velocity, rotation, HP, and lifecycle. A zero-length position vector uses opposite velocity, then positive X if velocity is also zero. Scene physics no longer collides ship with planets or Moolaris. Pure projectile obstacles contain Moolaris only, so planet shots pass through. World bounds are derived from the largest configured orbit plus body radius and navigation margin.
+**Contract**: After flight movement, a pure resolver moves an overlapping ship to `sun radius + ship radius + configured visible clearance`, sets velocity to zero, and preserves rotation, HP, lifecycle, clock, and weapon state. A zero-length contact vector uses opposite previous velocity, then positive X. Remove the Arcade collider. Projectile obstacles contain Moolaris only; ships and shots pass through planets and the asteroid band.
 
-#### 3. World-object labels and projection
+#### 3. Celestial labels and visual asteroid band
 
-**Files**: `src/game/objects/planet/planet.ts`, `src/game/objects/sun/sun.ts`, `src/game/scenes/gameScene.ts`
+**Files**: `src/game/objects/planet/planet.ts`, `src/game/objects/sun/sun.ts`, new scene-owned asteroid-band module as needed, `src/game/scenes/gameScene.ts`
 
-**Intent**: Make every celestial body identifiable in player language and keep Phaser projections synchronized with current authoritative world positions.
+**Intent**: Make bodies identifiable, establish a decorative fourth orbital band, and present authoritative orbital updates without choppy visual jumps.
 
-**Contract**: Planet labels render names only, never debug coordinates. Moolaris renders the exact visible label `MOO-2187 “Moolaris”`. Each frame synchronizes post-simulation planet state before updating dependent visuals; existing landing rings/prompt remain visible and gain no functionality.
+**Contract**: Planet labels are names only. `Planet.synchronizeAuthoritative(state)` accepts the exact snapshot slice for identity/radius and non-visual gameplay calculations; `Planet.renderOrbit(activeElapsedMs)` owns all transient display coordinates. `Sun.synchronizeLabel(shipPosition, cameraMidpoint)` receives transient Phaser vectors from `GameScene` after ship synchronization and renders exactly `MOO-2187 “Moolaris”` inside its visible surface on the edge facing the ship; it uses the camera midpoint only when ship and sun share a position. Each moving planet and asteroid visual derives its display position from pure projections at the enclosing 100 ms active-time boundaries and linearly interpolates with `activeElapsedMs % 100 / 100`; it snaps only at scene creation, restore, or invalid targets. Raw Phaser delta must not advance this presentation. Exact authoritative positions still drive all non-visual logic. The planet sprite, atmosphere, name label, landing ring, landing zone, and prompt geometry share that interpolated display position. The asteroid band has a fixed deterministic seed/count and projects its angle from the same active elapsed-time basis and CCW orbital convention as the planets; `GameScene` synchronizes it from `state.clock.activeElapsedMs` after each provider update. It has no label, body, obstacle, collider, damage, or persisted state. Existing landing rings and prompt remain visible but inert for S-03, and their radius-derived geometry tests update to the tuned planet sizes. Synchronize planets before dependent indicators and visuals.
 
-#### 4. Orientation and menu pause-state contract
+### Success Criteria
 
-**Files**: `src/game/state/gameClockState.ts`, `src/game/application/gameStateCodec.ts`, `src/game/scenes/gameScene.ts`
+#### Automated Verification
 
-**Intent**: Make every visual layer that blocks play pause the same authoritative active clock, including portrait orientation and the in-game menu.
+- Pure mechanics tests prove zero-time compatibility, canonical order, CCW direction, distinct radii/periods, full-period return, pause/restore/chunk equivalence, tuned geometry, and immutable input.
+- Contact tests prove configured visible clearance, zero post-contact velocity, unchanged non-flight state, and both zero-vector fallbacks.
+- Direct-flight/projectile tests prove planets and asteroids pass through while Moolaris is the sole obstacle: `npm.cmd run test:mechanics`.
+- State continuity tests pass: `npm.cmd run test:domain`.
+- TypeScript projects compile: `npm.cmd run typecheck`.
 
-**Contract**: Add `orientation` and `menu` to the valid unique pause-reason union and codec allow-list. On a coarse-pointer portrait change, `GameScene` adds/removes `orientation`, clears held pointer, joystick, boost, and fire intent, and removes its media-query listener on shutdown. Menu presentation adds/removes `menu`; either reason composes with background and landed reasons without advancing active time. On scene creation after restore, reconcile `orientation` against current media-query state and always remove `menu`, because no menu modal is restored; scene/menu teardown also removes its owned reason. Regression tests cover restoring snapshots made while each blocker was active.
+#### Manual Verification
 
-### Success Criteria:
+- Observe four distinct CCW orbital bands; focus loss freezes active-clock motion.
+- Confirm readable labels, intended smaller star scale, and name-only planet labels.
+- Confirm planet/asteroid pass-through and visible, non-damaging Moolaris push-out that stops the ship.
 
-#### Automated Verification:
-
-- Pure mechanics tests prove zero-time compatibility with the initial v3 planet order/positions, initial phase, CCW direction, distinct periods, full-period return, paused stability, configured radii, chunked-frame equivalence, and immutable input.
-- Mechanics and state continuity tests prove restore produces the same next orbital/flight state and Moolaris push-out reaches the exact configured clearance without HP or terminal-state changes.
-- Existing projectile and direct-flight tests prove planets no longer block shots or ship motion while Moolaris remains the sole obstacle: `npm.cmd run test:mechanics`.
-- Clock/provider tests prove orientation and menu reasons are unique, codec-valid, serializable, compose with existing pause reasons, and reconcile correctly after restore.
-- Production and test TypeScript projects compile: `npm.cmd run typecheck`.
-
-#### Manual Verification:
-
-- Observe all named planets moving CCW around stationary Moolaris; pause/focus loss freezes them, and the ship passes through planets but is pushed out of Moolaris without damage.
-- On a portrait touch layout, confirm held flight input is cleared and time stays paused until landscape resumes.
-
-**Implementation Note**: After automated checks pass, pause for human confirmation of this manual verification before considering the phase complete.
+**Implementation Note**: After automated checks pass, pause for human confirmation before considering the phase complete.
 
 ---
 
-## Phase 2: Full-Viewport Touch Controls and Toolbar Menu
+## Phase 2: Full-Viewport Touch Controls, Orientation, and Toolbar Menu
 
 ### Overview
 
-Make the game canvas resize to the viewport without stretching world objects, introduce a scene-owned mobile joystick, fix the portrait blocker, and reorganize the DOM toolbar and paused menu into non-overlapping zones.
+Make the canvas responsive, introduce touch steering, and implement UI-owned orientation and menu pause lifecycles.
 
-### Changes Required:
+### Changes Required
 
-#### 1. Viewport-sized Phaser canvas and responsive scene HUD
+#### 1. Responsive Phaser layout and touch-flight joystick
 
-**Files**: `src/game/main.ts`, `public/style.css`, `src/game/scenes/gameScene.ts`, `src/game/scenes/mainMenuScene.ts`, `src/game/scenes/gameOverScene.ts`, `src/game/scenes/preloaderScene.ts`, `src/game/effects/starfield.ts`
+**Files**: `src/game/main.ts`, `public/style.css`, `src/game/scenes/gameScene.ts`, `src/game/scenes/mainMenuScene.ts`, `src/game/scenes/gameOverScene.ts`, `src/game/scenes/preloaderScene.ts`, `src/game/effects/starfield.ts`, new `src/game/scenes/touchFlightJoystick.ts`, `tests/ui/applicationUiTest.ts`
 
-**Intent**: Use all available viewport pixels while retaining the world’s native geometry and keeping transient scene HUD readable after rotation, resize, or fullscreen changes.
+**Intent**: Fill the viewport without stretching world geometry, with exclusive touch steering.
 
-**Contract**: Replace `Scale.FIT` with `Scale.RESIZE`; the game container/canvas fills the viewport without app padding. Keep normal game camera zoom at one. Every Phaser scene with fixed 1024 x 768 placement derives its initial layout from current scale dimensions, subscribes to scale resize, and removes that listener on shutdown: Game updates its UI-camera viewport, anchors help/prompt/exit, and refreshes Starfield coverage for the new visible extent; Main Menu, Preloader, and Game Over re-centre their content. On Main Menu resize, stop and restart the active cow tween from a newly computed in-bounds route, so its captured pre-resize dimensions cannot leave it off-screen. DOM controls retain safe-area positioning through their own CSS insets.
+**Contract**: Replace `Scale.FIT` with `Scale.RESIZE`, retain normal game-camera zoom one, and reflow fixed scene/HUD positions on resize with cleanup. On coarse-pointer devices a UI-camera joystick at left-centre uses a 120 px base and 44 px knob, maps clamped direction to existing steering, and prevents outside touches from steering.
 
-#### 2. Scene-owned touch-flight joystick
+#### 2. Orientation pause contract and toolbar
 
-**Files**: new `src/game/scenes/touchFlightJoystick.ts`, `src/game/scenes/gameScene.ts`, `tests/ui/applicationUiTest.ts`
+**Files**: `src/game/state/gameClockState.ts`, `src/game/application/gameStateCodec.ts`, `src/game/scenes/gameScene.ts`, `index.html`, `src/ui/components/displayControls.ts`, `src/ui/components/runStatus.ts`, `src/ui/contracts.ts`, `src/ui/setupUi.ts`, `src/ui/adapters/displayAdapter.ts`, `public/style.css`, UI harness and tests
 
-**Intent**: Give touch players an accessible, visually stable directional control without changing desktop flight or introducing an analog speed rule.
+**Intent**: Revise the existing portrait presentation stack so it stays aligned with the authoritative clock and the readable toolbar.
 
-**Contract**: On a coarse-pointer device and only in active `Game`, create a UI-camera joystick centred on the left viewport edge at vertical midpoint: 120 px semi-transparent base and 44 px knob. `GameScene` passes its UI container and UI camera explicitly to the joystick constructor, which adds every display object to that container so the main-camera/UI-camera ignore masks apply once and resize/masking stay coherent. Its pointer gestures are exclusive touch steering; the joystick stops propagation and `GameScene.startSteering` rejects coarse-pointer touches, so canvas touches outside it do not steer. Clamped knob direction produces the same target-direction semantics as pointer flight at normal existing acceleration/max speed; release clears the target and coasts. The joystick resizes/repositions with the viewport and destroys all graphics/listeners on shutdown.
+**Contract**: Add unique serializable `orientation` and `menu` reasons. Reuse the existing `DisplayPort`, display adapter, notice markup, UI harness, and component tests strictly for orientation presentation; do not add a parallel observer or notice element. `GameScene` is the sole media-query owner: it applies/removes `orientation`, clears pointer/joystick/boost/fire intent, reconciles after restore, and removes its listener on shutdown. Update the existing DOM blocker to render exactly `Rotate your device to landscape to play.` above every control through its revised CSS layer. Keep the established three-zone toolbar and compact-width behavior.
 
-#### 3. Orientation blocker and top toolbar layout
+#### 3. Modal menu and control lifecycle
 
-**Files**: `index.html`, `src/ui/components/displayControls.ts`, `src/ui/components/runStatus.ts`, `src/ui/contracts.ts`, `src/ui/setupUi.ts`, `src/ui/adapters/displayAdapter.ts`, `public/style.css`, `tests/ui/fixtures/uiHarness.html`, `tests/ui/fixtures/uiHarness.ts`, `tests/ui/componentsUiTest.ts`, `tests/ui/applicationUiTest.ts`
+**Files**: `index.html`, new `src/ui/adapters/gameControlAdapter.ts`, `src/ui/components/gameMenu.ts`, `src/ui/contracts.ts`, `src/ui/setupUi.ts`, `src/game/scenes/gameScene.ts`, `src/ui/components/audioControls.ts`, UI harness and tests
 
-**Intent**: Present orientation blocking and game status in a stable hierarchy that never competes with toolbar or joystick interaction.
+**Intent**: Provide a safe paused menu without a scene-to-DOM dependency.
 
-**Contract**: On a coarse-pointer portrait layout, a full-viewport `orientation-notice` has the highest visual layer, blocks all controls, and renders exactly `Rotate your device to landscape to play.` with no fullscreen action. `displayControls` renders the notice from `DisplayPort` only; `GameScene` is the sole owner of the `orientation` pause reason and input clearing. The toolbar uses three zones: top-left Menu with non-interactive `Anonymous` beneath; centred clock with HP text/bar beneath; top-right cash, `Load <used> / <capacity>`, Cargo details, then Ship info. At widths below 560 CSS px, left/right zones have fixed compact widths, cash/load stack vertically, and action labels shorten to `Cargo` and `Ship`; the centred clock/HP remains centred. Cargo/Ship detail panels anchor below the right stack with `max-width: min(280px, calc(100vw - 16px))`. They do not hide the joystick because they occupy the opposite side of the screen. All controls retain `data-game-input="ignore"`.
+**Contract**: `GameControlPort` has idempotent `pause(reason)`, `resume(reason)`, and `endGame()`. The menu adapter alone applies/removes `menu`; GameScene only handles the payload-free end-game event. Remove the persistent normal-game audio host and its unconditional mount. The accessible modal is the sole audio-control host; it mounts audio controls once for its own lifecycle, mirrors that composition in the UI harness, and proves teardown/re-entry cannot duplicate subscriptions. The modal owns/restores focus, sits below the orientation blocker, contains touch-only fullscreen exit and End game, and tears down only its own reason/listeners.
 
-#### 4. Modal game menu and control lifecycle
+### Success Criteria
 
-**Files**: `index.html`, new `src/ui/adapters/gameControlAdapter.ts`, new or updated `src/ui/components/gameMenu.ts`, `src/ui/contracts.ts`, `src/ui/setupUi.ts`, `src/game/scenes/gameScene.ts`, `src/ui/components/audioControls.ts`, `public/style.css`, `tests/ui/fixtures/uiHarness.html`, `tests/ui/fixtures/uiHarness.ts`, `tests/ui/componentsUiTest.ts`, `tests/ui/applicationUiTest.ts`
+#### Automated Verification
 
-**Intent**: Give the player a safe full-screen operational menu without duplicating controls in the active play view.
+- UI component tests cover orientation text/layering, toolbar layout, dialog focus lifecycle, menu-owned audio, and control-port actions.
+- Application tests cover desktop pointer flight, joystick interaction/resizing, orientation pause/restoration, menu pause/resume/teardown, and mobile fullscreen exit.
+- Resize tests cover canvas/HUD/scene reflow and unscaled world geometry: `npm.cmd run test:ui`.
+- TypeScript projects compile: `npm.cmd run typecheck`.
 
-**Contract**: `GameControlPort` exposes idempotent `pause(reason)`, `resume(reason)`, and `endGame()` commands. `setupApplicationUi` constructs the adapter/menu and replaces its normal-view `mountAudioControls` call with menu-owned audio controls; the UI harness mirrors this composition. Its adapter updates the registry provider only while Game is active and emits the payload-free `game-control:end-game` event on `game.events` for `endGame`; `GameScene` owns that listener and performs the existing GameOver transition. Menu opens an accessible full-screen modal below the orientation notice, blocks game input, owns focus, pauses using the port's `menu` reason, and restores focus to Menu on close. It contains existing audio controls (removed from normal game view), a mobile/touch-only `Exit fullscreen` control when fullscreen is active, and `End game`, which closes the menu and uses `endGame()` without recording a terminal result. Close X and Escape dismiss it. The adapter, scene listener, and port are idempotent: their teardown removes their listeners and only their owned pause reason (`menu` for the menu; `orientation` for the orientation listener), rather than reusing focus-loss cleanup.
+#### Manual Verification
 
-### Success Criteria:
+- On touch, confirm joystick placement and non-overlap with Cargo/Ship details.
+- Confirm resize, fullscreen, portrait blocking, toolbar readability, and menu pause behavior.
 
-#### Automated Verification:
-
-- UI component tests cover English orientation text, highest-layer visibility, revised toolbar order, Anonymous status, compact-width layout, viewport-bounded details, dialog focus lifecycle, Escape/Close behavior, audio controls mounted only in the dialog, GameControlPort action dispatch, and end-game action dispatch.
-- Application tests cover desktop pointer flight unchanged; touch joystick visibility, direction, clamping, release, outside-touch non-steering, UI-camera masking, and resize; portrait pause/no clock progress/cleared input and post-restore reconciliation; menu pause/resume/teardown; and mobile fullscreen exit visibility/wiring.
-- Resize tests cover canvas-to-viewport dimensions, UI-camera/HUD anchors, Main Menu/Game/Game Over/Preloader reflow, orientation/fullscreen transitions, and unscaled world-object geometry: `npm.cmd run test:ui`.
-- Production and test TypeScript projects compile: `npm.cmd run typecheck`.
-
-#### Manual Verification:
-
-- On a touch device, use the left-centre joystick comfortably without accidental steering from other screen touches; verify it stays screen-fixed through resize and right-side Cargo/Ship details do not overlap it.
-- Resize/rotate and enter/exit fullscreen; confirm canvas fills the viewport, world objects keep their proportions, portrait notice is topmost and pauses play, the toolbar remains readable, and the menu safely pauses play.
-
-**Implementation Note**: After automated checks pass, pause for human confirmation of this manual verification before considering the phase complete.
+**Implementation Note**: After automated checks pass, pause for human confirmation before considering the phase complete.
 
 ---
 
@@ -157,76 +139,67 @@ Make the game canvas resize to the viewport without stretching world objects, in
 
 ### Overview
 
-Complete end-to-end acceptance coverage, validate state/architecture boundaries, and refresh generated architecture artifacts required by the authoritative planet-state change.
+Complete end-to-end acceptance coverage and refresh required architecture artifacts.
 
-### Changes Required:
+### Changes Required
 
 #### 1. End-to-end user acceptance
 
 **Files**: `tests/game-mechanics.test.mjs`, `tests/domain/gameState.test.mjs`, `tests/ui/applicationUiTest.ts`, UI component/harness tests as required
 
-**Intent**: Protect the cross-layer player contract: moving world, unchanged direct desktop flight, touch joystick, responsive canvas, and paused controls.
+**Intent**: Protect the moving-system, controls, and paused-UI player contract across layers.
 
-**Contract**: Tests use deterministic pure mechanics assertions for orbital behavior and semantic Playwright selectors for toolbar/menu/orientation behavior. Desktop and touch projects retain no-page-error, focus pause/resume, portrait blocking, and scene-transition coverage.
+**Contract**: Keep orbital behavior in pure mechanics tests and use semantic Playwright selectors for UI behavior. Retain desktop/touch no-page-error, focus pause/resume, portrait blocking, and scene-transition coverage.
 
 #### 2. Generated architecture contracts
 
 **Files**: `context/foundation/code-graph.json`, `context/foundation/data-logical-diagram.md`
 
-**Intent**: Keep dependency and persistable-data documentation accurate after planet positions become simulation-updated authoritative state and UI/control modules are introduced.
+**Intent**: Keep dependency and persistable-state documentation accurate after authoritative planet projections and UI-control additions.
 
-**Contract**: Regenerate the code graph and logical data diagram using their project skills/scripts, validate the diagram, and resolve every `REFACTOR_REQUIRED` finding before completion.
+**Contract**: Regenerate and validate both artifacts with their project skills, resolving every `REFACTOR_REQUIRED` finding.
 
-### Success Criteria:
+### Success Criteria
 
-#### Automated Verification:
+#### Automated Verification
 
 - Full unit, architecture, and desktop/touch Playwright suite passes: `npm.cmd run test:project`.
 - Code graph and logical data diagram regenerate and validate with no `REFACTOR_REQUIRED` finding.
-- Production build and both TypeScript projects pass: `npm.cmd run build-nolog` and `npm.cmd run typecheck`.
+- Production build and TypeScript projects pass: `npm.cmd run build-nolog` and `npm.cmd run typecheck`.
 
-#### Manual Verification:
+#### Manual Verification
 
-- Complete menu-to-flight journey works at desktop and touch sizes: status and controls are readable, direct flight is responsive, Moolaris push-out is understandable, menu audio/fullscreen/end-game controls work, and no visual stretching or input regression is visible.
+- Complete desktop and touch menu-to-flight journey is readable and responsive; Moolaris contact is understandable; no stretching or input regression is visible.
 
 ## Testing Strategy
 
 ### Unit Tests
 
-- Exercise orbit calculations at phase/period boundaries, paused active time, restore continuity, configurable body radius, and Moolaris centre/velocity fallbacks.
-- Exercise touch joystick geometry and intent mapping independently from Phaser scene lifecycle where possible.
+- Test phase/period boundaries, pause/restore continuity, canonical ordering, contact fallbacks, and input immutability.
+- Test 100 ms active-time interpolation separately from orbital mechanics, including creation/restore snaps, paused visual stability, resume continuity, and exact-state non-visual logic.
+- Test asteroid-band determinism, shared active-time orbital basis, and paused stability without adding it to authoritative state.
 
 ### Integration Tests
 
-- Use Playwright desktop and touch projects for pointer-vs-joystick input, portrait pause/blocking, toolbar/dialog accessibility, full-window resize/fullscreen behavior, and browser-error smoke coverage.
-- Use semantic role/label selectors for DOM controls; keep orbit correctness in pure mechanics tests rather than pixel comparisons.
+- Use desktop and touch Playwright projects for pointer/joystick behavior, portrait/menu pauses, resize/fullscreen behavior, and browser-error smoke coverage.
 
 ### Manual Testing Steps
 
-1. Start a run and observe labels, distinct CCW planet motion, and pause/resume stability.
-2. Fly through a planet, then into Moolaris; confirm only Moolaris pushes the ship out and HP is unchanged.
-3. On touch, enter portrait while steering and confirm the English orientation notice is topmost, clears input, and freezes time; return to landscape and confirm play resumes.
-4. On touch, steer using the left-centre joystick, open Cargo and Ship info, and confirm their right-side panels do not overlap it.
-5. Open Menu, change audio, exit fullscreen on mobile when active, close with X/Escape, and end the demo through End game.
-6. Resize, rotate, and fullscreen the application; confirm canvas fill, object proportions, responsive scene HUD, and toolbar readability.
-
-## Performance Considerations
-
-Orbit projection is a fixed three-body pure calculation each simulation tick. Joystick graphics and menu subscriptions must be scene/UI-owned and must not accumulate resize, pointer, or keyboard listeners across scene re-entry.
+1. Verify planets and asteroid band occupy visibly separated CCW orbital bands.
+2. Verify Moolaris label faces the ship and contact stops the ship outside it without damage.
+3. Verify planet and asteroid pass-through for ships and shots.
+4. Verify portrait blocking, joystick, menu, resize, and fullscreen behavior.
 
 ## Migration Notes
 
-No snapshot schema migration is introduced. Planet positions retain their existing JSON-safe `Vector2State` shape; their new values are deterministic projections of configured body IDs and active elapsed time. This follows the project rule against adding snapshot migrations before application maturity.
+No snapshot migration or schema-version change is introduced. Persisted planet positions remain JSON-safe `Vector2State` values; asteroid positions remain transient presentation data.
 
 ## References
 
 - Product contract: `context/foundation/prd.md` (US-02, FR-010, FR-012, FR-014)
 - Roadmap slice: `context/foundation/roadmap.md` (S-02)
-- Previous slice plan: `context/changes/anonymous-run-status/plan.md`
 - Architecture: `context/foundation/architecture.md`
 - Testing policy: `context/foundation/testing.md`
-- State boundary: `src/game/state/AGENTS.md`
-- Existing simulation and scene: `src/game/mechanics/gameSimulation.ts`, `src/game/scenes/gameScene.ts`
 
 ## Progress
 
@@ -236,30 +209,31 @@ No snapshot schema migration is introduced. Planet positions retain their existi
 
 #### Automated
 
-- [ ] 1.1 Pure mechanics tests prove zero-time compatibility with the initial v3 planet order/positions, initial phase, CCW direction, distinct periods, full-period return, paused stability, configured radii, chunked-frame equivalence, and immutable input.
-- [ ] 1.2 Mechanics and state continuity tests prove restore produces the same next orbital/flight state and Moolaris push-out reaches the exact configured clearance without HP or terminal-state changes.
-- [ ] 1.3 Existing projectile and direct-flight tests prove planets no longer block shots or ship motion while Moolaris remains the sole obstacle: `npm.cmd run test:mechanics`.
-- [ ] 1.4 Clock/provider tests prove orientation and menu reasons are unique, codec-valid, serializable, compose with existing pause reasons, and reconcile correctly after restore.
+- [ ] 1.1 Pure mechanics and presentation tests prove zero-time compatibility, canonical order, distinct CCW orbital bands, active-time pausing, tuned geometry, smooth frame-delta interpolation, chunk equivalence, and immutable input.
+- [ ] 1.2 Contact and restore tests prove visible Moolaris clearance, zero post-contact velocity, unchanged non-flight state, and deterministic fallbacks.
+- [ ] 1.3 Direct-flight and projectile tests prove planets and asteroids pass through while Moolaris remains the sole obstacle: `npm.cmd run test:mechanics`.
+- [ ] 1.4 State continuity tests prove restore produces the same next orbital and flight state: `npm.cmd run test:domain`.
 - [ ] 1.5 Production and test TypeScript projects compile: `npm.cmd run typecheck`.
 
 #### Manual
 
-- [ ] 1.6 Observe all named planets moving CCW around stationary Moolaris; pause/focus loss freezes them, and the ship passes through planets but is pushed out of Moolaris without damage.
-- [ ] 1.7 On a portrait touch layout, confirm held flight input is cleared and time stays paused until landscape resumes.
+- [ ] 1.6 Observe named planets and visual asteroid band on distinct CCW orbits; focus loss freezes all active-clock motion.
+- [ ] 1.7 Confirm readable labels, intended smaller star scale, and name-only planet labels.
+- [ ] 1.8 Confirm planet/asteroid pass-through and visible, non-damaging Moolaris push-out that stops the ship.
 
-### Phase 2: Full-Viewport Touch Controls and Toolbar Menu
+### Phase 2: Full-Viewport Touch Controls, Orientation, and Toolbar Menu
 
 #### Automated
 
-- [ ] 2.1 UI component tests cover English orientation text, highest-layer visibility, revised toolbar order, Anonymous status, compact-width layout, viewport-bounded details, dialog focus lifecycle, Escape/Close behavior, audio controls mounted only in the dialog, GameControlPort action dispatch, and end-game action dispatch.
-- [ ] 2.2 Application tests cover desktop pointer flight unchanged; touch joystick visibility, direction, clamping, release, outside-touch non-steering, UI-camera masking, and resize; portrait pause/no clock progress/cleared input and post-restore reconciliation; menu pause/resume/teardown; and mobile fullscreen exit visibility/wiring.
-- [ ] 2.3 Resize tests cover canvas-to-viewport dimensions, UI-camera/HUD anchors, Main Menu/Game/Game Over/Preloader reflow, orientation/fullscreen transitions, and unscaled world-object geometry: `npm.cmd run test:ui`.
+- [ ] 2.1 UI component tests cover orientation text/layering, toolbar layout, dialog focus lifecycle, menu-owned audio, and GameControlPort actions.
+- [ ] 2.2 Application tests cover desktop pointer flight, touch joystick behavior, orientation pause/reconciliation, menu pause/resume/teardown, and mobile fullscreen exit.
+- [ ] 2.3 Resize tests cover canvas/HUD/scene reflow and unscaled world geometry: `npm.cmd run test:ui`.
 - [ ] 2.4 Production and test TypeScript projects compile: `npm.cmd run typecheck`.
 
 #### Manual
 
-- [ ] 2.5 On a touch device, use the left-centre joystick comfortably without accidental steering from other screen touches; verify it stays screen-fixed through resize and right-side Cargo/Ship details do not overlap it.
-- [ ] 2.6 Resize/rotate and enter/exit fullscreen; confirm canvas fills the viewport, world objects keep their proportions, portrait notice is topmost and pauses play, the toolbar remains readable, and the menu safely pauses play.
+- [ ] 2.5 On touch, confirm joystick placement and non-overlap with Cargo/Ship details.
+- [ ] 2.6 Confirm resize, fullscreen, portrait blocking, toolbar readability, and menu pause behavior.
 
 ### Phase 3: Acceptance Coverage and Architecture Artifacts
 
@@ -271,4 +245,4 @@ No snapshot schema migration is introduced. Planet positions retain their existi
 
 #### Manual
 
-- [ ] 3.4 Complete menu-to-flight journey works at desktop and touch sizes: status and controls are readable, direct flight is responsive, Moolaris push-out is understandable, menu audio/fullscreen/end-game controls work, and no visual stretching or input regression is visible.
+- [ ] 3.4 Complete desktop and touch menu-to-flight journey works without visual stretching or input regression.
