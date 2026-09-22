@@ -19,6 +19,9 @@ dist-ssr
 .env.*
 !.env.example
 
+# Locally installed 10xDevs skills
+.agents/skills/10x-*/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
