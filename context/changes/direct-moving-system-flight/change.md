@@ -1,9 +1,9 @@
 ---
 change_id: direct-moving-system-flight
 title: Direct moving system flight
-status: planned
+status: implementing
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-09-22
 archived_at: null
 ---
 
