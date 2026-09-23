@@ -285,7 +285,7 @@ No persisted-shape migration is required. Planet positions retain their existing
 
 #### Manual
 
-- [ ] 1.3 The three planets move smoothly in distinct counter-clockwise circles and freeze immediately whenever active time is paused.
+- [x] 1.3 The three planets move smoothly in distinct counter-clockwise circles and freeze immediately whenever active time is paused.
 
 ### Phase 2: Moolaris Flight Safety
 

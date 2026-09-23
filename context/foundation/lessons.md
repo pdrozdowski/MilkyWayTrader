@@ -15,3 +15,10 @@
 - **Problem**: Zapisany stan gry w starszej wersji u użytkowników będzie niekompatybilny z nowym stanem i może spowodować crash.
 - **Rule**: Nie implementuj migracji snapshotów stanu przed osiągnięciem odpowiedniego poziomu dojrzałości aplikacji.
 - **Applies to**: all
+
+## Enable camera pixel alignment for tracking
+
+- **Context**: graphics and rendering
+- **Problem**: when objects are rendered and are moving then they might appear in glitchy way due to lack of pixel alignment
+- **Rule**: that problem is solved with phaser engine the camera pixel alignement flag needs to be set when tracking
+- **Applies to**: implement
