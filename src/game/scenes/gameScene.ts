@@ -67,7 +67,7 @@ export class Game extends Scene
             this.audio.play('ship-laser');
         });
         this.contact = this.physics.add.collider(this.ship.sprite, [this.sun.sprite, ...this.planets.map(planet => planet.sprite)]);
-        this.camera.startFollow(this.ship.sprite, false, 1, 1, 0, 0);
+        this.camera.startFollow(this.ship.sprite, true, 1, 1, 0, 0);
         this.camera.centerOn(this.ship.sprite.x, this.ship.sprite.y);
         const ui = this.add.container(0, 0).setScrollFactor(0).setDepth(ObjectDepth.UI);
         const help = this.add.text(24, 96, 'Hold / drag to fly · Left Ctrl: fire', {
@@ -216,7 +216,14 @@ export class Game extends Scene
             shipTuning.maxSpeed, shipBoostTuning.speedMultiplier, delta);
         const zoomTarget = state.ship.boosting ? shipBoostTuning.cameraZoom : 1;
         const zoomBlend = 1 - Math.exp(-delta / (shipBoostTuning.cameraTransitionSeconds * 1000));
-        this.camera.setZoom(this.camera.zoom + (zoomTarget - this.camera.zoom) * zoomBlend);
+        const nextZoom = this.camera.zoom + (zoomTarget - this.camera.zoom) * zoomBlend;
+        if (Math.abs(nextZoom - zoomTarget) < 0.001) {
+            this.camera.setZoom(zoomTarget);
+            this.camera.roundPixels = Number.isInteger(zoomTarget);
+        } else {
+            this.camera.setZoom(nextZoom);
+            this.camera.roundPixels = false;
+        }
         const planetsById = this.planetsById(state.planets);
         for (const planet of this.planets) {
             planet.synchronize(planetsById.get(planet.id)!);
