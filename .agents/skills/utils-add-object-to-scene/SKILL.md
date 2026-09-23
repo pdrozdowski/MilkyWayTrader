@@ -19,7 +19,7 @@ Defaults: no physics; rectangle when physics is requested. Creates a class, auto
 
 Implement behavior, placement, create/update wiring and interactions. Read [contracts](references/objects.md) for definitions/ownership; [animation, physics and camera integration](references/animation-physics.md) when applicable. Use [$utils-add-sound](../utils-add-sound/SKILL.md) when audio is requested.
 
-Stateful object constructors receive an identity or readonly state slice. Their methods emit intent or synchronize presentation; they never own or directly replace authoritative state. After changing authoritative state, refresh both [$arch-make-code-graph](../arch-make-code-graph/SKILL.md) and [$arch-make-data-logical-diag](../arch-make-data-logical-diag/SKILL.md), and resolve every diagram finding.
+Stateful object constructors receive an identity or readonly state slice. Their methods emit intent or synchronize presentation; they never own or directly replace authoritative state. Generate architecture artifacts only when the requested task explicitly includes them.
 
 World objects scroll with the camera; the ship remains its follow target. Exclude new world sprites and overlays from Game's UI camera. Own cleanup of effects/listeners/timers/sounds; keep economy and models independent of Phaser.
 

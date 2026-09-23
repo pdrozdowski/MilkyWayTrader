@@ -1,6 +1,6 @@
 ---
 name: arch-make-code-graph
-description: Build or check MilkyWayTrader's deterministic JSON dependency graph from TypeScript declarations and referenced assets. Use when creating, refreshing, or validating context/foundation/code-graph.json after source changes.
+description: Build or check MilkyWayTrader's deterministic JSON dependency graph from TypeScript declarations and referenced assets. Use only when a user explicitly requests creation, refresh, or validation of context/foundation/code-graph.json.
 ---
 
 Run from the repository root:
