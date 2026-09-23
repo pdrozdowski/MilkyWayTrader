@@ -1,5 +1,5 @@
 ---
-change_id: S-01_anonymous-run-status
+change_id: s01-anonymous-run-status
 title: Anonymous run status
 status: implemented
 created: 2026-09-21

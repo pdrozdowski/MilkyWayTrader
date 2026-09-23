@@ -1,7 +1,7 @@
 <!-- IMPL-REVIEW-REPORT -->
 # Implementation Review: Anonymous Run Status Implementation Plan
 
-- **Plan**: context/changes/S-01_anonymous-run-status/plan.md
+- **Plan**: context/changes/s01-anonymous-run-status/plan.md
 - **Scope**: Full plan (completed phases only)
 - **Reviewed phases**: 1, 2
 - **Date**: 2026-09-21
