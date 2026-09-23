@@ -1,6 +1,6 @@
 # Anonymous Run Status — Plan Brief
 
-> Full plan: `context/changes/S-01_anonymous-run-status/plan.md`
+> Full plan: `context/changes/s01-anonymous-run-status/plan.md`
 
 ## What & Why
 
