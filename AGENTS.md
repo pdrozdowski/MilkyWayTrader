@@ -29,7 +29,7 @@ Command rules: [.codex/rules/project.rules](.codex/rules/project.rules).
 - Tokeny: tylko potrzebne operacje/projekt; bez administracji/rozliczeń. Sekrety: zmienne środowiskowe, nigdy repozytorium, commitowany `.mcp.json` ani rozmowa.
 - Produkcję zmieniaj po zatwierdzeniu planu. Produkcyjne bazy/projekty usuwa i główny sekret rotuje użytkownik ręcznie.
 
-- Every authoritative game-state, clock, timer, lifecycle, snapshot, save, or restore change requires @.agents/skills/utils-add-state/SKILL.md and refreshed code/data graphs with no `REFACTOR_REQUIRED` findings.
+- Every authoritative game-state, clock, timer, lifecycle, snapshot, save, or restore change requires @.agents/skills/utils-add-state/SKILL.md. Generate architecture artifacts only when a task explicitly requests them.
 
 ## Lessons learned
 

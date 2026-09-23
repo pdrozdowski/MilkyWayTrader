@@ -17,12 +17,4 @@ Model positions, velocities, offsets, and other coordinate pairs as `Vector2Stat
 
 Update the versioned codec whenever the aggregate changes. A breaking persisted shape requires a schema-version increment and migration decision; stop for a product decision when safe migration or default semantics are unknown. Test validation, atomic restore, immutability, transitions, pause behavior, and serialization continuity appropriate to the change.
 
-Finish by running focused tests, then refresh and validate both artifacts:
-
-```powershell
-node .agents/skills/arch-make-code-graph/scripts/build-code-graph.mjs
-node .agents/skills/arch-make-data-logical-diag/scripts/build-data-logical-diag.mjs
-node .agents/skills/arch-make-data-logical-diag/scripts/build-data-logical-diag.mjs --check
-```
-
-Do not hand off with `REFACTOR_REQUIRED` findings.
+Finish by running focused tests. Generate or validate architecture artifacts only when the requested task explicitly includes them.
