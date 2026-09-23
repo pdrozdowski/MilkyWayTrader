@@ -280,8 +280,8 @@ No persisted-shape migration is required. Planet positions retain their existing
 
 #### Automated
 
-- [ ] 1.1 Mechanics tests prove each configured period, phase, radius, direction, and exact active-time projection.
-- [ ] 1.2 State tests prove paused and restored runs retain the same projected planet positions and schema-v3 codec round trips remain valid.
+- [x] 1.1 Mechanics tests prove each configured period, phase, radius, direction, and exact active-time projection.
+- [x] 1.2 State tests prove paused and restored runs retain the same projected planet positions and schema-v3 codec round trips remain valid.
 
 #### Manual
 

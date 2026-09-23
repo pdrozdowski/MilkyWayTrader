@@ -57,7 +57,7 @@ export class Planet extends SceneObject
 
     private updateDebugLabel (state: PlanetState): void
     {
-        const text = `${state.name}\nx: ${Math.round(state.position.x)}  y: ${Math.round(state.position.y)}`;
+        const text = state.name;
         if (this.debugLabel.text !== text) this.debugLabel.setText(text);
         this.debugLabel.setPosition(state.position.x, state.position.y - this.radius - 16);
     }

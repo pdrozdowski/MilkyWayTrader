@@ -13,6 +13,7 @@ import { Spaceship } from '../objects/spaceship/spaceship';
 import { Sun } from '../objects/sun/sun';
 import { ObjectDepth } from '../visual/layers';
 import type { CircleObstacle } from '../world/geometry';
+import type { PlanetState } from '../state/planetState';
 import { gameObjectLayout, gameWorldBounds } from './gameObjects';
 
 export class Game extends Scene
@@ -50,12 +51,17 @@ export class Game extends Scene
         const state = this.stateProvider.snapshot();
         this.camera = this.cameras.main;
         this.camera.setZoom(1).removeBounds();
+        this.camera.roundPixels = true;
         this.camera.setBackgroundColor('#000000');
         this.physics.world.setBounds(gameWorldBounds.x, gameWorldBounds.y, gameWorldBounds.width, gameWorldBounds.height);
         this.background = new Starfield(this, gameWorldBounds.width, gameWorldBounds.height, gameWorldBounds.x, gameWorldBounds.y);
         this.sun = new Sun(this, gameObjectLayout.sun);
         this.ship = new Spaceship(this, state.ship);
-        this.planets = gameObjectLayout.planets.map((options, index) => new Planet(this, { ...options, model: state.planets[index] }));
+        const planetsById = this.planetsById(state.planets);
+        this.planets = gameObjectLayout.planets.map(({ id, ...options }) => new Planet(this, {
+            ...options,
+            model: planetsById.get(id)!
+        }));
         this.weapon = new ShipWeapon(this, projectile => {
             this.uiCamera.ignore(projectile.sprite);
             this.audio.play('ship-laser');
@@ -161,6 +167,22 @@ export class Game extends Scene
         this.landingPrompt.setVisible(this.planets.some(planet => planet.indicator.visible));
     }
 
+    private planetsById (states: readonly PlanetState[]): ReadonlyMap<string, PlanetState>
+    {
+        const configuredIds = new Set<string>();
+        for (const options of gameObjectLayout.planets) {
+            if (configuredIds.has(options.id)) throw new Error(`Duplicate configured planet id: ${options.id}.`);
+            configuredIds.add(options.id);
+        }
+        const planetsById = new Map<string, PlanetState>();
+        for (const state of states) {
+            if (planetsById.has(state.id)) throw new Error(`Duplicate state planet id: ${state.id}.`);
+            planetsById.set(state.id, state);
+        }
+        for (const id of configuredIds) if (!planetsById.has(id)) throw new Error(`Missing configured planet state: ${id}.`);
+        return planetsById;
+    }
+
     update (time: number, delta: number): void
     {
         const pointer = this.steeringPointer;
@@ -195,8 +217,9 @@ export class Game extends Scene
         const zoomTarget = state.ship.boosting ? shipBoostTuning.cameraZoom : 1;
         const zoomBlend = 1 - Math.exp(-delta / (shipBoostTuning.cameraTransitionSeconds * 1000));
         this.camera.setZoom(this.camera.zoom + (zoomTarget - this.camera.zoom) * zoomBlend);
-        for (const [index, planet] of this.planets.entries()) {
-            planet.synchronize(state.planets[index]);
+        const planetsById = this.planetsById(state.planets);
+        for (const planet of this.planets) {
+            planet.synchronize(planetsById.get(planet.id)!);
             planet.updateLandingIndicator(this.ship);
         }
         this.updateLandingPrompt();

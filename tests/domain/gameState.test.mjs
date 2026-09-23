@@ -176,6 +176,25 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
         target: null, boostRequested: false, firing: false
     }, 600_000));
     assert.equal(unchanged.clock.activeElapsedMs, 0);
+    assert.deepEqual(unchanged.planets, paused.planets);
+});
+
+test('planet projections retain continuity through restore and active-time pauses', () => {
+    const input = { target: null, boostRequested: false, firing: false };
+    const active = advanceGameSimulation(initialGameState, input, 12_345);
+    const restored = decodeGameState(encodeGameState(active));
+    const paused = {
+        ...restored,
+        clock: pauseGameClock(restored.clock, 'background')
+    };
+    const frozen = advanceGameSimulation(paused, input, 60_000);
+    assert.deepEqual(frozen.planets, paused.planets);
+    const resumed = {
+        ...frozen,
+        clock: resumeGameClock(frozen.clock, 'background')
+    };
+    assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 3);
 });
 
 test('run status projection derives clock, capacity and readable run values', () => {
