@@ -7,6 +7,8 @@ import { advanceFireCadence } from '../src/game/mechanics/spaceship/fireCadence.
 import { initialGameState } from '../src/game/definitions/initialGameState.ts';
 import { advanceGameSimulation } from '../src/game/mechanics/gameSimulation.ts';
 import { gameObjectLayout, PLANET_SIZE_MULTIPLIER, SUN_RADIUS } from '../src/game/scenes/gameObjects.ts';
+import { planetDefinitions } from '../src/game/definitions/planetDefinitions.ts';
+import { projectPlanetPosition } from '../src/game/mechanics/planet/orbit.ts';
 
 const tuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5 };
 const speed = velocity => Math.hypot(velocity.x, velocity.y);
@@ -75,23 +77,49 @@ test('landing uses the same surface gap for every planet', () => {
     }
 });
 
-test('the sun is five times the largest 3x planet and the starting layout has no overlapping bodies', () => {
+test('the sun retains its configured scale and each orbital band has at least a 50-pixel surface gap', () => {
     assert.equal(PLANET_SIZE_MULTIPLIER, 3);
-    assert.deepEqual(gameObjectLayout.planets.map(planet => planet.model.radius), [144, 240, 330]);
-    assert.equal(SUN_RADIUS, 1650);
-    assert.equal(SUN_RADIUS, Math.max(...gameObjectLayout.planets.map(planet => planet.model.radius)) * 5);
+    assert.deepEqual(planetDefinitions.map(planet => planet.radius), [144, 158.4, 172.8]);
+    assert.equal(SUN_RADIUS, 825);
     assert.deepEqual({ x: gameObjectLayout.sun.x, y: gameObjectLayout.sun.y, radius: gameObjectLayout.sun.size / 2 }, { x: 0, y: 0, radius: SUN_RADIUS });
     const bodies = [
         { id: 'sun', x: gameObjectLayout.sun.x, y: gameObjectLayout.sun.y, radius: SUN_RADIUS },
-        ...gameObjectLayout.planets.map(planet => ({ id: planet.model.id, ...planet.model.position, radius: planet.model.radius }))
+        ...initialGameState.planets.map(planet => ({ id: planet.id, ...planet.position, radius: planet.radius }))
     ];
     for (let index = 0; index < bodies.length; index++) for (const other of bodies.slice(index + 1)) {
         assert(Math.hypot(bodies[index].x - other.x, bodies[index].y - other.y) > bodies[index].radius + other.radius,
             `${bodies[index].id} must not overlap ${other.id}`);
     }
-    const ship = { ...gameObjectLayout.ship, radius: 36 };
+    const ship = { ...gameObjectLayout.ship, radius: 18 };
     for (const body of bodies) assert(Math.hypot(ship.x - body.x, ship.y - body.y) > ship.radius + body.radius,
         `ship must start outside ${body.id}`);
+});
+
+test('planet definitions project exact counter-clockwise active-time orbits', () => {
+    assert.deepEqual(planetDefinitions.map(planet => planet.orbitalPeriodMs), [180_000, 240_000, 300_000]);
+    assert.deepEqual(planetDefinitions.map(planet => planet.radius), [144, 158.4, 172.8]);
+    assert.deepEqual(planetDefinitions.map(planet => planet.orbitRadius), [1169, 1521.4, 1902.6]);
+    assert.deepEqual(planetDefinitions.map(planet => planet.initialPhaseRadians), [0, Math.PI * 2 / 3, Math.PI * 4 / 3]);
+    const normalizedAngle = angle => (angle + Math.PI * 2) % (Math.PI * 2);
+    for (const definition of planetDefinitions) {
+        const initial = projectPlanetPosition(definition.id, 0);
+        assert(Math.abs(Math.hypot(initial.x, initial.y) - definition.orbitRadius) < 1e-8);
+        assert(Math.abs(normalizedAngle(Math.atan2(-initial.y, initial.x)) - definition.initialPhaseRadians) < 1e-8);
+        assert.deepEqual(projectPlanetPosition(definition.id, definition.orbitalPeriodMs), initial);
+        const quarter = projectPlanetPosition(definition.id, definition.orbitalPeriodMs / 4);
+        const change = normalizedAngle(Math.atan2(-quarter.y, quarter.x) - Math.atan2(-initial.y, initial.x));
+        assert(Math.abs(change - Math.PI / 2) < 1e-8, `${definition.id} advances counter-clockwise in world coordinates`);
+    }
+    const bands = [{ radius: SUN_RADIUS, orbitRadius: 0 }, ...planetDefinitions];
+    assert.equal(bands[1].orbitRadius - bands[1].radius - SUN_RADIUS, 200);
+    for (let index = 2; index < bands.length; index++) {
+        const inner = bands[index - 1];
+        const outer = bands[index];
+        assert(Math.abs(outer.orbitRadius - outer.radius - (inner.orbitRadius + inner.radius) - 50) < 1e-8);
+    }
+    const active = advanceGameSimulation(initialGameState, { target: null, boostRequested: false, firing: false }, 12_345);
+    assert.deepEqual(active.planets.map(planet => planet.position),
+        planetDefinitions.map(planet => projectPlanetPosition(planet.id, active.clock.activeElapsedMs)));
 });
 
 test('fast projectile paths detect crossed planets, tangent hits and endpoints without false hits', () => {

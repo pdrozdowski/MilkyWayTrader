@@ -22,6 +22,6 @@ export const definition: GameObjectDefinition = {
         frameRate: 18,
         repeat: -1
     }],
-    visual: { texture: shipFrames.off.key, scale: 2, depth: ObjectDepth.Ship },
+    visual: { texture: shipFrames.off.key, scale: 1, depth: ObjectDepth.Ship },
     physics: { kind: 'dynamic', shape: { kind: 'circle', radius: 18 }, bounce: 0.15, worldBounds: true }
 };

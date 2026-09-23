@@ -6,6 +6,8 @@ import { advanceGameClock } from './clock/gameClock.ts';
 import { segmentHitsCircle, shotTrajectory } from './projectile/trajectory.ts';
 import { advanceFireCadence } from './spaceship/fireCadence.ts';
 import { boostAccelerationRate, directionRotation, flightVelocity } from './spaceship/flight.ts';
+import { getPlanetDefinition } from '../definitions/planetDefinitions.ts';
+import { projectPlanetPosition } from './planet/orbit.ts';
 
 export interface GameSimulationInput
 {
@@ -112,5 +114,9 @@ export function advanceGameSimulation (
         }];
         weapon = { ...weapon, projectileSequence: sequence };
     }
-    return { ...state, clock, ship, weapon, projectiles };
+    const planets = state.planets.map(planet => ({
+        ...planet,
+        position: projectPlanetPosition(getPlanetDefinition(planet.id).id, clock.activeElapsedMs)
+    }));
+    return { ...state, clock, ship, planets, weapon, projectiles };
 }
