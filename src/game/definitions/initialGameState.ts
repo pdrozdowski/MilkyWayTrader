@@ -15,7 +15,7 @@ export const initialGameState: GameStateSnapshot = {
     credits: initialCredits,
     cargo: [],
     ship: {
-        position: { x: 1950, y: 600 },
+        position: { x: 0, y: -planetDefinitions[0].orbitRadius },
         velocity: { x: 0, y: 0 },
         rotation: 0,
         enginesOn: false,

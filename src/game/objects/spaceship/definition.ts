@@ -1,4 +1,5 @@
 import { ObjectDepth } from '../../visual/layers';
+import { shipTuning } from '../../definitions/gameplayTuning.ts';
 import type { GameObjectDefinition } from '../_shared/types';
 export { shipBoostTuning, shipTuning } from '../../definitions/gameplayTuning';
 
@@ -23,5 +24,5 @@ export const definition: GameObjectDefinition = {
         repeat: -1
     }],
     visual: { texture: shipFrames.off.key, scale: 1, depth: ObjectDepth.Ship },
-    physics: { kind: 'dynamic', shape: { kind: 'circle', radius: 18 }, bounce: 0.15, worldBounds: true }
+    physics: { kind: 'dynamic', shape: { kind: 'circle', radius: shipTuning.collisionRadius }, bounce: 0.15, worldBounds: true }
 };

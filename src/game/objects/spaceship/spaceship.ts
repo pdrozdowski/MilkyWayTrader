@@ -12,6 +12,7 @@ export class Spaceship extends SceneObject
     constructor (scene: Scene, state: ShipState)
     {
         super(scene, definition, { ...state.position });
+        this.body.setEnable(false);
         this.boostEffects = new BoostEffects(scene);
         this.ownCleanup(() => this.boostEffects.destroy());
         this.synchronize(state, 0);
