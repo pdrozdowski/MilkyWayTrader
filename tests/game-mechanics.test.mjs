@@ -9,6 +9,8 @@ import { advanceGameSimulation } from '../src/game/mechanics/gameSimulation.ts';
 import { gameObjectLayout, PLANET_SIZE_MULTIPLIER, SUN_RADIUS } from '../src/game/scenes/gameObjects.ts';
 import { planetDefinitions } from '../src/game/definitions/planetDefinitions.ts';
 import { projectPlanetPosition } from '../src/game/mechanics/planet/orbit.ts';
+import { MOOLARIS_CONTROL_CLEARANCE, MOOLARIS_RECOVERY_SECONDS, moolarisDefinition } from '../src/game/definitions/moolarisDefinition.ts';
+import { isRecoveringFromMoolaris, moolarisControlRadius, resolveMoolarisContact } from '../src/game/mechanics/moolaris/contact.ts';
 
 const tuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5 };
 const speed = velocity => Math.hypot(velocity.x, velocity.y);
@@ -122,7 +124,7 @@ test('planet definitions project exact counter-clockwise active-time orbits', ()
         planetDefinitions.map(planet => projectPlanetPosition(planet.id, active.clock.activeElapsedMs)));
 });
 
-test('fast projectile paths detect crossed planets, tangent hits and endpoints without false hits', () => {
+test('fast projectile paths detect crossed Moolaris, tangent hits and endpoints without false hits', () => {
     const planet = { x: 100, y: 0, radius: 48 };
     assert(segmentHitsCircle({ x: 0, y: 0 }, { x: 200, y: 0 }, planet, 3), 'both endpoints can miss while the path crosses a planet');
     assert(segmentHitsCircle({ x: 200, y: 0 }, { x: 0, y: 0 }, planet, 3), 'reverse direction also hits');
@@ -135,6 +137,63 @@ test('fast projectile paths detect crossed planets, tangent hits and endpoints w
     const shot = shotTrajectory({ x: -100, y: 200 }, Math.PI / 2, 38, 12000);
     assert(Math.abs(shot.start.x + 62) < 1e-8 && Math.abs(shot.start.y - 200) < 1e-8);
     assert(Math.abs(shot.velocity.x - 12000) < 1e-8 && Math.abs(shot.velocity.y) < 1e-8);
+});
+
+test('Moolaris contact forces a finite full-speed escape and suppresses player controls', () => {
+    assert.equal(moolarisControlRadius, moolarisDefinition.radius + 18 + MOOLARIS_CONTROL_CLEARANCE);
+    const contact = resolveMoolarisContact({ position: { x: 0, y: 0 } });
+    assert.equal(contact.hasControl, false);
+    assert.deepEqual(contact.forcedVelocity, { x: 240, y: 0 });
+    assert(Number.isFinite(contact.forcedVelocity.x) && Number.isFinite(contact.forcedVelocity.y));
+    const inside = advanceGameSimulation({
+        ...initialGameState,
+        ship: { ...initialGameState.ship, position: { x: moolarisControlRadius, y: 0 }, velocity: { x: 0, y: 0 } },
+        shipStatus: { ...initialGameState.shipStatus, boosterUnlocked: true }
+    }, { target: { x: -10_000, y: 0 }, boostRequested: true, firing: true }, 100);
+    assert.deepEqual(inside.ship.velocity, { x: 240, y: 0 });
+    assert.equal(inside.ship.boosting, false);
+    assert.equal(inside.projectiles.length, 0);
+    assert.equal(resolveMoolarisContact({ position: { x: moolarisControlRadius + 0.01, y: 0 } }).hasControl, true);
+});
+
+test('Moolaris recovery coasts outward for one second instead of immediately re-entering contact', () => {
+    const ship = {
+        ...initialGameState.ship,
+        position: { x: moolarisControlRadius + 1, y: 0 },
+        velocity: { x: 240, y: 0 },
+        enginesOn: true
+    };
+    const target = { x: -10_000, y: 0 };
+    assert.equal(isRecoveringFromMoolaris(ship, target), true);
+    const recovered = advanceGameSimulation({ ...initialGameState, ship }, { target, boostRequested: true, firing: true }, 100);
+    assert(recovered.ship.position.x > ship.position.x, 'recovery continues outward');
+    assert.equal(recovered.ship.velocity.x, 216, 'recovery slows over one second');
+    assert.equal(recovered.ship.boosting, false);
+    assert.equal(recovered.projectiles.length, 0);
+    assert.equal(isRecoveringFromMoolaris({ ...ship, position: { x: moolarisControlRadius + 121, y: 0 } }, target), false);
+});
+
+test('ships and projectiles pass through planets while Moolaris removes crossing projectiles', () => {
+    const planet = initialGameState.planets[0];
+    const ship = advanceGameSimulation({
+        ...initialGameState,
+        ship: { ...initialGameState.ship, position: { x: planet.position.x, y: planet.position.y }, velocity: { x: 0, y: 0 } }
+    }, { target: { x: planet.position.x + 10_000, y: planet.position.y }, boostRequested: false, firing: false }, 100);
+    assert(ship.ship.position.x > planet.position.x, 'planet contact does not correct ship state');
+    const projectile = {
+        id: 'planet-crossing', position: { x: planet.position.x - planet.radius - 20, y: planet.position.y }, velocity: { x: 1_000, y: 0 }, bornAtActiveMs: 0
+    };
+    const throughPlanet = advanceGameSimulation({ ...initialGameState, projectiles: [projectile] }, { target: null, boostRequested: false, firing: false }, 100, {
+        obstacles: [{ ...moolarisDefinition.position, radius: moolarisDefinition.radius }]
+    });
+    assert.equal(throughPlanet.projectiles.length, 1);
+    const moolarisCrossing = advanceGameSimulation({
+        ...initialGameState,
+        projectiles: [{ ...projectile, id: 'moolaris-crossing', position: { x: -900, y: 0 }, velocity: { x: 2_000, y: 0 } }]
+    }, { target: null, boostRequested: false, firing: false }, 100, {
+        obstacles: [{ ...moolarisDefinition.position, radius: moolarisDefinition.radius }]
+    });
+    assert.equal(moolarisCrossing.projectiles.length, 0);
 });
 
 test('held fire keeps a half-second beat despite late frames, without booster backlogs or rapid taps', () => {

@@ -1,4 +1,4 @@
-export const shipTuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5 };
+export const shipTuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5, collisionRadius: 18 };
 
 export const shipBoostTuning = {
     speedMultiplier: 5,

@@ -8,6 +8,8 @@ import { advanceFireCadence } from './spaceship/fireCadence.ts';
 import { boostAccelerationRate, directionRotation, flightVelocity } from './spaceship/flight.ts';
 import { getPlanetDefinition } from '../definitions/planetDefinitions.ts';
 import { projectPlanetPosition } from './planet/orbit.ts';
+import { isRecoveringFromMoolaris, resolveMoolarisContact } from './moolaris/contact.ts';
+import { MOOLARIS_RECOVERY_SECONDS } from '../definitions/moolarisDefinition.ts';
 
 export interface GameSimulationInput
 {
@@ -65,27 +67,30 @@ export function advanceGameSimulation (
     const activeDeltaMs = clock.activeElapsedMs - state.clock.activeElapsedMs;
     if (activeDeltaMs <= 0) return { ...state, clock };
 
-    const targetDelta = input.target ? {
+    const contact = resolveMoolarisContact(state.ship);
+    const recovering = contact.hasControl && isRecoveringFromMoolaris(state.ship, input.target);
+    const targetDelta = contact.hasControl && !recovering && input.target ? {
         x: input.target.x - state.ship.position.x,
         y: input.target.y - state.ship.position.y
     } : null;
     const currentSpeed = Math.hypot(state.ship.velocity.x, state.ship.velocity.y);
-    const wantsBoost = state.shipStatus.boosterUnlocked && input.boostRequested
+    const wantsBoost = contact.hasControl && !recovering && state.shipStatus.boosterUnlocked && input.boostRequested
         && !!targetDelta && Math.hypot(targetDelta.x, targetDelta.y) > 2;
     const boostAcceleration = wantsBoost && !state.ship.boosting
         ? boostAccelerationRate(currentSpeed, shipTuning.maxSpeed, shipBoostTuning.speedMultiplier, shipBoostTuning.accelerationSeconds)
             || shipTuning.maxSpeed * (shipBoostTuning.speedMultiplier - 1) / shipBoostTuning.accelerationSeconds
         : state.ship.boostAcceleration;
-    const coastDeceleration = !targetDelta && state.ship.enginesOn
+    const coastDeceleration = recovering ? shipTuning.maxSpeed / MOOLARIS_RECOVERY_SECONDS : !targetDelta && state.ship.enginesOn
         ? Math.max(shipTuning.maxSpeed, currentSpeed) / shipTuning.stoppingSeconds
         : state.ship.coastDeceleration;
     const movementSeconds = Math.min(activeDeltaMs, 100) / 1000;
-    const velocity = flightVelocity(state.ship.velocity, targetDelta, movementSeconds, {
+    const flight = flightVelocity(state.ship.velocity, targetDelta, movementSeconds, {
         ...shipTuning,
         maxSpeed: shipTuning.maxSpeed * (wantsBoost ? shipBoostTuning.speedMultiplier : 1),
         accelerationRate: wantsBoost ? boostAcceleration : shipTuning.maxSpeed / shipTuning.accelerationSeconds,
         decelerationRate: !targetDelta ? coastDeceleration : shipTuning.maxSpeed * (shipBoostTuning.speedMultiplier - 1) / shipBoostTuning.accelerationSeconds
     });
+    const velocity = contact.forcedVelocity ?? flight;
     const ship = {
         ...state.ship,
         position: {
@@ -94,14 +99,14 @@ export function advanceGameSimulation (
         },
         velocity: { x: velocity.x, y: velocity.y },
         rotation: directionRotation(velocity.x, velocity.y, state.ship.rotation),
-        enginesOn: velocity.enginesOn,
+        enginesOn: contact.forcedVelocity !== null || flight.enginesOn,
         boosting: wantsBoost,
-        boostAcceleration,
+        boostAcceleration: contact.forcedVelocity !== null ? 0 : boostAcceleration,
         coastDeceleration
     };
 
     let projectiles = advanceProjectiles(state.projectiles, clock.activeElapsedMs, activeDeltaMs, options);
-    const cadence = advanceFireCadence(state.weapon, clock.activeElapsedMs, input.firing && !ship.boosting, options.shotIntervalMs);
+    const cadence = advanceFireCadence(state.weapon, clock.activeElapsedMs, contact.hasControl && !recovering && input.firing && !ship.boosting, options.shotIntervalMs);
     let weapon = cadence.weapon;
     if (cadence.fired) {
         const trajectory = shotTrajectory(ship.position, ship.rotation, options.muzzleOffset + options.projectileRadius + 1, options.projectileSpeed);

@@ -291,12 +291,12 @@ No persisted-shape migration is required. Planet positions retain their existing
 
 #### Automated
 
-- [ ] 2.1 Mechanics tests prove Moolaris contact forces an outward full-speed vector, suppresses player controls, and restores control only outside the configured clearance.
-- [ ] 2.2 Mechanics tests prove ship and projectile paths pass through planets while a Moolaris-crossing projectile is removed.
+- [x] 2.1 Mechanics tests prove Moolaris contact forces an outward full-speed vector, suppresses player controls, and restores control only outside the configured clearance.
+- [x] 2.2 Mechanics tests prove ship and projectile paths pass through planets while a Moolaris-crossing projectile is removed.
 
 #### Manual
 
-- [ ] 2.3 Flying into Moolaris visibly shows temporary loss of control and reliably pushes the ship clear without trapping it.
+- [x] 2.3 Flying into Moolaris visibly shows temporary loss of control and reliably pushes the ship clear without trapping it.
 
 ### Phase 3: World Presentation
 
