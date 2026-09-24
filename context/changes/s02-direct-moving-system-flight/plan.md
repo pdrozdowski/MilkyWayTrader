@@ -307,7 +307,7 @@ No persisted-shape migration is required. Planet positions retain their existing
 
 #### Manual
 
-- [ ] 3.3 Planet and Moolaris labels remain readable during flight, and the belt is visible, smooth, and completely non-interactive.
+- [x] 3.3 Planet and Moolaris labels remain readable during flight, and the belt is visible, smooth, and completely non-interactive.
 
 ### Phase 4: Responsive Direct Controls
 

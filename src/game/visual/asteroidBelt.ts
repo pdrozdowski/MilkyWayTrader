@@ -1,4 +1,4 @@
-import { asteroidBeltDefinition } from '../definitions/asteroidBeltDefinition.ts';
+import { asteroidBeltDefinition } from './asteroidBeltDefinition.ts';
 
 export type AsteroidType = 'rock' | 'ice' | 'metal' | 'dirt';
 
