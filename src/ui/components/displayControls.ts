@@ -11,34 +11,43 @@ export function mountDisplayControls (root: HTMLElement, port: DisplayPort): UiH
 {
     const notice = required<HTMLElement>(root, '#orientation-notice');
     const help = required<HTMLElement>(root, '#orientation-help');
-    const controls = required<HTMLElement>(root, '#mobile-controls');
-    const button = required<HTMLButtonElement>(root, '#fullscreen-toggle');
-    const status = required<HTMLElement>(root, '#display-status');
+    const orientationControls = required<HTMLElement>(root, '#mobile-controls');
+    const menuControls = required<HTMLElement>(root, '#menu-display-controls');
+    const controls = [
+        { button: required<HTMLButtonElement>(root, '#fullscreen-toggle'), status: required<HTMLElement>(root, '#display-status') },
+        { button: required<HTMLButtonElement>(root, '#menu-fullscreen-toggle'), status: required<HTMLElement>(root, '#menu-display-status') }
+    ];
 
     const render = (): void => {
         const snapshot = port.getSnapshot();
-        controls.hidden = !snapshot.mobile;
+        orientationControls.hidden = !snapshot.mobile;
+        menuControls.hidden = !snapshot.mobile;
         notice.hidden = !(snapshot.mobile && snapshot.portrait);
-        button.hidden = !snapshot.fullscreenAvailable;
-        help.textContent = button.hidden ? 'Obróć urządzenie, aby grać.' : 'Obróć urządzenie lub wybierz „Pełny ekran”.';
-        button.textContent = snapshot.fullscreenActive ? 'X' : 'Pełny ekran';
-        button.setAttribute('aria-pressed', String(snapshot.fullscreenActive));
-        if (!snapshot.mobile) status.textContent = '';
+        for (const control of controls) {
+            control.button.hidden = !snapshot.fullscreenAvailable;
+            control.button.textContent = snapshot.fullscreenActive ? 'X' : 'Pełny ekran';
+            control.button.setAttribute('aria-pressed', String(snapshot.fullscreenActive));
+            if (!snapshot.mobile) control.status.textContent = '';
+        }
+        help.textContent = !snapshot.fullscreenAvailable ? 'Obróć urządzenie, aby grać.' : 'Obróć urządzenie lub wybierz „Pełny ekran”.';
         port.refreshScale();
     };
-    const showResult = (result: FullscreenResult): void => {
+    const showResult = (status: HTMLElement, result: FullscreenResult): void => {
         if (result === 'manual-rotation') status.textContent = 'Obróć telefon do poziomu, aby grać.';
         if (result === 'failed') status.textContent = 'Nie udało się włączyć pełnego ekranu. Możesz grać po obróceniu telefonu do poziomu.';
     };
-    const toggle = async (): Promise<void> => {
-        button.disabled = true;
-        status.textContent = '';
-        try { showResult(await port.toggleFullscreen()); }
-        finally { button.disabled = false; render(); }
+    const toggle = async (control: typeof controls[number]): Promise<void> => {
+        for (const item of controls) item.button.disabled = true;
+        control.status.textContent = '';
+        try { showResult(control.status, await port.toggleFullscreen()); }
+        finally {
+            for (const item of controls) item.button.disabled = false;
+            render();
+        }
     };
-    const click = (): void => { void toggle(); };
+    const clicks = controls.map(control => () => { void toggle(control); });
     const unsubscribe = port.subscribe(() => render());
-    button.addEventListener('click', click);
+    for (let index = 0; index < controls.length; index++) controls[index].button.addEventListener('click', clicks[index]);
     render();
     let destroyed = false;
 
@@ -47,7 +56,7 @@ export function mountDisplayControls (root: HTMLElement, port: DisplayPort): UiH
             if (destroyed) return;
             destroyed = true;
             unsubscribe();
-            button.removeEventListener('click', click);
+            for (let index = 0; index < controls.length; index++) controls[index].button.removeEventListener('click', clicks[index]);
             port.destroy();
         }
     };
