@@ -1,6 +1,7 @@
 import { mountAudioControls } from '../../../src/ui/components/audioControls';
 import { mountDisplayControls } from '../../../src/ui/components/displayControls';
 import { mountRunStatus } from '../../../src/ui/components/runStatus';
+import { mountGameMenu } from '../../../src/ui/components/gameMenu';
 import type { AudioSettingsSnapshot, DisplaySnapshot, FullscreenResult, RunStatusSnapshot, UiHandle } from '../../../src/ui/contracts';
 
 function harnessRoot (): HTMLElement
@@ -23,6 +24,10 @@ let refreshes = 0;
 let audioHandle: UiHandle | null = null;
 let displayHandle: UiHandle | null = null;
 let runStatusHandle: UiHandle | null = null;
+let gameMenuHandle: UiHandle | null = null;
+let menuOpen = false;
+let orientationPaused = false;
+let exits = 0;
 
 const runStatusPort = {
     getSnapshot: (): Readonly<RunStatusSnapshot> => runStatusState,
@@ -56,14 +61,25 @@ const displayPort = {
     destroy: (): void => { displayListener = null; }
 };
 
+const gameControlsPort = {
+    openMenu: (): void => { menuOpen = true; },
+    closeMenu: (): void => { menuOpen = false; },
+    exitToMainMenu: (): void => { menuOpen = false; exits += 1; },
+    setOrientationPaused: (paused: boolean): void => { orientationPaused = paused; },
+    isMenuOpen: (): boolean => menuOpen,
+    destroy: (): void => {}
+};
+
 function mount (): void
 {
     audioHandle?.destroy();
     displayHandle?.destroy();
     runStatusHandle?.destroy();
+    gameMenuHandle?.destroy();
     audioHandle = mountAudioControls(root, audioPort);
     displayHandle = mountDisplayControls(root, displayPort, () => {});
     runStatusHandle = mountRunStatus(root, runStatusPort);
+    gameMenuHandle = mountGameMenu(root, gameControlsPort);
 }
 
 mount();
@@ -75,8 +91,10 @@ window.uiHarness = {
     setFullscreenResult: result => { fullscreenResult = result; },
     setRunStatus: state => { runStatusState = { ...runStatusState, ...state }; runStatusListener?.(runStatusState); },
     listeners: () => ({ audio: Number(Boolean(audioListener)), display: Number(Boolean(displayListener)), runStatus: Number(Boolean(runStatusListener)) }),
+    gameControls: () => ({ menuOpen, orientationPaused, exits }),
+    setOrientationPaused: paused => { gameControlsPort.setOrientationPaused(paused); },
     refreshes: () => refreshes,
-    destroy: () => { audioHandle?.destroy(); displayHandle?.destroy(); runStatusHandle?.destroy(); },
+    destroy: () => { audioHandle?.destroy(); displayHandle?.destroy(); runStatusHandle?.destroy(); gameMenuHandle?.destroy(); },
     mount
 };
 
@@ -90,6 +108,8 @@ declare global {
             setRunStatus(state: Partial<RunStatusSnapshot>): void;
             listeners(): { audio: number; display: number; runStatus: number };
             refreshes(): number;
+            gameControls(): { menuOpen: boolean; orientationPaused: boolean; exits: number };
+            setOrientationPaused(paused: boolean): void;
             destroy(): void;
             mount(): void;
         };

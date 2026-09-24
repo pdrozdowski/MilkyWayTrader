@@ -1,4 +1,4 @@
-export type GamePauseReason = 'background' | 'landed' | 'manual' | 'menu';
+export type GamePauseReason = 'background' | 'landed' | 'manual' | 'menu' | 'orientation';
 
 export interface GameClockState
 {

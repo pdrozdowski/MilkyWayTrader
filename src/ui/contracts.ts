@@ -43,3 +43,12 @@ export interface DisplayPort extends UiHandle
     toggleFullscreen(): Promise<FullscreenResult>;
     refreshScale(): void;
 }
+
+export interface GameControlsPort extends UiHandle
+{
+    openMenu(): void;
+    closeMenu(): void;
+    exitToMainMenu(): void;
+    setOrientationPaused(paused: boolean): void;
+    isMenuOpen(): boolean;
+}

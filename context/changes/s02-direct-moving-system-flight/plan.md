@@ -324,9 +324,9 @@ No persisted-shape migration is required. Planet positions retain their existing
 
 #### Automated
 
-- [ ] 5.1 State and UI tests cover overlapping background, menu, and orientation pauses, invalid pause-reason codec input, modal focus/actions/cleanup, and audio controls inside the modal.
-- [ ] 5.2 Playwright covers portrait pause/resume, menu open/resume/exit, fullscreen wiring, no page errors, and no clock advancement for every pause state.
+- [x] 5.1 State and UI tests cover overlapping background, menu, and orientation pauses, invalid pause-reason codec input, modal focus/actions/cleanup, and audio controls inside the modal.
+- [x] 5.2 Playwright covers portrait pause/resume, menu open/resume/exit, fullscreen wiring, no page errors, and no clock advancement for every pause state.
 
 #### Manual
 
-- [ ] 5.3 Escape and the pause button reliably open a usable modal; portrait blocks flight until landscape returns; fullscreen does not interrupt active flight.
+- [x] 5.3 Escape and the pause button reliably open a usable modal; portrait blocks flight until landscape returns; fullscreen does not interrupt active flight.

@@ -143,6 +143,61 @@ test('a new run exposes status, accepts flight input, and survives focus and sce
     expect(pageErrors).toEqual([]);
 });
 
+test('pause menu opens through Escape and its visible control, freezes time, restores focus, and exits to MainMenu', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-desktop', 'Desktop modal keyboard coverage.');
+    test.setTimeout(60_000);
+    const pageErrors: string[] = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await startRun(page);
+    const menuToggle = page.getByRole('button', { name: 'Menu', exact: true });
+    await menuToggle.focus();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Game menu' })).toBeVisible();
+    await expect(page.locator('#run-status-clock')).toContainText('PAUSED');
+    const menuClock = await page.locator('#run-status-clock').textContent();
+    await page.waitForTimeout(1_100);
+    await expect(page.locator('#run-status-clock')).toHaveText(menuClock ?? '');
+    await page.getByRole('button', { name: 'Resume' }).click();
+    await expect(page.getByRole('dialog', { name: 'Game menu' })).toBeHidden();
+    await expect(menuToggle).toBeFocused();
+    await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
+    await menuToggle.click();
+    await expect(page.getByRole('dialog', { name: 'Game menu' })).toBeVisible();
+    await page.getByRole('button', { name: 'Return to Main Menu' }).click();
+    await expect(page.getByLabel('Main menu')).toBeVisible();
+    await expect(page.getByLabel('Run status')).toBeHidden();
+    expect(pageErrors).toEqual([]);
+});
+
+test('portrait and fullscreen preserve composable active-clock behavior', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-touch', 'Portrait and mobile fullscreen coverage.');
+    test.setTimeout(60_000);
+    const pageErrors: string[] = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await startRun(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByRole('dialog', { name: 'Screen orientation' })).toBeVisible();
+    await expect(page.locator('#run-status-clock')).toContainText('PAUSED');
+    const portraitClock = await page.locator('#run-status-clock').textContent();
+    await page.waitForTimeout(1_100);
+    await expect(page.locator('#run-status-clock')).toHaveText(portraitClock ?? '');
+    await page.keyboard.down('ShiftLeft');
+    await page.keyboard.down('ControlLeft');
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(page.getByRole('dialog', { name: 'Screen orientation' })).toBeHidden();
+    await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
+    await page.keyboard.up('ControlLeft');
+    await page.keyboard.up('ShiftLeft');
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    await page.locator('#menu-fullscreen-toggle').click();
+    await expect(page.locator('#run-status-clock')).toContainText('PAUSED');
+    await page.getByRole('button', { name: 'Resume' }).click();
+    await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
+    expect(pageErrors).toEqual([]);
+});
+
 test('desktop flight retains pointer and keyboard actions after a viewport resize', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium-desktop', 'Desktop pointer coverage.');
     test.setTimeout(60_000);

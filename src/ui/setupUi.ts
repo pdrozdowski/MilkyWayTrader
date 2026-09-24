@@ -1,9 +1,11 @@
 import type { Game } from 'phaser';
 import { createAudioSettingsPort } from './adapters/audioSettingsAdapter';
 import { createDisplayPort } from './adapters/displayAdapter';
+import { createGameControlsPort } from './adapters/gameControlsAdapter';
 import { createRunStatusPort } from './adapters/runStatusAdapter';
 import { mountAudioControls } from './components/audioControls';
 import { mountDisplayControls } from './components/displayControls';
+import { mountGameMenu } from './components/gameMenu';
 import { mountRunStatus } from './components/runStatus';
 import type { UiHandle } from './contracts';
 
@@ -12,23 +14,21 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
     const container = root.querySelector<HTMLElement>('#game-container');
     if (!container) throw new Error('Missing game container.');
     const audio = mountAudioControls(root, createAudioSettingsPort(game));
+    const controlsPort = createGameControlsPort(game);
+    const menuControls = mountGameMenu(root, controlsPort);
     const displayPort = createDisplayPort(game, root, container);
     const display = mountDisplayControls(root, displayPort, active => game.events.emit('fullscreen-change', active));
     const toggleFullscreen = (): void => { void displayPort.toggleFullscreen(); };
     game.events.on('toggle-fullscreen', toggleFullscreen);
     const runStatus = mountRunStatus(root, createRunStatusPort(game));
-    const menu = root.querySelector<HTMLElement>('#game-menu');
     const mainMenu = root.querySelector<HTMLElement>('#main-menu');
     const mainMenuNewGame = root.querySelector<HTMLButtonElement>('#main-menu-new-game');
     const mainMenuFullscreen = root.querySelector<HTMLButtonElement>('#main-menu-fullscreen');
-    const menuToggle = root.querySelector<HTMLButtonElement>('#game-menu-toggle');
-    const menuClose = root.querySelector<HTMLButtonElement>('#game-menu-close');
-    const returnToMenu = root.querySelector<HTMLButtonElement>('#return-to-menu');
     const debugMenu = root.querySelector<HTMLElement>('#debug-menu');
     const debugClose = root.querySelector<HTMLButtonElement>('#debug-menu-close');
     const touchControlsToggle = root.querySelector<HTMLButtonElement>('#debug-touch-controls-toggle');
     const mouseMovementToggle = root.querySelector<HTMLButtonElement>('#debug-mouse-movement-toggle');
-    if (!menu || !mainMenu || !mainMenuNewGame || !mainMenuFullscreen || !menuToggle || !menuClose || !returnToMenu || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle) throw new Error('Missing game menu controls.');
+    if (!mainMenu || !mainMenuNewGame || !mainMenuFullscreen || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle) throw new Error('Missing game menu controls.');
     const showMainMenu = (): void => { mainMenu.hidden = false; };
     const hideMainMenu = (): void => { mainMenu.hidden = true; };
     const startNewGame = (): void => { game.events.emit('start-new-game'); };
@@ -39,12 +39,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
     game.events.on('main-menu-open', showMainMenu);
     game.events.on('main-menu-close', hideMainMenu);
     game.events.on('fullscreen-change', updateMainMenuFullscreen);
-    const closeMenu = (): void => { menu.hidden = true; menuToggle.setAttribute('aria-expanded', 'false'); game.events.emit('menu-close'); menuToggle.focus(); };
-    const openMenu = (): void => { menu.hidden = false; menuToggle.setAttribute('aria-expanded', 'true'); game.events.emit('menu-open'); menuClose.focus(); };
-    menuToggle.addEventListener('click', openMenu);
-    menuClose.addEventListener('click', closeMenu);
-    const leaveGame = (): void => { closeMenu(); game.events.emit('return-to-menu'); };
-    returnToMenu.addEventListener('click', leaveGame);
+    const updateOrientationPause = (): void => controlsPort.setOrientationPaused(displayPort.getSnapshot().mobile && displayPort.getSnapshot().portrait);
+    const unsubscribeOrientation = displayPort.subscribe(updateOrientationPause);
     let touchControlsEnabled = false;
     let mouseMovementEnabled = true;
     const renderDebugToggles = (): void => {
@@ -84,11 +80,10 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
             if (destroyed) return;
             destroyed = true;
             audio.destroy();
+            menuControls.destroy();
             display.destroy();
             runStatus.destroy();
-            menuToggle.removeEventListener('click', openMenu);
-            menuClose.removeEventListener('click', closeMenu);
-            returnToMenu.removeEventListener('click', leaveGame);
+            unsubscribeOrientation();
             mainMenuNewGame.removeEventListener('click', startNewGame);
             mainMenuFullscreen.removeEventListener('click', toggleMainMenuFullscreen);
             game.events.off('main-menu-open', showMainMenu);
