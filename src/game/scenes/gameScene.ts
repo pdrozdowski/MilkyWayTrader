@@ -268,7 +268,7 @@ export class Game extends Scene
         this.joystickStick.setVisible(touchLayoutVisible);
         this.joystickZone.setActive(touchLayoutVisible).setPosition(visibleLeft + 108, visibleBottom - 108);
         this.fireButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 74, visibleBottom - 74);
-        this.boostButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 74, visibleBottom - 186);
+        this.boostButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 186, visibleBottom - 74);
         if (this.joystickPointer) this.drawJoystick();
         else this.releaseJoystick();
     }

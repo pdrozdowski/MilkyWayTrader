@@ -53,8 +53,7 @@ export class MainMenu extends Scene
             stateProvider.reset(initialGameState);
             this.scene.start('Game');
         };
-        this.input.once('pointerdown', startGame);
-        this.input.once('pointerup', startGame);
+        this.title.setInteractive({ useHandCursor: true }).on('pointerdown', startGame);
     }
 
     private updateFullscreenMode (active: boolean): void
