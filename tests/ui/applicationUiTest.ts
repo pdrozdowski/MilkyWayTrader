@@ -32,7 +32,8 @@ test('application boots and persists accessible audio controls without consuming
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('#game-container canvas')).toBeVisible();
+    await startRun(page);
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
     await expect(page.getByRole('group', { name: 'Game audio' })).toBeVisible();
     await page.locator('#audio-volume').fill('67');
     await expect(page.locator('#audio-volume-value')).toHaveText('67%');
@@ -42,6 +43,8 @@ test('application boots and persists accessible audio controls without consuming
     });
     expect(keyWasNotCancelled).toBe(true);
     await page.reload({ waitUntil: 'domcontentloaded' });
+    await startRun(page);
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
     await expect(page.locator('#audio-volume')).toHaveValue('67');
     expect(pageErrors).toEqual([]);
 });
@@ -103,7 +106,8 @@ test('a new run exposes status, accepts flight input, and survives focus and sce
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
     await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
 
-    await canvas.click({ position: { x: bounds.width * 0.97, y: bounds.height * 0.96 } });
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    await page.getByRole('button', { name: 'Return to Main Menu' }).click();
     await page.waitForTimeout(250);
     const gameOver = await canvas.screenshot();
     expect(gameOver.equals(running)).toBe(false);
