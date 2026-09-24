@@ -63,45 +63,48 @@ Demo; brak logowania Google OAuth/zapisów/ekonomii/backendu. Konfiguracja Cloud
 
 <!-- BEGIN @przeprogramowani/10x-cli -->
 
-## Zestaw narzędzi AI 10xDevs — Moduł 2, Lekcja 3
+## Zestaw narzędzi AI 10xDevs — Moduł 2, Lekcja 5
 
-Przed scaleniem przejrzyj kod wygenerowany przez AI za pomocą **łańcucha przeglądu implementacji**:
+Rozszerz cykl pojedynczej zmiany do pracy równoległej z użyciem **worktrees, delegowania ukierunkowanego na cel i orkiestracji wielu sesji**:
 
 ```
-/10x-implement -> /10x-impl-review -> triage -> (/10x-lesson | fix | skip | disagree)
+worktree per change -> /goal or your AI coding assistant in headless mode -> PR -> review -> merge
 ```
 
-`/10x-impl-review` jest głównym tematem lekcji. Przegląd jest bramką jakości, a nie poleceniem naprawienia każdego znaleziska.
+Lekcja koncentruje się na bezpiecznej przepustowości: izolowanych kontekstach, wyborze odpowiedniego trybu wykonania i ograniczaniu równoległości do możliwości przeglądu.
 
 ### Router zadań — od czego zacząć
 
 | Umiejętność | Użyj jej, gdy |
 | --- | --- |
-| **Przegląd kodu (główny temat lekcji)** | |
-| `/10x-impl-review <change-id>` | Zaimplementowałeś kod i chcesz przeprowadzić ustrukturyzowany przegląd przed scaleniem. Umiejętność sprawdza zgodność z planem, dyscyplinę zakresu, bezpieczeństwo i jakość, architekturę, spójność wzorców oraz kryteria sukcesu, a następnie przedstawia znaleziska do triage. |
-| **Rezultat powtarzającej się lekcji** | |
-| `/10x-lesson` | Znalezisko ujawnia powtarzającą się regułę projektu lub wzorzec błędów agenta. Zapisz je w `context/foundation/lessons.md` zamiast traktować jako jednorazową notatkę. |
+| **Izolacja kodu** | |
+| `git worktree add` | Potrzebujesz osobnego katalogu roboczego dla równoległej zmiany. Jedna zmiana na worktree, jeden świeży kontekst agenta na worktree. |
+| **Złożone zmiany** | |
+| `/10x-implement <change-id> phase <n>` | Zmiana ma wiele faz, wymaga ręcznych bramek lub korzysta z interaktywnego podejmowania decyzji podczas wykonania. |
+| **Proste zmiany** | |
+| `/goal` | Masz jasne, ograniczone zadanie i chcesz delegowania ukierunkowanego na cel. Agent pracuje autonomicznie w kierunku określonego celu z warunkiem zatrzymania. |
+| twój asystent kodowania AI w trybie headless | Chcesz wykonania w trybie headless dla dobrze zdefiniowanego zadania. Pętla Ralpha Wigguma (uruchom, sprawdź, ponów próbę) jest uniwersalnym wzorcem autonomicznym. |
+| **Orkiestracja wielu sesji** | |
+| Superset / Conductor / Antigravity / VS Code Agent View | Uruchamiasz równolegle wiele sesji agentów i potrzebujesz widoczności, koordynacji lub zarządzania sesjami między nimi. |
 
-### Dyscyplina triage
+### Zasady pracy równoległej
 
-- Severity określa, jak poważne jest znalezisko. Impact określa, jak duże znaczenie ma teraz decyzja.
-- Prawidłowe rezultaty: napraw teraz, napraw inaczej, pomiń, zaakceptuj jako ryzyko, zapisz jako powtarzającą się regułę (`/10x-lesson`), nie zgódź się.
-- Napraw krytyczne znaleziska. Nie poświęcaj godzin na obserwacje o niskim wpływie tylko dlatego, że agent je znalazł.
-- Świadome pomijanie znalezisk o niskim wpływie jest prawidłowym wynikiem przeglądu, a nie zaniedbaniem.
-- Jeśli nie zgadzasz się ze znaleziskiem, zapisz dlaczego. Błędne rozumowanie agenta również jest sygnałem.
+- Jedna zmiana na worktree lub izolowany obszar roboczy. Jeden świeży kontekst agenta na zmianę.
+- Wybierz interaktywne `/10x-implement` dla złożonych zmian, a `/goal` lub swojego asystenta kodowania AI w trybie headless dla prostych.
+- Równoległość jest ograniczona możliwościami przeglądu. Więcej agentów bez przeglądu oznacza więcej nieprzejrzanego kodu, a nie większą przepustowość.
+- Problem jakości wynikający z szybszego dostarczania jest zamierzony — stanowi przejście do bramek testowych w Module 3.
 
-### Granice przeglądu
+### Granice lekcji
 
-- Ta lekcja dotyczy przeglądu zaimplementowanego kodu. Nie tworzy planu, nie wykonuje nowych faz ani nie uczy przeglądu CI.
-- Strategia testowania i bramki jakości są wprowadzane w Module 3.
-- W tej lekcji nie używaj `/10x-contract` jako wyniku triage.
+- Nie omawiaj ponownie interaktywnych `/10x-implement` ani `/10x-impl-review`; są one przedstawione w Lekcjach 2 i 3.
+- Nie wprowadzaj tutaj strategii testowania. Problem jakości jest motywacją dla Modułu 3.
+- Worktrees są mechanizmem izolacji, a nie tematem pełnego samouczka git.
 
-### Ścieżki używane przez tę lekcję
+### Ścieżki używane w tej lekcji
 
-- `context/changes/<change-id>/plan.md` — oczekiwany kontrakt implementacji
-- `context/changes/<change-id>/reviews/` — wynik przeglądu
-- `context/foundation/lessons.md` — powtarzające się lekcje
+- `context/changes/<change-id>/` - folder aktywnej zmiany
+- `context/changes/<change-id>/plan.md` - dane wejściowe implementacji dla dowolnego trybu wykonania
 
-Umiejętności nie mogą zapisywać do `context/archive/`. Zarchiwizowane zmiany są niezmienne; jeśli rozwiązana ścieżka docelowa zaczyna się od `context/archive/`, przerwij z komunikatem: „Ta zmiana jest zarchiwizowana. Zamiast tego otwórz nową zmianę za pomocą `/10x-new`.”
+Umiejętności nie mogą zapisywać w `context/archive/`. Zarchiwizowane zmiany są niezmienne; jeśli rozwiązana ścieżka docelowa zaczyna się od `context/archive/`, przerwij z komunikatem: "Ta zmiana jest zarchiwizowana. Zamiast tego otwórz nową zmianę za pomocą `/10x-new`."
 
 <!-- END @przeprogramowani/10x-cli -->
