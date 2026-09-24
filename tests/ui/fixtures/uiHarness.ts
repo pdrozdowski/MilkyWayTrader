@@ -62,7 +62,7 @@ function mount (): void
     displayHandle?.destroy();
     runStatusHandle?.destroy();
     audioHandle = mountAudioControls(root, audioPort);
-    displayHandle = mountDisplayControls(root, displayPort);
+    displayHandle = mountDisplayControls(root, displayPort, () => {});
     runStatusHandle = mountRunStatus(root, runStatusPort);
 }
 
