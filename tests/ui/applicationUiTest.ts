@@ -22,6 +22,8 @@ async function startRun (page: Page): Promise<Locator>
         else await page.mouse.click(x, y);
         expect(await runStatus.isVisible()).toBe(true);
     }).toPass({ timeout: 15_000 });
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
     return canvas;
 }
 
@@ -44,7 +46,8 @@ test('application boots and persists accessible audio controls without consuming
     expect(pageErrors).toEqual([]);
 });
 
-test('a new run exposes status, accepts flight input, and survives focus and scene transitions', async ({ page }) => {
+test('a new run exposes status, accepts flight input, and survives focus and scene transitions', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-desktop', 'Desktop flight and scene-transition coverage.');
     test.setTimeout(60_000);
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
@@ -54,7 +57,7 @@ test('a new run exposes status, accepts flight input, and survives focus and sce
     await expect(canvas).toBeVisible();
     await expect(runStatus).toBeHidden();
     const menu = await canvas.screenshot();
-    await canvas.click({ position: { x: 100, y: 100 } });
+    await startRun(page);
     await expect(runStatus).toBeVisible();
     await expect(page.locator('#run-status-clock')).toHaveText('30:00 · RUNNING');
     await expect(page.locator('#run-status-credits')).toHaveText('100,000 cr');
@@ -142,8 +145,6 @@ test('touch controls accept joystick and action pointers and clear them on relea
     page.on('pageerror', error => pageErrors.push(error.message));
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     const canvas = await startRun(page);
-    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-    await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
     const bounds = await canvas.boundingBox();
     expect(bounds).not.toBeNull();
     if (!bounds) throw new Error('Missing touch canvas bounds.');
