@@ -9,8 +9,17 @@ async function startRun (page: Page): Promise<Locator>
     await expect(async () => {
         const bounds = await canvas.boundingBox();
         if (!bounds) throw new Error('Missing canvas bounds.');
-        if (await page.evaluate(() => navigator.maxTouchPoints > 0)) await page.touchscreen.tap(bounds.x + 100, bounds.y + 100);
-        else await page.mouse.click(bounds.x + 100, bounds.y + 100);
+        const viewport = page.viewportSize();
+        if (!viewport) throw new Error('Missing viewport size.');
+        const left = Math.max(bounds.x, 0);
+        const right = Math.min(bounds.x + bounds.width, viewport.width);
+        const top = Math.max(bounds.y, 0);
+        const bottom = Math.min(bounds.y + bounds.height, viewport.height);
+        if (right <= left || bottom <= top) throw new Error('Canvas is outside the viewport.');
+        const x = (left + right) / 2;
+        const y = (top + bottom) / 2;
+        if (await page.evaluate(() => navigator.maxTouchPoints > 0)) await page.touchscreen.tap(x, y);
+        else await page.mouse.click(x, y);
         expect(await runStatus.isVisible()).toBe(true);
     }).toPass({ timeout: 15_000 });
     return canvas;
@@ -133,6 +142,8 @@ test('touch controls accept joystick and action pointers and clear them on relea
     page.on('pageerror', error => pageErrors.push(error.message));
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     const canvas = await startRun(page);
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
     const bounds = await canvas.boundingBox();
     expect(bounds).not.toBeNull();
     if (!bounds) throw new Error('Missing touch canvas bounds.');
