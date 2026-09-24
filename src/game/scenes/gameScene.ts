@@ -216,14 +216,20 @@ export class Game extends Scene
     private layoutScreenSpace (): void
     {
         const { width, height } = this.scale;
+        const visibleWidth = Math.min(width, this.scale.parentSize.width / this.scale.displayScale.x);
+        const visibleHeight = Math.min(height, this.scale.parentSize.height / this.scale.displayScale.y);
+        const visibleLeft = (width - visibleWidth) / 2;
+        const visibleTop = (height - visibleHeight) / 2;
+        const visibleRight = visibleLeft + visibleWidth;
+        const visibleBottom = visibleTop + visibleHeight;
         this.lossOfControl.setPosition(width / 2, height / 3);
         this.exit.setPosition(width - 24, height - 24);
         const touchLayoutVisible = this.sys.game.device.input.touch;
         this.joystickBase.setVisible(touchLayoutVisible);
         this.joystickStick.setVisible(touchLayoutVisible);
-        this.joystickZone.setActive(touchLayoutVisible).setPosition(108, height - 108);
-        this.fireButton.setVisible(touchLayoutVisible).setPosition(width - 92, height - 98);
-        this.boostButton.setVisible(touchLayoutVisible).setPosition(width - 104, height - 174);
+        this.joystickZone.setActive(touchLayoutVisible).setPosition(visibleLeft + 108, visibleBottom - 108);
+        this.fireButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 92, visibleBottom - 98);
+        this.boostButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 104, visibleBottom - 174);
         if (this.joystickPointer) this.drawJoystick();
     }
 

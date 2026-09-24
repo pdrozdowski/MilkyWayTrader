@@ -36,11 +36,11 @@ body {
     user-select: none;
 }
 
-#run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: start; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }
+#run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: auto auto minmax(0, 1fr) 115px; align-items: start; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }
 #run-status-clock, #run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
 #run-status-clock { padding: 10px 12px; white-space: nowrap; }
-#run-status-primary { justify-self: center; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: min(600px, 58vw); min-width: 0; padding: 10px 12px; }
-#run-status-secondary { position: relative; justify-self: end; display: grid; gap: 5px; min-width: 230px; text-align: center; }
+#run-status-primary { justify-self: stretch; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; min-width: 0; padding: 10px 12px; }
+#run-status-secondary { position: relative; justify-self: end; display: grid; gap: 5px; min-width: 0; text-align: center; }
 #run-status-secondary > span { padding: 10px 12px; border: 1px solid #406587; border-radius: 8px; background: #102039e8; white-space: nowrap; text-align: center; }
 #run-status-primary > span, #run-status-hp-label, #run-status p { white-space: nowrap; }
 #run-status-hp { flex: 1; min-width: 0; height: 12px; accent-color: #8bdfff; }
@@ -81,7 +81,7 @@ body {
 }
 
 #game-menu { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px; background: #07111bd9; }
-.game-menu-panel { position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; width: min(400px, 100%); height: min(600px, 100%); padding: 48px 24px 24px; border: 1px solid #8bdfff; border-radius: 12px; background: #102039; }
+.game-menu-panel { position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; width: min(400px, 100%); height: min(360px, 100%); padding: 48px 24px 24px; border: 1px solid #8bdfff; border-radius: 12px; background: #102039; }
 .game-menu-panel h2 { margin: 0 0 12px; }
 #game-menu-close { position: absolute; top: 8px; right: 8px; }
 .game-menu-panel button { min-width: 180px; min-height: 44px; padding: 10px 14px; border: 1px solid #8bdfff; border-radius: 6px; color: #fff; background: #122541; font: inherit; cursor: pointer; }
