@@ -6,6 +6,7 @@ import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
+import { AsteroidBelt } from '../effects/asteroidBelt';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
 import { resolveMoolarisContact } from '../mechanics/moolaris/contact';
@@ -21,6 +22,7 @@ export class Game extends Scene
 {
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Starfield;
+    asteroidBelt: AsteroidBelt;
     sun: Sun;
     ship: Spaceship;
     planets: Planet[];
@@ -31,7 +33,6 @@ export class Game extends Scene
     private readonly pointerWorld = new PhaserMath.Vector2();
     private readonly cameraDisplacement = new PhaserMath.Vector2();
     private readonly shipVelocity = new PhaserMath.Vector2();
-    private landingPrompt: GameObjects.Text;
     private lossOfControl: GameObjects.Text;
     private lossOfControlUntilMs = 0;
     private boostHeld = false;
@@ -56,6 +57,7 @@ export class Game extends Scene
         this.camera.setBackgroundColor('#000000');
         this.physics.world.setBounds(gameWorldBounds.x, gameWorldBounds.y, gameWorldBounds.width, gameWorldBounds.height);
         this.background = new Starfield(this, gameWorldBounds.width, gameWorldBounds.height, gameWorldBounds.x, gameWorldBounds.y);
+        this.asteroidBelt = new AsteroidBelt(this);
         this.sun = new Sun(this, gameObjectLayout.sun);
         this.ship = new Spaceship(this, state.ship);
         const planetsById = this.planetsById(state.planets);
@@ -65,13 +67,6 @@ export class Game extends Scene
         }));
         this.weapon = new ShipWeapon(this, () => this.audio.play('ship-laser'));
         this.camera.centerOn(this.ship.sprite.x, this.ship.sprite.y);
-        this.add.text(24, 96, 'Hold / drag to fly · Left Ctrl: fire', {
-            fontFamily: 'Arial', fontSize: 18, color: '#ffffff', backgroundColor: '#102039', padding: { x: 12, y: 10 }
-        }).setScrollFactor(0).setDepth(ObjectDepth.UI);
-        this.landingPrompt = this.add.text(512, 692, 'Press [SPACE] / Tap on planet\nto land', {
-            fontFamily: 'Arial', fontSize: 20, color: '#d6efff', align: 'center',
-            backgroundColor: '#102039', padding: { x: 18, y: 12 }
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(ObjectDepth.UI).setVisible(false);
         this.lossOfControl = this.add.text(512, this.scale.height / 3, 'CONTROLS DISABLED - RECOVERING...', {
             fontFamily: 'Arial', fontSize: 18, color: '#ffd6d6', backgroundColor: '#7a1212', padding: { x: 12, y: 10 }
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(ObjectDepth.UI).setVisible(false);
@@ -103,9 +98,13 @@ export class Game extends Scene
             window.removeEventListener('keydown', this.flightKeyDown);
             window.removeEventListener('keyup', this.flightKeyUp);
         });
-        for (const planet of this.planets) planet.updateLandingIndicator(this.ship);
-        this.updateLandingPrompt();
-        this.background.update(this.time.now);
+        for (const planet of this.planets) {
+            planet.update(state.clock.activeElapsedMs);
+            planet.updateLandingIndicator(this.ship);
+        }
+        this.background.update(state.clock.activeElapsedMs);
+        this.asteroidBelt.update(state.clock.activeElapsedMs);
+        this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);
     }
 
     private startSteering (pointer: Input.Pointer): void
@@ -151,11 +150,6 @@ export class Game extends Scene
     private readonly gainFocus = (): void => {
         if (this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: resumeGameClock(state.clock, 'background') }));
     };
-
-    private updateLandingPrompt (): void
-    {
-        this.landingPrompt.setVisible(this.planets.some(planet => planet.indicator.visible));
-    }
 
     private readonly exitToGameOver = (): void => {
         this.loseFocus();
@@ -204,7 +198,7 @@ export class Game extends Scene
         }));
         this.ship.synchronize(state.ship, time);
         this.lossOfControl.setVisible(time < this.lossOfControlUntilMs);
-        this.sun.update(time, delta);
+        this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);
         this.shipVelocity.copy(state.ship.velocity);
         updateShipAudio(this.audio, state.ship, this.shipVelocity.length(),
             shipTuning.maxSpeed, shipBoostTuning.speedMultiplier, delta);
@@ -217,11 +211,12 @@ export class Game extends Scene
         const planetsById = this.planetsById(state.planets);
         for (const planet of this.planets) {
             planet.synchronize(planetsById.get(planet.id)!);
+            planet.update(state.clock.activeElapsedMs);
             planet.updateLandingIndicator(this.ship);
         }
-        this.updateLandingPrompt();
         this.weapon.synchronize(state.projectiles);
-        this.background.update(time);
+        this.background.update(state.clock.activeElapsedMs);
+        this.asteroidBelt.update(state.clock.activeElapsedMs);
     }
 
 }

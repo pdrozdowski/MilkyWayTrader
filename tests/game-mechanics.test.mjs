@@ -11,6 +11,9 @@ import { planetDefinitions } from '../src/game/definitions/planetDefinitions.ts'
 import { projectPlanetPosition } from '../src/game/mechanics/planet/orbit.ts';
 import { MOOLARIS_CONTROL_CLEARANCE, MOOLARIS_RECOVERY_SECONDS, moolarisDefinition } from '../src/game/definitions/moolarisDefinition.ts';
 import { isRecoveringFromMoolaris, moolarisControlRadius, resolveMoolarisContact } from '../src/game/mechanics/moolaris/contact.ts';
+import { asteroidBeltDefinition } from '../src/game/definitions/asteroidBeltDefinition.ts';
+import { asteroidBeltLayout, projectAsteroidBelt } from '../src/game/visual/asteroidBelt.ts';
+import { activeTimeCycle, activeTimeWave } from '../src/game/visual/activeTime.ts';
 
 const tuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5 };
 const speed = velocity => Math.hypot(velocity.x, velocity.y);
@@ -122,6 +125,40 @@ test('planet definitions project exact counter-clockwise active-time orbits', ()
     const active = advanceGameSimulation(initialGameState, { target: null, boostRequested: false, firing: false }, 12_345);
     assert.deepEqual(active.planets.map(planet => planet.position),
         planetDefinitions.map(planet => projectPlanetPosition(planet.id, active.clock.activeElapsedMs)));
+});
+
+test('decorative asteroid belt has a deterministic active-time projection beyond Maslo-Prime', () => {
+    const masloPrime = planetDefinitions.find(planet => planet.id === 'maslo-prime');
+    assert(masloPrime);
+    assert.equal(asteroidBeltDefinition.asteroidRadius, Math.min(...planetDefinitions.map(planet => planet.radius)) / 2);
+    assert.equal(asteroidBeltLayout.length, asteroidBeltDefinition.asteroidCount * 2);
+    assert.equal(asteroidBeltLayout.filter(asteroid => asteroid.beltIndex === 0).length, asteroidBeltDefinition.asteroidCount);
+    assert.equal(asteroidBeltLayout.filter(asteroid => asteroid.beltIndex === 1).length, asteroidBeltDefinition.asteroidCount);
+    assert.deepEqual(new Set(asteroidBeltLayout.map(asteroid => asteroid.type)), new Set(['rock', 'ice', 'metal', 'dirt']));
+    assert.deepEqual(projectAsteroidBelt(0), projectAsteroidBelt(0));
+    for (const asteroid of asteroidBeltLayout) {
+        assert(asteroid.radius - asteroidBeltDefinition.asteroidRadius >= masloPrime.orbitRadius + masloPrime.radius + 50);
+    }
+    const innerBeltOuterRadius = Math.max(...asteroidBeltLayout.filter(asteroid => asteroid.beltIndex === 0).map(asteroid => asteroid.radius));
+    const outerBeltInnerRadius = Math.min(...asteroidBeltLayout.filter(asteroid => asteroid.beltIndex === 1).map(asteroid => asteroid.radius));
+    assert(outerBeltInnerRadius - asteroidBeltDefinition.asteroidRadius >= innerBeltOuterRadius
+        + asteroidBeltDefinition.asteroidRadius + asteroidBeltDefinition.outerBeltGap - asteroidBeltDefinition.outerBeltInset);
+    const initial = projectAsteroidBelt(0);
+    const quarter = projectAsteroidBelt(asteroidBeltDefinition.rotationPeriodMs / 4);
+    assert(Math.abs(initial[0].x - -quarter[0].y) < 1e-8);
+    assert(Math.abs(initial[0].y - quarter[0].x) < 1e-8);
+    assert.deepEqual(projectAsteroidBelt(asteroidBeltDefinition.rotationPeriodMs), initial);
+});
+
+test('sun and starfield presentation phases freeze and resume from active elapsed time', () => {
+    const elapsedBeforePause = 12_345;
+    const sunBeforePause = activeTimeCycle(0.32, 0.000041, elapsedBeforePause);
+    const starBeforePause = activeTimeWave(1.24, 0.0011, elapsedBeforePause);
+    assert.equal(activeTimeCycle(0.32, 0.000041, elapsedBeforePause), sunBeforePause);
+    assert.equal(activeTimeWave(1.24, 0.0011, elapsedBeforePause), starBeforePause);
+    const resumedElapsed = elapsedBeforePause + 500;
+    assert.equal(activeTimeCycle(0.32, 0.000041, resumedElapsed), activeTimeCycle(0.32, 0.000041, 12_845));
+    assert.equal(activeTimeWave(1.24, 0.0011, resumedElapsed), activeTimeWave(1.24, 0.0011, 12_845));
 });
 
 test('fast projectile paths detect crossed Moolaris, tangent hits and endpoints without false hits', () => {
