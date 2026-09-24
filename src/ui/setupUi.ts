@@ -12,7 +12,10 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
     const container = root.querySelector<HTMLElement>('#game-container');
     if (!container) throw new Error('Missing game container.');
     const audio = mountAudioControls(root, createAudioSettingsPort(game));
-    const display = mountDisplayControls(root, createDisplayPort(game, root, container), game);
+    const displayPort = createDisplayPort(game, root, container);
+    const display = mountDisplayControls(root, displayPort, active => game.events.emit('fullscreen-change', active));
+    const toggleFullscreen = (): void => { void displayPort.toggleFullscreen(); };
+    game.events.on('toggle-fullscreen', toggleFullscreen);
     const runStatus = mountRunStatus(root, createRunStatusPort(game));
     const menu = root.querySelector<HTMLElement>('#game-menu');
     const menuToggle = root.querySelector<HTMLButtonElement>('#game-menu-toggle');
@@ -77,6 +80,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
             touchControlsToggle.removeEventListener('click', toggleTouchControls);
             mouseMovementToggle.removeEventListener('click', toggleMouseMovement);
             game.events.off('debug-controls-reset', resetDebugControls);
+            game.events.off('toggle-fullscreen', toggleFullscreen);
             window.removeEventListener('keydown', debugKeyDown);
             game.canvas.removeEventListener('pointerdown', returnToGame);
             game.events.off('destroy', handle.destroy);
