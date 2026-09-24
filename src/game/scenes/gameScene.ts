@@ -102,8 +102,7 @@ export class Game extends Scene
         this.input.on('pointerupoutside', this.endSteering, this);
         this.scale.on('resize', this.layoutScreenSpace, this);
         this.game.events.on('blur', this.loseFocus, this);
-        this.game.events.on('menu-open', this.pauseForMenu, this);
-        this.game.events.on('menu-close', this.resumeFromMenu, this);
+        this.game.events.on('game-pause-reason-added', this.clearInputForPause, this);
         this.game.events.on('return-to-menu', this.exitToGameOver, this);
         this.game.events.on('debug-touch-controls', this.setTouchControlsVisible, this);
         this.game.events.on('debug-mouse-movement', this.setMouseMovementEnabled, this);
@@ -119,8 +118,7 @@ export class Game extends Scene
             this.input.off('pointerupoutside', this.endSteering, this);
             this.scale.off('resize', this.layoutScreenSpace, this);
             this.game.events.off('blur', this.loseFocus, this);
-            this.game.events.off('menu-open', this.pauseForMenu, this);
-            this.game.events.off('menu-close', this.resumeFromMenu, this);
+            this.game.events.off('game-pause-reason-added', this.clearInputForPause, this);
             this.game.events.off('return-to-menu', this.exitToGameOver, this);
             this.game.events.off('debug-touch-controls', this.setTouchControlsVisible, this);
             this.game.events.off('debug-mouse-movement', this.setMouseMovementEnabled, this);
@@ -275,6 +273,10 @@ export class Game extends Scene
 
     private readonly flightKeyDown = (event: KeyboardEvent): void => {
         if (event.target instanceof Element && event.target.closest('[data-game-input="ignore"]')) return;
+        if (this.hasInputBlockingPause()) {
+            this.clearFlightInput();
+            return;
+        }
         if (event.code === 'ShiftLeft') this.boostHeld = true;
         if (event.code === 'ControlLeft') {
             this.fireHeld = true;
@@ -288,12 +290,7 @@ export class Game extends Scene
     };
 
     private readonly loseFocus = (): void => {
-        this.boostHeld = false;
-        this.fireHeld = false;
-        this.releaseSteering();
-        this.releaseJoystick();
-        this.firePointer = null;
-        this.boostPointer = null;
+        this.clearFlightInput();
         if (this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: pauseGameClock(state.clock, 'background') }));
     };
 
@@ -306,19 +303,24 @@ export class Game extends Scene
         this.scene.start('MainMenu');
     };
 
-    private readonly pauseForMenu = (): void => {
+    private readonly clearFlightInput = (): void => {
         this.boostHeld = false;
         this.fireHeld = false;
         this.releaseSteering();
         this.releaseJoystick();
         this.firePointer = null;
         this.boostPointer = null;
-        if (this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: pauseGameClock(state.clock, 'menu') }));
     };
 
-    private readonly resumeFromMenu = (): void => {
-        if (this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: resumeGameClock(state.clock, 'menu') }));
+    private readonly clearInputForPause = (reason: string): void => {
+        if (reason === 'menu' || reason === 'orientation') this.clearFlightInput();
     };
+
+    private hasInputBlockingPause (): boolean
+    {
+        const reasons = this.stateProvider.snapshot().clock.pauseReasons;
+        return reasons.includes('menu') || reasons.includes('orientation');
+    }
 
     private planetsById (states: readonly PlanetState[]): ReadonlyMap<string, PlanetState>
     {

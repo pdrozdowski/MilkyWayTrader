@@ -179,6 +179,20 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
     assert.deepEqual(unchanged.planets, paused.planets);
 });
 
+test('clock composes background, menu and orientation pauses without advancing active time', () => {
+    let clock = pauseGameClock(initialGameState.clock, 'background');
+    clock = pauseGameClock(clock, 'menu');
+    clock = pauseGameClock(clock, 'orientation');
+    assert.deepEqual(clock.pauseReasons, ['background', 'menu', 'orientation']);
+    clock = resumeGameClock(clock, 'menu');
+    assert.equal(advanceGameClock(clock, 1000).activeElapsedMs, 0);
+    clock = resumeGameClock(clock, 'orientation');
+    assert.equal(advanceGameClock(clock, 1000).activeElapsedMs, 0);
+    clock = resumeGameClock(clock, 'background');
+    assert.equal(advanceGameClock(clock, 1000).activeElapsedMs, 1000);
+    assert.deepEqual(decodeGameState({ ...clone(initialGameState), clock: { ...clone(initialGameState.clock), pauseReasons: ['menu', 'orientation'] } }).clock.pauseReasons, ['menu', 'orientation']);
+});
+
 test('planet projections retain continuity through restore and active-time pauses', () => {
     const input = { target: null, boostRequested: false, firing: false };
     const active = advanceGameSimulation(initialGameState, input, 12_345);

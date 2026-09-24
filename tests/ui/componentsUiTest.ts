@@ -28,18 +28,38 @@ test('display controls render responsive state and actionable errors', async ({ 
     await expect(page.locator('#menu-fullscreen-toggle')).toHaveAttribute('aria-pressed', 'false');
     await page.evaluate(() => window.uiHarness.setFullscreenResult('manual-rotation'));
     await page.locator('#menu-fullscreen-toggle').click();
-    await expect(page.locator('#menu-display-status')).toContainText('Obróć telefon');
+    await expect(page.locator('#menu-display-status')).toContainText('Rotate your device to play.');
     await expect(page.locator('#display-status')).toBeEmpty();
 
     await page.evaluate(() => window.uiHarness.setFullscreenResult('failed'));
     await page.locator('#fullscreen-toggle').click();
-    await expect(page.locator('#display-status')).toContainText('Nie udało się');
+    await expect(page.locator('#display-status')).toContainText('Failed to enter fullscreen.');
     expect(await page.evaluate(() => window.uiHarness.refreshes())).toBeGreaterThan(0);
 });
 
 test('repeated mounting keeps one subscription per component', async ({ page }) => {
     await page.evaluate(() => { window.uiHarness.mount(); window.uiHarness.mount(); });
     expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 1, display: 1, runStatus: 1 });
+});
+
+test('pause menu traps focus, resumes and restores its trigger focus', async ({ page }) => {
+    const toggle = page.locator('#game-menu-toggle');
+    await toggle.focus();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#game-menu')).toBeVisible();
+    expect(await page.evaluate(() => window.uiHarness.gameControls().menuOpen)).toBe(true);
+    await page.getByRole('button', { name: 'Resume' }).click();
+    await expect(page.locator('#game-menu')).toBeHidden();
+    await expect(toggle).toBeFocused();
+    expect(await page.evaluate(() => window.uiHarness.gameControls().menuOpen)).toBe(false);
+});
+
+test('game controls fixture reports orientation pauses and exits through its port', async ({ page }) => {
+    await page.evaluate(() => window.uiHarness.setOrientationPaused(true));
+    expect(await page.evaluate(() => window.uiHarness.gameControls())).toEqual({ menuOpen: false, orientationPaused: true, exits: 0 });
+    await page.locator('#game-menu-toggle').click();
+    await page.getByRole('button', { name: 'Exit to Main Menu' }).click();
+    expect(await page.evaluate(() => window.uiHarness.gameControls())).toEqual({ menuOpen: false, orientationPaused: true, exits: 1 });
 });
 
 test('run status renders updates and independently toggles Ship info and Cargo', async ({ page }) => {
