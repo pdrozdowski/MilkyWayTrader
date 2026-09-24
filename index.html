@@ -11,6 +11,11 @@
 <body>
     <div id="app">
         <div id="game-container"></div>
+        <section id="main-menu-controls" data-game-input="ignore" aria-label="Main menu" hidden>
+            <button id="main-menu-new-game" type="button">New Game</button>
+            <button id="main-menu-continue" type="button" disabled>Continue Game</button>
+            <button id="main-menu-fullscreen" type="button" aria-pressed="false">Fullscreen Mode: OFF</button>
+        </section>
         <section id="run-status" data-game-input="ignore" aria-label="Run status" hidden>
             <button id="game-menu-toggle" type="button" aria-expanded="false" aria-controls="game-menu">Menu</button>
             <span id="run-status-clock"></span>
