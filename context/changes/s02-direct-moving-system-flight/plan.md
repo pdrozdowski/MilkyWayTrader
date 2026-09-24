@@ -302,19 +302,19 @@ No persisted-shape migration is required. Planet positions retain their existing
 
 #### Automated
 
-- [x] 3.1 Unit tests prove deterministic belt layout and active-time rotation without adding it to authoritative state.
-- [x] 3.2 Architecture tests continue to pass with mechanics, world, and presentation dependency boundaries intact.
+- [x] 3.1 Unit tests prove deterministic belt layout and active-time rotation without adding it to authoritative state. — e431b3d
+- [x] 3.2 Architecture tests continue to pass with mechanics, world, and presentation dependency boundaries intact. — e431b3d
 
 #### Manual
 
-- [x] 3.3 Planet and Moolaris labels remain readable during flight, and the belt is visible, smooth, and completely non-interactive.
+- [x] 3.3 Planet and Moolaris labels remain readable during flight, and the belt is visible, smooth, and completely non-interactive. — e431b3d
 
 ### Phase 4: Responsive Direct Controls
 
 #### Automated
 
-- [ ] 4.1 Application UI tests cover viewport resize/re-anchoring and retain desktop pointer, keyboard, boost, and fire behavior.
-- [ ] 4.2 Touch UI tests cover joystick ownership, dead-zone/full-thrust behavior, fire/boost actions, release, and cancellation cleanup.
+- [x] 4.1 Application UI tests cover viewport resize/re-anchoring and retain desktop pointer, keyboard, boost, and fire behavior.
+- [x] 4.2 Touch UI tests cover joystick ownership, dead-zone/full-thrust behavior, fire/boost actions, release, and cancellation cleanup.
 
 #### Manual
 

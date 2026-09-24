@@ -30,11 +30,13 @@ export class MainMenu extends Scene
 
         this.flyCow(true);
 
-        this.input.once('pointerdown', () => {
+        const startGame = () => {
             const stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
             stateProvider.reset(initialGameState);
             this.scene.start('Game');
-        });
+        };
+        this.input.once('pointerdown', startGame);
+        this.input.once('pointerup', startGame);
     }
 
     private flyCow (upwards: boolean)

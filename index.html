@@ -12,12 +12,27 @@
     <div id="app">
         <div id="game-container"></div>
         <section id="run-status" data-game-input="ignore" aria-label="Run status" hidden>
+            <button id="game-menu-toggle" type="button" aria-expanded="false" aria-controls="game-menu">Menu</button>
             <span id="run-status-clock"></span>
-            <button id="run-status-ship-toggle" type="button" aria-expanded="false" aria-controls="run-status-ship-details">Ship info</button>
-            <div id="run-status-primary"><span id="run-status-credits"></span><span id="run-status-cargo"></span><label id="run-status-hp-label" for="run-status-hp"></label><progress id="run-status-hp" value="0" max="100"></progress></div>
-            <button id="run-status-cargo-toggle" type="button" aria-expanded="false" aria-controls="run-status-cargo-details">Cargo</button>
-            <section id="run-status-ship-details" aria-label="Ship information" hidden><p id="run-status-cargo-system"></p><p id="run-status-engine-system"></p><p id="run-status-weapon-system"></p><p id="run-status-booster"></p></section>
-            <section id="run-status-cargo-details" aria-label="Cargo contents" hidden><p id="run-status-cargo-contents"></p></section>
+            <div id="run-status-primary"><label id="run-status-hp-label" for="run-status-hp"></label><progress id="run-status-hp" value="0" max="100"></progress></div>
+            <div id="run-status-secondary"><span id="run-status-credits"></span><span id="run-status-cargo"></span><button id="run-status-ship-toggle" type="button" aria-expanded="false" aria-controls="run-status-ship-details">Ship info</button><button id="run-status-cargo-toggle" type="button" aria-expanded="false" aria-controls="run-status-cargo-details">Cargo info</button><section id="run-status-ship-details" aria-label="Ship information" hidden><p id="run-status-cargo-system"></p><p id="run-status-engine-system"></p><p id="run-status-weapon-system"></p><p id="run-status-booster"></p></section><section id="run-status-cargo-details" aria-label="Cargo contents" hidden><p id="run-status-cargo-contents"></p></section></div>
+        </section>
+        <section id="game-menu" data-game-input="ignore" aria-label="Game menu" aria-modal="true" role="dialog" hidden>
+            <div class="game-menu-panel">
+                <button id="game-menu-close" type="button" aria-label="Close menu">X</button>
+                <h2>Menu</h2>
+                <div id="audio-controls" role="group" aria-label="Game audio">
+                    <button id="audio-mute" type="button" aria-pressed="false">Mute</button>
+                    <label for="audio-volume">Volume</label>
+                    <input id="audio-volume" type="range" min="0" max="100" step="1" value="50" />
+                    <output id="audio-volume-value" for="audio-volume">50%</output>
+                </div>
+                <div id="mobile-controls">
+                    <button id="fullscreen-toggle" type="button" aria-pressed="false">Fullscreen</button>
+                    <p id="display-status" role="status" aria-live="polite"></p>
+                </div>
+                <button id="return-to-menu" type="button">Return to Main Menu</button>
+            </div>
         </section>
         <aside id="orientation-notice" aria-label="Orientacja ekranu" hidden>
             <div>
@@ -27,16 +42,6 @@
                 <p id="orientation-help">Obróć urządzenie lub wybierz „Pełny ekran”.</p>
             </div>
         </aside>
-        <div id="mobile-controls" data-game-input="ignore" hidden>
-            <button id="fullscreen-toggle" type="button" aria-pressed="false">Pełny ekran</button>
-            <p id="display-status" role="status" aria-live="polite"></p>
-        </div>
-        <div id="audio-controls" data-game-input="ignore" role="group" aria-label="Game audio">
-            <button id="audio-mute" type="button" aria-pressed="false">Mute</button>
-            <label for="audio-volume">Volume</label>
-            <input id="audio-volume" type="range" min="0" max="100" step="1" value="50" />
-            <output id="audio-volume-value" for="audio-volume">50%</output>
-        </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
 </body>

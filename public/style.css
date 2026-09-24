@@ -32,18 +32,22 @@ body {
 #game-container canvas {
     display: block;
     touch-action: none;
+    -webkit-touch-callout: none;
+    user-select: none;
 }
 
-#run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }
+#run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: start; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }
 #run-status-clock, #run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
 #run-status-clock { padding: 10px 12px; white-space: nowrap; }
-#run-status-primary { display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); min-width: 0; padding: 10px 12px; }
+#run-status-primary { justify-self: center; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: min(600px, 58vw); min-width: 0; padding: 10px 12px; }
+#run-status-secondary { position: relative; justify-self: end; display: grid; gap: 5px; min-width: 230px; text-align: center; }
+#run-status-secondary > span { padding: 10px 12px; border: 1px solid #406587; border-radius: 8px; background: #102039e8; white-space: nowrap; text-align: center; }
 #run-status-primary > span, #run-status-hp-label, #run-status p { white-space: nowrap; }
-#run-status-hp { width: clamp(70px, 14vw, 150px); height: 12px; accent-color: #8bdfff; }
+#run-status-hp { flex: 1; min-width: 0; height: 12px; accent-color: #8bdfff; }
 #run-status button { min-height: 38px; padding: 8px 10px; color: #fff; font: inherit; cursor: pointer; pointer-events: auto; }
 #run-status :focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-#run-status-ship-details, #run-status-cargo-details { position: absolute; top: calc(100% + 6px); padding: 8px 12px; line-height: 1.4; }
-#run-status-ship-details { left: 0; } #run-status-cargo-details { right: 0; } #run-status p { margin: 0; }
+#run-status-ship-details, #run-status-cargo-details { position: absolute; top: calc(100% + 6px); right: 0; min-width: 220px; padding: 8px 12px; text-align: left; line-height: 1.4; }
+#run-status p { margin: 0; }
 
 [hidden] {
     display: none !important;
@@ -76,17 +80,13 @@ body {
     color: #8bdfff;
 }
 
-#mobile-controls {
-    position: absolute;
-    top: max(64px, calc(env(safe-area-inset-top) + 56px));
-    right: max(12px, env(safe-area-inset-right));
-    left: max(12px, env(safe-area-inset-left));
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    pointer-events: none;
-}
+#game-menu { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px; background: #07111bd9; }
+.game-menu-panel { position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; width: min(400px, 100%); height: min(600px, 100%); padding: 48px 24px 24px; border: 1px solid #8bdfff; border-radius: 12px; background: #102039; }
+.game-menu-panel h2 { margin: 0 0 12px; }
+#game-menu-close { position: absolute; top: 8px; right: 8px; }
+.game-menu-panel button { min-width: 180px; min-height: 44px; padding: 10px 14px; border: 1px solid #8bdfff; border-radius: 6px; color: #fff; background: #122541; font: inherit; cursor: pointer; }
+.game-menu-panel #game-menu-close { min-width: 72px; padding: 10px 14px; font-size: 24px; font-weight: 700; }
+#mobile-controls { display: grid; width: min(100%, 250px); gap: 8px; }
 
 #fullscreen-toggle {
     min-height: 44px;
@@ -120,11 +120,9 @@ body {
 }
 
 #audio-controls {
-    position: absolute;
-    bottom: max(12px, env(safe-area-inset-bottom));
-    left: max(12px, env(safe-area-inset-left));
-    z-index: 3;
-    display: flex;
+    display: grid;
+    width: min(100%, 250px);
+    justify-items: center;
     align-items: center;
     gap: 10px;
     padding: 6px 10px;
@@ -158,5 +156,5 @@ body {
 
 @media (max-width: 420px) {
     #audio-controls { gap: 6px; padding: 4px 6px; }
-    #run-status { gap: 4px; font-size: 11px; } #run-status-primary { gap: 5px; padding: 8px; } #run-status-hp { width: 54px; } #run-status-clock { padding: 8px; } #run-status button { min-height: 36px; padding: 7px; }
+    #run-status { gap: 4px; font-size: 11px; } #run-status-primary { gap: 5px; padding: 8px; } #run-status-clock { padding: 8px; } #run-status button { min-height: 36px; padding: 7px; }
 }
