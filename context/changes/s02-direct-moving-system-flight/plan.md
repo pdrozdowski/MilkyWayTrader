@@ -302,8 +302,8 @@ No persisted-shape migration is required. Planet positions retain their existing
 
 #### Automated
 
-- [ ] 3.1 Unit tests prove deterministic belt layout and active-time rotation without adding it to authoritative state.
-- [ ] 3.2 Architecture tests continue to pass with mechanics, world, and presentation dependency boundaries intact.
+- [x] 3.1 Unit tests prove deterministic belt layout and active-time rotation without adding it to authoritative state.
+- [x] 3.2 Architecture tests continue to pass with mechanics, world, and presentation dependency boundaries intact.
 
 #### Manual
 
