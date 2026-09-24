@@ -25,17 +25,17 @@ export function mountDisplayControls (root: HTMLElement, port: DisplayPort, onFu
         notice.hidden = !(snapshot.mobile && snapshot.portrait);
         for (const control of controls) {
             control.button.hidden = false;
-            control.button.textContent = snapshot.fullscreenActive ? 'X' : 'Pełny ekran';
+            control.button.textContent = snapshot.fullscreenActive ? 'X' : 'Fullscreen';
             control.button.setAttribute('aria-pressed', String(snapshot.fullscreenActive));
             if (!snapshot.mobile) control.status.textContent = '';
         }
         onFullscreenChange(snapshot.fullscreenActive);
-        help.textContent = !snapshot.fullscreenAvailable ? 'Obróć urządzenie, aby grać.' : 'Obróć urządzenie lub wybierz „Pełny ekran”.';
+        help.textContent = !snapshot.fullscreenAvailable ? 'Rotate your device to play.' : 'Rotate your device or select "Fullscreen".';
         port.refreshScale();
     };
     const showResult = (status: HTMLElement, result: FullscreenResult): void => {
-        if (result === 'manual-rotation') status.textContent = 'Obróć telefon do poziomu, aby grać.';
-        if (result === 'failed') status.textContent = 'Nie udało się włączyć pełnego ekranu. Możesz grać po obróceniu telefonu do poziomu.';
+        if (result === 'manual-rotation') status.textContent = 'Rotate your device to play.';
+        if (result === 'failed') status.textContent = 'Failed to enter fullscreen. You can still play by rotating your device.';
     };
     const toggle = async (control: typeof controls[number]): Promise<void> => {
         for (const item of controls) item.button.disabled = true;
