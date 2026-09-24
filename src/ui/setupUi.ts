@@ -18,7 +18,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
     game.events.on('toggle-fullscreen', toggleFullscreen);
     const runStatus = mountRunStatus(root, createRunStatusPort(game));
     const menu = root.querySelector<HTMLElement>('#game-menu');
-    const mainMenu = root.querySelector<HTMLElement>('#main-menu-controls');
+    const mainMenu = root.querySelector<HTMLElement>('#main-menu');
     const mainMenuNewGame = root.querySelector<HTMLButtonElement>('#main-menu-new-game');
     const mainMenuFullscreen = root.querySelector<HTMLButtonElement>('#main-menu-fullscreen');
     const menuToggle = root.querySelector<HTMLButtonElement>('#game-menu-toggle');

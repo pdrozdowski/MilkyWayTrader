@@ -49,6 +49,34 @@ test('main-menu fullscreen control and empty canvas do not start a run', async (
     await expect(page.getByLabel('Run status')).toBeHidden();
 });
 
+test('main-menu DOM logo leaves every control visible below it', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    const menu = page.getByLabel('Main menu');
+    const logo = page.getByRole('img', { name: 'MilkyWayTrader' });
+    const controls = [
+        page.getByRole('button', { name: 'New Game', exact: true }),
+        page.getByRole('button', { name: 'Continue Game', exact: true }),
+        page.getByRole('button', { name: /Fullscreen Mode:/ })
+    ];
+    await expect(menu).toBeVisible();
+    await expect(logo).toBeVisible();
+    for (const control of controls) await expect(control).toBeVisible();
+    const layout = await page.evaluate(() => {
+        const logoBounds = document.querySelector('#main-menu-logo')?.getBoundingClientRect();
+        const buttonBounds = [...document.querySelectorAll('#main-menu-controls button')].map(button => button.getBoundingClientRect());
+        return { logoBounds, buttonBounds, viewportHeight: window.innerHeight, viewportWidth: window.innerWidth };
+    });
+    expect(layout.logoBounds).not.toBeNull();
+    expect(layout.logoBounds?.width).toBeGreaterThanOrEqual(layout.viewportWidth - 1);
+    expect(layout.buttonBounds).toHaveLength(3);
+    for (const button of layout.buttonBounds) {
+        expect(button.top).toBeGreaterThanOrEqual(layout.logoBounds?.bottom ?? 0);
+        expect(button.bottom).toBeLessThanOrEqual(layout.viewportHeight);
+    }
+    const menuContentCenter = ((layout.logoBounds?.top ?? 0) + layout.buttonBounds[2].bottom) / 2;
+    expect(Math.abs(menuContentCenter - layout.viewportHeight / 2)).toBeLessThanOrEqual(1);
+});
+
 test('a new run exposes status, accepts flight input, and survives focus and scene transitions', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium-desktop', 'Desktop flight and scene-transition coverage.');
     test.setTimeout(60_000);

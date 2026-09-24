@@ -5,7 +5,6 @@ import { initialGameState } from '../definitions/initialGameState';
 export class MainMenu extends Scene
 {
     background: GameObjects.Image;
-    logo: GameObjects.Image;
     private cow: GameObjects.Image;
 
     constructor ()
@@ -18,8 +17,6 @@ export class MainMenu extends Scene
         this.background = this.add.image(512, 384, 'background').setDepth(0);
 
         this.cow = this.add.image(0, 0, 'cow').setDepth(1).setVisible(false);
-
-        this.logo = this.add.image(512, 350, 'logo').setDepth(2);
 
         this.flyCow(true);
 
