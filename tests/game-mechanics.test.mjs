@@ -11,7 +11,7 @@ import { planetDefinitions } from '../src/game/definitions/planetDefinitions.ts'
 import { projectPlanetPosition } from '../src/game/mechanics/planet/orbit.ts';
 import { MOOLARIS_CONTROL_CLEARANCE, MOOLARIS_RECOVERY_SECONDS, moolarisDefinition } from '../src/game/definitions/moolarisDefinition.ts';
 import { isRecoveringFromMoolaris, moolarisControlRadius, resolveMoolarisContact } from '../src/game/mechanics/moolaris/contact.ts';
-import { asteroidBeltDefinition } from '../src/game/definitions/asteroidBeltDefinition.ts';
+import { asteroidBeltDefinition } from '../src/game/visual/asteroidBeltDefinition.ts';
 import { asteroidBeltLayout, projectAsteroidBelt } from '../src/game/visual/asteroidBelt.ts';
 import { activeTimeCycle, activeTimeWave } from '../src/game/visual/activeTime.ts';
 

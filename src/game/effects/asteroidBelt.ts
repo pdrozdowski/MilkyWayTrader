@@ -1,5 +1,5 @@
 import { GameObjects, Scene } from 'phaser';
-import { asteroidBeltDefinition } from '../definitions/asteroidBeltDefinition';
+import { asteroidBeltDefinition } from '../visual/asteroidBeltDefinition';
 import { ObjectDepth } from '../visual/layers';
 import { asteroidBeltLayout, projectAsteroidBelt } from '../visual/asteroidBelt';
 
