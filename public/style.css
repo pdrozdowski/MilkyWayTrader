@@ -19,6 +19,9 @@ body {
     height: 100dvh;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
     background-color: #0f0f0f;
 }
 
@@ -80,18 +83,21 @@ body {
     color: #8bdfff;
 }
 
-#game-menu { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px; background: #07111bd9; }
+#game-menu, #debug-menu { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px; background: #07111bd9; }
 .game-menu-panel { position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 14px; width: min(760px, 100%); min-height: 0; padding: 48px 24px 24px; border: 1px solid #8bdfff; border-radius: 12px; background: #102039; }
 .game-menu-panel h2 { margin: 0 0 12px; }
 #game-menu-close { position: absolute; top: 8px; right: 8px; }
+#debug-menu-close { position: absolute; top: 8px; right: 8px; }
 .game-menu-panel button { min-width: 180px; min-height: 44px; padding: 10px 14px; border: 1px solid #8bdfff; border-radius: 6px; color: #fff; background: #122541; font: inherit; cursor: pointer; }
 .game-menu-panel #game-menu-close { min-width: 72px; padding: 10px 14px; font-size: 24px; font-weight: 700; }
-#mobile-controls, #menu-display-controls { display: grid; gap: 8px; }
+.game-menu-panel #debug-menu-close { min-width: 72px; padding: 10px 14px; font-size: 24px; font-weight: 700; }
+.debug-menu-panel { width: min(520px, 100%); }
+#menu-display-controls { display: grid; gap: 8px; }
 .game-menu-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; width: 100%; }
 .game-menu-actions > * { flex: 0 1 auto; }
 .game-menu-actions #return-to-menu { flex: 1 1 180px; }
 
-#fullscreen-toggle, #menu-fullscreen-toggle {
+#menu-fullscreen-toggle {
     min-height: 44px;
     padding: 10px 14px;
     border: 1px solid #8bdfff;
@@ -103,16 +109,16 @@ body {
     pointer-events: auto;
 }
 
-#fullscreen-toggle:focus-visible, #menu-fullscreen-toggle:focus-visible {
+#menu-fullscreen-toggle:focus-visible {
     outline: 3px solid #fff;
     outline-offset: 3px;
 }
 
-#fullscreen-toggle:disabled, #menu-fullscreen-toggle:disabled {
+#menu-fullscreen-toggle:disabled {
     opacity: 0.6;
 }
 
-#display-status:not(:empty), #menu-display-status:not(:empty) {
+#menu-display-status:not(:empty) {
     max-width: 32ch;
     margin: 8px 0 0;
     padding: 8px 12px;

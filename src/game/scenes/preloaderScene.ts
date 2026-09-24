@@ -40,6 +40,8 @@ export class Preloader extends Scene
         this.load.image('asteroid:ice', 'asteroid_ice.png');
         this.load.image('asteroid:metal', 'asteroid_metal.png');
         this.load.image('asteroid:dirt', 'asteroid_dirt.png');
+        this.load.image('control:fire', 'button_fire.png');
+        this.load.image('control:boost', 'button_boost.png');
         loadObjectAssets(this);
         loadSoundAssets(this);
     }
