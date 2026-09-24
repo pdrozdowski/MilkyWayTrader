@@ -27,7 +27,7 @@ const config: Phaser.Types.Core.GameConfig = {
     },
     backgroundColor: '#028af8',
     // Canvas touch-action:none handles gesture capture, including non-cancelable touchcancel.
-    input: { touch: { capture: false } },
+    input: { activePointers: 4, touch: { capture: false } },
     physics: {
         default: 'arcade',
         arcade: { gravity: { x: 0, y: 0 }, debug: false }

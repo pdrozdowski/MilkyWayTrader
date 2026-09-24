@@ -1,4 +1,20 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+
+async function startRun (page: Page): Promise<Locator>
+{
+    const canvas = page.locator('#game-container canvas');
+    const runStatus = page.getByLabel('Run status');
+    await expect(canvas).toBeVisible();
+    await canvas.screenshot();
+    await expect(async () => {
+        const bounds = await canvas.boundingBox();
+        if (!bounds) throw new Error('Missing canvas bounds.');
+        if (await page.evaluate(() => navigator.maxTouchPoints > 0)) await page.touchscreen.tap(bounds.x + 100, bounds.y + 100);
+        else await page.mouse.click(bounds.x + 100, bounds.y + 100);
+        expect(await runStatus.isVisible()).toBe(true);
+    }).toPass({ timeout: 15_000 });
+    return canvas;
+}
 
 test('application boots and persists accessible audio controls without consuming flight keys', async ({ page }) => {
     test.setTimeout(60_000);
@@ -80,5 +96,65 @@ test('a new run exposes status, accepts flight input, and survives focus and sce
     const gameOver = await canvas.screenshot();
     expect(gameOver.equals(running)).toBe(false);
     await expect(runStatus).toBeHidden();
+    expect(pageErrors).toEqual([]);
+});
+
+test('desktop flight retains pointer and keyboard actions after a viewport resize', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-desktop', 'Desktop pointer coverage.');
+    test.setTimeout(60_000);
+    const pageErrors: string[] = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    const canvas = await startRun(page);
+    await page.setViewportSize({ width: 960, height: 540 });
+    await expect(canvas).toBeVisible();
+    const resized = await canvas.boundingBox();
+    expect(resized).not.toBeNull();
+    if (!resized) throw new Error('Missing resized canvas bounds.');
+    expect(resized.width).toBeGreaterThan(900);
+    expect(resized.height).toBeGreaterThan(500);
+
+    await page.mouse.move(resized.x + resized.width * 0.7, resized.y + resized.height * 0.45);
+    await page.mouse.down();
+    await page.keyboard.down('ShiftLeft');
+    await page.keyboard.down('ControlLeft');
+    await page.waitForTimeout(200);
+    await page.keyboard.up('ControlLeft');
+    await page.keyboard.up('ShiftLeft');
+    await page.mouse.up();
+    await expect(page.getByLabel('Run status')).toBeVisible();
+    expect(pageErrors).toEqual([]);
+});
+
+test('touch controls accept joystick and action pointers and clear them on release or cancellation', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-touch', 'Touch-control coverage.');
+    test.setTimeout(60_000);
+    const pageErrors: string[] = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    const canvas = await startRun(page);
+    const bounds = await canvas.boundingBox();
+    expect(bounds).not.toBeNull();
+    if (!bounds) throw new Error('Missing touch canvas bounds.');
+    const dispatchTouch = async (type: string, pointerId: number, x: number, y: number): Promise<void> => {
+        await canvas.evaluate((element, event) => element.dispatchEvent(new PointerEvent(event.type, {
+            bubbles: true, cancelable: true, pointerType: 'touch', pointerId: event.pointerId,
+            clientX: event.x, clientY: event.y, buttons: event.type === 'pointerup' ? 0 : 1
+        })), { type, pointerId, x, y });
+    };
+    const joystickX = bounds.x + 108;
+    const joystickY = bounds.y + bounds.height - 108;
+    await dispatchTouch('pointerdown', 11, joystickX, joystickY);
+    await dispatchTouch('pointermove', 11, joystickX + 58, joystickY - 12);
+    await dispatchTouch('pointerup', 11, joystickX + 58, joystickY - 12);
+    await dispatchTouch('pointerdown', 12, bounds.x + bounds.width - 92, bounds.y + bounds.height - 98);
+    await dispatchTouch('pointerup', 12, bounds.x + bounds.width - 92, bounds.y + bounds.height - 98);
+    await dispatchTouch('pointerdown', 13, bounds.x + bounds.width - 104, bounds.y + bounds.height - 174);
+    await canvas.evaluate((element, point) => {
+        const touch = new Touch({ identifier: 13, target: element, clientX: point.x, clientY: point.y });
+        element.dispatchEvent(new TouchEvent('touchcancel', { bubbles: true, changedTouches: [touch] }));
+    }, { x: bounds.x + bounds.width - 104, y: bounds.y + bounds.height - 174 });
+    await page.waitForTimeout(150);
+    await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
     expect(pageErrors).toEqual([]);
 });

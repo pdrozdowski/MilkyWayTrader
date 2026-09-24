@@ -34,6 +34,18 @@ export class Game extends Scene
     private readonly cameraDisplacement = new PhaserMath.Vector2();
     private readonly shipVelocity = new PhaserMath.Vector2();
     private lossOfControl: GameObjects.Text;
+    private exit: GameObjects.Text;
+    private joystickBase: GameObjects.Graphics;
+    private joystickStick: GameObjects.Graphics;
+    private joystickZone: GameObjects.Zone;
+    private fireButton: GameObjects.Text;
+    private boostButton: GameObjects.Text;
+    private joystickPointer: Input.Pointer | null = null;
+    private firePointer: Input.Pointer | null = null;
+    private boostPointer: Input.Pointer | null = null;
+    private readonly joystickOrigin = new PhaserMath.Vector2();
+    private readonly joystickDirection = new PhaserMath.Vector2();
+    private readonly joystickPosition = new PhaserMath.Vector2();
     private lossOfControlUntilMs = 0;
     private boostHeld = false;
     private fireHeld = false;
@@ -70,17 +82,24 @@ export class Game extends Scene
         this.lossOfControl = this.add.text(512, this.scale.height / 3, 'CONTROLS DISABLED - RECOVERING...', {
             fontFamily: 'Arial', fontSize: 18, color: '#ffd6d6', backgroundColor: '#7a1212', padding: { x: 12, y: 10 }
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(ObjectDepth.UI).setVisible(false);
-        const exit = this.add.text(1000, 744, 'Exit demo', {
+        this.exit = this.add.text(1000, 744, 'Exit demo', {
             fontFamily: 'Arial', fontSize: 20, color: '#ffffff', backgroundColor: '#243952', padding: { x: 14, y: 10 }
         }).setOrigin(1, 1).setScrollFactor(0).setDepth(ObjectDepth.UI).setInteractive({ useHandCursor: true });
-        exit.on('pointerdown', (_pointer: Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+        this.exit.on('pointerdown', (_pointer: Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
             event.stopPropagation();
             this.exitToGameOver();
         });
+        this.exit.setVisible(false).disableInteractive();
+        this.createTouchControls();
+        this.layoutScreenSpace();
         this.input.on('pointerdown', this.startSteering, this);
         this.input.on('pointerup', this.endSteering, this);
         this.input.on('pointerupoutside', this.endSteering, this);
+        this.scale.on('resize', this.layoutScreenSpace, this);
         this.game.events.on('blur', this.loseFocus, this);
+        this.game.events.on('menu-open', this.pauseForMenu, this);
+        this.game.events.on('menu-close', this.resumeFromMenu, this);
+        this.game.events.on('return-to-menu', this.exitToGameOver, this);
         window.addEventListener('blur', this.loseFocus);
         window.addEventListener('focus', this.gainFocus);
         window.addEventListener('touchcancel', this.cancelTouch);
@@ -91,7 +110,11 @@ export class Game extends Scene
             this.input.off('pointerdown', this.startSteering, this);
             this.input.off('pointerup', this.endSteering, this);
             this.input.off('pointerupoutside', this.endSteering, this);
+            this.scale.off('resize', this.layoutScreenSpace, this);
             this.game.events.off('blur', this.loseFocus, this);
+            this.game.events.off('menu-open', this.pauseForMenu, this);
+            this.game.events.off('menu-close', this.resumeFromMenu, this);
+            this.game.events.off('return-to-menu', this.exitToGameOver, this);
             window.removeEventListener('blur', this.loseFocus);
             window.removeEventListener('focus', this.gainFocus);
             window.removeEventListener('touchcancel', this.cancelTouch);
@@ -109,22 +132,100 @@ export class Game extends Scene
 
     private startSteering (pointer: Input.Pointer): void
     {
-        if (!this.steeringPointer && (pointer.wasTouch || pointer.button === 0)) this.steeringPointer = pointer;
+        if (!this.steeringPointer && !pointer.wasTouch && pointer.button === 0) this.steeringPointer = pointer;
     }
 
     private endSteering (pointer: Input.Pointer): void
     {
-        if (pointer === this.steeringPointer && (pointer.wasTouch || !pointer.leftButtonDown())) this.releaseSteering();
+        if (pointer === this.steeringPointer && !pointer.leftButtonDown()) this.releaseSteering();
+        if (pointer === this.joystickPointer) this.releaseJoystick();
+        if (pointer === this.firePointer) this.firePointer = null;
+        if (pointer === this.boostPointer) this.boostPointer = null;
     }
 
     private readonly cancelTouch = (event: TouchEvent): void => {
         const pointer = this.steeringPointer;
         if (pointer?.wasTouch && Array.from(event.changedTouches).some(touch => touch.identifier === pointer.identifier)) this.releaseSteering();
+        if (this.joystickPointer && Array.from(event.changedTouches).some(touch => touch.identifier === this.joystickPointer?.identifier)) this.releaseJoystick();
+        if (this.firePointer && Array.from(event.changedTouches).some(touch => touch.identifier === this.firePointer?.identifier)) this.firePointer = null;
+        if (this.boostPointer && Array.from(event.changedTouches).some(touch => touch.identifier === this.boostPointer?.identifier)) this.boostPointer = null;
     };
 
     private readonly releaseSteering = (): void => {
         this.steeringPointer = null;
     };
+
+    private createTouchControls (): void
+    {
+        this.joystickBase = this.add.graphics().setScrollFactor(0).setDepth(ObjectDepth.UI).setVisible(false);
+        this.joystickStick = this.add.graphics().setScrollFactor(0).setDepth(ObjectDepth.UI).setVisible(false);
+        this.joystickZone = this.add.zone(0, 0, 160, 160).setScrollFactor(0).setDepth(ObjectDepth.UI).setCircleDropZone(80).setInteractive();
+        this.joystickZone.on('pointerdown', (pointer: Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+            if (!pointer.wasTouch || this.joystickPointer) return;
+            event.stopPropagation();
+            this.joystickPointer = pointer;
+            this.joystickOrigin.set(pointer.x, pointer.y);
+            this.updateJoystick(pointer);
+        });
+        this.fireButton = this.createTouchButton('FIRE');
+        this.boostButton = this.createTouchButton('BOOST');
+        this.bindTouchButton(this.fireButton, pointer => { this.firePointer = pointer; }, pointer => { if (pointer === this.firePointer) this.firePointer = null; });
+        this.bindTouchButton(this.boostButton, pointer => { this.boostPointer = pointer; }, pointer => { if (pointer === this.boostPointer) this.boostPointer = null; });
+    }
+
+    private createTouchButton (label: string): GameObjects.Text
+    {
+        return this.add.text(0, 0, label, {
+            fontFamily: 'Arial', fontSize: 16, color: '#ffffff', backgroundColor: '#173c5dcc', padding: { x: 18, y: 15 }
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(ObjectDepth.UI).setInteractive({ useHandCursor: true }).setVisible(false);
+    }
+
+    private bindTouchButton (button: GameObjects.Text, down: (pointer: Input.Pointer) => void, up: (pointer: Input.Pointer) => void): void
+    {
+        button.on('pointerdown', (pointer: Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+            if (!pointer.wasTouch) return;
+            event.stopPropagation();
+            down(pointer);
+        });
+        button.on('pointerup', up);
+        button.on('pointerout', up);
+    }
+
+    private readonly releaseJoystick = (): void => {
+        this.joystickPointer = null;
+        this.joystickDirection.setTo(0, 0);
+        this.joystickStick.clear();
+    };
+
+    private updateJoystick (pointer: Input.Pointer): void
+    {
+        this.joystickPosition.set(pointer.x, pointer.y).subtract(this.joystickOrigin);
+        const distance = this.joystickPosition.length();
+        if (distance <= 20) this.joystickDirection.setTo(0, 0);
+        else this.joystickDirection.copy(this.joystickPosition).normalize();
+        this.joystickPosition.limit(60).add(this.joystickOrigin);
+        this.drawJoystick();
+    }
+
+    private drawJoystick (): void
+    {
+        this.joystickBase.clear().fillStyle(0x173c5d, 0.55).fillCircle(this.joystickOrigin.x, this.joystickOrigin.y, 72).lineStyle(2, 0x8bdfff, 0.8).strokeCircle(this.joystickOrigin.x, this.joystickOrigin.y, 72);
+        this.joystickStick.clear().fillStyle(0x8bdfff, 0.8).fillCircle(this.joystickPosition.x, this.joystickPosition.y, 28);
+    }
+
+    private layoutScreenSpace (): void
+    {
+        const { width, height } = this.scale;
+        this.lossOfControl.setPosition(width / 2, height / 3);
+        this.exit.setPosition(width - 24, height - 24);
+        const touchLayoutVisible = this.sys.game.device.input.touch;
+        this.joystickBase.setVisible(touchLayoutVisible);
+        this.joystickStick.setVisible(touchLayoutVisible);
+        this.joystickZone.setActive(touchLayoutVisible).setPosition(108, height - 108);
+        this.fireButton.setVisible(touchLayoutVisible).setPosition(width - 92, height - 98);
+        this.boostButton.setVisible(touchLayoutVisible).setPosition(width - 104, height - 174);
+        if (this.joystickPointer) this.drawJoystick();
+    }
 
     private readonly flightKeyDown = (event: KeyboardEvent): void => {
         if (event.target instanceof Element && event.target.closest('[data-game-input="ignore"]')) return;
@@ -144,6 +245,9 @@ export class Game extends Scene
         this.boostHeld = false;
         this.fireHeld = false;
         this.releaseSteering();
+        this.releaseJoystick();
+        this.firePointer = null;
+        this.boostPointer = null;
         if (this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: pauseGameClock(state.clock, 'background') }));
     };
 
@@ -153,7 +257,21 @@ export class Game extends Scene
 
     private readonly exitToGameOver = (): void => {
         this.loseFocus();
-        this.scene.start('GameOver');
+        this.scene.start('MainMenu');
+    };
+
+    private readonly pauseForMenu = (): void => {
+        this.boostHeld = false;
+        this.fireHeld = false;
+        this.releaseSteering();
+        this.releaseJoystick();
+        this.firePointer = null;
+        this.boostPointer = null;
+        if (this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: pauseGameClock(state.clock, 'menu') }));
+    };
+
+    private readonly resumeFromMenu = (): void => {
+        if (this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: resumeGameClock(state.clock, 'menu') }));
     };
 
     private planetsById (states: readonly PlanetState[]): ReadonlyMap<string, PlanetState>
@@ -181,13 +299,18 @@ export class Game extends Scene
             this.cameraDisplacement.set(this.ship.sprite.x, this.ship.sprite.y).subtract(this.camera.midPoint);
             this.pointerWorld.add(this.cameraDisplacement);
         } else this.releaseSteering();
+        if (this.joystickPointer?.isDown) this.updateJoystick(this.joystickPointer);
+        else this.releaseJoystick();
+        const joystickTarget = this.joystickDirection.lengthSq() > 0
+            ? this.pointerWorld.copy(this.joystickDirection).scale(1000).add(this.ship.sprite)
+            : null;
         const before = this.stateProvider.snapshot();
         const isMoolarisContact = !resolveMoolarisContact(before.ship).hasControl;
         if (isMoolarisContact) this.lossOfControlUntilMs = time + 1500;
         const state = this.stateProvider.update(current => advanceGameSimulation(current, {
-            target: pointer?.isDown ? this.pointerWorld : null,
-            boostRequested: this.boostHeld && this.steeringPointer !== null,
-            firing: this.fireHeld
+            target: pointer?.isDown ? this.pointerWorld : joystickTarget,
+            boostRequested: (this.boostHeld || this.boostPointer !== null) && (this.steeringPointer !== null || joystickTarget !== null),
+            firing: this.fireHeld || this.firePointer !== null
         }, delta, {
             obstacles: [{ ...moolarisDefinition.position, radius: moolarisDefinition.radius }],
             projectileLifetimeMs: projectileTuning.lifetime,

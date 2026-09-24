@@ -2,7 +2,7 @@ import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 import { maximumShipHitPoints } from '../domain/runBalance.ts';
 
-const PAUSE_REASONS: readonly GamePauseReason[] = ['background', 'landed', 'manual'];
+const PAUSE_REASONS: readonly GamePauseReason[] = ['background', 'landed', 'manual', 'menu'];
 const keys = (value: object): string[] => Object.keys(value).sort();
 
 function isRecord (value: unknown): value is Record<string, unknown>
