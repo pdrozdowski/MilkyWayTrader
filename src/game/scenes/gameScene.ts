@@ -38,8 +38,8 @@ export class Game extends Scene
     private joystickBase: GameObjects.Graphics;
     private joystickStick: GameObjects.Graphics;
     private joystickZone: GameObjects.Zone;
-    private fireButton: GameObjects.Text;
-    private boostButton: GameObjects.Text;
+    private fireButton: GameObjects.Image;
+    private boostButton: GameObjects.Image;
     private joystickPointer: Input.Pointer | null = null;
     private firePointer: Input.Pointer | null = null;
     private boostPointer: Input.Pointer | null = null;
@@ -49,6 +49,8 @@ export class Game extends Scene
     private lossOfControlUntilMs = 0;
     private boostHeld = false;
     private fireHeld = false;
+    private touchControlsVisible = false;
+    private mouseMovementEnabled = true;
 
     constructor ()
     {
@@ -60,6 +62,9 @@ export class Game extends Scene
         this.steeringPointer = null;
         this.boostHeld = false;
         this.fireHeld = false;
+        this.touchControlsVisible = false;
+        this.mouseMovementEnabled = true;
+        this.game.events.emit('debug-controls-reset');
         this.audio = getAudioService(this.game).createScope(this);
         this.stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
         const state = this.stateProvider.snapshot();
@@ -100,6 +105,8 @@ export class Game extends Scene
         this.game.events.on('menu-open', this.pauseForMenu, this);
         this.game.events.on('menu-close', this.resumeFromMenu, this);
         this.game.events.on('return-to-menu', this.exitToGameOver, this);
+        this.game.events.on('debug-touch-controls', this.setTouchControlsVisible, this);
+        this.game.events.on('debug-mouse-movement', this.setMouseMovementEnabled, this);
         window.addEventListener('blur', this.loseFocus);
         window.addEventListener('focus', this.gainFocus);
         window.addEventListener('touchcancel', this.cancelTouch);
@@ -115,6 +122,8 @@ export class Game extends Scene
             this.game.events.off('menu-open', this.pauseForMenu, this);
             this.game.events.off('menu-close', this.resumeFromMenu, this);
             this.game.events.off('return-to-menu', this.exitToGameOver, this);
+            this.game.events.off('debug-touch-controls', this.setTouchControlsVisible, this);
+            this.game.events.off('debug-mouse-movement', this.setMouseMovementEnabled, this);
             window.removeEventListener('blur', this.loseFocus);
             window.removeEventListener('focus', this.gainFocus);
             window.removeEventListener('touchcancel', this.cancelTouch);
@@ -132,7 +141,43 @@ export class Game extends Scene
 
     private startSteering (pointer: Input.Pointer): void
     {
-        if (!this.steeringPointer && !pointer.wasTouch && pointer.button === 0) this.steeringPointer = pointer;
+        if (this.isJoystickPointer(pointer)) {
+            this.startJoystick(pointer);
+            return;
+        }
+        if (!this.steeringPointer && this.mouseMovementEnabled && !pointer.wasTouch && pointer.button === 0) this.steeringPointer = pointer;
+    }
+
+    private isJoystickPointer (pointer: Input.Pointer): boolean
+    {
+        return this.joystickZone.active && PhaserMath.Distance.Between(pointer.x, pointer.y, this.joystickZone.x, this.joystickZone.y) <= 80;
+    }
+
+    private startJoystick (pointer: Input.Pointer): void
+    {
+        if (this.joystickPointer) return;
+        this.releaseSteering();
+        this.joystickPointer = pointer;
+        if (pointer.wasTouch) this.joystickOrigin.set(pointer.x, pointer.y);
+        else this.joystickOrigin.set(this.joystickZone.x, this.joystickZone.y);
+        this.updateJoystick(pointer);
+    }
+
+    private setTouchControlsVisible (visible: boolean): void
+    {
+        this.touchControlsVisible = visible;
+        if (!visible && !this.sys.game.device.input.touch) {
+            this.releaseJoystick();
+            this.firePointer = null;
+            this.boostPointer = null;
+        }
+        this.layoutScreenSpace();
+    }
+
+    private setMouseMovementEnabled (enabled: boolean): void
+    {
+        this.mouseMovementEnabled = enabled;
+        if (!enabled) this.releaseSteering();
     }
 
     private endSteering (pointer: Input.Pointer): void
@@ -161,29 +206,23 @@ export class Game extends Scene
         this.joystickStick = this.add.graphics().setScrollFactor(0).setDepth(ObjectDepth.UI).setVisible(false);
         this.joystickZone = this.add.zone(0, 0, 160, 160).setScrollFactor(0).setDepth(ObjectDepth.UI).setCircleDropZone(80).setInteractive();
         this.joystickZone.on('pointerdown', (pointer: Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
-            if (!pointer.wasTouch || this.joystickPointer) return;
             event.stopPropagation();
-            this.joystickPointer = pointer;
-            this.joystickOrigin.set(pointer.x, pointer.y);
-            this.updateJoystick(pointer);
+            this.startJoystick(pointer);
         });
-        this.fireButton = this.createTouchButton('FIRE');
-        this.boostButton = this.createTouchButton('BOOST');
+        this.fireButton = this.createTouchButton('control:fire');
+        this.boostButton = this.createTouchButton('control:boost');
         this.bindTouchButton(this.fireButton, pointer => { this.firePointer = pointer; }, pointer => { if (pointer === this.firePointer) this.firePointer = null; });
         this.bindTouchButton(this.boostButton, pointer => { this.boostPointer = pointer; }, pointer => { if (pointer === this.boostPointer) this.boostPointer = null; });
     }
 
-    private createTouchButton (label: string): GameObjects.Text
+    private createTouchButton (assetKey: string): GameObjects.Image
     {
-        return this.add.text(0, 0, label, {
-            fontFamily: 'Arial', fontSize: 16, color: '#ffffff', backgroundColor: '#173c5dcc', padding: { x: 18, y: 15 }
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(ObjectDepth.UI).setInteractive({ useHandCursor: true }).setVisible(false);
+        return this.add.image(0, 0, assetKey).setScrollFactor(0).setDepth(ObjectDepth.UI).setInteractive({ useHandCursor: true }).setVisible(false);
     }
 
-    private bindTouchButton (button: GameObjects.Text, down: (pointer: Input.Pointer) => void, up: (pointer: Input.Pointer) => void): void
+    private bindTouchButton (button: GameObjects.Image, down: (pointer: Input.Pointer) => void, up: (pointer: Input.Pointer) => void): void
     {
         button.on('pointerdown', (pointer: Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
-            if (!pointer.wasTouch) return;
             event.stopPropagation();
             down(pointer);
         });
@@ -194,7 +233,9 @@ export class Game extends Scene
     private readonly releaseJoystick = (): void => {
         this.joystickPointer = null;
         this.joystickDirection.setTo(0, 0);
-        this.joystickStick.clear();
+        this.joystickOrigin.set(this.joystickZone.x, this.joystickZone.y);
+        this.joystickPosition.copy(this.joystickOrigin);
+        this.drawJoystick();
     };
 
     private updateJoystick (pointer: Input.Pointer): void
@@ -216,21 +257,20 @@ export class Game extends Scene
     private layoutScreenSpace (): void
     {
         const { width, height } = this.scale;
-        const visibleWidth = Math.min(width, this.scale.parentSize.width / this.scale.displayScale.x);
-        const visibleHeight = Math.min(height, this.scale.parentSize.height / this.scale.displayScale.y);
-        const visibleLeft = (width - visibleWidth) / 2;
-        const visibleTop = (height - visibleHeight) / 2;
-        const visibleRight = visibleLeft + visibleWidth;
-        const visibleBottom = visibleTop + visibleHeight;
+        const viewport = this.scale.getViewPort();
+        const visibleLeft = viewport.left;
+        const visibleRight = viewport.right;
+        const visibleBottom = viewport.bottom;
         this.lossOfControl.setPosition(width / 2, height / 3);
         this.exit.setPosition(width - 24, height - 24);
-        const touchLayoutVisible = this.sys.game.device.input.touch;
+        const touchLayoutVisible = this.sys.game.device.input.touch || this.touchControlsVisible;
         this.joystickBase.setVisible(touchLayoutVisible);
         this.joystickStick.setVisible(touchLayoutVisible);
         this.joystickZone.setActive(touchLayoutVisible).setPosition(visibleLeft + 108, visibleBottom - 108);
-        this.fireButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 92, visibleBottom - 98);
-        this.boostButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 104, visibleBottom - 174);
+        this.fireButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 74, visibleBottom - 74);
+        this.boostButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 74, visibleBottom - 186);
         if (this.joystickPointer) this.drawJoystick();
+        else this.releaseJoystick();
     }
 
     private readonly flightKeyDown = (event: KeyboardEvent): void => {

@@ -1,4 +1,4 @@
-import { Scene, GameObjects, Math as PhaserMath } from 'phaser';
+import { Scene, GameObjects, Input, Math as PhaserMath } from 'phaser';
 import type { GameStateProvider } from '../application/gameStateProvider';
 import { initialGameState } from '../definitions/initialGameState';
 
@@ -8,6 +8,7 @@ export class MainMenu extends Scene
     logo: GameObjects.Image;
     title: GameObjects.Text;
     private cow: GameObjects.Image;
+    private fullscreenMode: GameObjects.Text;
 
     constructor ()
     {
@@ -22,11 +23,28 @@ export class MainMenu extends Scene
 
         this.logo = this.add.image(512, 350, 'logo').setDepth(2);
 
-        this.title = this.add.text(512, 460, 'Start New Game', {
+        this.title = this.add.text(512, 460, 'New Game', {
             fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
             align: 'center'
         }).setOrigin(0.5).setDepth(2);
+        this.add.text(512, 520, 'Continue Game', {
+            fontFamily: 'Arial Black', fontSize: 38, color: '#777777',
+            stroke: '#000000', strokeThickness: 8,
+            align: 'center'
+        }).setOrigin(0.5).setDepth(2);
+        this.fullscreenMode = this.add.text(512, 580, '', {
+            fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
+            stroke: '#000000', strokeThickness: 8,
+            align: 'center'
+        }).setOrigin(0.5).setDepth(2).setInteractive({ useHandCursor: true });
+        this.updateFullscreenMode(Boolean(document.fullscreenElement));
+        this.fullscreenMode.on('pointerdown', (_pointer: Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+            event.stopPropagation();
+            this.game.events.emit('toggle-fullscreen');
+        });
+        this.game.events.on('fullscreen-change', this.updateFullscreenMode, this);
+        this.events.once('shutdown', () => this.game.events.off('fullscreen-change', this.updateFullscreenMode, this));
 
         this.flyCow(true);
 
@@ -35,8 +53,12 @@ export class MainMenu extends Scene
             stateProvider.reset(initialGameState);
             this.scene.start('Game');
         };
-        this.input.once('pointerdown', startGame);
-        this.input.once('pointerup', startGame);
+        this.title.setInteractive({ useHandCursor: true }).on('pointerdown', startGame);
+    }
+
+    private updateFullscreenMode (active: boolean): void
+    {
+        this.fullscreenMode.setText(`Fullscreen Mode: ${active ? 'ON' : 'OFF'}`);
     }
 
     private flyCow (upwards: boolean)

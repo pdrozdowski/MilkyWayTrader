@@ -318,7 +318,7 @@ No persisted-shape migration is required. Planet positions retain their existing
 
 #### Manual
 
-- [ ] 4.3 HUD and controls remain reachable and unobstructed in desktop and touch-sized landscape viewports during resize and fullscreen changes.
+- [x] 4.3 HUD and controls remain reachable and unobstructed in desktop and touch-sized landscape viewports during resize and fullscreen changes.
 
 ### Phase 5: Pause Menu, Orientation, and Acceptance
 
