@@ -24,9 +24,12 @@ test('display controls render responsive state and actionable errors', async ({ 
     await page.evaluate(() => window.uiHarness.setDisplay({ mobile: true, portrait: true, fullscreenAvailable: true }));
     await expect(page.locator('#orientation-notice')).toBeVisible();
     await expect(page.locator('#mobile-controls')).toBeVisible();
+    await expect(page.locator('#menu-display-controls')).toBeVisible();
+    await expect(page.locator('#menu-fullscreen-toggle')).toHaveAttribute('aria-pressed', 'false');
     await page.evaluate(() => window.uiHarness.setFullscreenResult('manual-rotation'));
-    await page.locator('#fullscreen-toggle').click();
-    await expect(page.locator('#display-status')).toContainText('Obróć telefon');
+    await page.locator('#menu-fullscreen-toggle').click();
+    await expect(page.locator('#menu-display-status')).toContainText('Obróć telefon');
+    await expect(page.locator('#display-status')).toBeEmpty();
 
     await page.evaluate(() => window.uiHarness.setFullscreenResult('failed'));
     await page.locator('#fullscreen-toggle').click();

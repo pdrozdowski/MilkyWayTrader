@@ -39,7 +39,7 @@ body {
 #run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: auto auto minmax(0, 1fr) 115px; align-items: start; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }
 #run-status-clock, #run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
 #run-status-clock { padding: 10px 12px; white-space: nowrap; }
-#run-status-primary { justify-self: stretch; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; min-width: 0; padding: 10px 12px; }
+#run-status-primary { box-sizing: border-box; justify-self: stretch; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; min-width: 0; padding: 10px 12px; }
 #run-status-secondary { position: relative; justify-self: end; display: grid; gap: 5px; min-width: 0; text-align: center; }
 #run-status-secondary > span { padding: 10px 12px; border: 1px solid #406587; border-radius: 8px; background: #102039e8; white-space: nowrap; text-align: center; }
 #run-status-primary > span, #run-status-hp-label, #run-status p { white-space: nowrap; }
@@ -56,7 +56,7 @@ body {
 #orientation-notice {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 6;
     display: grid;
     place-items: center;
     box-sizing: border-box;
@@ -81,14 +81,17 @@ body {
 }
 
 #game-menu { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px; background: #07111bd9; }
-.game-menu-panel { position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; width: min(400px, 100%); height: min(360px, 100%); padding: 48px 24px 24px; border: 1px solid #8bdfff; border-radius: 12px; background: #102039; }
+.game-menu-panel { position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 14px; width: min(760px, 100%); min-height: 0; padding: 48px 24px 24px; border: 1px solid #8bdfff; border-radius: 12px; background: #102039; }
 .game-menu-panel h2 { margin: 0 0 12px; }
 #game-menu-close { position: absolute; top: 8px; right: 8px; }
 .game-menu-panel button { min-width: 180px; min-height: 44px; padding: 10px 14px; border: 1px solid #8bdfff; border-radius: 6px; color: #fff; background: #122541; font: inherit; cursor: pointer; }
 .game-menu-panel #game-menu-close { min-width: 72px; padding: 10px 14px; font-size: 24px; font-weight: 700; }
-#mobile-controls { display: grid; width: min(100%, 250px); gap: 8px; }
+#mobile-controls, #menu-display-controls { display: grid; gap: 8px; }
+.game-menu-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; width: 100%; }
+.game-menu-actions > * { flex: 0 1 auto; }
+.game-menu-actions #return-to-menu { flex: 1 1 180px; }
 
-#fullscreen-toggle {
+#fullscreen-toggle, #menu-fullscreen-toggle {
     min-height: 44px;
     padding: 10px 14px;
     border: 1px solid #8bdfff;
@@ -100,16 +103,16 @@ body {
     pointer-events: auto;
 }
 
-#fullscreen-toggle:focus-visible {
+#fullscreen-toggle:focus-visible, #menu-fullscreen-toggle:focus-visible {
     outline: 3px solid #fff;
     outline-offset: 3px;
 }
 
-#fullscreen-toggle:disabled {
+#fullscreen-toggle:disabled, #menu-fullscreen-toggle:disabled {
     opacity: 0.6;
 }
 
-#display-status:not(:empty) {
+#display-status:not(:empty), #menu-display-status:not(:empty) {
     max-width: 32ch;
     margin: 8px 0 0;
     padding: 8px 12px;
@@ -120,11 +123,12 @@ body {
 }
 
 #audio-controls {
-    display: grid;
-    width: min(100%, 250px);
-    justify-items: center;
+    display: flex;
+    flex: 1 1 280px;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 6px 10px;
     border: 1px solid #406587;
     border-radius: 10px;
@@ -144,7 +148,7 @@ body {
 }
 
 #audio-volume {
-    width: clamp(65px, 15vw, 120px);
+    width: clamp(110px, 18vw, 180px);
     min-height: 44px;
     margin: 0;
     accent-color: #8bdfff;
@@ -157,4 +161,9 @@ body {
 @media (max-width: 420px) {
     #audio-controls { gap: 6px; padding: 4px 6px; }
     #run-status { gap: 4px; font-size: 11px; } #run-status-primary { gap: 5px; padding: 8px; } #run-status-clock { padding: 8px; } #run-status button { min-height: 36px; padding: 7px; }
+}
+
+@media (min-width: 600px) {
+    .game-menu-actions { flex-wrap: nowrap; }
+    .game-menu-actions #return-to-menu { flex: 0 1 auto; }
 }

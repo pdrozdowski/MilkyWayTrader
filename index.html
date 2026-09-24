@@ -21,13 +21,19 @@
             <div class="game-menu-panel">
                 <button id="game-menu-close" type="button" aria-label="Close menu">X</button>
                 <h2>Menu</h2>
+                <div class="game-menu-actions">
                 <div id="audio-controls" role="group" aria-label="Game audio">
                     <button id="audio-mute" type="button" aria-pressed="false">Mute</button>
                     <label for="audio-volume">Volume</label>
                     <input id="audio-volume" type="range" min="0" max="100" step="1" value="50" />
                     <output id="audio-volume-value" for="audio-volume">50%</output>
                 </div>
+                <div id="menu-display-controls" hidden>
+                    <button id="menu-fullscreen-toggle" type="button" aria-pressed="false">Fullscreen</button>
+                    <p id="menu-display-status" role="status" aria-live="polite"></p>
+                </div>
                 <button id="return-to-menu" type="button">Return to Main Menu</button>
+                </div>
             </div>
         </section>
         <aside id="orientation-notice" aria-label="Orientacja ekranu" hidden>
