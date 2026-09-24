@@ -313,12 +313,12 @@ No persisted-shape migration is required. Planet positions retain their existing
 
 #### Automated
 
-- [x] 4.1 Application UI tests cover viewport resize/re-anchoring and retain desktop pointer, keyboard, boost, and fire behavior.
-- [x] 4.2 Touch UI tests cover joystick ownership, dead-zone/full-thrust behavior, fire/boost actions, release, and cancellation cleanup.
+- [x] 4.1 Application UI tests cover viewport resize/re-anchoring and retain desktop pointer, keyboard, boost, and fire behavior. — 2e447ed
+- [x] 4.2 Touch UI tests cover joystick ownership, dead-zone/full-thrust behavior, fire/boost actions, release, and cancellation cleanup. — 2e447ed
 
 #### Manual
 
-- [x] 4.3 HUD and controls remain reachable and unobstructed in desktop and touch-sized landscape viewports during resize and fullscreen changes.
+- [x] 4.3 HUD and controls remain reachable and unobstructed in desktop and touch-sized landscape viewports during resize and fullscreen changes. — 2e447ed
 
 ### Phase 5: Pause Menu, Orientation, and Acceptance
 
