@@ -22,3 +22,10 @@
 - **Problem**: when objects are rendered and are moving then they might appear in glitchy way due to lack of pixel alignment
 - **Rule**: that problem is solved with phaser engine the camera pixel alignement flag needs to be set when tracking
 - **Applies to**: implement
+
+## Reuse display-label constants
+
+- **Context**: when adding text to some view/user visible control
+- **Problem**: when text is just entered to control then in tests we also need to use exact string to get a match, it makes a need to maintain same string in two places
+- **Rule**: use constant value and use text through the reference
+- **Applies to**: implement, impl-review

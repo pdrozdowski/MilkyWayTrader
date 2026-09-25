@@ -1,4 +1,5 @@
 import type { DisplayPort, FullscreenResult, UiHandle } from '../contracts';
+import { displayLabels } from './displayLabels';
 
 function required<T extends Element> (root: HTMLElement, selector: string): T
 {
@@ -25,17 +26,17 @@ export function mountDisplayControls (root: HTMLElement, port: DisplayPort, onFu
         notice.hidden = !(snapshot.mobile && snapshot.portrait);
         for (const control of controls) {
             control.button.hidden = false;
-            control.button.textContent = snapshot.fullscreenActive ? 'X' : 'Fullscreen';
+            control.button.textContent = snapshot.fullscreenActive ? displayLabels.closeFullscreen : displayLabels.fullscreen;
             control.button.setAttribute('aria-pressed', String(snapshot.fullscreenActive));
             if (!snapshot.mobile) control.status.textContent = '';
         }
         onFullscreenChange(snapshot.fullscreenActive);
-        help.textContent = !snapshot.fullscreenAvailable ? 'Rotate your device to play.' : 'Rotate your device or select "Fullscreen".';
+        help.textContent = !snapshot.fullscreenAvailable ? displayLabels.rotateToPlay : displayLabels.rotateOrFullscreen;
         port.refreshScale();
     };
     const showResult = (status: HTMLElement, result: FullscreenResult): void => {
-        if (result === 'manual-rotation') status.textContent = 'Rotate your device to play.';
-        if (result === 'failed') status.textContent = 'Failed to enter fullscreen. You can still play by rotating your device.';
+        if (result === 'manual-rotation') status.textContent = displayLabels.rotateToPlay;
+        if (result === 'failed') status.textContent = displayLabels.fullscreenFailed;
     };
     const toggle = async (control: typeof controls[number]): Promise<void> => {
         for (const item of controls) item.button.disabled = true;
