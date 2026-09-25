@@ -2,7 +2,7 @@
 
 ## Overview
 
-Deliver the S-03 navigation loop: advisory route guidance near moving planets, automatic orbit capture that preserves manual steering, manual centre-entry landing, and an explicit launch back into flight.
+Deliver the S-03 navigation loop: advisory route guidance near moving planets, automatic orbit capture that preserves manual steering, automatic centre-entry landing, and an explicit launch back into flight.
 
 ## Current State Analysis
 
@@ -56,7 +56,7 @@ Add the authoritative lifecycle and the complete manual landing/start interactio
 
 **Intent**: Make capture, detach, landing, and launch deterministic active-time transitions rather than Phaser behavior.
 
-**Contract**: Enter capture automatically inside `planetLandingRadius`; while captured, add the planet's tick displacement to the ship but preserve direct velocity/heading/target. Detach after leaving that zone. Permit landing only for the captured planet at centre distance ≤50 px. Landing adds `landed`; launch removes it, clears transient flight intent through the adapter, disables the relevant landing state, and blocks relanding until ship-centre distance exceeds the configured planet definition radius. While landed, boost/fire intents cannot affect simulation.
+**Contract**: Enter capture automatically inside `planetLandingRadius`; while captured, add the planet's tick displacement to the ship but preserve direct velocity/heading/target. Detach after leaving that zone. Land automatically for the captured planet at centre distance ≤35 px. Landing adds `landed`; launch removes it, clears transient flight intent through the adapter, disables the relevant landing state, and blocks relanding until ship-centre distance exceeds the configured planet definition radius. While landed, boost/fire intents cannot affect simulation.
 
 #### 3. Scene, planet projection, and landed status modal
 
@@ -64,19 +64,19 @@ Add the authoritative lifecycle and the complete manual landing/start interactio
 
 **Intent**: Let the player see capture/start states and perform the lifecycle without hiding control state or introducing future trading UI.
 
-**Contract**: Wire a manual centre-entry landing intent and an explicit semantic `LAUNCH` modal action. The modal names the planet, confirms paused time, and labels market/shipyard access as deferred. Mark interactive UI with `data-game-input="ignore"`; on modal transitions clear held gameplay input. Update planet-local rings/labels to distinguish available orbit, landed, and relaunch-lock states. The modal is not dismissible by backdrop or an ambiguous close control.
+**Contract**: Wire automatic centre-entry landing at 35 px and an explicit semantic `LAUNCH` modal action. The modal names the planet, confirms paused time, and labels market/shipyard access as deferred. Mark interactive UI with `data-game-input="ignore"`; on modal transitions clear held gameplay input. Update planet-local rings/labels to distinguish available orbit, landed, and relaunch-lock states. The modal is not dismissible by backdrop or an ambiguous close control.
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- Mechanics/state tests cover capture at the boundary, manual detach, inherited displacement, landing at 50 px, blocked landing outside capture, launched relanding lock, boost/fire suppression while landed, pause composition, immutability, JSON round-trip, and v4 codec rejection cases.
+- Mechanics/state tests cover capture at the boundary, manual detach, inherited displacement, automatic landing at 35 px, blocked landing outside capture, launched relanding lock, boost/fire suppression while landed, pause composition, immutability, JSON round-trip, and v4 codec rejection cases.
 - Architecture tests, `npm.cmd run typecheck`, and `npm.cmd run build-nolog` pass after the new state/UI contracts are added.
 
 #### Manual Verification:
 
 - In the browser, fly into a planet's capture zone and confirm steering remains manual while the ship follows that planet's movement.
-- Manually fly to the centre, confirm the modal pauses the clock and the explicit `LAUNCH` action resumes it; then leave the planet radius and confirm landing becomes available again.
+- Fly to the centre, confirm automatic landing pauses the clock and the explicit `LAUNCH` action resumes it; then leave the planet radius and confirm landing becomes available again.
 
 **Implementation Note**: After automated verification passes, pause for the human to confirm the manual lifecycle checks before Phase 2.
 
@@ -160,13 +160,13 @@ The snapshot advances from schema v3 to v4. No migration is added because persis
 
 #### Automated
 
-- [ ] 1.1 Lifecycle mechanics boundary and transition verification
-- [ ] 1.2 Snapshot, codec, architecture, typecheck, and build verification
+- [x] 1.1 Lifecycle mechanics boundary and transition verification
+- [x] 1.2 Snapshot, codec, architecture, typecheck, and build verification
 
 #### Manual
 
-- [ ] 1.3 Manual capture and direct-steering verification
-- [ ] 1.4 Manual landing, launch, pause, and relanding verification
+- [x] 1.3 Manual capture and direct-steering verification
+- [x] 1.4 Manual landing, launch, pause, and relanding verification
 
 ### Phase 2: Advisory Route Guidance
 

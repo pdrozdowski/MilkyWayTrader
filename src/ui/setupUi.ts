@@ -3,10 +3,12 @@ import { createAudioSettingsPort } from './adapters/audioSettingsAdapter';
 import { createDisplayPort } from './adapters/displayAdapter';
 import { createGameControlsPort } from './adapters/gameControlsAdapter';
 import { createRunStatusPort } from './adapters/runStatusAdapter';
+import { createLandingStatusPort } from './adapters/landingStatusAdapter';
 import { mountAudioControls } from './components/audioControls';
 import { mountDisplayControls } from './components/displayControls';
 import { mountGameMenu } from './components/gameMenu';
 import { mountRunStatus } from './components/runStatus';
+import { mountLandingStatus } from './components/landingStatus';
 import type { UiHandle } from './contracts';
 
 export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
@@ -21,6 +23,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
     const toggleFullscreen = (): void => { void displayPort.toggleFullscreen(); };
     game.events.on('toggle-fullscreen', toggleFullscreen);
     const runStatus = mountRunStatus(root, createRunStatusPort(game));
+    const landingStatus = mountLandingStatus(root, createLandingStatusPort(game));
     const mainMenu = root.querySelector<HTMLElement>('#main-menu');
     const mainMenuNewGame = root.querySelector<HTMLButtonElement>('#main-menu-new-game');
     const mainMenuFullscreen = root.querySelector<HTMLButtonElement>('#main-menu-fullscreen');
@@ -83,6 +86,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
             menuControls.destroy();
             display.destroy();
             runStatus.destroy();
+            landingStatus.destroy();
             unsubscribeOrientation();
             mainMenuNewGame.removeEventListener('click', startNewGame);
             mainMenuFullscreen.removeEventListener('click', toggleMainMenuFullscreen);

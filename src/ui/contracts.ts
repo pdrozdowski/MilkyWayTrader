@@ -52,3 +52,16 @@ export interface GameControlsPort extends UiHandle
     setOrientationPaused(paused: boolean): void;
     isMenuOpen(): boolean;
 }
+
+export interface LandingStatusSnapshot
+{
+    readonly visible: boolean;
+    readonly planetName: string | null;
+}
+
+export interface LandingStatusPort extends UiHandle
+{
+    getSnapshot(): Readonly<LandingStatusSnapshot>;
+    subscribe(listener: (snapshot: Readonly<LandingStatusSnapshot>) => void): () => void;
+    launch(): void;
+}

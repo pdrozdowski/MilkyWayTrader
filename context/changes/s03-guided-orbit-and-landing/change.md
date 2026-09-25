@@ -1,7 +1,7 @@
 ---
 change_id: s03-guided-orbit-and-landing
 title: Guided orbit and landing
-status: planned
+status: impl_reviewed
 created: 2026-09-25
 updated: 2026-09-25
 archived_at: null

@@ -10,6 +10,7 @@ import { AsteroidBelt } from '../effects/asteroidBelt';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
 import { resolveMoolarisContact } from '../mechanics/moolaris/contact';
+import { LANDING_CENTRE_RADIUS } from '../mechanics/planet/landing';
 import { Planet } from '../objects/planet/planet';
 import { ShipWeapon } from '../objects/spaceship/shipWeapon';
 import { Spaceship } from '../objects/spaceship/spaceship';
@@ -103,6 +104,7 @@ export class Game extends Scene
         this.scale.on('resize', this.layoutScreenSpace, this);
         this.game.events.on('blur', this.loseFocus, this);
         this.game.events.on('game-pause-reason-added', this.clearInputForPause, this);
+        this.game.events.on('landing-modal-transition', this.clearFlightInput, this);
         this.game.events.on('return-to-menu', this.exitToGameOver, this);
         this.game.events.on('debug-touch-controls', this.setTouchControlsVisible, this);
         this.game.events.on('debug-mouse-movement', this.setMouseMovementEnabled, this);
@@ -119,6 +121,7 @@ export class Game extends Scene
             this.scale.off('resize', this.layoutScreenSpace, this);
             this.game.events.off('blur', this.loseFocus, this);
             this.game.events.off('game-pause-reason-added', this.clearInputForPause, this);
+            this.game.events.off('landing-modal-transition', this.clearFlightInput, this);
             this.game.events.off('return-to-menu', this.exitToGameOver, this);
             this.game.events.off('debug-touch-controls', this.setTouchControlsVisible, this);
             this.game.events.off('debug-mouse-movement', this.setMouseMovementEnabled, this);
@@ -129,8 +132,8 @@ export class Game extends Scene
             window.removeEventListener('keyup', this.flightKeyUp);
         });
         for (const planet of this.planets) {
-            planet.update(state.clock.activeElapsedMs);
-            planet.updateLandingIndicator(this.ship);
+            planet.update(state.clock.activeElapsedMs, 0);
+            planet.updateLandingIndicator(this.ship, state.planetLifecycle);
         }
         this.background.update(state.clock.activeElapsedMs);
         this.asteroidBelt.update(state.clock.activeElapsedMs);
@@ -313,13 +316,13 @@ export class Game extends Scene
     };
 
     private readonly clearInputForPause = (reason: string): void => {
-        if (reason === 'menu' || reason === 'orientation') this.clearFlightInput();
+        if (reason === 'menu' || reason === 'orientation' || reason === 'landed') this.clearFlightInput();
     };
 
     private hasInputBlockingPause (): boolean
     {
         const reasons = this.stateProvider.snapshot().clock.pauseReasons;
-        return reasons.includes('menu') || reasons.includes('orientation');
+        return reasons.includes('menu') || reasons.includes('orientation') || reasons.includes('landed');
     }
 
     private planetsById (states: readonly PlanetState[]): ReadonlyMap<string, PlanetState>
@@ -358,7 +361,8 @@ export class Game extends Scene
         const state = this.stateProvider.update(current => advanceGameSimulation(current, {
             target: pointer?.isDown ? this.pointerWorld : joystickTarget,
             boostRequested: (this.boostHeld || this.boostPointer !== null) && (this.steeringPointer !== null || joystickTarget !== null),
-            firing: this.fireHeld || this.firePointer !== null
+            firing: this.fireHeld || this.firePointer !== null,
+            landingRequested: this.landingRequested(before)
         }, delta, {
             obstacles: [{ ...moolarisDefinition.position, radius: moolarisDefinition.radius }],
             projectileLifetimeMs: projectileTuning.lifetime,
@@ -367,6 +371,7 @@ export class Game extends Scene
             shotIntervalMs: 1000 / weaponTuning.shotsPerSecond,
             muzzleOffset: weaponTuning.noseOffset * this.ship.sprite.scaleX
         }));
+        if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.clearFlightInput();
         this.ship.synchronize(state.ship, time);
         this.lossOfControl.setVisible(time < this.lossOfControlUntilMs);
         this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);
@@ -382,12 +387,20 @@ export class Game extends Scene
         const planetsById = this.planetsById(state.planets);
         for (const planet of this.planets) {
             planet.synchronize(planetsById.get(planet.id)!);
-            planet.update(state.clock.activeElapsedMs);
-            planet.updateLandingIndicator(this.ship);
+            planet.update(state.clock.activeElapsedMs, time);
+            planet.updateLandingIndicator(this.ship, state.planetLifecycle);
         }
         this.weapon.synchronize(state.projectiles);
         this.background.update(state.clock.activeElapsedMs);
         this.asteroidBelt.update(state.clock.activeElapsedMs);
+    }
+
+    private landingRequested (state: ReturnType<GameStateProvider['snapshot']>): boolean
+    {
+        const planetId = state.planetLifecycle.capturedPlanetId;
+        const planet = planetId === null ? null : state.planets.find(candidate => candidate.id === planetId);
+        if (!planet || state.planetLifecycle.landedPlanetId !== null) return false;
+        return Math.hypot(state.ship.position.x - planet.position.x, state.ship.position.y - planet.position.y) <= LANDING_CENTRE_RADIUS;
     }
 
 }

@@ -81,8 +81,8 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         try { source = JSON.parse(source) as unknown; }
         catch { throw new Error('Game state is not valid JSON.'); }
     }
-    const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'ship', 'shipStatus', 'planets', 'weapon', 'projectiles']);
-    if (root.schemaVersion !== 3) throw new Error('Unsupported game-state schema version.');
+    const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles']);
+    if (root.schemaVersion !== 4) throw new Error('Unsupported game-state schema version.');
 
     const credits = nonNegativeSafeInteger(root.credits, 'state.credits');
     if (!Array.isArray(root.cargo)) throw new Error('state.cargo must be an array.');
@@ -136,6 +136,23 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         return { id, name: nonEmptyString(planet.name, `${path}.name`), position: vector2(planet.position, `${path}.position`), radius };
     });
 
+    const lifecycle = requireRecord(root.planetLifecycle, 'state.planetLifecycle', ['capturedPlanetId', 'landedPlanetId', 'relandingLockedPlanetId']);
+    const planetIdentity = (value: unknown, path: string): string | null => {
+        if (value === null) return null;
+        const id = nonEmptyString(value, path);
+        if (!planetIds.has(id)) throw new Error(`${path} must identify a configured planet.`);
+        return id;
+    };
+    const capturedPlanetId = planetIdentity(lifecycle.capturedPlanetId, 'state.planetLifecycle.capturedPlanetId');
+    const landedPlanetId = planetIdentity(lifecycle.landedPlanetId, 'state.planetLifecycle.landedPlanetId');
+    const relandingLockedPlanetId = planetIdentity(lifecycle.relandingLockedPlanetId, 'state.planetLifecycle.relandingLockedPlanetId');
+    if (landedPlanetId !== null && landedPlanetId !== capturedPlanetId) throw new Error('A landed planet must be captured.');
+    if (landedPlanetId !== null && !pauseReasons.includes('landed')) throw new Error('A landed planet requires the landed pause reason.');
+    if (landedPlanetId === null && pauseReasons.includes('landed')) throw new Error('The landed pause reason requires a landed planet.');
+    if (relandingLockedPlanetId !== null && relandingLockedPlanetId === landedPlanetId) {
+        throw new Error('A relanding lock cannot coexist with landing for that planet.');
+    }
+
     const weapon = requireRecord(root.weapon, 'state.weapon', ['nextShotAtMs', 'lastShotAtMs', 'projectileSequence']);
     const projectileSequence = nonNegativeNumber(weapon.projectileSequence, 'state.weapon.projectileSequence');
     if (!Number.isInteger(projectileSequence)) throw new Error('state.weapon.projectileSequence must be an integer.');
@@ -157,7 +174,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 3,
+        schemaVersion: 4,
         clock: { budgetMs, activeElapsedMs, pauseReasons },
         credits,
         cargo,
@@ -178,6 +195,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
             boosterUnlocked: shipStatus.boosterUnlocked
         },
         planets,
+        planetLifecycle: { capturedPlanetId, landedPlanetId, relandingLockedPlanetId },
         weapon: {
             nextShotAtMs: nullableTime(weapon.nextShotAtMs, 'state.weapon.nextShotAtMs'),
             lastShotAtMs: nullableTime(weapon.lastShotAtMs, 'state.weapon.lastShotAtMs'),

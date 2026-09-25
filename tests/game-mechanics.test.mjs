@@ -1,7 +1,7 @@
 ﻿import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { boostAccelerationRate, flightVelocity, directionRotation } from '../src/game/mechanics/spaceship/flight.ts';
-import { canLandNearPlanet, planetLandingRadius, PLANET_LANDING_SURFACE_GAP } from '../src/game/mechanics/planet/proximity.ts';
+import { canLandNearPlanet, planetLandingRadius, planetOrbitBoundaryRadius, PLANET_LANDING_SURFACE_GAP } from '../src/game/mechanics/planet/proximity.ts';
 import { segmentHitsCircle, shotTrajectory } from '../src/game/mechanics/projectile/trajectory.ts';
 import { advanceFireCadence } from '../src/game/mechanics/spaceship/fireCadence.ts';
 import { initialGameState } from '../src/game/definitions/initialGameState.ts';
@@ -14,9 +14,25 @@ import { isRecoveringFromMoolaris, moolarisControlRadius, resolveMoolarisContact
 import { asteroidBeltDefinition } from '../src/game/visual/asteroidBeltDefinition.ts';
 import { asteroidBeltLayout, projectAsteroidBelt } from '../src/game/visual/asteroidBelt.ts';
 import { activeTimeCycle, activeTimeWave } from '../src/game/visual/activeTime.ts';
+import { launchFromPlanet, LANDING_CENTRE_RADIUS, tryLandAtCapturedPlanet } from '../src/game/mechanics/planet/landing.ts';
 
 const tuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5 };
 const speed = velocity => Math.hypot(velocity.x, velocity.y);
+
+function lifecycleState (distance, lifecycle = {}, activeElapsedMs = 100) {
+    const planet = initialGameState.planets[0];
+    const planetLifecycle = { capturedPlanetId: null, landedPlanetId: null, relandingLockedPlanetId: null, ...lifecycle };
+    const currentPosition = projectPlanetPosition(planet.id, activeElapsedMs);
+    const nextPosition = projectPlanetPosition(planet.id, activeElapsedMs + 1);
+    const shipPosition = planetLifecycle.capturedPlanetId === planet.id ? currentPosition : nextPosition;
+    return {
+        ...initialGameState,
+        clock: { ...initialGameState.clock, activeElapsedMs },
+        planets: initialGameState.planets.map(candidate => ({ ...candidate, position: projectPlanetPosition(candidate.id, activeElapsedMs) })),
+        ship: { ...initialGameState.ship, position: { x: shipPosition.x + distance, y: shipPosition.y }, velocity: { x: 0, y: 0 } },
+        planetLifecycle
+    };
+}
 
 test('flight reaches its limit in one second and coasts to rest in half a second', () => {
     let velocity = { x: 0, y: 0 };
@@ -74,8 +90,10 @@ test('boost reaches five times normal speed in one second from rest, cruise, or 
 test('landing uses the same surface gap for every planet', () => {
     for (const radius of [48,80,110]) {
         const threshold = planetLandingRadius(radius, 18);
-        assert.equal(PLANET_LANDING_SURFACE_GAP, 72);
-        assert.equal(threshold - radius, 90, 'every planet retains the smallest planet ring spacing');
+        assert.equal(planetOrbitBoundaryRadius(radius, 18), threshold);
+        assert(threshold > radius, 'the shared orbit boundary contains the physical planet radius');
+        assert.equal(PLANET_LANDING_SURFACE_GAP, 52);
+        assert.equal(threshold - radius, 70, 'the orbit boundary is 70 px beyond the physical planet');
         assert.equal(canLandNearPlanet(threshold,18,radius), true);
         assert.equal(canLandNearPlanet(threshold + 0.01,18,radius), false);
         assert.equal(canLandNearPlanet(radius + 18,18,radius), true);
@@ -98,6 +116,72 @@ test('the sun retains its configured scale and each orbital band has at least a 
     const ship = { ...gameObjectLayout.ship, radius: 18 };
     for (const body of bodies) assert(Math.hypot(ship.x - body.x, ship.y - body.y) > ship.radius + body.radius,
         `ship must start outside ${body.id}`);
+});
+
+test('planet capture includes the boundary, inherits displacement, and retains manual flight control', () => {
+    const planet = initialGameState.planets[0];
+    const captureRadius = planetLandingRadius(planet.radius, 18);
+    const entering = lifecycleState(captureRadius);
+    const captured = advanceGameSimulation(entering, { target: null, boostRequested: false, firing: false }, 1);
+    assert.equal(captured.planetLifecycle.capturedPlanetId, planet.id);
+
+    const controlled = lifecycleState(100, { capturedPlanetId: planet.id });
+    const beforePlanet = controlled.planets.find(candidate => candidate.id === planet.id);
+    const followed = advanceGameSimulation(controlled, { target: { x: 10_000, y: controlled.ship.position.y }, boostRequested: false, firing: false }, 100);
+    const afterPlanet = followed.planets.find(candidate => candidate.id === planet.id);
+    assert(beforePlanet && afterPlanet);
+    assert.equal(followed.planetLifecycle.capturedPlanetId, planet.id);
+    assert.equal(followed.ship.velocity.y, 0);
+    assert(followed.ship.velocity.x > 0, 'the player target continues to control velocity');
+    assert.equal(followed.ship.rotation, Math.PI / 2, 'the direct-flight heading is retained from player input');
+    assert(Math.abs((followed.ship.position.y - controlled.ship.position.y) - (afterPlanet.position.y - beforePlanet.position.y)) < 1e-8,
+        'capture adds the planet tick displacement without replacing direct flight');
+    assert.deepEqual(controlled.ship.velocity, { x: 0, y: 0 }, 'simulation leaves its input snapshot immutable');
+});
+
+test('capture detaches outside its shared boundary and landing requires captured centre entry at 35 pixels', () => {
+    const planet = initialGameState.planets[0];
+    const captureRadius = planetLandingRadius(planet.radius, 18);
+    const detached = advanceGameSimulation(lifecycleState(captureRadius + 0.01, { capturedPlanetId: planet.id }), {
+        target: null, boostRequested: false, firing: false
+    }, 1);
+    assert.equal(detached.planetLifecycle.capturedPlanetId, null);
+
+    const centre = lifecycleState(LANDING_CENTRE_RADIUS, { capturedPlanetId: planet.id });
+    const landed = advanceGameSimulation(centre, { target: null, boostRequested: false, firing: false, landingRequested: true }, 1);
+    assert.equal(landed.planetLifecycle.landedPlanetId, planet.id);
+    assert.deepEqual(landed.clock.pauseReasons, ['landed']);
+    const uncaptured = lifecycleState(LANDING_CENTRE_RADIUS, { capturedPlanetId: null });
+    const blocked = tryLandAtCapturedPlanet(uncaptured, true);
+    assert.equal(blocked, uncaptured, 'landing intent outside capture must not mutate state');
+    assert.equal(blocked.planetLifecycle.landedPlanetId, null);
+});
+
+test('launch composes pauses, locks relanding until physical-radius exit, and landed input is inert', () => {
+    const planet = initialGameState.planets[0];
+    const landed = lifecycleState(0, { capturedPlanetId: planet.id, landedPlanetId: planet.id }, 100);
+    const paused = { ...landed, clock: { ...landed.clock, pauseReasons: ['background', 'landed'] } };
+    const inert = advanceGameSimulation(paused, {
+        target: { x: 10_000, y: 10_000 }, boostRequested: true, firing: true
+    }, 1000);
+    assert.deepEqual(inert.ship, paused.ship);
+    assert.equal(inert.projectiles.length, 0);
+    const launched = launchFromPlanet(paused);
+    assert.deepEqual(launched.clock.pauseReasons, ['background']);
+    assert.deepEqual(launched.planetLifecycle, { capturedPlanetId: planet.id, landedPlanetId: null, relandingLockedPlanetId: planet.id });
+
+    const blocked = advanceGameSimulation({ ...launched, clock: { ...launched.clock, pauseReasons: [] } }, {
+        target: null, boostRequested: false, firing: false
+    }, 1);
+    assert.equal(blocked.planetLifecycle.capturedPlanetId, planet.id, 'launch retains planet transport while relanding is locked');
+    assert.equal(blocked.planetLifecycle.relandingLockedPlanetId, planet.id);
+    const outside = lifecycleState(planet.radius + 0.01, { capturedPlanetId: planet.id, relandingLockedPlanetId: planet.id });
+    const unlocked = advanceGameSimulation(outside, { target: null, boostRequested: false, firing: false }, 1);
+    assert.equal(unlocked.planetLifecycle.relandingLockedPlanetId, null);
+    assert.equal(unlocked.planetLifecycle.capturedPlanetId, planet.id, 'leaving the physical planet resumes landing availability while capture continues');
+    const orbitExit = lifecycleState(planetOrbitBoundaryRadius(planet.radius, 18) + 0.01, { capturedPlanetId: planet.id });
+    const detached = advanceGameSimulation(orbitExit, { target: null, boostRequested: false, firing: false }, 1);
+    assert.equal(detached.planetLifecycle.capturedPlanetId, null);
 });
 
 test('planet definitions project exact counter-clockwise active-time orbits', () => {

@@ -6,7 +6,7 @@ import { projectPlanetPosition } from '../mechanics/planet/orbit.ts';
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
 
 export const initialGameState: GameStateSnapshot = {
-    schemaVersion: 3,
+    schemaVersion: 4,
     clock: {
         budgetMs: ACTIVE_TIME_BUDGET_MS,
         activeElapsedMs: 0,
@@ -36,6 +36,11 @@ export const initialGameState: GameStateSnapshot = {
         position: projectPlanetPosition(definition.id, 0),
         radius: definition.radius
     })),
+    planetLifecycle: {
+        capturedPlanetId: null,
+        landedPlanetId: null,
+        relandingLockedPlanetId: null
+    },
     weapon: {
         nextShotAtMs: null,
         lastShotAtMs: null,

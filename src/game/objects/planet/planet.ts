@@ -4,10 +4,13 @@ import { ObjectDepth } from '../../visual/layers';
 import type { SceneObjectOptions } from '../_shared/types';
 import type { PlanetState } from '../../state/planetState';
 import { definition } from './definition';
-import { canLandNearPlanet } from '../../mechanics/planet/proximity';
+import { isWithinPlanetOrbitBoundary, planetOrbitBoundaryRadius } from '../../mechanics/planet/proximity';
+import { LANDING_CENTRE_RADIUS } from '../../mechanics/planet/landing';
+import type { PlanetLifecycleState } from '../../state/planetLifecycleState';
+import { displayLabels } from '../../../ui/components/displayLabels';
 
 const SURFACE_FEATURE_COUNT = 32;
-const PLANET_VISUAL_SCALE = 0.7;
+const PLANET_VISUAL_SCALE = 1;
 const LANDING_WAVE_COUNT = 5;
 const LANDING_WAVE_PERIOD_MS = 2_000;
 
@@ -43,6 +46,7 @@ export class Planet extends SceneObject
     readonly landingGuide: GameObjects.Graphics;
     readonly id: string;
     readonly landingLabel: GameObjects.Text;
+    readonly landingInstructionLabel: GameObjects.Text;
     readonly planetNameLabel: GameObjects.Text;
     private readonly surface: GameObjects.Graphics;
     private readonly shipOffset = new PhaserMath.Vector2();
@@ -51,6 +55,8 @@ export class Planet extends SceneObject
     private readonly palette: PlanetPalette;
     private readonly spinSpeed: number;
     private activeElapsedMs = 0;
+    private presentationElapsedMs = 0;
+    private guideDirection: 'inward' | 'outward' = 'inward';
 
     constructor (scene: Scene, options: PlanetOptions)
     {
@@ -69,7 +75,11 @@ export class Planet extends SceneObject
             .setDepth(ObjectDepth.Planet - 2).setVisible(false);
         this.atmosphere = scene.add.graphics().setDepth(ObjectDepth.Planet - 1);
         this.landingGuide = scene.add.graphics().setDepth(ObjectDepth.Indicator).setVisible(false);
-        this.landingLabel = scene.add.text(options.model.position.x, options.model.position.y, 'LAND ON', {
+        this.landingLabel = scene.add.text(options.model.position.x, options.model.position.y, displayLabels.landOn, {
+            fontFamily: 'Arial', fontSize: 13, color: '#ffffff', align: 'center',
+            stroke: '#091421', strokeThickness: 5
+        }).setOrigin(0.5).setDepth(ObjectDepth.Indicator).setVisible(false);
+        this.landingInstructionLabel = scene.add.text(options.model.position.x, options.model.position.y, displayLabels.proceedToLand, {
             fontFamily: 'Arial', fontSize: 13, color: '#ffffff', align: 'center',
             stroke: '#091421', strokeThickness: 5
         }).setOrigin(0.5).setDepth(ObjectDepth.Indicator).setVisible(false);
@@ -83,6 +93,7 @@ export class Planet extends SceneObject
         this.ownCleanup(() => this.atmosphere.destroy());
         this.ownCleanup(() => this.landingGuide.destroy());
         this.ownCleanup(() => this.landingLabel.destroy());
+        this.ownCleanup(() => this.landingInstructionLabel.destroy());
         this.ownCleanup(() => this.planetNameLabel.destroy());
         this.synchronize(options.model);
     }
@@ -96,9 +107,10 @@ export class Planet extends SceneObject
         this.drawAtmosphere();
     }
 
-    update (activeElapsedMs: number): void
+    update (activeElapsedMs: number, presentationElapsedMs = activeElapsedMs): void
     {
         this.activeElapsedMs = activeElapsedMs;
+        this.presentationElapsedMs = presentationElapsedMs;
         this.drawPlanetSurface();
         this.drawLandingGuide();
     }
@@ -107,8 +119,9 @@ export class Planet extends SceneObject
     {
         const text = state.name.toUpperCase();
         if (this.planetNameLabel.text !== text) this.planetNameLabel.setText(text);
-        this.landingLabel.setPosition(state.position.x, state.position.y - 12);
-        this.planetNameLabel.setPosition(state.position.x, state.position.y + 12);
+        this.landingLabel.setPosition(state.position.x, state.position.y - 26);
+        this.planetNameLabel.setPosition(state.position.x, state.position.y);
+        this.landingInstructionLabel.setPosition(state.position.x, state.position.y + 26);
     }
 
     private get visualRadius (): number
@@ -148,26 +161,43 @@ export class Planet extends SceneObject
         if (!this.landingGuide.visible) return;
         const cycle = this.activeElapsedMs / LANDING_WAVE_PERIOD_MS;
         const startRadius = 0;
-        const endRadius = this.visualRadius * 0.75;
+        const endRadius = this.radius;
         this.landingGuide.clear().setPosition(this.sprite.x, this.sprite.y);
         for (let index = 0; index < LANDING_WAVE_COUNT; index++) {
-            const phase = (cycle + index / LANDING_WAVE_COUNT) % 1;
+            const progress = (cycle + index / LANDING_WAVE_COUNT) % 1;
+            const phase = this.guideDirection === 'inward' ? 1 - progress : progress;
             const radius = startRadius + (endRadius - startRadius) * phase;
             this.landingGuide.lineStyle(2, 0xc6efff, phase * 0.42).strokeCircle(0, 0, radius);
         }
     }
 
-    updateLandingIndicator (ship: SceneObject): void
+    updateLandingIndicator (ship: SceneObject, lifecycle: PlanetLifecycleState): void
     {
         this.indicator.setPosition(this.sprite.x, this.sprite.y).setRadius(this.visualRadius);
         const distance = this.shipOffset.set(ship.sprite.x, ship.sprite.y).subtract(this.sprite).length();
-        const available = canLandNearPlanet(distance, ship.radius, this.radius);
-        this.indicator.setVisible(available);
-        this.landingLabel.setVisible(available);
-        this.planetNameLabel.setVisible(available);
-        this.landingGuide.setVisible(available);
+        const orbitBoundary = planetOrbitBoundaryRadius(this.radius, ship.radius);
+        const nearby = isWithinPlanetOrbitBoundary(distance, this.radius, ship.radius);
+        const captured = lifecycle.capturedPlanetId === this.id;
+        const landed = lifecycle.landedPlanetId === this.id;
+        const locked = lifecycle.relandingLockedPlanetId === this.id;
+        const leavingPhysicalPlanet = locked && distance <= this.radius;
+        const landingEligible = captured && !locked && distance <= LANDING_CENTRE_RADIUS;
+        const visible = nearby || captured || landed || locked;
+        const label = landed ? displayLabels.landed : leavingPhysicalPlanet ? displayLabels.leavingPlanet : landingEligible ? displayLabels.landOn : captured ? displayLabels.orbitCaptured : displayLabels.orbitAvailable;
+        const blinking = captured || leavingPhysicalPlanet;
+        const blinkLight = Math.sin(this.presentationElapsedMs * 0.008) >= 0;
+        this.landingLabel.setText(label);
+        this.landingLabel.setColor(blinking ? (blinkLight ? '#ffffff' : locked ? '#ffd45c' : '#7cff9b') : '#ffffff');
+        this.landingInstructionLabel.setColor(blinkLight ? '#ffffff' : '#7cff9b');
+        this.guideDirection = locked ? 'outward' : 'inward';
+        this.indicator.setStrokeStyle(2, landed ? 0x8fffb0 : locked ? 0xffd45c : captured ? 0x7cff9b : 0x9be0ff);
+        this.indicator.setVisible(visible);
+        this.landingLabel.setVisible(visible && (!locked || leavingPhysicalPlanet));
+        this.landingInstructionLabel.setVisible(captured && !locked && !landingEligible);
+        this.planetNameLabel.setVisible(visible);
+        this.landingGuide.setVisible(captured || landed || locked);
         this.landingZone.setPosition(this.sprite.x, this.sprite.y)
-            .setRadius(this.visualRadius + 60).setVisible(available);
+            .setRadius(orbitBoundary).setVisible(visible);
         this.drawLandingGuide();
     }
 }
