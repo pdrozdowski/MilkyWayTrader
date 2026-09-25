@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { displayLabels } from '../../src/ui/components/displayLabels';
 
 test.beforeEach(async ({ page }) => {
     await page.goto('/tests/ui/fixtures/uiHarness.html', { waitUntil: 'domcontentloaded' });
@@ -28,12 +29,12 @@ test('display controls render responsive state and actionable errors', async ({ 
     await expect(page.locator('#menu-fullscreen-toggle')).toHaveAttribute('aria-pressed', 'false');
     await page.evaluate(() => window.uiHarness.setFullscreenResult('manual-rotation'));
     await page.locator('#menu-fullscreen-toggle').click();
-    await expect(page.locator('#menu-display-status')).toContainText('Rotate your device to play.');
+    await expect(page.locator('#menu-display-status')).toContainText(displayLabels.rotateToPlay);
     await expect(page.locator('#display-status')).toBeEmpty();
 
     await page.evaluate(() => window.uiHarness.setFullscreenResult('failed'));
     await page.locator('#fullscreen-toggle').click();
-    await expect(page.locator('#display-status')).toContainText('Failed to enter fullscreen.');
+    await expect(page.locator('#display-status')).toContainText(displayLabels.fullscreenFailed);
     expect(await page.evaluate(() => window.uiHarness.refreshes())).toBeGreaterThan(0);
 });
 
