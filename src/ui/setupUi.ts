@@ -31,7 +31,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
     const debugClose = root.querySelector<HTMLButtonElement>('#debug-menu-close');
     const touchControlsToggle = root.querySelector<HTMLButtonElement>('#debug-touch-controls-toggle');
     const mouseMovementToggle = root.querySelector<HTMLButtonElement>('#debug-mouse-movement-toggle');
-    if (!mainMenu || !mainMenuNewGame || !mainMenuFullscreen || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle) throw new Error('Missing game menu controls.');
+    const boosterToggle = root.querySelector<HTMLButtonElement>('#debug-booster-toggle');
+    if (!mainMenu || !mainMenuNewGame || !mainMenuFullscreen || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle) throw new Error('Missing game menu controls.');
     const showMainMenu = (): void => { mainMenu.hidden = false; };
     const hideMainMenu = (): void => { mainMenu.hidden = true; };
     const startNewGame = (): void => { game.events.emit('start-new-game'); };
@@ -46,19 +47,24 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
     const unsubscribeOrientation = displayPort.subscribe(updateOrientationPause);
     let touchControlsEnabled = false;
     let mouseMovementEnabled = true;
+    let boosterEnabled = false;
     const renderDebugToggles = (): void => {
         touchControlsToggle.textContent = `Show touch screen controls: ${touchControlsEnabled ? 'ON' : 'OFF'}`;
         touchControlsToggle.setAttribute('aria-pressed', String(touchControlsEnabled));
         mouseMovementToggle.textContent = `Mouse movement: ${mouseMovementEnabled ? 'ON' : 'OFF'}`;
         mouseMovementToggle.setAttribute('aria-pressed', String(mouseMovementEnabled));
+        boosterToggle.textContent = `Booster enable: ${boosterEnabled ? 'ON' : 'OFF'}`;
+        boosterToggle.setAttribute('aria-pressed', String(boosterEnabled));
     };
     const closeDebugMenu = (): void => { debugMenu.hidden = true; game.canvas.focus(); };
     const openDebugMenu = (): void => { debugMenu.hidden = false; renderDebugToggles(); debugClose.focus(); };
     const toggleTouchControls = (): void => { touchControlsEnabled = !touchControlsEnabled; game.events.emit('debug-touch-controls', touchControlsEnabled); renderDebugToggles(); };
     const toggleMouseMovement = (): void => { mouseMovementEnabled = !mouseMovementEnabled; game.events.emit('debug-mouse-movement', mouseMovementEnabled); renderDebugToggles(); };
+    const toggleBooster = (): void => { boosterEnabled = !boosterEnabled; game.events.emit('debug-booster', boosterEnabled); renderDebugToggles(); };
     const resetDebugControls = (): void => {
         touchControlsEnabled = false;
         mouseMovementEnabled = true;
+        boosterEnabled = false;
         debugMenu.hidden = true;
         renderDebugToggles();
     };
@@ -70,6 +76,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
     debugClose.addEventListener('click', closeDebugMenu);
     touchControlsToggle.addEventListener('click', toggleTouchControls);
     mouseMovementToggle.addEventListener('click', toggleMouseMovement);
+    boosterToggle.addEventListener('click', toggleBooster);
     game.events.on('debug-controls-reset', resetDebugControls);
     window.addEventListener('keydown', debugKeyDown);
     const returnToGame = (): void => {
@@ -96,6 +103,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
             debugClose.removeEventListener('click', closeDebugMenu);
             touchControlsToggle.removeEventListener('click', toggleTouchControls);
             mouseMovementToggle.removeEventListener('click', toggleMouseMovement);
+            boosterToggle.removeEventListener('click', toggleBooster);
             game.events.off('debug-controls-reset', resetDebugControls);
             game.events.off('toggle-fullscreen', toggleFullscreen);
             window.removeEventListener('keydown', debugKeyDown);

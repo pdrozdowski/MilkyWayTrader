@@ -151,6 +151,10 @@ test('capture detaches outside its shared boundary and landing requires captured
     const landed = advanceGameSimulation(centre, { target: null, boostRequested: false, firing: false, landingRequested: true }, 1);
     assert.equal(landed.planetLifecycle.landedPlanetId, planet.id);
     assert.deepEqual(landed.clock.pauseReasons, ['landed']);
+    assert.deepEqual(landed.ship.velocity, { x: 0, y: 0 }, 'landing immediately stops the ship');
+    assert.equal(landed.ship.enginesOn, false, 'landing immediately silences the engine loop');
+    const boosting = { ...centre, ship: { ...centre.ship, boosting: true } };
+    assert.equal(tryLandAtCapturedPlanet(boosting, true), boosting, 'a boosted ship must return to normal flight before landing');
     const uncaptured = lifecycleState(LANDING_CENTRE_RADIUS, { capturedPlanetId: null });
     const blocked = tryLandAtCapturedPlanet(uncaptured, true);
     assert.equal(blocked, uncaptured, 'landing intent outside capture must not mutate state');
