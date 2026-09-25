@@ -34,6 +34,19 @@ test('application boots and persists accessible audio controls without consuming
     expect(pageErrors).toEqual([]);
 });
 
+test('debug menu enables the booster only when explicitly toggled', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await startRun(page);
+    await page.keyboard.press('d');
+    const boosterToggle = page.getByRole('button', { name: 'Booster enable: OFF', exact: true });
+    await expect(boosterToggle).toBeVisible();
+    await boosterToggle.click();
+    await expect(page.getByRole('button', { name: 'Booster enable: ON', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Close debug menu', exact: true }).click();
+    await page.getByRole('button', { name: 'Ship info' }).click();
+    await expect(page.getByLabel('Ship information')).toContainText('Booster: Available');
+});
+
 test('main-menu fullscreen control and empty canvas do not start a run', async ({ page }, testInfo) => {
     test.setTimeout(60_000);
     test.skip(testInfo.project.name === 'chromium-touch', 'Desktop coordinate coverage for the Phaser main menu.');

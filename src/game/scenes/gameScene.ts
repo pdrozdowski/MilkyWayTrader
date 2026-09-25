@@ -108,6 +108,7 @@ export class Game extends Scene
         this.game.events.on('return-to-menu', this.exitToGameOver, this);
         this.game.events.on('debug-touch-controls', this.setTouchControlsVisible, this);
         this.game.events.on('debug-mouse-movement', this.setMouseMovementEnabled, this);
+        this.game.events.on('debug-booster', this.setBoosterEnabled, this);
         window.addEventListener('blur', this.loseFocus);
         window.addEventListener('focus', this.gainFocus);
         window.addEventListener('touchcancel', this.cancelTouch);
@@ -125,6 +126,7 @@ export class Game extends Scene
             this.game.events.off('return-to-menu', this.exitToGameOver, this);
             this.game.events.off('debug-touch-controls', this.setTouchControlsVisible, this);
             this.game.events.off('debug-mouse-movement', this.setMouseMovementEnabled, this);
+            this.game.events.off('debug-booster', this.setBoosterEnabled, this);
             window.removeEventListener('blur', this.loseFocus);
             window.removeEventListener('focus', this.gainFocus);
             window.removeEventListener('touchcancel', this.cancelTouch);
@@ -173,6 +175,15 @@ export class Game extends Scene
             this.boostPointer = null;
         }
         this.layoutScreenSpace();
+    }
+
+    private setBoosterEnabled (enabled: boolean): void
+    {
+        this.stateProvider.update(state => ({
+            ...state,
+            ship: enabled ? state.ship : { ...state.ship, boosting: false, boostAcceleration: 0 },
+            shipStatus: { ...state.shipStatus, boosterUnlocked: enabled }
+        }));
     }
 
     private setMouseMovementEnabled (enabled: boolean): void
