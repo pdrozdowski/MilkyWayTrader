@@ -1,10 +1,10 @@
 ---
 change_id: s02-direct-moving-system-flight
 title: S02 direct moving system flight
-status: implemented
+status: archived
 created: 2026-09-23
-updated: 2026-09-24
-archived_at: null
+updated: 2026-09-25
+archived_at: 2026-09-25T12:44:30Z
 ---
 
 ## Notes
