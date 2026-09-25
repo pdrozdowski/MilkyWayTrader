@@ -3,7 +3,7 @@ project: MilkyWayTrader
 version: 1
 status: draft
 created: 2026-09-21
-updated: 2026-09-23
+updated: 2026-09-25
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -268,3 +268,5 @@ No standalone foundations are required. Deployment is already present, the autho
 ## Milestone History
 
 ## Done
+
+- **S-01: User can start an anonymous run and read its essential state.** — Archived 2026-09-25 → `context/archive/2026-09-21-s01-anonymous-run-status/`. Lesson: —.
