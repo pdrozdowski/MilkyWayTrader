@@ -2,7 +2,8 @@ import { mountAudioControls } from '../../../src/ui/components/audioControls';
 import { mountDisplayControls } from '../../../src/ui/components/displayControls';
 import { mountRunStatus } from '../../../src/ui/components/runStatus';
 import { mountGameMenu } from '../../../src/ui/components/gameMenu';
-import type { AudioSettingsSnapshot, DisplaySnapshot, FullscreenResult, RunStatusSnapshot, UiHandle } from '../../../src/ui/contracts';
+import { mountLandingStatus } from '../../../src/ui/components/landingStatus';
+import type { AudioSettingsSnapshot, DisplaySnapshot, FullscreenResult, LandingStatusSnapshot, RunStatusSnapshot, UiHandle } from '../../../src/ui/contracts';
 
 function harnessRoot (): HTMLElement
 {
@@ -25,9 +26,13 @@ let audioHandle: UiHandle | null = null;
 let displayHandle: UiHandle | null = null;
 let runStatusHandle: UiHandle | null = null;
 let gameMenuHandle: UiHandle | null = null;
+let landingStatusHandle: UiHandle | null = null;
 let menuOpen = false;
 let orientationPaused = false;
 let exits = 0;
+let launches = 0;
+let landingStatusState: LandingStatusSnapshot = { visible: false, planetName: null };
+let landingStatusListener: ((snapshot: Readonly<LandingStatusSnapshot>) => void) | null = null;
 
 const runStatusPort = {
     getSnapshot: (): Readonly<RunStatusSnapshot> => runStatusState,
@@ -70,16 +75,29 @@ const gameControlsPort = {
     destroy: (): void => {}
 };
 
+const landingStatusPort = {
+    getSnapshot: (): Readonly<LandingStatusSnapshot> => landingStatusState,
+    subscribe: (listener: (snapshot: Readonly<LandingStatusSnapshot>) => void): (() => void) => {
+        landingStatusListener = listener;
+        listener(landingStatusState);
+        return () => { if (landingStatusListener === listener) landingStatusListener = null; };
+    },
+    launch: (): void => { launches += 1; },
+    destroy: (): void => { landingStatusListener = null; }
+};
+
 function mount (): void
 {
     audioHandle?.destroy();
     displayHandle?.destroy();
     runStatusHandle?.destroy();
     gameMenuHandle?.destroy();
+    landingStatusHandle?.destroy();
     audioHandle = mountAudioControls(root, audioPort);
     displayHandle = mountDisplayControls(root, displayPort, () => {});
     runStatusHandle = mountRunStatus(root, runStatusPort);
     gameMenuHandle = mountGameMenu(root, gameControlsPort);
+    landingStatusHandle = mountLandingStatus(root, landingStatusPort);
 }
 
 mount();
@@ -90,11 +108,13 @@ window.uiHarness = {
     setDisplay: state => { displayState = { ...displayState, ...state }; displayListener?.({ ...displayState }); },
     setFullscreenResult: result => { fullscreenResult = result; },
     setRunStatus: state => { runStatusState = { ...runStatusState, ...state }; runStatusListener?.(runStatusState); },
-    listeners: () => ({ audio: Number(Boolean(audioListener)), display: Number(Boolean(displayListener)), runStatus: Number(Boolean(runStatusListener)) }),
+    setLandingStatus: state => { landingStatusState = { ...landingStatusState, ...state }; landingStatusListener?.(landingStatusState); },
+    listeners: () => ({ audio: Number(Boolean(audioListener)), display: Number(Boolean(displayListener)), runStatus: Number(Boolean(runStatusListener)), landingStatus: Number(Boolean(landingStatusListener)) }),
     gameControls: () => ({ menuOpen, orientationPaused, exits }),
     setOrientationPaused: paused => { gameControlsPort.setOrientationPaused(paused); },
     refreshes: () => refreshes,
-    destroy: () => { audioHandle?.destroy(); displayHandle?.destroy(); runStatusHandle?.destroy(); gameMenuHandle?.destroy(); },
+    launches: () => launches,
+    destroy: () => { audioHandle?.destroy(); displayHandle?.destroy(); runStatusHandle?.destroy(); gameMenuHandle?.destroy(); landingStatusHandle?.destroy(); },
     mount
 };
 
@@ -106,10 +126,12 @@ declare global {
             setDisplay(state: Partial<DisplaySnapshot>): void;
             setFullscreenResult(result: FullscreenResult): void;
             setRunStatus(state: Partial<RunStatusSnapshot>): void;
-            listeners(): { audio: number; display: number; runStatus: number };
+            setLandingStatus(state: Partial<LandingStatusSnapshot>): void;
+            listeners(): { audio: number; display: number; runStatus: number; landingStatus: number };
             refreshes(): number;
             gameControls(): { menuOpen: boolean; orientationPaused: boolean; exits: number };
             setOrientationPaused(paused: boolean): void;
+            launches(): number;
             destroy(): void;
             mount(): void;
         };

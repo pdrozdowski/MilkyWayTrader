@@ -33,7 +33,7 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 3);
+    assert.equal(state.schemaVersion, 4);
     assert.equal(state.credits, 100_000);
     assert.deepEqual(state.cargo, []);
     assert.deepEqual(state.shipStatus, {
@@ -179,6 +179,38 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
     assert.deepEqual(unchanged.planets, paused.planets);
 });
 
+test('v4 codec preserves lifecycle JSON and rejects legacy and inconsistent lifecycle shapes', () => {
+    const planetId = initialGameState.planets[0].id;
+    const landed = {
+        ...clone(initialGameState),
+        clock: { ...clone(initialGameState.clock), pauseReasons: ['landed'] },
+        planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
+    };
+    const decoded = decodeGameState(landed);
+    assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
+    assert(Object.isFrozen(decoded.planetLifecycle));
+
+    const legacyV3 = clone(initialGameState);
+    legacyV3.schemaVersion = 3;
+    assert.throws(() => decodeGameState(legacyV3));
+    assert.throws(() => decodeGameState({
+        ...clone(initialGameState),
+        planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
+    }));
+    assert.throws(() => decodeGameState({
+        ...clone(landed),
+        planetLifecycle: { capturedPlanetId: null, landedPlanetId: planetId, relandingLockedPlanetId: null }
+    }));
+    assert.throws(() => decodeGameState({
+        ...clone(initialGameState),
+        planetLifecycle: { capturedPlanetId: 'unknown', landedPlanetId: null, relandingLockedPlanetId: null }
+    }));
+    assert.deepEqual(decodeGameState({
+        ...clone(initialGameState),
+        planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: null, relandingLockedPlanetId: planetId }
+    }).planetLifecycle, { capturedPlanetId: planetId, landedPlanetId: null, relandingLockedPlanetId: planetId });
+});
+
 test('clock composes background, menu and orientation pauses without advancing active time', () => {
     let clock = pauseGameClock(initialGameState.clock, 'background');
     clock = pauseGameClock(clock, 'menu');
@@ -208,7 +240,7 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 3);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 4);
 });
 
 test('run status projection derives clock, capacity and readable run values', () => {

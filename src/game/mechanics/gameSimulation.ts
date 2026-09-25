@@ -8,6 +8,8 @@ import { advanceFireCadence } from './spaceship/fireCadence.ts';
 import { boostAccelerationRate, directionRotation, flightVelocity } from './spaceship/flight.ts';
 import { getPlanetDefinition } from '../definitions/planetDefinitions.ts';
 import { projectPlanetPosition } from './planet/orbit.ts';
+import { isWithinPlanetOrbitBoundary } from './planet/proximity.ts';
+import { tryLandAtCapturedPlanet } from './planet/landing.ts';
 import { isRecoveringFromMoolaris, resolveMoolarisContact } from './moolaris/contact.ts';
 import { MOOLARIS_RECOVERY_SECONDS } from '../definitions/moolarisDefinition.ts';
 
@@ -16,6 +18,7 @@ export interface GameSimulationInput
     readonly target: Readonly<{ x: number; y: number }> | null;
     readonly boostRequested: boolean;
     readonly firing: boolean;
+    readonly landingRequested?: boolean;
 }
 
 export interface GameSimulationOptions
@@ -67,6 +70,7 @@ export function advanceGameSimulation (
     const activeDeltaMs = clock.activeElapsedMs - state.clock.activeElapsedMs;
     if (activeDeltaMs <= 0) return { ...state, clock };
 
+    const landed = state.planetLifecycle.landedPlanetId !== null;
     const contact = resolveMoolarisContact(state.ship);
     const recovering = contact.hasControl && isRecoveringFromMoolaris(state.ship, input.target);
     const targetDelta = contact.hasControl && !recovering && input.target ? {
@@ -74,7 +78,7 @@ export function advanceGameSimulation (
         y: input.target.y - state.ship.position.y
     } : null;
     const currentSpeed = Math.hypot(state.ship.velocity.x, state.ship.velocity.y);
-    const wantsBoost = contact.hasControl && !recovering && state.shipStatus.boosterUnlocked && input.boostRequested
+    const wantsBoost = !landed && contact.hasControl && !recovering && state.shipStatus.boosterUnlocked && input.boostRequested
         && !!targetDelta && Math.hypot(targetDelta.x, targetDelta.y) > 2;
     const boostAcceleration = wantsBoost && !state.ship.boosting
         ? boostAccelerationRate(currentSpeed, shipTuning.maxSpeed, shipBoostTuning.speedMultiplier, shipBoostTuning.accelerationSeconds)
@@ -106,7 +110,7 @@ export function advanceGameSimulation (
     };
 
     let projectiles = advanceProjectiles(state.projectiles, clock.activeElapsedMs, activeDeltaMs, options);
-    const cadence = advanceFireCadence(state.weapon, clock.activeElapsedMs, contact.hasControl && !recovering && input.firing && !ship.boosting, options.shotIntervalMs);
+    const cadence = advanceFireCadence(state.weapon, clock.activeElapsedMs, !landed && contact.hasControl && !recovering && input.firing && !ship.boosting, options.shotIntervalMs);
     let weapon = cadence.weapon;
     if (cadence.fired) {
         const trajectory = shotTrajectory(ship.position, ship.rotation, options.muzzleOffset + options.projectileRadius + 1, options.projectileSpeed);
@@ -123,5 +127,44 @@ export function advanceGameSimulation (
         ...planet,
         position: projectPlanetPosition(getPlanetDefinition(planet.id).id, clock.activeElapsedMs)
     }));
-    return { ...state, clock, ship, planets, weapon, projectiles };
+    const capturedPlanetId = state.planetLifecycle.capturedPlanetId;
+    const capturedPlanet = capturedPlanetId === null ? null : planets.find(planet => planet.id === capturedPlanetId) ?? null;
+    const previousCapturedPlanet = capturedPlanetId === null ? null : state.planets.find(planet => planet.id === capturedPlanetId) ?? null;
+    let lifecycle = state.planetLifecycle;
+    let orbitShip = ship;
+    let detachedThisTick = false;
+    if (capturedPlanet && previousCapturedPlanet) {
+        const displacedPosition = {
+            x: ship.position.x + capturedPlanet.position.x - previousCapturedPlanet.position.x,
+            y: ship.position.y + capturedPlanet.position.y - previousCapturedPlanet.position.y
+        };
+        if (isWithinPlanetOrbitBoundary(Math.hypot(displacedPosition.x - capturedPlanet.position.x, displacedPosition.y - capturedPlanet.position.y), capturedPlanet.radius, shipTuning.collisionRadius)) {
+            orbitShip = { ...ship, position: displacedPosition };
+        } else {
+            lifecycle = { ...lifecycle, capturedPlanetId: null, relandingLockedPlanetId: lifecycle.relandingLockedPlanetId === capturedPlanet.id ? null : lifecycle.relandingLockedPlanetId };
+            detachedThisTick = true;
+        }
+    }
+    if (lifecycle.relandingLockedPlanetId !== null && lifecycle.capturedPlanetId === lifecycle.relandingLockedPlanetId) {
+        const lockedPlanet = planets.find(planet => planet.id === lifecycle.relandingLockedPlanetId);
+        if (lockedPlanet && Math.hypot(orbitShip.position.x - lockedPlanet.position.x, orbitShip.position.y - lockedPlanet.position.y) > lockedPlanet.radius) {
+            lifecycle = { ...lifecycle, relandingLockedPlanetId: null };
+        }
+    }
+    if (!detachedThisTick && lifecycle.capturedPlanetId === null && lifecycle.landedPlanetId === null) {
+        const eligible = planets.find(planet => planet.id !== lifecycle.relandingLockedPlanetId
+            && isWithinPlanetOrbitBoundary(Math.hypot(orbitShip.position.x - planet.position.x, orbitShip.position.y - planet.position.y), planet.radius, shipTuning.collisionRadius));
+        if (eligible) {
+            const previous = state.planets.find(planet => planet.id === eligible.id);
+            if (previous) orbitShip = {
+                ...orbitShip,
+                position: {
+                    x: orbitShip.position.x + eligible.position.x - previous.position.x,
+                    y: orbitShip.position.y + eligible.position.y - previous.position.y
+                }
+            };
+            lifecycle = { ...lifecycle, capturedPlanetId: eligible.id };
+        }
+    }
+    return tryLandAtCapturedPlanet({ ...state, clock, ship: orbitShip, planets, planetLifecycle: lifecycle, weapon, projectiles }, input.landingRequested === true);
 }

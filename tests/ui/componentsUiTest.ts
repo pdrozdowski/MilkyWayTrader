@@ -18,7 +18,7 @@ test('audio controls render state, emit actions and release listeners', async ({
     await expect(mute).toHaveAttribute('aria-pressed', 'false');
     await expect(page.locator('#audio-volume')).toHaveValue('25');
     await page.evaluate(() => window.uiHarness.destroy());
-    expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 0, display: 0, runStatus: 0 });
+    expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 0, display: 0, runStatus: 0, landingStatus: 0 });
 });
 
 test('display controls render responsive state and actionable errors', async ({ page }) => {
@@ -40,7 +40,19 @@ test('display controls render responsive state and actionable errors', async ({ 
 
 test('repeated mounting keeps one subscription per component', async ({ page }) => {
     await page.evaluate(() => { window.uiHarness.mount(); window.uiHarness.mount(); });
-    expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 1, display: 1, runStatus: 1 });
+    expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 1, display: 1, runStatus: 1, landingStatus: 1 });
+});
+
+test('landing status names the planet, identifies deferred services, and emits the semantic launch action', async ({ page }) => {
+    await page.evaluate(() => window.uiHarness.setLandingStatus({ visible: true, planetName: 'Seroton' }));
+    const modal = page.getByRole('dialog', { name: 'Landed status' });
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText('Seroton — LANDED');
+    await expect(modal).toContainText('Time is paused while landed.');
+    await expect(modal).toContainText('Market access: deferred.');
+    await expect(modal).toContainText('Shipyard access: deferred.');
+    await page.getByRole('button', { name: 'LAUNCH', exact: true }).click();
+    expect(await page.evaluate(() => window.uiHarness.launches())).toBe(1);
 });
 
 test('pause menu traps focus, resumes and restores its trigger focus', async ({ page }) => {
