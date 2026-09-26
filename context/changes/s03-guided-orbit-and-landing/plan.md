@@ -10,7 +10,7 @@ The simulation already advances direct flight and deterministic planet positions
 
 ## Desired End State
 
-For each configured planet, a player can see nearby navigation information, enter its capture zone, retain direct flight while following the planet's displacement, manually land from orbit, and explicitly launch. Landing pauses the shared clock and disables boost/fire; launch resumes the clock and requires leaving the physical planet radius before another landing can occur.
+For each configured planet, a player can see nearby CW and CCW cruise-time estimates, enter its capture zone, retain direct flight while following the planet's displacement, manually land from orbit, and explicitly launch. Landing pauses the shared clock and disables boost/fire; launch resumes the clock and requires leaving the physical planet radius before another landing can occur.
 
 ### Key Discoveries:
 
@@ -32,7 +32,7 @@ Keep lifecycle values in the JSON-safe snapshot and transition them through pure
 
 ## Critical Implementation Details
 
-The simulation must update planet positions before deriving capture displacement, then apply that displacement to a captured ship without altering its player-controlled velocity, heading, or target. On the landing transition, the clock pause reason and modal state must commit in the same provider update; launch must remove only `landed`, preserving any independent pause reason.
+The simulation must update planet positions before deriving capture displacement, then apply that displacement to a captured ship without altering its player-controlled velocity, heading, or target. On the landing transition, the clock pause reason and modal state must commit in the same provider update; launch must remove only `landed`, preserving any independent pause reason. Guidance ETA is an advisory active-time estimate at instantaneous configured normal cruise speed; it is not an arrival promise and deliberately excludes current velocity, acceleration, boost, hazards, and player steering error.
 
 ## Phase 1: Orbit, Landing, and Launch Lifecycle
 
@@ -88,32 +88,40 @@ Render useful route guidance in the world without adding steering, target select
 
 ### Changes Required:
 
-#### 1. Derived route-geometry mechanics
+#### 1. Product contract update
+
+**Files**: `context/foundation/prd.md`
+
+**Intent**: Align the product contract with player-actionable route information before implementation replaces kilometre labels.
+
+**Contract**: Replace the visible CW/CCW predicted-distance requirements in US-02 acceptance criteria and BR-023 through BR-026 with paired predicted cruise ETAs in whole seconds, lower-ETA emphasis, and neutral treatment of effectively equal ETAs. Preserve the moving-planet, normal-unboosted-speed, advisory-only, and visibility constraints. Validate the PRD with `10x-prd-en-capability` before Phase 2 implementation proceeds.
+
+#### 2. Derived route-geometry mechanics
 
 **Files**: `src/game/mechanics/planet/`, `src/game/definitions/`
 
 **Intent**: Calculate the information the player needs to choose an interception direction from present authoritative positions and configured normal ship speed.
 
-**Contract**: Define a 100 px radial guidance band and 200 km-per-world-pixel display scale. For the closest eligible planet, project the ship onto that planet's orbit and derive CW and CCW route distances accounting for current planet motion at normal unboosted speed. Provide equality tolerance so neither route is preferred when effectively equal. These functions return derived values and do not mutate state.
+**Contract**: Define a 100 px radial guidance band. Select the eligible orbit with the smallest ship-to-orbit-circumference distance, project the ship onto it, and derive CW and CCW interception results accounting for current planet motion at configured normal unboosted cruise speed. Each direction returns its geometry and a whole-second active-time ETA from the same interception solve; do not calculate ETA by dividing a displayed distance by speed. Provide ETA equality tolerance so neither route is preferred when effectively equal, and represent zero or near-zero relative closing-rate routes as unavailable. These functions return derived values and do not mutate state.
 
-#### 2. World guidance projection
+#### 3. World guidance projection
 
 **Files**: `src/game/scenes/gameScene.ts`, `src/game/effects/` or `src/game/visual/`, `src/game/objects/planet/planet.ts`
 
 **Intent**: Make the advisory route visible without cluttering remote flight or conflicting with captured/landed states.
 
-**Contract**: Render the complete selected orbit as a subtle dashed line with the planet name while inside its 100 px band. Show both CW and CCW distances in km near the guide, emphasize the shorter value, and omit emphasis on equality. Hide the guide after capture or on leaving the band; when bands overlap, show the closest eligible planet. Reuse display-label constants for visible text.
+**Contract**: Render the complete selected orbit as a subtle dashed line with the planet name while inside its 100 px band. Place `↺` and `↻` whole-second ETA labels on their corresponding sides of the guide with a static `EST. AT CRUISE` qualifier; emphasize the lower ETA and omit emphasis on equality. Do not render km distances. Hide the guide after capture or on leaving the band; when bands overlap, show the closest eligible orbit. Reuse display-label constants for visible text.
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- Mechanics tests cover guidance-band boundaries, closest-planet selection, both directional distances, 200 km conversion, equal-route presentation state, planet-motion prediction, paused-time stability, and input/state immutability.
-- UI/browser tests cover guide visibility at the band boundary, distance labels, shorter-route emphasis, hide-on-capture behavior, and unchanged direct-flight input; `npm.cmd run test:project`, `npm.cmd run typecheck`, and `npm.cmd run build-nolog` pass.
+- The PRD capability validator passes after the route-information contract changes, and mechanics tests cover guidance-band boundaries, closest-orbit selection, both directional moving-intercept ETAs, whole-second rounding, equal-ETA presentation state, unavailable intercepts, paused-time stability, and input/state immutability.
+- UI/browser tests cover guide visibility at the band boundary, curved-arrow ETA labels, cruise qualifier, lower-ETA emphasis, hide-on-capture behavior, and unchanged direct-flight input; `npm.cmd run test:project`, `npm.cmd run typecheck`, and `npm.cmd run build-nolog` pass.
 
 #### Manual Verification:
 
-- In the browser, approach each orbital path and confirm a subtle dashed guide, readable CW/CCW km values, and only the shorter route emphasis; leave or capture the orbit and confirm the guide disappears.
+- In the browser, approach each orbital path and confirm a subtle dashed guide, readable `↺`/`↻` cruise ETAs, only the lower ETA emphasis, and no displayed km distances; leave or capture the orbit and confirm the guide disappears.
 - Confirm the guide never moves the ship, changes its heading, or changes boost/fire behavior during direct flight.
 
 **Implementation Note**: After automated verification passes, pause for the human to confirm manual guidance behavior.
@@ -124,7 +132,7 @@ Render useful route guidance in the world without adding steering, target select
 
 - Test all transition thresholds and invalid lifecycle combinations in pure mechanics, state, and codec tests.
 - Compare uninterrupted and restored orbit/planet simulation while excluding transient held input and presentation effects.
-- Test route derivation with normal speed, moving planets, overlap selection, equality, and kilometre conversion.
+- Test route derivation with normal cruise speed, moving planets, overlap selection, ETA equality, whole-second rounding, and unavailable intercept handling.
 
 ### Integration Tests:
 
@@ -172,8 +180,8 @@ The snapshot advances from schema v3 to v4. No migration is added because persis
 
 #### Automated
 
-- [ ] 2.1 Route-geometry boundary and derived-distance verification
-- [ ] 2.2 UI/browser, project-test, typecheck, and build verification
+- [ ] 2.1 PRD capability and route-geometry ETA verification
+- [ ] 2.2 UI/browser cruise-ETA, project-test, typecheck, and build verification
 
 #### Manual
 
