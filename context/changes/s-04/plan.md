@@ -196,8 +196,8 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 
 #### Automated
 
-- [x] 3.1 UI tests cover market rendering, slider constraints, quote states, focus, and cleanup.
-- [x] 3.2 Playwright covers an end-to-end landed buy/sell flow and immediate HUD update.
+- [x] 3.1 UI tests cover market rendering, slider constraints, quote states, focus, and cleanup. — dfd08d3
+- [x] 3.2 Playwright covers an end-to-end landed buy/sell flow and immediate HUD update. — dfd08d3
 
 #### Manual
 
