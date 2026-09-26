@@ -58,8 +58,21 @@
             <div class="landing-status-panel">
                 <h2 id="landing-status-title"></h2>
                 <p id="landing-status-paused"></p>
-                <p id="landing-status-market"></p>
-                <p id="landing-status-shipyard"></p>
+                <p id="landing-status-balances"></p>
+                <div id="landing-status-catalogue" role="group" aria-label="Seroton commodities">
+                    <button type="button" data-commodity-id="supplies"></button>
+                    <button type="button" data-commodity-id="alloys"></button>
+                    <button type="button" data-commodity-id="medicines"></button>
+                </div>
+                <section id="landing-status-trade" aria-label="Trade preview">
+                    <label for="landing-status-quantity" id="landing-status-quantity-label"></label>
+                    <input id="landing-status-quantity" type="range" step="1" value="0" />
+                    <output id="landing-status-quantity-value" for="landing-status-quantity"></output>
+                    <p id="landing-status-quote"></p>
+                    <p id="landing-status-impact"></p>
+                    <p id="landing-status-cash-shortfall" role="status"></p>
+                    <button id="landing-status-confirm" type="button"></button>
+                </section>
                 <button id="landing-status-launch" type="button"></button>
             </div>
         </section>

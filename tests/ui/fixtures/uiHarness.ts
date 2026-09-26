@@ -4,6 +4,7 @@ import { mountRunStatus } from '../../../src/ui/components/runStatus';
 import { mountGameMenu } from '../../../src/ui/components/gameMenu';
 import { mountLandingStatus } from '../../../src/ui/components/landingStatus';
 import type { AudioSettingsSnapshot, DisplaySnapshot, FullscreenResult, LandingStatusSnapshot, RunStatusSnapshot, UiHandle } from '../../../src/ui/contracts';
+import type { SerotonCommodityId } from '../../../src/game/state/serotonMarketState';
 
 function harnessRoot (): HTMLElement
 {
@@ -31,6 +32,9 @@ let menuOpen = false;
 let orientationPaused = false;
 let exits = 0;
 let launches = 0;
+let selectedCommodities: string[] = [];
+let tradeQuantities: number[] = [];
+let confirmations = 0;
 let landingStatusState: LandingStatusSnapshot = {
     visible: false,
     eligible: false,
@@ -93,9 +97,9 @@ const landingStatusPort = {
         listener(landingStatusState);
         return () => { if (landingStatusListener === listener) landingStatusListener = null; };
     },
-    selectCommodity: (): void => {},
-    setTradeQuantity: (): void => {},
-    confirmTrade: (): void => {},
+    selectCommodity: (commodityId: SerotonCommodityId): void => { selectedCommodities.push(commodityId); },
+    setTradeQuantity: (quantity: number): void => { tradeQuantities.push(quantity); },
+    confirmTrade: (): void => { confirmations += 1; },
     launch: (): void => { launches += 1; },
     destroy: (): void => { landingStatusListener = null; }
 };
@@ -128,6 +132,7 @@ window.uiHarness = {
     setOrientationPaused: paused => { gameControlsPort.setOrientationPaused(paused); },
     refreshes: () => refreshes,
     launches: () => launches,
+    marketActions: () => ({ selectedCommodities: [...selectedCommodities], tradeQuantities: [...tradeQuantities], confirmations }),
     destroy: () => { audioHandle?.destroy(); displayHandle?.destroy(); runStatusHandle?.destroy(); gameMenuHandle?.destroy(); landingStatusHandle?.destroy(); },
     mount
 };
@@ -146,6 +151,7 @@ declare global {
             gameControls(): { menuOpen: boolean; orientationPaused: boolean; exits: number };
             setOrientationPaused(paused: boolean): void;
             launches(): number;
+            marketActions(): { selectedCommodities: string[]; tradeQuantities: number[]; confirmations: number };
             destroy(): void;
             mount(): void;
         };

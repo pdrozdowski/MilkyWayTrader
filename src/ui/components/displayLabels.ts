@@ -13,6 +13,8 @@ export const displayLabels = {
     landedSuffix: '— LANDED',
     launch: 'LAUNCH',
     pausedTime: 'Time is paused while landed.',
-    marketDeferred: 'Market access: deferred.',
-    shipyardDeferred: 'Shipyard access: deferred.'
+    marketCredits: 'Credits', marketCargo: 'Cargo', marketQuantity: 'Trade quantity', marketQuote: 'Quote',
+    marketPostTradeStock: 'Stock after trade', marketNextPrice: 'Next unit price', marketConfirm: 'CONFIRM TRADE',
+    marketBuy: 'BUY', marketSell: 'SELL', marketNoTrade: 'SELECT A QUANTITY', marketCashShortfall: 'Insufficient credits:',
+    supplies: 'Supplies', alloys: 'Alloys', medicines: 'Medicines'
 } as const;

@@ -9,6 +9,8 @@ import type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/appl
 import type { SerotonCommodityId } from '../game/state/serotonMarketState';
 import type { RunStatusSnapshot } from '../game/application/runStatus';
 
+export type LandingCommodityId = LandingStatusSnapshot['selectedCommodityId'];
+
 export interface RunStatusPort extends UiHandle
 {
     getSnapshot(): Readonly<RunStatusSnapshot>;

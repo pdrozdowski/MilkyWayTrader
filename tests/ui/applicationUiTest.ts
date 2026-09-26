@@ -12,6 +12,30 @@ async function startRun (page: Page): Promise<Locator>
     return canvas;
 }
 
+test('landed Seroton market atomically buys and sells through the application ports while active time stays paused', async ({ page }) => {
+    const pageErrors: string[] = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
+    await page.goto('/tests/ui/fixtures/landedMarketApplicationHarness.html', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => window.applicationMarketHarness.land());
+    const modal = page.getByRole('dialog', { name: 'Landed status' });
+    await expect(modal).toBeVisible();
+    await expect(page.locator('#run-status-clock')).toContainText('PAUSED');
+    const pausedClock = await page.locator('#run-status-clock').textContent();
+    await page.waitForTimeout(1_100);
+    await expect(page.locator('#run-status-clock')).toHaveText(pausedClock ?? '');
+
+    await page.locator('#landing-status-quantity').fill('2');
+    await page.getByRole('button', { name: 'CONFIRM TRADE' }).click();
+    await expect(page.locator('#run-status-credits')).toHaveText('98,000 cr');
+    await expect(page.locator('#run-status-cargo')).toHaveText('Cargo 2 / 20');
+
+    await page.locator('#landing-status-quantity').fill('-1');
+    await page.getByRole('button', { name: 'CONFIRM TRADE' }).click();
+    await expect(page.locator('#run-status-credits')).toHaveText('99,000 cr');
+    await expect(page.locator('#run-status-cargo')).toHaveText('Cargo 1 / 20');
+    expect(pageErrors).toEqual([]);
+});
+
 test('application boots and persists accessible audio controls without consuming flight keys', async ({ page }) => {
     test.setTimeout(60_000);
     const pageErrors: string[] = [];

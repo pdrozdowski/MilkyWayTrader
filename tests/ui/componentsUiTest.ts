@@ -43,16 +43,38 @@ test('repeated mounting keeps one subscription per component', async ({ page }) 
     expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 1, display: 1, runStatus: 1, landingStatus: 1 });
 });
 
-test('landing status names the planet, identifies deferred services, and emits the semantic launch action', async ({ page }) => {
-    await page.evaluate(() => window.uiHarness.setLandingStatus({ visible: true, planetName: 'Seroton' }));
+test('landing market renders bounded quotes, emits semantic actions, traps focus and returns it on launch', async ({ page }) => {
+    await page.evaluate(() => window.uiHarness.setLandingStatus({
+        visible: true, eligible: true, planetName: 'Seroton', credits: 500, cargoUsed: 3, cargoCapacity: 20,
+        commodities: [
+            { commodityId: 'supplies', stock: 100, carriedQuantity: 3, unitPrice: 1_000 },
+            { commodityId: 'alloys', stock: 60, carriedQuantity: 0, unitPrice: 5_000 },
+            { commodityId: 'medicines', stock: 20, carriedQuantity: 0, unitPrice: 15_000 }
+        ], selectedCommodityId: 'supplies', tradeQuantity: 2,
+        quote: { quantity: 2, total: 2_000, failure: 'insufficient-credits', postTradeStock: 98, nextUnitPrice: 1_020 }
+    }));
     const modal = page.getByRole('dialog', { name: 'Landed status' });
     await expect(modal).toBeVisible();
     await expect(modal).toContainText('Seroton — LANDED');
     await expect(modal).toContainText('Time is paused while landed.');
-    await expect(modal).toContainText('Market access: deferred.');
-    await expect(modal).toContainText('Shipyard access: deferred.');
+    await expect(page.locator('#landing-status-quantity')).toHaveAttribute('min', '-3');
+    await expect(page.locator('#landing-status-quantity')).toHaveAttribute('max', '17');
+    await expect(modal).toContainText('Quote: 2,000 cr');
+    await expect(modal).toContainText('Stock after trade: 98');
+    await expect(modal).toContainText('Insufficient credits: 1,500 cr');
+    await expect(page.getByRole('button', { name: 'CONFIRM TRADE' })).toBeDisabled();
+    await page.getByRole('button', { name: /Alloys/ }).click();
+    await page.locator('#landing-status-quantity').fill('4');
+    expect(await page.evaluate(() => window.uiHarness.marketActions())).toEqual({ selectedCommodities: ['alloys'], tradeQuantities: [4], confirmations: 0 });
+    await page.evaluate(() => window.uiHarness.setLandingStatus({ selectedCommodityId: 'alloys', tradeQuantity: -1, quote: { quantity: -1, total: 5_000, failure: null, postTradeStock: 61, nextUnitPrice: 4_950 } }));
+    await page.getByRole('button', { name: 'CONFIRM TRADE' }).click();
+    expect(await page.evaluate(() => window.uiHarness.marketActions())).toEqual({ selectedCommodities: ['alloys'], tradeQuantities: [4], confirmations: 1 });
+    await page.getByRole('button', { name: 'LAUNCH', exact: true }).focus();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: /Supplies/ })).toBeFocused();
     await page.getByRole('button', { name: 'LAUNCH', exact: true }).click();
     expect(await page.evaluate(() => window.uiHarness.launches())).toBe(1);
+    await expect(page.locator('#game-container canvas')).toBeFocused();
 });
 
 test('pause menu traps focus, resumes and restores its trigger focus', async ({ page }) => {
