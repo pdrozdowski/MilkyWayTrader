@@ -13,15 +13,15 @@ The game already has direct flight, a shared active-time clock, deterministic pl
 
 ## Desired End State
 
-Near an orbit, the player sees a subtle dashed path, planet name, and both projected CW/CCW distances in km. Entering the capture zone makes the ship follow only the planet's displacement while retaining direct steering; flying to the centre opens a paused status modal, and `LAUNCH` returns the player to manual flight without allowing an immediate accidental relanding.
+Near an orbit, the player sees a subtle dashed path, planet name, and paired `↺`/`↻` estimated cruise times in seconds. Entering the capture zone makes the ship follow only the planet's displacement while retaining direct steering; flying to the centre opens a paused status modal, and `LAUNCH` returns the player to manual flight without allowing an immediate accidental relanding.
 
 ## Key Decisions Made
 
 | Decision | Choice | Why | Source |
 | --- | --- | --- | --- |
 | Flight control | Guidance is advisory; capture never steers the ship | Direct control is a PRD guardrail. | PRD / Plan |
-| Guidance | 100 px radial band, dashed path, CW/CCW km labels | Meets route-information requirements while keeping the world view subtle. | Plan |
-| Distance display | 1 world px = 200 km | Geometry stays in existing world units while UI uses player-facing units. | Plan |
+| Guidance | 100 px radial band, dashed path, paired curved-arrow cruise ETAs | Shows the actionable direction choice without meaningless world-distance units. | Plan |
+| ETA basis | Whole active-time seconds at normal unboosted cruise speed | Accounts for planet motion while remaining an explicitly advisory estimate. | Plan |
 | Capture | Existing proximity radius, automatic state, relative displacement | Reuses a tested seam and preserves manual movement. | Research / Plan |
 | Landing | Captured ship manually reaches within 50 px of centre | Landing remains a piloting action rather than automatic travel. | Plan |
 | Launch | Explicit `LAUNCH` resumes time; lock clears outside definition radius | Prevents immediate relanding and makes time resumption clear. | Plan |
@@ -42,7 +42,7 @@ Pure mechanics calculate transition and route geometry from the authoritative sn
 | Phase | What it delivers | Key risk |
 | --- | --- | --- |
 | 1. Orbit, landing, and launch lifecycle | Restorable state, direct-control capture, modal, pause/resume, and relanding lock | State/clock ordering and stale held input |
-| 2. Advisory route guidance | Dashed orbital guidance and correctly derived route distances | Visual clarity without changing controls |
+| 2. Advisory route guidance | Dashed orbital guidance and correctly derived directional cruise ETAs | Visual clarity without implying guaranteed arrival or changing controls |
 
 **Prerequisites:** S-02 direct moving-system flight is complete.
 **Estimated effort:** ~2–3 focused sessions across 2 phases.
@@ -55,5 +55,5 @@ Pure mechanics calculate transition and route geometry from the authoritative sn
 ## Success Criteria (Summary)
 
 - The player can manually reach, orbit, land on, and launch from each configured planet while active time pauses only when landed.
-- Guidance presents both calculated routes but never changes player velocity, heading, target, or control state.
+- Guidance presents both directional cruise ETAs, emphasizes the faster direction, and never changes player velocity, heading, target, or control state.
 - Snapshot validation, pure mechanics, UI behavior, and browser interaction checks cover the new lifecycle.
