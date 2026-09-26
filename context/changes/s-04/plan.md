@@ -185,8 +185,8 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 
 #### Automated
 
-- [x] 2.1 Mechanics tests cover exact one-second ticks, restored continuity, and all pauses.
-- [x] 2.2 Application tests cover landed eligibility and transient cache invalidation after a trade.
+- [x] 2.1 Mechanics tests cover exact one-second ticks, restored continuity, and all pauses. — c796d59
+- [x] 2.2 Application tests cover landed eligibility and transient cache invalidation after a trade. — c796d59
 
 #### Manual
 
@@ -196,8 +196,8 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 
 #### Automated
 
-- [ ] 3.1 UI tests cover market rendering, slider constraints, quote states, focus, and cleanup.
-- [ ] 3.2 Playwright covers an end-to-end landed buy/sell flow and immediate HUD update.
+- [x] 3.1 UI tests cover market rendering, slider constraints, quote states, focus, and cleanup.
+- [x] 3.2 Playwright covers an end-to-end landed buy/sell flow and immediate HUD update.
 
 #### Manual
 

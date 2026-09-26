@@ -15,6 +15,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
 {
     const container = root.querySelector<HTMLElement>('#game-container');
     if (!container) throw new Error('Missing game container.');
+    game.canvas.tabIndex = 0;
     const audio = mountAudioControls(root, createAudioSettingsPort(game));
     const controlsPort = createGameControlsPort(game);
     const menuControls = mountGameMenu(root, controlsPort);

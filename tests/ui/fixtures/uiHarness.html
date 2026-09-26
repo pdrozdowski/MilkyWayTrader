@@ -2,7 +2,7 @@
 <html lang="en">
 <head><meta charset="UTF-8"><title>UI component harness</title></head>
 <body>
-    <main id="app">
+    <main id="app"><div id="game-container"><canvas tabindex="0"></canvas></div>
         <section id="run-status" aria-label="Run status" hidden><span id="run-status-clock"></span><button id="run-status-ship-toggle" type="button" aria-expanded="false">Ship info</button><span id="run-status-credits"></span><span id="run-status-cargo"></span><label id="run-status-hp-label" for="run-status-hp"></label><progress id="run-status-hp" value="0" max="100"></progress><button id="run-status-cargo-toggle" type="button" aria-expanded="false">Cargo</button><section id="run-status-ship-details" hidden><p id="run-status-cargo-system"></p><p id="run-status-engine-system"></p><p id="run-status-weapon-system"></p><p id="run-status-booster"></p></section><section id="run-status-cargo-details" hidden><p id="run-status-cargo-contents"></p></section></section>
         <div id="orientation-notice" hidden><p id="orientation-help"></p></div>
         <div id="mobile-controls" data-game-input="ignore" hidden>
@@ -21,7 +21,7 @@
         </div>
         <button id="game-menu-toggle" type="button" aria-expanded="false">Menu</button>
         <section id="game-menu" data-game-input="ignore" role="dialog" aria-modal="true" hidden><button id="game-menu-close" type="button">Close</button><button id="game-menu-resume" type="button">Resume</button><button id="return-to-menu" type="button">Exit to Main Menu</button></section>
-        <section id="landing-status" data-game-input="ignore" aria-label="Landed status" aria-modal="true" role="dialog" hidden><h2 id="landing-status-title"></h2><p id="landing-status-paused"></p><p id="landing-status-market"></p><p id="landing-status-shipyard"></p><button id="landing-status-launch" type="button"></button></section>
+        <section id="landing-status" data-game-input="ignore" aria-label="Landed status" aria-modal="true" role="dialog" hidden><h2 id="landing-status-title"></h2><p id="landing-status-paused"></p><p id="landing-status-balances"></p><div id="landing-status-catalogue" role="group" aria-label="Seroton commodities"><button type="button" data-commodity-id="supplies"></button><button type="button" data-commodity-id="alloys"></button><button type="button" data-commodity-id="medicines"></button></div><section id="landing-status-trade" aria-label="Trade preview"><label for="landing-status-quantity" id="landing-status-quantity-label"></label><input id="landing-status-quantity" type="range" step="1" value="0" /><output id="landing-status-quantity-value" for="landing-status-quantity"></output><p id="landing-status-quote"></p><p id="landing-status-impact"></p><p id="landing-status-cash-shortfall" role="status"></p><button id="landing-status-confirm" type="button"></button></section><button id="landing-status-launch" type="button"></button></section>
     </main>
     <script type="module" src="/tests/ui/fixtures/uiHarness.ts"></script>
 </body>
