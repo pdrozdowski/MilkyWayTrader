@@ -2,11 +2,12 @@ import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 import { initialCredits, maximumShipHitPoints } from '../domain/runBalance.ts';
 import { planetDefinitions } from './planetDefinitions.ts';
 import { projectPlanetPosition } from '../mechanics/planet/orbit.ts';
+import { serotonCommodityDefinitions } from './serotonMarketDefinitions.ts';
 
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
 
 export const initialGameState: GameStateSnapshot = {
-    schemaVersion: 4,
+    schemaVersion: 5,
     clock: {
         budgetMs: ACTIVE_TIME_BUDGET_MS,
         activeElapsedMs: 0,
@@ -14,6 +15,10 @@ export const initialGameState: GameStateSnapshot = {
     },
     credits: initialCredits,
     cargo: [],
+    markets: [{
+        planetId: 'seroton',
+        commodityStocks: serotonCommodityDefinitions.map(definition => ({ commodityId: definition.id, stock: definition.initialStock }))
+    }],
     ship: {
         position: { x: 0, y: -planetDefinitions[0].orbitRadius },
         velocity: { x: 0, y: 0 },
