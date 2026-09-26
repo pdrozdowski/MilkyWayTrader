@@ -172,11 +172,11 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 ### Planetary services and economy
 
-- FR-019: A landed player can access the planet's market. Priority: must-have
-- FR-020: A landed player can inspect local commodity stock and prices. Priority: must-have
-- FR-021: A player can buy commodities from a planetary market. Priority: must-have
-- FR-022: A player can sell commodities to a planetary market. Priority: must-have
-- FR-023: The game can evolve each planet's commodity market during active game time. Priority: must-have
+- FR-019: A landed player can access Seroton's market. Priority: must-have
+- FR-020: A landed player can inspect Seroton's commodity stock and prices. Priority: must-have
+- FR-021: A player can buy commodities from Seroton's market. Priority: must-have
+- FR-022: A player can sell commodities to Seroton's market. Priority: must-have
+- FR-023: The game can evolve Seroton's commodity market during active game time. Priority: must-have
 - FR-024: A landed player can access the planet's shipyard. Priority: must-have
 - FR-025: A player can repair their ship at a shipyard. Priority: must-have
 - FR-026: A player can purchase ship upgrades available at the current shipyard. Priority: must-have
@@ -305,7 +305,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 
 ### Planetary services, upgrades, and economy
 
-- BR-069: Every planet provides a market and a shipyard after landing.
+- BR-069: Seroton provides the current market after landing; other planetary markets are outside the current slice.
 - BR-070: Live market stock, prices, and shipyard services are unavailable remotely.
 - BR-071: Repairs are purchased in player-selected increments of 10% maximum HP at a configured fixed cost per increment.
 - BR-072: A repair cannot exceed missing HP or available credits.
@@ -314,8 +314,8 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-075: Maslo-Prime sells weapon upgrades.
 - BR-076: Cargo upgrades increase capacity, engine upgrades increase normal maximum speed, and weapon upgrades add projectiles to each shot.
 - BR-077: Upgrade levels, effects, and costs are configured balance parameters.
-- BR-078: Every planet maintains independent stock for every commodity.
-- BR-079: Scheduled market updates occur every ten seconds of active game time.
+- BR-078: Seroton maintains independent stock for supplies, alloys, and medicines; other planetary markets are outside the current slice.
+- BR-079: Scheduled Seroton market updates occur every second of active game time.
 - BR-080: Each scheduled update changes stock by configured production minus configured consumption without allowing stock below zero.
 - BR-081: A commodity's local price is derived from local stock, configured stock thresholds, and configured base price.
 - BR-082: Below the lower threshold, the price multiplier scales linearly from 200% at zero stock to 100% at the threshold.
@@ -323,10 +323,10 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-084: Above the upper threshold and below the combined thresholds, the multiplier scales linearly from 100% to 50%.
 - BR-085: At or above the combined thresholds, the price multiplier remains at 50%.
 - BR-086: Unit price equals configured base price multiplied by the current multiplier and rounded to an integer.
-- BR-087: A transaction uses the unit price calculated before that transaction for every unit in the transaction.
+- BR-087: A transaction sums the rounded marginal unit prices recalculated after each one-unit stock change in its direction.
 - BR-088: Buying decreases market stock, decreases credits, and increases cargo immediately.
-- BR-089: Selling increases market stock, decreases cargo, and increases credits by gross value minus sales tax immediately.
-- BR-090: Sales tax is rounded once from the gross transaction value and the planet's configured tax rate.
+- BR-089: Selling increases market stock, decreases cargo, and increases credits by its gross marginal value immediately.
+- BR-090: Seroton market transactions have no sales tax.
 - BR-091: A transaction recalculates subsequent prices after applying its complete stock change.
 - BR-092: Buying cannot exceed credits, market stock, or cargo capacity, and selling cannot exceed carried cargo.
 - BR-093: Starting credits, commodity values, stock thresholds, initial stock, production, consumption, taxes, repair costs, upgrade values, asteroid values, and salvage values are balance parameters rather than fixed PRD tables.

@@ -35,7 +35,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 
 > Here, the north star means the smallest end-to-end slice whose successful delivery proves the central product idea.
 
-**S-04: Player completes the first planetary trade** — it is the earliest slice that connects direct flight, landing, paused time, local market information, cargo, credits, and economic progress.
+**S-04: Player completes the first Seroton trade** — it is the earliest slice that connects direct flight, landing, paused time, local market information, cargo, credits, and economic progress.
 
 ## At a glance
 
@@ -44,7 +44,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-01 | s01-anonymous-run-status | User can start an anonymous run and read its essential state. | — | US-01, FR-001, FR-002, FR-003, FR-004, FR-027, FR-028, FR-029, FR-030 | done |
 | S-02 | s02-direct-moving-system-flight | User can fly directly through a moving, identifiable solar system. | S-01 | US-02, FR-010, FR-012, FR-014 | done |
 | S-03 | s03-guided-orbit-and-landing | User can follow route guidance, enter and leave orbit, land, and launch. | S-02 | US-02, FR-011, FR-015, FR-016, FR-017, FR-018 | in-progress |
-| S-04 | s04-first-planetary-trade | User can inspect a landed market and complete a commodity trade. | S-03 | US-03, FR-019, FR-020, FR-021, FR-022, FR-023 | proposed |
+| S-04 | s04-first-planetary-trade | User can inspect Seroton's landed market and complete a commodity trade. | S-03 | US-03, FR-019, FR-020, FR-021, FR-022, FR-023 | planned |
 | S-05 | s05-planet-ship-services | User can repair and upgrade the ship through planet-specific services. | S-04 | US-03, FR-013, FR-024, FR-025, FR-026, FR-030 | proposed |
 | S-06 | s06-timed-debt-outcome | User can abandon a run or reach timeout and see the debt outcome and final cash score. | S-01, S-04 | US-01, FR-005, FR-007, FR-009 | proposed |
 | S-07 | s07-environmental-hazards-and-death | User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed. | S-01, S-02 | US-01, US-04, FR-008, FR-032, FR-034 | proposed |
@@ -108,17 +108,17 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Risk:** Guidance, capture, and manual escape must remain advisory and never take direct control away from the player.
 - **Status:** in-progress
 
-### S-04: Complete the first planetary trade
+### S-04: Complete the first Seroton trade
 
-- **Outcome:** User can inspect a landed market and complete a commodity trade.
+- **Outcome:** User can inspect Seroton's landed market and complete a commodity trade.
 - **Change ID:** s04-first-planetary-trade
 - **PRD refs:** US-03, FR-019, FR-020, FR-021, FR-022, FR-023
 - **Prerequisites:** S-03
 - **Parallel with:** S-07, S-10
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** This is the earliest complete product proof; clock pause, stock, price, credits, and cargo must change atomically from the player's perspective.
-- **Status:** proposed
+- **Risk:** Marginal-price previews and atomic state updates must agree exactly while the shared active-time clock remains paused during trading.
+- **Status:** planned
 
 ### S-05: Repair and upgrade the ship
 
@@ -236,7 +236,7 @@ No standalone foundations are required. Deployment is already present, the autho
 | S-01 | s01-anonymous-run-status | Complete the anonymous run status contract | yes | Run `/10x-plan s01-anonymous-run-status` |
 | S-02 | s02-direct-moving-system-flight | Complete direct flight through the moving system | no | Requires S-01 |
 | S-03 | s03-guided-orbit-and-landing | Deliver guided orbit, landing, and launch | no | Requires S-02 |
-| S-04 | s04-first-planetary-trade | Deliver the first landed market transaction | no | Requires S-03 |
+| S-04 | s04-first-planetary-trade | Deliver the first Seroton market transaction | no | Requires S-03 acceptance |
 | S-05 | s05-planet-ship-services | Deliver planet-specific repairs and upgrades | no | Requires S-04 |
 | S-06 | s06-timed-debt-outcome | Resolve abandonment and timed debt outcomes | no | Requires S-01 and S-04 |
 | S-07 | s07-environmental-hazards-and-death | Deliver environmental damage and death | no | Requires S-01 and S-02 |
