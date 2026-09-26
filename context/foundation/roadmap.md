@@ -44,7 +44,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-01 | s01-anonymous-run-status | User can start an anonymous run and read its essential state. | — | US-01, FR-001, FR-002, FR-003, FR-004, FR-027, FR-028, FR-029, FR-030 | done |
 | S-02 | s02-direct-moving-system-flight | User can fly directly through a moving, identifiable solar system. | S-01 | US-02, FR-010, FR-012, FR-014 | done |
 | S-03 | s03-guided-orbit-and-landing | User can follow route guidance, enter and leave orbit, land, and launch. | S-02 | US-02, FR-011, FR-015, FR-016, FR-017, FR-018 | in-progress |
-| S-04 | s04-first-planetary-trade | User can inspect Seroton's landed market and complete a commodity trade. | S-03 | US-03, FR-019, FR-020, FR-021, FR-022, FR-023 | planned |
+| S-04 | s04-first-planetary-trade | User can inspect Seroton's landed market and complete a commodity trade. | S-03 | US-03, FR-019, FR-020, FR-021, FR-022, FR-023 | in-progress |
 | S-05 | s05-planet-ship-services | User can repair and upgrade the ship through planet-specific services. | S-04 | US-03, FR-013, FR-024, FR-025, FR-026, FR-030 | proposed |
 | S-06 | s06-timed-debt-outcome | User can abandon a run or reach timeout and see the debt outcome and final cash score. | S-01, S-04 | US-01, FR-005, FR-007, FR-009 | proposed |
 | S-07 | s07-environmental-hazards-and-death | User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed. | S-01, S-02 | US-01, US-04, FR-008, FR-032, FR-034 | proposed |
@@ -118,7 +118,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Marginal-price previews and atomic state updates must agree exactly while the shared active-time clock remains paused during trading.
-- **Status:** planned
+- **Status:** in-progress
 
 ### S-05: Repair and upgrade the ship
 

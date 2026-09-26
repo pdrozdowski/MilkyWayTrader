@@ -174,12 +174,12 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 
 #### Automated
 
-- [ ] 1.1 Domain tests cover price boundaries, marginal totals, limits, and immutable inputs.
-- [ ] 1.2 Codec and provider tests cover schema-v5 market validation and atomic trades.
+- [x] 1.1 Domain tests cover price boundaries, marginal totals, limits, and immutable inputs.
+- [x] 1.2 Codec and provider tests cover schema-v5 market validation and atomic trades.
 
 #### Manual
 
-- [ ] 1.3 A fresh run exposes the configured Seroton economy without status regressions.
+- [x] 1.3 A fresh run exposes the configured Seroton economy without status regressions.
 
 ### Phase 2: Active-Time Market Simulation and Projection
 

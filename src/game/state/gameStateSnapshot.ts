@@ -6,13 +6,15 @@ import type { ShipState } from './shipState';
 import type { ShipStatusState } from './shipStatusState';
 import type { WeaponState } from './weaponState';
 import type { PlanetLifecycleState } from './planetLifecycleState';
+import type { SerotonMarketState } from './serotonMarketState';
 
 export interface GameStateSnapshot
 {
-    readonly schemaVersion: 4;
+    readonly schemaVersion: 5;
     readonly clock: GameClockState;
     readonly credits: number;
     readonly cargo: readonly CargoState[];
+    readonly markets: readonly SerotonMarketState[];
     readonly ship: ShipState;
     readonly shipStatus: ShipStatusState;
     readonly planets: readonly PlanetState[];

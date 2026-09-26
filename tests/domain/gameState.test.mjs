@@ -6,6 +6,7 @@ import { initialGameState } from '../../src/game/definitions/initialGameState.ts
 import { advanceGameClock, pauseGameClock, resumeGameClock } from '../../src/game/mechanics/clock/gameClock.ts';
 import { advanceGameSimulation } from '../../src/game/mechanics/gameSimulation.ts';
 import { projectRunStatus } from '../../src/game/application/runStatus.ts';
+import { applySerotonTrade } from '../../src/game/mechanics/serotonMarket.ts';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -33,9 +34,17 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 4);
+    assert.equal(state.schemaVersion, 5);
     assert.equal(state.credits, 100_000);
     assert.deepEqual(state.cargo, []);
+    assert.deepEqual(state.markets, [{
+        planetId: 'seroton',
+        commodityStocks: [
+            { commodityId: 'supplies', stock: 100 },
+            { commodityId: 'alloys', stock: 60 },
+            { commodityId: 'medicines', stock: 20 }
+        ]
+    }]);
     assert.deepEqual(state.shipStatus, {
         currentHitPoints: 100,
         cargoLevel: 1,
@@ -60,6 +69,12 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
         { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1 }, { commodityId: 'ore', quantity: 2 }] },
         { ...clone(advanced), cargo: [{ commodityId: '', quantity: 1 }] },
         { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: -1 }] },
+        { ...clone(advanced), markets: [] },
+        { ...clone(advanced), markets: [{ planetId: 'lactozis-7c', commodityStocks: clone(advanced.markets[0].commodityStocks) }] },
+        { ...clone(advanced), markets: [{ planetId: 'seroton', commodityStocks: [{ commodityId: 'supplies', stock: 1 }, { commodityId: 'supplies', stock: 2 }, { commodityId: 'medicines', stock: 3 }] }] },
+        { ...clone(advanced), markets: [{ planetId: 'seroton', commodityStocks: [{ commodityId: 'supplies', stock: 1 }, { commodityId: 'alloys', stock: 2 }] }] },
+        { ...clone(advanced), markets: [{ planetId: 'seroton', commodityStocks: [{ commodityId: 'supplies', stock: -1 }, ...clone(advanced.markets[0].commodityStocks.slice(1))] }] },
+        { ...clone(advanced), markets: [{ planetId: 'seroton', commodityStocks: [{ commodityId: 'supplies', stock: 1.5 }, ...clone(advanced.markets[0].commodityStocks.slice(1))] }] },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), currentHitPoints: 101 } },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), cargoLevel: 0 } },
         {
@@ -179,7 +194,21 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
     assert.deepEqual(unchanged.planets, paused.planets);
 });
 
-test('v4 codec preserves lifecycle JSON and rejects legacy and inconsistent lifecycle shapes', () => {
+test('provider commits a valid Seroton trade as one immutable replacement', () => {
+    const provider = new GameStateProvider(initialGameState);
+    const landed = provider.update(state => ({
+        ...state,
+        clock: { ...state.clock, pauseReasons: ['landed'] },
+        planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
+    }));
+    const traded = provider.update(state => applySerotonTrade(state, 'alloys', 2));
+    assert.equal(traded.credits, landed.credits - 10_000);
+    assert.deepEqual(traded.cargo, [{ commodityId: 'alloys', quantity: 2 }]);
+    assert.equal(traded.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 58);
+    assert.equal(landed.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 60);
+});
+
+test('v5 codec preserves lifecycle JSON and rejects v4 and inconsistent lifecycle shapes', () => {
     const planetId = initialGameState.planets[0].id;
     const landed = {
         ...clone(initialGameState),
@@ -190,9 +219,10 @@ test('v4 codec preserves lifecycle JSON and rejects legacy and inconsistent life
     assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
     assert(Object.isFrozen(decoded.planetLifecycle));
 
-    const legacyV3 = clone(initialGameState);
-    legacyV3.schemaVersion = 3;
-    assert.throws(() => decodeGameState(legacyV3));
+    const legacyV4 = clone(initialGameState);
+    legacyV4.schemaVersion = 4;
+    delete legacyV4.markets;
+    assert.throws(() => decodeGameState(legacyV4));
     assert.throws(() => decodeGameState({
         ...clone(initialGameState),
         planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
@@ -240,7 +270,7 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 4);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 5);
 });
 
 test('run status projection derives clock, capacity and readable run values', () => {
