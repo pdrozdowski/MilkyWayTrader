@@ -12,6 +12,7 @@ import { isWithinPlanetOrbitBoundary } from './planet/proximity.ts';
 import { tryLandAtCapturedPlanet } from './planet/landing.ts';
 import { isRecoveringFromMoolaris, resolveMoolarisContact } from './moolaris/contact.ts';
 import { MOOLARIS_RECOVERY_SECONDS } from '../definitions/moolarisDefinition.ts';
+import { advanceSerotonMarket } from './serotonMarketSimulation.ts';
 
 export interface GameSimulationInput
 {
@@ -69,6 +70,8 @@ export function advanceGameSimulation (
     const clock = advanceGameClock(state.clock, deltaMs);
     const activeDeltaMs = clock.activeElapsedMs - state.clock.activeElapsedMs;
     if (activeDeltaMs <= 0) return { ...state, clock };
+    const marketElapsedSeconds = Math.floor(clock.activeElapsedMs / 1000) - Math.floor(state.clock.activeElapsedMs / 1000);
+    const markets = marketElapsedSeconds === 0 ? state.markets : state.markets.map(market => advanceSerotonMarket(market, marketElapsedSeconds));
 
     const landed = state.planetLifecycle.landedPlanetId !== null;
     const contact = resolveMoolarisContact(state.ship);
@@ -166,5 +169,5 @@ export function advanceGameSimulation (
             lifecycle = { ...lifecycle, capturedPlanetId: eligible.id };
         }
     }
-    return tryLandAtCapturedPlanet({ ...state, clock, ship: orbitShip, planets, planetLifecycle: lifecycle, weapon, projectiles }, input.landingRequested === true);
+    return tryLandAtCapturedPlanet({ ...state, clock, markets, ship: orbitShip, planets, planetLifecycle: lifecycle, weapon, projectiles }, input.landingRequested === true);
 }

@@ -6,7 +6,8 @@ import { initialGameState } from '../../src/game/definitions/initialGameState.ts
 import { advanceGameClock, pauseGameClock, resumeGameClock } from '../../src/game/mechanics/clock/gameClock.ts';
 import { advanceGameSimulation } from '../../src/game/mechanics/gameSimulation.ts';
 import { projectRunStatus } from '../../src/game/application/runStatus.ts';
-import { applySerotonTrade } from '../../src/game/mechanics/serotonMarket.ts';
+import { applySerotonTrade } from '../../src/game/application/serotonMarket.ts';
+import { createLandingStatusPort } from '../../src/ui/adapters/landingStatusAdapter.ts';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -206,6 +207,38 @@ test('provider commits a valid Seroton trade as one immutable replacement', () =
     assert.deepEqual(traded.cargo, [{ commodityId: 'alloys', quantity: 2 }]);
     assert.equal(traded.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 58);
     assert.equal(landed.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 60);
+});
+
+test('landed market port rejects unlanded trade commands and rebuilds its visit-local price ladder after a trade', () => {
+    const gameFor = provider => ({ registry: { get: () => provider }, events: { emit: () => {} } });
+    const unlandedProvider = new GameStateProvider(initialGameState);
+    const unlandedPort = createLandingStatusPort(gameFor(unlandedProvider));
+    unlandedPort.selectCommodity('supplies');
+    unlandedPort.setTradeQuantity(1);
+    unlandedPort.confirmTrade();
+    assert.equal(unlandedPort.getSnapshot().eligible, false);
+    assert.deepEqual(unlandedProvider.snapshot().cargo, []);
+    assert.equal(unlandedProvider.snapshot().credits, initialGameState.credits);
+    unlandedPort.destroy();
+
+    const landedProvider = new GameStateProvider({
+        ...initialGameState,
+        clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
+        markets: [{
+            planetId: 'seroton',
+            commodityStocks: initialGameState.markets[0].commodityStocks.map(stock => stock.commodityId === 'supplies'
+                ? { ...stock, stock: 51 }
+                : { ...stock })
+        }],
+        planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
+    });
+    const landedPort = createLandingStatusPort(gameFor(landedProvider));
+    landedPort.setTradeQuantity(2);
+    assert.equal(landedPort.getSnapshot().quote.total, 2_000);
+    landedPort.confirmTrade();
+    landedPort.setTradeQuantity(1);
+    assert.equal(landedPort.getSnapshot().quote.total, 1_020, 'the rebuilt ladder uses post-trade stock below the lower threshold');
+    landedPort.destroy();
 });
 
 test('v5 codec preserves lifecycle JSON and rejects v4 and inconsistent lifecycle shapes', () => {

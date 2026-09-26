@@ -1,4 +1,4 @@
-import { serotonCommodityDefinitionById } from '../definitions/serotonMarketDefinitions.ts';
+import { serotonCommodityPriceProfiles } from '../domain/serotonMarketCatalog.ts';
 import { cargoCapacityByLevel } from '../domain/runBalance.ts';
 import { marginalTradeTotal } from '../domain/marketPricing.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot.ts';
@@ -40,7 +40,7 @@ export function quoteSerotonTrade (state: GameStateSnapshot, commodityId: Seroto
         const capacity = cargoCapacityByLevel[state.shipStatus.cargoLevel] ?? 0;
         if (used + quantity > capacity) return { commodityId, quantity, total: 0, failure: 'insufficient-cargo' };
     }
-    const total = marginalTradeTotal(stock, quantity, serotonCommodityDefinitionById[commodityId]);
+    const total = marginalTradeTotal(stock, quantity, serotonCommodityPriceProfiles[commodityId]);
     if (quantity > 0 && total > state.credits) return { commodityId, quantity, total, failure: 'insufficient-credits' };
     return { commodityId, quantity, total, failure: null };
 }

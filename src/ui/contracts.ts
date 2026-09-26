@@ -4,6 +4,9 @@ export interface UiHandle
 }
 
 export type { RunStatusSnapshot } from '../game/application/runStatus';
+export type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
+import type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
+import type { SerotonCommodityId } from '../game/state/serotonMarketState';
 import type { RunStatusSnapshot } from '../game/application/runStatus';
 
 export interface RunStatusPort extends UiHandle
@@ -53,15 +56,12 @@ export interface GameControlsPort extends UiHandle
     isMenuOpen(): boolean;
 }
 
-export interface LandingStatusSnapshot
-{
-    readonly visible: boolean;
-    readonly planetName: string | null;
-}
-
 export interface LandingStatusPort extends UiHandle
 {
     getSnapshot(): Readonly<LandingStatusSnapshot>;
     subscribe(listener: (snapshot: Readonly<LandingStatusSnapshot>) => void): () => void;
+    selectCommodity(commodityId: SerotonCommodityId): void;
+    setTradeQuantity(quantity: number): void;
+    confirmTrade(): void;
     launch(): void;
 }

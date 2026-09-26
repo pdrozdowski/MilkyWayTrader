@@ -185,8 +185,8 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 
 #### Automated
 
-- [ ] 2.1 Mechanics tests cover exact one-second ticks, restored continuity, and all pauses.
-- [ ] 2.2 Application tests cover landed eligibility and transient cache invalidation after a trade.
+- [x] 2.1 Mechanics tests cover exact one-second ticks, restored continuity, and all pauses.
+- [x] 2.2 Application tests cover landed eligibility and transient cache invalidation after a trade.
 
 #### Manual
 

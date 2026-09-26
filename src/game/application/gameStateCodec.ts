@@ -1,7 +1,8 @@
 import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
+import type { SerotonCommodityId } from '../state/serotonMarketState';
 import { maximumShipHitPoints } from '../domain/runBalance.ts';
-import { serotonCommodityDefinitions } from '../definitions/serotonMarketDefinitions.ts';
+import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
 
 const PAUSE_REASONS: readonly GamePauseReason[] = ['background', 'landed', 'manual', 'menu', 'orientation'];
 const keys = (value: object): string[] => Object.keys(value).sort();
@@ -141,20 +142,20 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     const [candidateMarket] = root.markets;
     const market = requireRecord(candidateMarket, 'state.markets[0]', ['planetId', 'commodityStocks']);
     if (market.planetId !== 'seroton') throw new Error('state.markets[0].planetId must be Seroton.');
-    if (!Array.isArray(market.commodityStocks) || market.commodityStocks.length !== serotonCommodityDefinitions.length) {
+    if (!Array.isArray(market.commodityStocks) || market.commodityStocks.length !== serotonCommodityIds.length) {
         throw new Error('state.markets[0].commodityStocks must contain every Seroton commodity.');
     }
-    const expectedCommodityIds = new Set(serotonCommodityDefinitions.map(definition => definition.id));
+    const expectedCommodityIds = new Set<string>(serotonCommodityIds);
     const seenCommodityIds = new Set<string>();
     const commodityStocks = market.commodityStocks.map((candidateStock, index) => {
         const path = `state.markets[0].commodityStocks[${index}]`;
         const stock = requireRecord(candidateStock, path, ['commodityId', 'stock']);
-        if (typeof stock.commodityId !== 'string' || !expectedCommodityIds.has(stock.commodityId as typeof serotonCommodityDefinitions[number]['id'])) {
+        if (typeof stock.commodityId !== 'string' || !expectedCommodityIds.has(stock.commodityId)) {
             throw new Error(`${path}.commodityId is not a configured Seroton commodity.`);
         }
         if (seenCommodityIds.has(stock.commodityId)) throw new Error(`Duplicate Seroton commodity id: ${stock.commodityId}.`);
         seenCommodityIds.add(stock.commodityId);
-        return { commodityId: stock.commodityId as typeof serotonCommodityDefinitions[number]['id'], stock: nonNegativeSafeInteger(stock.stock, `${path}.stock`) };
+        return { commodityId: stock.commodityId as SerotonCommodityId, stock: nonNegativeSafeInteger(stock.stock, `${path}.stock`) };
     });
     if (seenCommodityIds.size !== expectedCommodityIds.size) throw new Error('state.markets[0].commodityStocks is missing a Seroton commodity.');
 

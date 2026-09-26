@@ -15,6 +15,9 @@ import { asteroidBeltDefinition } from '../src/game/visual/asteroidBeltDefinitio
 import { asteroidBeltLayout, projectAsteroidBelt } from '../src/game/visual/asteroidBelt.ts';
 import { activeTimeCycle, activeTimeWave } from '../src/game/visual/activeTime.ts';
 import { launchFromPlanet, LANDING_CENTRE_RADIUS, tryLandAtCapturedPlanet } from '../src/game/mechanics/planet/landing.ts';
+import { decodeGameState, encodeGameState } from '../src/game/application/gameStateCodec.ts';
+
+const marketStocks = state => state.markets[0].commodityStocks.map(commodity => ({ ...commodity }));
 
 const tuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5 };
 const speed = velocity => Math.hypot(velocity.x, velocity.y);
@@ -247,6 +250,46 @@ test('sun and starfield presentation phases freeze and resume from active elapse
     const resumedElapsed = elapsedBeforePause + 500;
     assert.equal(activeTimeCycle(0.32, 0.000041, resumedElapsed), activeTimeCycle(0.32, 0.000041, 12_845));
     assert.equal(activeTimeWave(1.24, 0.0011, resumedElapsed), activeTimeWave(1.24, 0.0011, 12_845));
+});
+
+test('Seroton market advances only at crossed active-second boundaries', () => {
+    const input = { target: null, boostRequested: false, firing: false };
+    const beforeBoundary = {
+        ...initialGameState,
+        clock: { ...initialGameState.clock, activeElapsedMs: 999 }
+    };
+    const crossedBoundary = advanceGameSimulation(beforeBoundary, input, 1);
+    assert.deepEqual(marketStocks(crossedBoundary), [
+        { commodityId: 'supplies', stock: 102 },
+        { commodityId: 'alloys', stock: 59 },
+        { commodityId: 'medicines', stock: 19 }
+    ]);
+
+    const multiSecond = advanceGameSimulation({
+        ...initialGameState,
+        clock: { ...initialGameState.clock, activeElapsedMs: 500 }
+    }, input, 3_500);
+    assert.deepEqual(marketStocks(multiSecond), [
+        { commodityId: 'supplies', stock: 108 },
+        { commodityId: 'alloys', stock: 56 },
+        { commodityId: 'medicines', stock: 16 }
+    ]);
+});
+
+test('Seroton market is continuous through restore and frozen by every pause reason', () => {
+    const input = { target: null, boostRequested: false, firing: false };
+    const uninterrupted = advanceGameSimulation(initialGameState, input, 4_000);
+    const restored = decodeGameState(encodeGameState(advanceGameSimulation(initialGameState, input, 1_500)));
+    const resumed = advanceGameSimulation(restored, input, 2_500);
+    assert.deepEqual(marketStocks(resumed), marketStocks(uninterrupted));
+
+    for (const reason of ['background', 'landed', 'manual', 'menu', 'orientation']) {
+        const paused = advanceGameSimulation({
+            ...initialGameState,
+            clock: { ...initialGameState.clock, pauseReasons: [reason] }
+        }, input, 5_000);
+        assert.deepEqual(marketStocks(paused), marketStocks(initialGameState), `${reason} pause freezes market stock`);
+    }
 });
 
 test('fast projectile paths detect crossed Moolaris, tangent hits and endpoints without false hits', () => {
