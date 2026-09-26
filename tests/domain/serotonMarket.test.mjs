@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { serotonCommodityDefinitionById } from '../../src/game/definitions/serotonMarketDefinitions.ts';
 import { commodityPriceMultiplier, commodityUnitPrice, marginalTradeTotal } from '../../src/game/domain/marketPricing.ts';
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
-import { applySerotonTrade, quoteSerotonTrade } from '../../src/game/mechanics/serotonMarket.ts';
+import { applySerotonTrade, quoteSerotonTrade } from '../../src/game/application/serotonMarket.ts';
 
 const supplies = serotonCommodityDefinitionById.supplies;
 const landed = () => ({

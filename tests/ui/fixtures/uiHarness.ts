@@ -31,7 +31,18 @@ let menuOpen = false;
 let orientationPaused = false;
 let exits = 0;
 let launches = 0;
-let landingStatusState: LandingStatusSnapshot = { visible: false, planetName: null };
+let landingStatusState: LandingStatusSnapshot = {
+    visible: false,
+    eligible: false,
+    planetName: null,
+    credits: 100_000,
+    cargoUsed: 0,
+    cargoCapacity: 20,
+    commodities: [],
+    selectedCommodityId: 'supplies',
+    tradeQuantity: 0,
+    quote: { quantity: 0, total: 0, failure: 'invalid-quantity', postTradeStock: 0, nextUnitPrice: 0 }
+};
 let landingStatusListener: ((snapshot: Readonly<LandingStatusSnapshot>) => void) | null = null;
 
 const runStatusPort = {
@@ -82,6 +93,9 @@ const landingStatusPort = {
         listener(landingStatusState);
         return () => { if (landingStatusListener === listener) landingStatusListener = null; };
     },
+    selectCommodity: (): void => {},
+    setTradeQuantity: (): void => {},
+    confirmTrade: (): void => {},
     launch: (): void => { launches += 1; },
     destroy: (): void => { landingStatusListener = null; }
 };
