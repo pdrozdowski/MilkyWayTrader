@@ -190,7 +190,7 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 
 #### Manual
 
-- [ ] 2.3 Landing freezes and launch resumes the Seroton market.
+- [x] 2.3 Landing freezes and launch resumes the Seroton market.
 
 ### Phase 3: Accessible Landed Market
 
@@ -201,4 +201,4 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 
 #### Manual
 
-- [ ] 3.3 Desktop and touch layouts complete a readable land-trade-launch loop.
+- [x] 3.3 Desktop and touch layouts complete a readable land-trade-launch loop.

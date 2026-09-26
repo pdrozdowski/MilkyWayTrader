@@ -1,7 +1,7 @@
 ---
 change_id: s-04
 title: S 04
-status: implementing
+status: implemented
 created: 2026-09-26
 updated: 2026-09-26
 archived_at: null
