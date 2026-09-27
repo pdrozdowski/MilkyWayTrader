@@ -47,22 +47,49 @@ test('landing market renders bounded quotes, emits semantic actions, traps focus
     await page.evaluate(() => window.uiHarness.setLandingStatus({
         visible: true, eligible: true, planetName: 'Seroton', credits: 500, cargoUsed: 3, cargoCapacity: 20,
         commodities: [
-            { commodityId: 'supplies', stock: 100, carriedQuantity: 3, unitPrice: 1_000 },
-            { commodityId: 'alloys', stock: 60, carriedQuantity: 0, unitPrice: 5_000 },
-            { commodityId: 'medicines', stock: 20, carriedQuantity: 0, unitPrice: 15_000 }
-        ], selectedCommodityId: 'supplies', tradeQuantity: 2,
+            { commodityId: 'supplies', stock: 100, carriedQuantity: 3, unitPrice: 1_000, averageBuyPrice: 950, productionPerSecond: 4, consumptionPerSecond: 2 },
+            { commodityId: 'alloys', stock: 60, carriedQuantity: 0, unitPrice: 5_000, averageBuyPrice: 0, productionPerSecond: 1, consumptionPerSecond: 2 },
+            { commodityId: 'medicines', stock: 20, carriedQuantity: 0, unitPrice: 15_000, averageBuyPrice: 0, productionPerSecond: 0, consumptionPerSecond: 1 }
+        ], selectedCommodityId: 'supplies', selectedCommodity: { commodityId: 'supplies', stock: 100, carriedQuantity: 3, unitPrice: 1_000, averageBuyPrice: 950, productionPerSecond: 4, consumptionPerSecond: 2 }, tradeQuantity: 2, plannedStockDelta: -2, plannedCargoDelta: 2,
         quote: { quantity: 2, total: 2_000, failure: 'insufficient-credits', postTradeStock: 98, nextUnitPrice: 1_020 }
     }));
     const modal = page.getByRole('dialog', { name: 'Landed status' });
     await expect(modal).toBeVisible();
-    await expect(modal).toContainText('Seroton — LANDED');
-    await expect(modal).toContainText('Time is paused while landed.');
+    await expect(modal).toContainText('SEROTON MARKET');
+    await expect(page.locator('#landing-status-trade > :nth-child(1)')).toHaveAttribute('aria-label', 'Planet stock');
+    await expect(page.locator('#landing-status-trade > :nth-child(2)')).toHaveClass(/market-trade-control/);
+    await expect(page.locator('#landing-status-trade > :nth-child(3)')).toHaveAttribute('aria-label', 'Ship inventory');
+    await expect(page.locator('#landing-status-commodity-name')).toHaveText(displayLabels.supplies);
+    await expect(page.locator('#landing-status-supply')).toHaveText('Supply: Medium');
+    await expect(page.getByRole('button', { name: /Supplies/ })).toHaveText('Supplies · 3');
+    await expect(page.getByRole('button', { name: /Alloys/ })).toHaveText('Alloys');
+    await expect(modal).not.toContainText('Time is paused while landed.');
     await expect(page.locator('#landing-status-quantity')).toHaveAttribute('min', '-3');
     await expect(page.locator('#landing-status-quantity')).toHaveAttribute('max', '17');
-    await expect(modal).toContainText('Quote: 2,000 cr');
-    await expect(modal).toContainText('Stock after trade: 98');
-    await expect(modal).toContainText('Insufficient credits: 1,500 cr');
+    await expect(page.locator('#landing-status-quantity-label')).toHaveText('Trading: Supplies');
+    await expect(page.locator('#landing-status-planet-stock')).toHaveText('98 (-2)');
+    await expect(page.locator('#landing-status-planet-stock .market-stock-delta')).toHaveClass(/market-stock-delta--negative/);
+    await expect(page.locator('#landing-status-player-stock')).toHaveText('5 (+2)');
+    await expect(page.locator('#landing-status-player-stock .market-stock-delta')).toHaveClass(/market-stock-delta--positive/);
+    await expect(page.locator('#landing-status-average-buy-price')).toHaveText('Average buy price: 970 cr');
+    await expect(page.locator('.market-commodity-icon')).toHaveAttribute('aria-label', 'Supplies commodity icon');
+    await expect(page.locator('#landing-status-unit-price')).toHaveText('Price: 1,020 cr');
+    await expect(page.locator('#landing-status-quantity-value')).toHaveText('+2 BUY');
+    await expect(modal).toContainText('Total trade value: 2,000 cr');
+    await expect(page.locator('#landing-status-budget')).toHaveText(`${displayLabels.outOfBudget} — ${displayLabels.marketCashShortfall} 1,500 cr`);
+    await expect(page.locator('#landing-status-budget')).toHaveClass(/market-budget--warning/);
+    await expect(page.locator('#landing-status-impact')).toHaveCount(0);
+    await expect(page.locator('#landing-status-cash-shortfall')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'CONFIRM TRADE' })).toBeDisabled();
+    await page.evaluate(() => window.uiHarness.setLandingStatus({ tradeQuantity: -2, plannedStockDelta: 2, plannedCargoDelta: -2, quote: { quantity: -2, total: 1_800, failure: null, postTradeStock: 102, nextUnitPrice: 1_000 } }));
+    await expect(page.locator('#landing-status-average-buy-price')).toHaveText('Average buy price: 950 cr');
+    await expect(page.locator('#landing-status-trade-result-label')).toHaveText('Trade result:');
+    await expect(page.locator('#landing-status-trade-result')).toHaveText('LOSS -100 cr');
+    await expect(page.locator('#landing-status-trade-result')).toHaveClass(/market-trade-result--loss/);
+    await page.evaluate(() => window.uiHarness.setLandingStatus({ supplyLevel: 'Low' }));
+    await expect(page.locator('#landing-status-supply')).toHaveText('Supply: Low');
+    await page.evaluate(() => window.uiHarness.setLandingStatus({ supplyLevel: 'High' }));
+    await expect(page.locator('#landing-status-supply')).toHaveText('Supply: High');
     await page.getByRole('button', { name: /Alloys/ }).click();
     await page.locator('#landing-status-quantity').fill('4');
     expect(await page.evaluate(() => window.uiHarness.marketActions())).toEqual({ selectedCommodities: ['alloys'], tradeQuantities: [4], confirmations: 0 });
@@ -110,7 +137,15 @@ test('run status renders updates and independently toggles Ship info and Cargo',
     await expect(page.locator('#run-status-booster')).toHaveText('Booster: Locked');
     await page.getByRole('button', { name: 'Cargo' }).click();
     await expect(page.locator('#run-status-cargo-details')).toBeVisible();
-    await expect(page.locator('#run-status-cargo-contents')).toHaveText('Cargo contents: Empty');
+    await expect(page.locator('#run-status-cargo-contents')).toHaveText('Cargo contents:');
+    await expect(page.locator('#run-status-cargo-rows tr')).toHaveCount(0);
+    await page.evaluate(() => window.uiHarness.setRunStatus({ cargo: [{ commodityId: 'supplies', quantity: 6 }, { commodityId: 'alloys', quantity: 2 }] }));
+    await expect(page.locator('#run-status-cargo-table tr')).toHaveCount(3);
+    await expect(page.locator('#run-status-cargo-rows tr').nth(0)).toHaveText('SSupplies6');
+    await expect(page.locator('#run-status-cargo-rows tr').nth(1)).toHaveText('AAlloys2');
+    await expect(page.locator('#run-status-cargo-rows tr td')).toHaveCount(6);
+    await expect(page.locator('#run-status-cargo-rows .cargo-commodity-icon').nth(0)).toHaveCSS('width', '32px');
+    await expect(page.locator('#run-status-cargo-rows .cargo-commodity-icon').nth(0)).toHaveCSS('height', '32px');
     await page.evaluate(() => window.uiHarness.setRunStatus({ credits: 123_456, currentHitPoints: 42, visible: false }));
     await expect(page.getByLabel('Run status')).toBeHidden();
     await expect(page.locator('#run-status-credits')).toHaveText('123,456 cr');

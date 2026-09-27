@@ -35,13 +35,13 @@ test('Seroton trades enforce landing, stock, cargo, credits and atomically prese
     assert.equal(quoteSerotonTrade(landed(), 'supplies', 0).failure, 'invalid-quantity');
     assert.equal(quoteSerotonTrade(landed(), 'supplies', 101).failure, 'insufficient-stock');
     assert.equal(quoteSerotonTrade({ ...landed(), credits: 1 }, 'supplies', 1).failure, 'insufficient-credits');
-    assert.equal(quoteSerotonTrade({ ...landed(), cargo: [{ commodityId: 'ore', quantity: 20 }] }, 'supplies', 1).failure, 'insufficient-cargo');
+    assert.equal(quoteSerotonTrade({ ...landed(), cargo: [{ commodityId: 'ore', quantity: 20, averageBuyPrice: 0 }] }, 'supplies', 1).failure, 'insufficient-cargo');
     assert.equal(quoteSerotonTrade(landed(), 'supplies', -1).failure, 'insufficient-cargo-commodity');
 
     const before = landed();
     const bought = applySerotonTrade(before, 'supplies', 2);
     assert.equal(bought.credits, before.credits - 2_000);
-    assert.deepEqual(bought.cargo, [{ commodityId: 'supplies', quantity: 2 }]);
+    assert.deepEqual(bought.cargo, [{ commodityId: 'supplies', quantity: 2, averageBuyPrice: 1_000 }]);
     assert.equal(bought.markets[0].commodityStocks.find(stock => stock.commodityId === 'supplies').stock, 98);
     assert.deepEqual(before.cargo, []);
     assert.equal(before.markets[0].commodityStocks.find(stock => stock.commodityId === 'supplies').stock, 100);
@@ -51,4 +51,15 @@ test('Seroton trades enforce landing, stock, cargo, credits and atomically prese
     assert.deepEqual(sold.cargo, []);
     assert.equal(sold.markets[0].commodityStocks.find(stock => stock.commodityId === 'supplies').stock, 100);
     assert.equal(applySerotonTrade(before, 'supplies', 101), before);
+});
+
+test('Seroton purchases weight cargo cost basis and sales retain it until the stack is empty', () => {
+    const first = applySerotonTrade(landed(), 'supplies', 2);
+    const shifted = { ...first, markets: [{ ...first.markets[0], commodityStocks: first.markets[0].commodityStocks.map(stock => stock.commodityId === 'supplies' ? { ...stock, stock: 49 } : stock) }] };
+    const bought = applySerotonTrade(shifted, 'supplies', 1);
+    assert.equal(bought.cargo[0].averageBuyPrice, (2_000 + 1_020) / 3);
+    const partial = applySerotonTrade(bought, 'supplies', -1);
+    assert.equal(partial.cargo[0].averageBuyPrice, bought.cargo[0].averageBuyPrice);
+    assert.deepEqual(applySerotonTrade(partial, 'supplies', -2).cargo, []);
+    assert.deepEqual(first.cargo, [{ commodityId: 'supplies', quantity: 2, averageBuyPrice: 1_000 }]);
 });

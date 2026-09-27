@@ -84,18 +84,22 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         catch { throw new Error('Game state is not valid JSON.'); }
     }
     const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles']);
-    if (root.schemaVersion !== 5) throw new Error('Unsupported game-state schema version.');
+    if (root.schemaVersion !== 6) throw new Error('Unsupported game-state schema version.');
 
     const credits = nonNegativeSafeInteger(root.credits, 'state.credits');
     if (!Array.isArray(root.cargo)) throw new Error('state.cargo must be an array.');
     const commodityIds = new Set<string>();
     const cargo = root.cargo.map((candidateCargo, index) => {
         const path = `state.cargo[${index}]`;
-        const stack = requireRecord(candidateCargo, path, ['commodityId', 'quantity']);
+        const stack = requireRecord(candidateCargo, path, ['commodityId', 'quantity', 'averageBuyPrice']);
         const commodityId = nonEmptyString(stack.commodityId, `${path}.commodityId`);
         if (commodityIds.has(commodityId)) throw new Error(`Duplicate commodity id: ${commodityId}.`);
         commodityIds.add(commodityId);
-        return { commodityId, quantity: nonNegativeSafeInteger(stack.quantity, `${path}.quantity`) };
+        return {
+            commodityId,
+            quantity: nonNegativeSafeInteger(stack.quantity, `${path}.quantity`),
+            averageBuyPrice: nonNegativeNumber(stack.averageBuyPrice, `${path}.averageBuyPrice`)
+        };
     });
 
     const clock = requireRecord(root.clock, 'state.clock', ['budgetMs', 'activeElapsedMs', 'pauseReasons']);
@@ -197,7 +201,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 5,
+        schemaVersion: 6,
         clock: { budgetMs, activeElapsedMs, pauseReasons },
         credits,
         cargo,

@@ -10,7 +10,7 @@ import type { SerotonMarketState } from './serotonMarketState';
 
 export interface GameStateSnapshot
 {
-    readonly schemaVersion: 5;
+    readonly schemaVersion: 6;
     readonly clock: GameClockState;
     readonly credits: number;
     readonly cargo: readonly CargoState[];

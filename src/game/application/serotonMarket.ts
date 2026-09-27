@@ -27,6 +27,11 @@ function cargoQuantity (state: GameStateSnapshot, commodityId: SerotonCommodityI
     return state.cargo.find(stack => stack.commodityId === commodityId)?.quantity ?? 0;
 }
 
+function cargoStack (state: GameStateSnapshot, commodityId: SerotonCommodityId)
+{
+    return state.cargo.find(stack => stack.commodityId === commodityId);
+}
+
 export function quoteSerotonTrade (state: GameStateSnapshot, commodityId: SerotonCommodityId, quantity: number): SerotonTradeQuote
 {
     if (state.planetLifecycle.landedPlanetId !== 'seroton') return { commodityId, quantity, total: 0, failure: 'not-landed-on-seroton' };
@@ -51,10 +56,14 @@ export function applySerotonTrade (state: GameStateSnapshot, commodityId: Seroto
     if (quote.failure !== null) return state;
     const market = state.markets.find(candidate => candidate.planetId === 'seroton');
     if (!market) throw new Error('Missing Seroton market.');
-    const cargoBefore = cargoQuantity(state, commodityId);
+    const existingCargo = cargoStack(state, commodityId);
+    const cargoBefore = existingCargo?.quantity ?? 0;
     const cargoAfter = cargoBefore + quantity;
     const cargo = state.cargo.filter(stack => stack.commodityId !== commodityId);
-    const nextCargo = cargoAfter === 0 ? cargo : [...cargo, { commodityId, quantity: cargoAfter }];
+    const averageBuyPrice = quantity > 0
+        ? ((cargoBefore * (existingCargo?.averageBuyPrice ?? 0)) + quote.total) / cargoAfter
+        : existingCargo?.averageBuyPrice ?? 0;
+    const nextCargo = cargoAfter === 0 ? cargo : [...cargo, { commodityId, quantity: cargoAfter, averageBuyPrice }];
     return {
         ...state,
         credits: quantity > 0 ? state.credits - quote.total : state.credits + quote.total,

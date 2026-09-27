@@ -45,6 +45,10 @@ let landingStatusState: LandingStatusSnapshot = {
     commodities: [],
     selectedCommodityId: 'supplies',
     tradeQuantity: 0,
+    selectedCommodity: { commodityId: 'supplies', stock: 0, carriedQuantity: 0, unitPrice: 0, averageBuyPrice: 0, productionPerSecond: 0, consumptionPerSecond: 0 },
+    plannedStockDelta: 0,
+    plannedCargoDelta: 0,
+    supplyLevel: 'Medium',
     quote: { quantity: 0, total: 0, failure: 'invalid-quantity', postTradeStock: 0, nextUnitPrice: 0 }
 };
 let landingStatusListener: ((snapshot: Readonly<LandingStatusSnapshot>) => void) | null = null;
