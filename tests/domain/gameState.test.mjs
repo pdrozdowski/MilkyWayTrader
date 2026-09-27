@@ -35,7 +35,7 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 5);
+    assert.equal(state.schemaVersion, 6);
     assert.equal(state.credits, 100_000);
     assert.deepEqual(state.cargo, []);
     assert.deepEqual(state.markets, [{
@@ -67,9 +67,10 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
         { ...clone(advanced), schemaVersion: 2 },
         { ...clone(advanced), credits: -1 },
         { ...clone(advanced), credits: 0.5 },
-        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1 }, { commodityId: 'ore', quantity: 2 }] },
-        { ...clone(advanced), cargo: [{ commodityId: '', quantity: 1 }] },
-        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: -1 }] },
+        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1, averageBuyPrice: 0 }, { commodityId: 'ore', quantity: 2, averageBuyPrice: 0 }] },
+        { ...clone(advanced), cargo: [{ commodityId: '', quantity: 1, averageBuyPrice: 0 }] },
+        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: -1, averageBuyPrice: 0 }] },
+        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1, averageBuyPrice: -1 }] },
         { ...clone(advanced), markets: [] },
         { ...clone(advanced), markets: [{ planetId: 'lactozis-7c', commodityStocks: clone(advanced.markets[0].commodityStocks) }] },
         { ...clone(advanced), markets: [{ planetId: 'seroton', commodityStocks: [{ commodityId: 'supplies', stock: 1 }, { commodityId: 'supplies', stock: 2 }, { commodityId: 'medicines', stock: 3 }] }] },
@@ -204,7 +205,7 @@ test('provider commits a valid Seroton trade as one immutable replacement', () =
     }));
     const traded = provider.update(state => applySerotonTrade(state, 'alloys', 2));
     assert.equal(traded.credits, landed.credits - 10_000);
-    assert.deepEqual(traded.cargo, [{ commodityId: 'alloys', quantity: 2 }]);
+    assert.deepEqual(traded.cargo, [{ commodityId: 'alloys', quantity: 2, averageBuyPrice: 5_000 }]);
     assert.equal(traded.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 58);
     assert.equal(landed.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 60);
 });
@@ -303,21 +304,21 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 5);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 6);
 });
 
 test('run status projection derives clock, capacity and readable run values', () => {
     const state = clone(initialGameState);
     state.clock.activeElapsedMs = 0;
     state.credits = 123_456;
-    state.cargo = [{ commodityId: 'ore', quantity: 2 }];
+    state.cargo = [{ commodityId: 'ore', quantity: 2, averageBuyPrice: 0 }];
     const initial = projectRunStatus(state, true);
     assert.equal(initial.remainingSeconds, 1800);
     assert.equal(initial.runState, 'RUNNING');
     assert.equal(initial.cargoUsed, 2);
     assert.equal(initial.cargoCapacity, 20);
     assert.equal(initial.maximumHitPoints, 100);
-    assert.deepEqual(initial.cargo, [{ commodityId: 'ore', quantity: 2 }]);
+    assert.deepEqual(initial.cargo, [{ commodityId: 'ore', quantity: 2, averageBuyPrice: 0 }]);
 
     state.clock.activeElapsedMs = 1;
     assert.equal(projectRunStatus(state, true).remainingSeconds, 1800, 'ceil retains the current displayed second');

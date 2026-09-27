@@ -19,17 +19,33 @@ test('landed Seroton market atomically buys and sells through the application po
     await page.evaluate(() => window.applicationMarketHarness.land());
     const modal = page.getByRole('dialog', { name: 'Landed status' });
     await expect(modal).toBeVisible();
+    const marketScreenshot = await modal.screenshot();
+    expect(marketScreenshot.byteLength).toBeGreaterThan(0);
+    expect(await page.locator('#landing-status-trade').evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
     await expect(page.locator('#run-status-clock')).toContainText('PAUSED');
     const pausedClock = await page.locator('#run-status-clock').textContent();
     await page.waitForTimeout(1_100);
     await expect(page.locator('#run-status-clock')).toHaveText(pausedClock ?? '');
 
     await page.locator('#landing-status-quantity').fill('2');
+    await expect(page.locator('#landing-status-planet-stock')).toHaveText('98 (-2)');
+    await expect(page.locator('#landing-status-player-stock')).toHaveText('2 (+2)');
+    await expect(page.locator('#landing-status-unit-price')).toHaveText('Price: 1,000 cr');
+    await expect(page.locator('#landing-status-average-buy-price')).toHaveText('Average buy price: 1,000 cr');
     await page.getByRole('button', { name: 'CONFIRM TRADE' }).click();
     await expect(page.locator('#run-status-credits')).toHaveText('98,000 cr');
     await expect(page.locator('#run-status-cargo')).toHaveText('Cargo 2 / 20');
+    await expect(page.locator('#landing-status-planet-stock')).toHaveText('98 (0)');
+    await expect(page.locator('#landing-status-player-stock')).toHaveText('2 (0)');
 
     await page.locator('#landing-status-quantity').fill('-1');
+    await expect(page.locator('#landing-status-planet-stock')).toHaveText('99 (+1)');
+    await expect(page.locator('#landing-status-player-stock')).toHaveText('1 (-1)');
+    await expect(page.locator('#landing-status-unit-price')).toHaveText('Price: 1,000 cr');
+    await expect(page.locator('#landing-status-quantity-value')).toHaveText('1 SELL');
+    await expect(page.locator('#landing-status-average-buy-price')).toHaveText('Average buy price: 1,000 cr');
+    await expect(page.locator('#landing-status-trade-result-label')).toHaveText('Trade result:');
+    await expect(page.locator('#landing-status-trade-result')).toHaveText('PROFIT +0 cr');
     await page.getByRole('button', { name: 'CONFIRM TRADE' }).click();
     await expect(page.locator('#run-status-credits')).toHaveText('99,000 cr');
     await expect(page.locator('#run-status-cargo')).toHaveText('Cargo 1 / 20');
@@ -146,7 +162,8 @@ test('a new run exposes status, accepts flight input, and survives focus and sce
     await expect(page.getByLabel('Cargo contents')).toBeHidden();
     await cargo.click();
     await expect(cargo).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.getByLabel('Cargo contents')).toHaveText('Cargo contents: Empty');
+    await expect(page.locator('#run-status-cargo-contents')).toHaveText('Cargo contents:');
+    await expect(page.locator('#run-status-cargo-rows tr')).toHaveCount(0);
     await page.waitForTimeout(500);
     const running = await canvas.screenshot();
     expect(running.equals(menu)).toBe(false);

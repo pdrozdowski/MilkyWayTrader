@@ -7,7 +7,7 @@ import { serotonCommodityDefinitions } from './serotonMarketDefinitions.ts';
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
 
 export const initialGameState: GameStateSnapshot = {
-    schemaVersion: 5,
+    schemaVersion: 6,
     clock: {
         budgetMs: ACTIVE_TIME_BUDGET_MS,
         activeElapsedMs: 0,

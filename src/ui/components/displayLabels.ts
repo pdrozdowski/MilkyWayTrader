@@ -12,9 +12,11 @@ export const displayLabels = {
     landed: 'LANDED',
     landedSuffix: '— LANDED',
     launch: 'LAUNCH',
-    pausedTime: 'Time is paused while landed.',
-    marketCredits: 'Credits', marketCargo: 'Cargo', marketQuantity: 'Trade quantity', marketQuote: 'Quote',
-    marketPostTradeStock: 'Stock after trade', marketNextPrice: 'Next unit price', marketConfirm: 'CONFIRM TRADE',
+    marketCredits: 'Credits', marketCargo: 'Cargo', marketQuantity: 'Trading', marketQuote: 'Total trade value',
+    marketConfirm: 'CONFIRM TRADE',
     marketBuy: 'BUY', marketSell: 'SELL', marketNoTrade: 'SELECT A QUANTITY', marketCashShortfall: 'Insufficient credits:',
+    planetStock: 'Planet stock', playerStock: 'Ship inventory', produces: 'Produces', consumes: 'Consumes', supply: 'Supply',
+    averageBuyPrice: 'Average buy price', inBudget: 'IN BUDGET', outOfBudget: 'OUT OF BUDGET',
+    tradeResult: 'Trade result:', profit: 'PROFIT', loss: 'LOSS',
     supplies: 'Supplies', alloys: 'Alloys', medicines: 'Medicines'
 } as const;

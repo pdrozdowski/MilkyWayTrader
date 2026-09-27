@@ -147,6 +147,54 @@ Replace deferred landing text with the selected-commodity market workflow.
 
 **Implementation Note**: Pause after automated verification for manual confirmation.
 
+---
+
+## Phase 4: Vertical Market Inventory Breakdown
+
+### Overview
+
+Recompose the landed-market dialog around the selected commodity: a planet-stock panel, a focused trade control, and a player-stock panel. The catalogue becomes name-only, and the obsolete landed-time notice is removed.
+
+### Changes Required:
+
+#### 1. Authoritative cargo cost basis and market projection
+
+**Files**: `src/game/state/`, `src/game/application/gameStateCodec.ts`, `src/game/application/serotonMarket.ts`, `src/game/application/landedMarket.ts`, `src/game/definitions/`
+
+**Intent**: Provide a truthful average buy price for the selected commodity, including after a save/restore, without making presentation cache authoritative.
+
+**Contract**: Each JSON-safe cargo stack carries a non-negative integer quantity and a finite non-negative weighted-average buy price. Purchases recompute the weighted average using the exact marginal trade total; sales retain the existing average while quantity remains and remove the stack at zero. The schema is incremented and rejects obsolete snapshots rather than migrating them. The market projection exposes selected-commodity production, consumption, derived Low/Medium/High supply level, planned stock delta, carried quantity with planned delta, and formatted-cost inputs.
+
+#### 2. Semantic vertical market dialog
+
+**Files**: `index.html`, `src/ui/components/landingStatus.ts`, `src/ui/components/displayLabels.ts`, `public/style.css`
+
+**Intent**: Make the selected commodity's world stock, proposed transaction, and ship inventory readable as three vertical controls in the existing modal.
+
+**Contract**: `#landing-status-trade` contains, in order: (1) a planet-stock control with commodity name, non-decorative icon, current stock plus planned signed delta, production/sec, and a Low/Medium/High supply level; (2) the existing centered quantity slider with current signed buy/sell amount, unit price, total trade value, and an explicit in-budget/out-of-budget indication; and (3) a player-stock control with carried quantity plus planned signed delta and average buy price. Catalogue buttons show only commodity names. The separate “Time is paused while landed” line is absent. Every interactive element stays inside `data-game-input="ignore"`; keyboard focus, disabled trade behavior, and launch focus return remain intact.
+
+#### 3. Responsive UI and coverage
+
+**Files**: `tests/domain/`, `tests/ui/componentsUiTest.ts`, `tests/ui/applicationUiTest.ts`, `tests/ui/fixtures/`, `public/style.css`
+
+**Intent**: Preserve economic correctness and verify the denser vertical layout at desktop and touch widths.
+
+**Contract**: Domain/state tests cover cost-basis weighting, partial/full sales, immutable inputs, codec round-trip/rejection, and exact trade totals. UI tests cover the three-panel order, name-only catalogue, stock/cargo deltas, supply-level boundaries, budget status, focus behavior, and absence of the pause line. Application UI tests exercise buy/sell refreshes for the new projected values. A screenshot gate verifies one desktop and one touch-width rendered market state.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Domain and codec/provider tests cover weighted average buy price, sale behavior, schema validation, and immutability.
+- UI and application Playwright tests cover the three vertical panels, commodity-name tabs, all supply levels, budget states, and immediate post-trade refresh.
+- Screenshot verification covers desktop and touch-width market layouts with readable controls.
+
+#### Manual Verification:
+
+- In a complete Seroton land-trade-launch loop, the player can read planet stock, trade economics, and ship stock without scrolling horizontally on desktop or touch-sized views.
+
+**Implementation Note**: The cost basis is authoritative game state; follow `utils-add-state` and do not add snapshot migration.
+
 ## Testing Strategy
 
 Run focused domain, state, mechanics, and UI tests during each phase; then run `npm.cmd run test:project`, `npm.cmd run typecheck`, and `npm.cmd run build-nolog`. Verify the real browser interaction after code changes.
@@ -202,3 +250,15 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 #### Manual
 
 - [x] 3.3 Desktop and touch layouts complete a readable land-trade-launch loop.
+
+### Phase 4: Vertical Market Inventory Breakdown
+
+#### Automated
+
+- [x] 4.1 State, codec, and provider tests cover weighted average buy price and sale lifecycle.
+- [x] 4.2 UI and application tests cover vertical panels, supply/budget states, and refreshed trade data.
+- [x] 4.3 Screenshot verification covers desktop and touch-width market layouts.
+
+#### Manual
+
+- [x] 4.4 A full land-trade-launch loop keeps all three inventory controls readable on desktop and touch views.
