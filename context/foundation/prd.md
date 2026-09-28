@@ -70,16 +70,12 @@ The primary persona is a casual browser player who wants a self-contained sessio
 ### US-02: Player navigates to a moving planet
 
 - **Given** the ship is under direct control in the moving solar system
-- **When** it approaches a planet's orbital path
-- **Then** the player receives route guidance, chooses a direction, intercepts the planet, enters orbit, and may land
+- **When** it flies among the planets
+- **Then** the player can see each planetary orbital path, intercept a planet, enter orbit, and may land
 
 #### Acceptance Criteria
 
-- A nearby orbital path is shown as a subtle shaded line with the planet name.
-- Clockwise and counter-clockwise interception distances update as the ship and planet move.
-- The shorter route is emphasized unless both routes are effectively equal.
-- Prediction uses normal ship speed and accounts for planet motion.
-- Guidance disappears outside the guidance band or after orbit capture.
+- All configured planetary orbital paths are continuously visible as subtle dashed references.
 - The ship follows the planet's displacement while captured inside its orbit zone.
 - The player can leave orbit through manual flight without an automated travel sequence.
 
@@ -161,7 +157,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 ### Solar system and flight
 
 - FR-010: A player can identify the sun and planets in the navigable world. Priority: must-have
-- FR-011: A player can receive visual route guidance near a planet's orbital path. Priority: must-have
+- FR-011: A player can view the orbital paths of all configured planets. Priority: must-have
 - FR-012: A player can directly control their ship's flight. Priority: must-have
 - FR-013: A player can use an unlocked booster for faster travel. Priority: must-have
 - FR-014: The game can move planets along distinct orbits around the sun. Priority: must-have
@@ -243,20 +239,12 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-016: Reaching zero HP ends the run immediately with a death outcome.
 - BR-017: Confirmed abandonment ends the run immediately with an abandonment outcome.
 
-### Solar system, guidance, and flight
+### Solar system and flight
 
 - BR-018: The navigable world contains a central sun and the planets Seroton, Lactozis-7C, and Maslo-Prime.
 - BR-019: Each planet follows its own configured orbit around the sun at its configured speed while the clock is running.
 - BR-020: Remote planetary information is limited to planet identity and position.
-- BR-021: Each planetary orbital path has a configured navigation-guidance band.
-- BR-022: Entering an eligible guidance band displays the complete orbital path as a subtle shaded line and displays the planet's name.
-- BR-023: Route guidance projects the ship onto the orbital path and continuously calculates clockwise and counter-clockwise interception routes.
-- BR-024: Interception prediction accounts for current planet motion and assumes the ship's configured normal, unboosted speed.
-- BR-025: The guide displays both predicted route distances and emphasizes the shorter route.
-- BR-026: When the predicted routes are effectively equal, neither route is emphasized.
-- BR-027: When guidance bands overlap, only the closest eligible orbital path is emphasized.
-- BR-028: Guidance disappears when the ship leaves the guidance band or enters the planet's orbit-capture zone.
-- BR-029: Route guidance never changes ship velocity, heading, target, or control state.
+- BR-021: All configured planetary orbital paths remain visible as dashed world references throughout flight and landing lifecycle transitions.
 - BR-030: Entering a planet's capture zone automatically places the ship into orbit.
 - BR-031: While inside the orbit zone, the ship inherits the planet's displacement as the planet moves.
 - BR-032: Flying beyond the orbit zone detaches the ship from the planet without moving the detached ship with it.

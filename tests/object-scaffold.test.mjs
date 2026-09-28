@@ -1,7 +1,7 @@
 ﻿import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { cp, mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 test('scaffold dry-run, validation, overwrite refusal and generated TypeScript integration', async () => {
@@ -11,6 +11,7 @@ test('scaffold dry-run, validation, overwrite refusal and generated TypeScript i
     await mkdir(join(fixture, 'src/game/scenes'), { recursive: true });
     await cp('src/game/objects/_shared', join(fixture, 'src/game/objects/_shared'), { recursive: true });
     await cp('src/game/visual', join(fixture, 'src/game/visual'), { recursive: true });
+    await rm(join(fixture, 'src/game/visual/orbitalPaths.ts'));
     await writeFile(join(fixture, 'src/game/scenes/gameScene.ts'), "import { Scene } from 'phaser';\nexport class Game extends Scene {}\n");
     await cp('src/viteEnv.d.ts', join(fixture, 'src/viteEnv.d.ts'));
     const script = join(root, '.agents/skills/utils-add-object-to-scene/scripts/scaffold.mjs');

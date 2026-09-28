@@ -7,6 +7,7 @@ import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
 import { AsteroidBelt } from '../effects/asteroidBelt';
+import { OrbitalPaths } from '../effects/orbitalPaths';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
 import { resolveMoolarisContact } from '../mechanics/moolaris/contact';
@@ -24,6 +25,7 @@ export class Game extends Scene
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Starfield;
     asteroidBelt: AsteroidBelt;
+    orbitalPaths: OrbitalPaths;
     sun: Sun;
     ship: Spaceship;
     planets: Planet[];
@@ -76,6 +78,7 @@ export class Game extends Scene
         this.physics.world.setBounds(gameWorldBounds.x, gameWorldBounds.y, gameWorldBounds.width, gameWorldBounds.height);
         this.background = new Starfield(this, gameWorldBounds.width, gameWorldBounds.height, gameWorldBounds.x, gameWorldBounds.y);
         this.asteroidBelt = new AsteroidBelt(this);
+        this.orbitalPaths = new OrbitalPaths(this);
         this.sun = new Sun(this, gameObjectLayout.sun);
         this.ship = new Spaceship(this, state.ship);
         const planetsById = this.planetsById(state.planets);
