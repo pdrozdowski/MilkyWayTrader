@@ -1,7 +1,7 @@
 # S-04 First Seroton Planetary Trade — Plan Brief
 
-> Full plan: `context/changes/s-04/plan.md`
-> Research: `context/changes/s-04/research.md`
+> Full plan: `context/changes/s04-first-planetary-trade/plan.md`
+> Research: `context/changes/s04-first-planetary-trade/research.md`
 
 ## What & Why
 

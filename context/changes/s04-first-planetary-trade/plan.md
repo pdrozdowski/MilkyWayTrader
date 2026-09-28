@@ -209,7 +209,7 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 
 ## References
 
-- Research: `context/changes/s-04/research.md`
+- Research: `context/changes/s04-first-planetary-trade/research.md`
 - `context/foundation/prd.md`
 - `src/game/mechanics/planet/landing.ts:5`
 - `src/ui/adapters/landingStatusAdapter.ts:11`
