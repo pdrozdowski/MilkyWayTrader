@@ -111,7 +111,7 @@ body {
 .game-menu-panel h2 { margin: 0 0 12px; }
 .landing-status-panel { box-sizing: border-box; width: 100%; height: 100%; min-height: 0; padding: 0; background: var(--ui-surface); }
 .landing-status-panel h2, .landing-status-panel p { margin: 0; }
-.action-button, .landing-status-panel button { min-height: 44px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-action); font: inherit; cursor: pointer; }
+.action-button, .landing-status-panel button:not(.landing-image-button) { min-height: 44px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-action); font: inherit; cursor: pointer; }
 .landing-status-panel button:disabled, .landing-status-panel input:disabled { opacity: 0.55; cursor: default; }
 .landing-status-panel :focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
 #landing-status-catalogue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -142,11 +142,12 @@ body {
 .landing-view { box-sizing: border-box; width: 100%; height: 100%; min-height: 0; }
 #landing-status-hub { position: relative; display: block; }
 .landing-visual { position: absolute; inset: 0; display: flex; align-items: end; min-width: 0; padding: clamp(16px, 3vw, 44px); background: url('/assets/landing_bg_seroton.png') center / cover; }
-.landing-title-stack { display: grid; justify-items: start; gap: clamp(6px, 1vw, 12px); width: min(38vw, 520px); }
+.landing-visual::after { position: absolute; right: 0; bottom: 0; left: 0; height: 25%; content: ''; background: linear-gradient(to bottom, transparent, #07111b); pointer-events: none; }
+.landing-title-stack { position: relative; z-index: 1; display: grid; justify-items: start; gap: clamp(6px, 1vw, 12px); width: min(38vw, 520px); }
 #landing-status-title { display: block; width: 100%; height: auto; }
 #landing-status-landed { display: block; width: min(26vw, 230px); height: auto; }
 .landing-actions { position: absolute; inset: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) auto; z-index: 1; display: flex; flex-direction: column; align-items: end; gap: clamp(8px, 1.2vw, 16px); padding: 0; background: transparent; }
-.landing-image-button { width: min(24vw, 230px); padding: 0; border: 0; background: transparent; cursor: pointer; }
+.landing-image-button { appearance: none; width: min(24vw, 230px); min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; cursor: pointer; }
 .landing-image-button img { display: block; width: 100%; height: auto; }
 .landing-image-button:disabled { opacity: .55; }
 .landing-actions .landing-launch { margin-top: auto; }

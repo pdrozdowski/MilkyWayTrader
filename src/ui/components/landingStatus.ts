@@ -77,9 +77,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         } else {
             title.textContent = `${displayLabels.landedOn} ${snapshot.planetName ?? ''}`;
         }
-        market.textContent = '';
         marketHeading.textContent = displayLabels.market;
-        shipyard.textContent = '';
         shipyard.setAttribute('aria-label', displayLabels.shipyardUnavailable);
         balances.textContent = `${displayLabels.marketCredits}: ${formatCredits(snapshot.credits)} · ${displayLabels.marketCargo}: ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
         balances.replaceChildren(credits, cargo);
@@ -124,7 +122,6 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         budget.classList.toggle('market-budget--warning', snapshot.quote.failure === 'insufficient-credits');
         confirm.textContent = displayLabels.marketConfirm;
         confirm.disabled = !snapshot.eligible || snapshot.quote.failure !== null;
-        launch.textContent = '';
         back.textContent = displayLabels.back;
         for (const button of catalogue) {
             const commodityId = button.dataset.commodityId as LandingCommodityId;
