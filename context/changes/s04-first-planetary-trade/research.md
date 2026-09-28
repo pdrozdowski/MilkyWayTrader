@@ -7,7 +7,7 @@ repository: MilkyWayTrader
 topic: "S-04 first Seroton planetary market and trade"
 tags: [research, economy, market, landing, ui]
 status: complete
-last_updated: 2026-09-26
+last_updated: 2026-09-28
 last_updated_by: Codex
 ---
 
@@ -61,3 +61,24 @@ Persist mutable Seroton stock in `GameStateSnapshot`; keep commodity definitions
 - Seroton updates stock once per active second; a trade sums discrete marginal unit prices and has no sales tax.
 - A selected-commodity, centered slider sells leftward and buys rightward. It clamps cargo and stock bounds, but shows unaffordable purchases as invalid.
 - The transient price cache is rebuilt at landing and after every confirmed trade.
+
+## Phase 5 Follow-up: Planet Hub UI
+
+### Landing hub and modal lifecycle
+
+- The inspected landing dialog is visible for a non-null `landedPlanetId`, while its market projection currently grants eligibility only when that id is `seroton` (`src/game/application/landedMarket.ts:69-97`). The temporary Phase 5 decision supersedes the earlier Seroton-only rule: every currently landable planet uses the existing shared Seroton market until planet-specific market changes are planned.
+- The landing component currently hard-codes `SEROTON MARKET`, immediately renders the trade controls, focuses the quantity slider on entry, traps Tab within its one dialog, and restores canvas focus after launch (`src/ui/components/landingStatus.ts:14-125`). A hub and market are therefore presentation-local views of that dialog, not nested dialogs or authoritative state.
+- The adapter already preserves the authoritative launch path through `launchFromPlanet` and emits `landing-modal-transition` for the scene to clear flight input (`src/ui/adapters/landingStatusAdapter.ts:96-100`; `src/game/scenes/gameScene.ts:104-110`). Hub-to-market and Back navigation must not emit that transition.
+
+### UI-system audit
+
+- `index.html:57-70` mounts the market workflow as the landing dialog and `public/style.css:108-115` styles it as a capped, scrolling, centered card. This prevents the requested full-window landing composition and place selection.
+- The CSS root exposes surface, border, overlay, and focus values, while selected, border, and status values are repeated as literals in the landed-market rules (`public/style.css:1`, `118`, `120`, `126-138`). Phase 5 should add semantic action, danger, disabled, and title-outline tokens before adding a red Launch control.
+- Landing and game-menu buttons repeat comparable button geometry and action styling (`public/style.css:113`, `143`). A shared in-repository action style is the smallest reusable component contract for the new landing rail.
+- The supplied visual asset is `public/assets/landing_bg_seroton.png`; it is present in this worktree and should be tracked with the Phase 5 implementation.
+
+### Phase 5 decisions
+
+- The hub fills the available viewport with a visual column and a fixed 200px action rail. The visual column uses the supplied Seroton artwork, a contrast scrim, and the actual landed planet name.
+- The title reveal uses CSS stepped character animation and respects `prefers-reduced-motion`; assistive technology receives the full heading rather than partial animated text.
+- Shipyard is shown as disabled and marked unavailable. Market opens the existing trade view; Back returns to the hub; Launch remains the sole action that ends landing.
