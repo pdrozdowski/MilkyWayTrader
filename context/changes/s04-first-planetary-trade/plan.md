@@ -195,6 +195,63 @@ Recompose the landed-market dialog around the selected commodity: a planet-stock
 
 **Implementation Note**: The cost basis is authoritative game state; follow `utils-add-state` and do not add snapshot migration.
 
+---
+
+## Phase 5: Full-Window Planet Hub and Shared Market Entry
+
+### Overview
+
+Replace the direct landed-market entry with a full-window planet hub that makes landing feel distinct, then enters the existing market through an explicit place action.
+
+### Changes Required:
+
+#### 1. Shared landed-market eligibility
+
+**Files**: `src/game/application/landedMarket.ts`, `src/game/application/serotonMarket.ts`, `src/ui/adapters/landingStatusAdapter.ts`
+
+**Intent**: Until dedicated planetary markets are introduced, make the existing Seroton market usable from every currently landable planet while retaining its one authoritative shared stock and price model.
+
+**Contract**: A non-null landed planet makes the shared market eligible and permits quotes and confirmed trades; unlanded trade remains invalid. The projected `planetName` remains the actual landing destination. Local hub/market navigation is not added to the snapshot or typed port. Entering a new landing and reopening Market resets the transient selection to Supplies and quantity to zero.
+
+#### 2. Planet hub and market-panel markup
+
+**Files**: `index.html`, `src/ui/components/landingStatus.ts`, `src/ui/components/displayLabels.ts`
+
+**Intent**: Present a named landing destination before services, retain the established market controls, and ensure navigation remains accessible without nested DOM dialogs.
+
+**Contract**: The one `#landing-status` dialog contains mutually exclusive `hub` and `market` views. The hub has a visual heading reading `Landed on <planet name>`, Market, disabled Shipyard with an accessible unavailable label, and LAUNCH. Market replaces its launch control with BACK. The component keeps navigation state locally, preserves `data-game-input="ignore"`, maintains its Tab trap, focuses Market on hub entry, the first trade control on Market entry, Market after Back, and the game canvas after Launch. Only Launch calls the existing port `launch` action and emits the existing scene transition.
+
+#### 3. Landing UI contract and responsive presentation
+
+**Files**: `public/style.css`, `public/assets/landing_bg_seroton.png`
+
+**Intent**: Give the landing hub a durable, game-native visual hierarchy instead of extending the centered market card with one-off styles.
+
+**Contract**: Extend the existing root variables with semantic action, danger, disabled, and title-outline tokens, and apply a reusable action-button class to landing and existing menu actions. The hub fills the available safe-area viewport as `minmax(0, 1fr) 200px`: a left visual column uses the supplied artwork as a cover background with a readable scrim, and the right rail stacks its top-aligned place actions with LAUNCH aligned to the bottom. The title is large white text with a dark-gray outline, uses a stepped letter-reveal animation, and renders without animation under `prefers-reduced-motion`. Desktop and touch-landscape layouts retain the fixed rail, visible focus, readable contrast, and no horizontal overflow.
+
+#### 4. Regression and visual coverage
+
+**Files**: `tests/ui/fixtures/uiHarness.ts`, `tests/ui/componentsUiTest.ts`, `tests/ui/applicationUiTest.ts`, `tests/domain/gameState.test.mjs`
+
+**Intent**: Protect shared-market behavior and the new landed navigation from lifecycle, focus, and layout regressions.
+
+**Contract**: Tests exercise the shared market on each currently landable planet, reject unlanded trade, and enter market actions through the hub. Component tests cover the planet title, disabled Shipyard, Market/Back focus behavior, preserved landed pause, launch focus return, and cleanup. Application tests cover an end-to-end land → Market → trade → Back → Launch flow without page errors. Screenshot coverage captures hub and market at desktop and touch-landscape widths, including the reduced-motion title state.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Domain/application and UI tests prove any landed planet can use the shared market, while unlanded trade remains invalid.
+- Component and application tests prove hub-to-market-to-back navigation, focus handling, paused time, launch lifecycle, and disabled Shipyard behavior.
+- Screenshot verification covers readable desktop and touch-landscape hub and market layouts, including reduced motion.
+
+#### Manual Verification:
+
+- Landing on each currently landable planet shows its own name over the shared Seroton landing artwork; Market trades successfully and BACK returns to the hub without resuming time.
+- LAUNCH resumes flight, hides the dialog, and restores canvas control; Shipyard remains visibly unavailable.
+
+**Implementation Note**: Preserve the single DOM dialog and the existing launch event boundary. Hub and market switches are presentation changes, whereas only Launch may alter the authoritative landed lifecycle.
+
 ## Testing Strategy
 
 Run focused domain, state, mechanics, and UI tests during each phase; then run `npm.cmd run test:project`, `npm.cmd run typecheck`, and `npm.cmd run build-nolog`. Verify the real browser interaction after code changes.
@@ -213,6 +270,7 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 - `context/foundation/prd.md`
 - `src/game/mechanics/planet/landing.ts:5`
 - `src/ui/adapters/landingStatusAdapter.ts:11`
+- Phase 5 UI research: `context/changes/s04-first-planetary-trade/research.md`
 
 ## Progress
 
@@ -262,3 +320,16 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 #### Manual
 
 - [x] 4.4 A full land-trade-launch loop keeps all three inventory controls readable on desktop and touch views.
+
+### Phase 5: Full-Window Planet Hub and Shared Market Entry
+
+#### Automated
+
+- [ ] 5.1 Domain/application and UI tests prove any landed planet can use the shared market, while unlanded trade remains invalid.
+- [ ] 5.2 Component and application tests prove hub-to-market-to-back navigation, focus handling, paused time, launch lifecycle, and disabled Shipyard behavior.
+- [ ] 5.3 Screenshot verification covers readable desktop and touch-landscape hub and market layouts, including reduced motion.
+
+#### Manual
+
+- [ ] 5.4 Landing on each currently landable planet shows its own name over the shared Seroton landing artwork; Market trades successfully and BACK returns to the hub without resuming time.
+- [ ] 5.5 LAUNCH resumes flight, hides the dialog, and restores canvas control; Shipyard remains visibly unavailable.
