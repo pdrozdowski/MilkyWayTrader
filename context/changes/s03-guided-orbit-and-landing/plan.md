@@ -168,22 +168,22 @@ The snapshot advances from schema v3 to v4. No migration is added because persis
 
 #### Automated
 
-- [x] 1.1 Lifecycle mechanics boundary and transition verification
-- [x] 1.2 Snapshot, codec, architecture, typecheck, and build verification
+- [x] 1.1 Lifecycle mechanics boundary and transition verification — 27ecdab
+- [x] 1.2 Snapshot, codec, architecture, typecheck, and build verification — 27ecdab
 
 #### Manual
 
-- [x] 1.3 Manual capture and direct-steering verification
-- [x] 1.4 Manual landing, launch, pause, and relanding verification
+- [x] 1.3 Manual capture and direct-steering verification — 27ecdab
+- [x] 1.4 Manual landing, launch, pause, and relanding verification — 27ecdab
 
 ### Phase 2: Permanent Static Orbital Paths
 
 #### Automated
 
-- [x] 2.1 PRD capability and static orbit-path geometry verification
-- [x] 2.2 UI/browser permanent-path, project-test, typecheck, and build verification
+- [x] 2.1 PRD capability and static orbit-path geometry verification — 8104659
+- [x] 2.2 UI/browser permanent-path, project-test, typecheck, and build verification — 8104659
 
 #### Manual
 
-- [x] 2.3 Manual permanent-path visibility and performance verification
-- [x] 2.4 Manual no-autopilot behavior verification
+- [x] 2.3 Manual permanent-path visibility and performance verification — 8104659
+- [x] 2.4 Manual no-autopilot behavior verification — 8104659
