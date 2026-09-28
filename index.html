@@ -14,9 +14,9 @@
         <section id="main-menu" data-game-input="ignore" aria-label="Main menu" hidden>
             <img id="main-menu-logo" src="/assets/logo.png" alt="MilkyWayTrader" />
             <div id="main-menu-controls">
-                <button id="main-menu-new-game" type="button">New Game</button>
-                <button id="main-menu-continue" type="button" disabled>Continue Game</button>
-                <button id="main-menu-fullscreen" type="button" aria-pressed="false">Fullscreen Mode: OFF</button>
+                <button id="main-menu-new-game" class="action-button" type="button">New Game</button>
+                <button id="main-menu-continue" class="action-button" type="button" disabled>Continue Game</button>
+                <button id="main-menu-fullscreen" class="action-button" type="button" aria-pressed="false">Fullscreen Mode: OFF</button>
             </div>
         </section>
         <section id="run-status" data-game-input="ignore" aria-label="Run status" hidden>
@@ -30,7 +30,7 @@
                 <button id="game-menu-close" type="button" aria-label="Close menu">X</button>
                 <h2>Menu</h2>
                 <div class="game-menu-actions">
-                <button id="game-menu-resume" type="button">Resume</button>
+                <button id="game-menu-resume" class="action-button" type="button">Resume</button>
                 <div id="audio-controls" role="group" aria-label="Game audio">
                     <button id="audio-mute" type="button" aria-pressed="false">Mute</button>
                     <label for="audio-volume">Volume</label>
@@ -41,7 +41,7 @@
                     <button id="menu-fullscreen-toggle" type="button" aria-pressed="false">Fullscreen</button>
                     <p id="menu-display-status" role="status" aria-live="polite"></p>
                 </div>
-                <button id="return-to-menu" type="button">Return to Main Menu</button>
+                <button id="return-to-menu" class="action-button" type="button">Return to Main Menu</button>
                 </div>
             </div>
         </section>
@@ -56,7 +56,12 @@
         </section>
         <section id="landing-status" data-game-input="ignore" aria-label="Landed status" aria-modal="true" role="dialog" hidden>
             <div class="landing-status-panel">
-                <header class="landing-market-header"><h2 id="landing-status-title"></h2><div id="landing-status-balances"><span id="landing-status-credits"></span><span id="landing-status-cargo"></span></div></header>
+                <section id="landing-status-hub" class="landing-view">
+                    <div class="landing-visual"><div class="landing-title-stack"><img id="landing-status-title" src="" alt="" /><img id="landing-status-landed" src="/assets/banner_landed_01.png" alt="LANDED" /></div></div>
+                    <nav class="landing-actions" aria-label="Planet services"><button id="landing-status-market" class="landing-image-button" type="button" aria-label="Market"><img src="/assets/button_market.png" alt="" /></button><button id="landing-status-shipyard" class="landing-image-button" type="button" aria-label="Shipyard unavailable" disabled><img src="/assets/button_shipyard.png" alt="" /></button><button id="landing-status-launch" class="landing-image-button landing-launch" type="button" aria-label="Launch"><img src="/assets/button_launch.png" alt="" /></button></nav>
+                </section>
+                <section id="landing-status-market-view" class="landing-view" hidden>
+                <header class="landing-market-header"><h2 id="landing-status-market-heading"></h2><div id="landing-status-balances"><span id="landing-status-credits"></span><span id="landing-status-cargo"></span></div></header>
                 <div id="landing-status-catalogue" role="group" aria-label="Seroton commodities">
                     <button type="button" data-commodity-id="supplies"></button>
                     <button type="button" data-commodity-id="alloys"></button>
@@ -67,7 +72,8 @@
                     <section class="market-trade-control"><header class="market-trade-header"><div><strong id="landing-status-quantity-label"></strong><p id="landing-status-unit-price"></p></div><span class="market-commodity-icon" role="img"></span></header><input id="landing-status-quantity" type="range" step="1" value="0" /><output id="landing-status-quantity-value" for="landing-status-quantity"></output><p id="landing-status-quote"></p><p id="landing-status-budget" role="status"></p><button id="landing-status-confirm" type="button"></button></section>
                     <section class="market-inventory-panel" aria-label="Ship inventory"><strong>Ship stock</strong><p id="landing-status-player-stock"></p><p id="landing-status-average-buy-price"></p><p id="landing-status-trade-result-label"></p><p id="landing-status-trade-result"></p></section>
                 </section>
-                <button id="landing-status-launch" type="button"></button>
+                <button id="landing-status-back" class="action-button" type="button"></button>
+                </section>
             </div>
         </section>
         <aside id="orientation-notice" data-game-input="ignore" aria-label="Screen orientation" aria-modal="true" role="dialog" hidden>

@@ -12,6 +12,7 @@ export const displayLabels = {
     landed: 'LANDED',
     landedSuffix: '— LANDED',
     launch: 'LAUNCH',
+    landedOn: 'Landed on', market: 'Market', back: 'BACK', shipyard: 'Shipyard', shipyardUnavailable: 'Shipyard unavailable',
     marketCredits: 'Credits', marketCargo: 'Cargo', marketQuantity: 'Trading', marketQuote: 'Total trade value',
     marketConfirm: 'CONFIRM TRADE',
     marketBuy: 'BUY', marketSell: 'SELL', marketNoTrade: 'SELECT A QUANTITY', marketCashShortfall: 'Insufficient credits:',

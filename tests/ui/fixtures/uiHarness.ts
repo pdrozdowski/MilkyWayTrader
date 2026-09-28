@@ -38,6 +38,7 @@ let confirmations = 0;
 let landingStatusState: LandingStatusSnapshot = {
     visible: false,
     eligible: false,
+    planetId: null,
     planetName: null,
     credits: 100_000,
     cargoUsed: 0,

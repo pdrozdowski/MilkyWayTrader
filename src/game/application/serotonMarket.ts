@@ -34,7 +34,7 @@ function cargoStack (state: GameStateSnapshot, commodityId: SerotonCommodityId)
 
 export function quoteSerotonTrade (state: GameStateSnapshot, commodityId: SerotonCommodityId, quantity: number): SerotonTradeQuote
 {
-    if (state.planetLifecycle.landedPlanetId !== 'seroton') return { commodityId, quantity, total: 0, failure: 'not-landed-on-seroton' };
+    if (state.planetLifecycle.landedPlanetId === null) return { commodityId, quantity, total: 0, failure: 'not-landed-on-seroton' };
     if (!Number.isSafeInteger(quantity) || quantity === 0) return { commodityId, quantity, total: 0, failure: 'invalid-quantity' };
     const stock = currentStock(state, commodityId);
     const carried = cargoQuantity(state, commodityId);
