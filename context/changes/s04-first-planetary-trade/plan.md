@@ -325,11 +325,11 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 
 #### Automated
 
-- [ ] 5.1 Domain/application and UI tests prove any landed planet can use the shared market, while unlanded trade remains invalid.
-- [ ] 5.2 Component and application tests prove hub-to-market-to-back navigation, focus handling, paused time, launch lifecycle, and disabled Shipyard behavior.
-- [ ] 5.3 Screenshot verification covers readable desktop and touch-landscape hub and market layouts, including reduced motion.
+- [x] 5.1 Domain/application and UI tests prove any landed planet can use the shared market, while unlanded trade remains invalid.
+- [x] 5.2 Component and application tests prove hub-to-market-to-back navigation, focus handling, paused time, launch lifecycle, and disabled Shipyard behavior.
+- [x] 5.3 Screenshot verification covers readable desktop and touch-landscape hub and market layouts, including reduced motion.
 
 #### Manual
 
-- [ ] 5.4 Landing on each currently landable planet shows its own name over the shared Seroton landing artwork; Market trades successfully and BACK returns to the hub without resuming time.
-- [ ] 5.5 LAUNCH resumes flight, hides the dialog, and restores canvas control; Shipyard remains visibly unavailable.
+- [x] 5.4 Landing on each currently landable planet shows its own name over the shared Seroton landing artwork; Market trades successfully and BACK returns to the hub without resuming time.
+- [x] 5.5 LAUNCH resumes flight, hides the dialog, and restores canvas control; Shipyard remains visibly unavailable.

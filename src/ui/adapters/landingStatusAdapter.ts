@@ -46,7 +46,7 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
     const refresh = (): void => {
         if (destroyed || refreshSuppressed) return;
         const state = provider.snapshot();
-        const eligible = state.planetLifecycle.landedPlanetId === 'seroton';
+        const eligible = state.planetLifecycle.landedPlanetId !== null;
         if (eligible && !wasEligible) {
             selectedCommodityId = 'supplies';
             tradeQuantity = 0;
@@ -57,7 +57,7 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
         snapshot = project();
         for (const listener of listeners) listener(snapshot);
     };
-    if (provider.snapshot().planetLifecycle.landedPlanetId === 'seroton') {
+    if (provider.snapshot().planetLifecycle.landedPlanetId !== null) {
         wasEligible = true;
         rebuildPriceLadder();
     }

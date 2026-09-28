@@ -210,6 +210,20 @@ test('provider commits a valid Seroton trade as one immutable replacement', () =
     assert.equal(landed.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 60);
 });
 
+test('every currently landable planet uses the one shared Seroton market while landed', () => {
+    for (const planet of initialGameState.planets) {
+        const landed = {
+            ...initialGameState,
+            clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
+            planetLifecycle: { capturedPlanetId: planet.id, landedPlanetId: planet.id, relandingLockedPlanetId: null }
+        };
+        const quote = applySerotonTrade(landed, 'supplies', 1);
+        assert.equal(quote.credits, landed.credits - 1_000, planet.name);
+        assert.equal(quote.markets[0].commodityStocks.find(stock => stock.commodityId === 'supplies').stock, 99, planet.name);
+        assert.equal(quote.planetLifecycle.landedPlanetId, planet.id, planet.name);
+    }
+});
+
 test('landed market port rejects unlanded trade commands and rebuilds its visit-local price ladder after a trade', () => {
     const gameFor = provider => ({ registry: { get: () => provider }, events: { emit: () => {} } });
     const unlandedProvider = new GameStateProvider(initialGameState);

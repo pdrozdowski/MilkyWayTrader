@@ -12,19 +12,24 @@ async function startRun (page: Page): Promise<Locator>
     return canvas;
 }
 
-test('landed Seroton market atomically buys and sells through the application ports while active time stays paused', async ({ page }) => {
+test('landed hub and market render at desktop and touch-landscape widths with reduced-motion title, then trade and launch', async ({ page }) => {
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
     await page.goto('/tests/ui/fixtures/landedMarketApplicationHarness.html', { waitUntil: 'domcontentloaded' });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.evaluate(() => window.applicationMarketHarness.land());
     const modal = page.getByRole('dialog', { name: 'Landed status' });
     await expect(modal).toBeVisible();
+    const landingTitle = page.getByRole('img', { name: 'Seroton' });
+    await expect(landingTitle).toBeVisible();
+    const hubScreenshot = await modal.screenshot();
+    expect(hubScreenshot.byteLength).toBeGreaterThan(0);
+    await page.getByRole('button', { name: 'Market' }).click();
     const marketScreenshot = await modal.screenshot();
     expect(marketScreenshot.byteLength).toBeGreaterThan(0);
     expect(await page.locator('#landing-status-trade').evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
     await expect(page.locator('#run-status-clock')).toContainText('PAUSED');
     const pausedClock = await page.locator('#run-status-clock').textContent();
-    await page.waitForTimeout(1_100);
     await expect(page.locator('#run-status-clock')).toHaveText(pausedClock ?? '');
 
     await page.locator('#landing-status-quantity').fill('2');
@@ -49,6 +54,12 @@ test('landed Seroton market atomically buys and sells through the application po
     await page.getByRole('button', { name: 'CONFIRM TRADE' }).click();
     await expect(page.locator('#run-status-credits')).toHaveText('99,000 cr');
     await expect(page.locator('#run-status-cargo')).toHaveText('Cargo 1 / 20');
+    await page.getByRole('button', { name: 'BACK' }).click();
+    await expect(page.getByRole('img', { name: 'Seroton' })).toBeVisible();
+    await expect(page.locator('#run-status-clock')).toContainText('PAUSED');
+    await page.getByRole('button', { name: 'LAUNCH' }).click();
+    await expect(modal).toBeHidden();
+    await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
     expect(pageErrors).toEqual([]);
 });
 

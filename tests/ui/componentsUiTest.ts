@@ -43,7 +43,7 @@ test('repeated mounting keeps one subscription per component', async ({ page }) 
     expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 1, display: 1, runStatus: 1, landingStatus: 1 });
 });
 
-test('landing market renders bounded quotes, emits semantic actions, traps focus and returns it on launch', async ({ page }) => {
+test('landing hub enters and leaves the shared market, preserves landing, traps focus and returns it on launch', async ({ page }) => {
     await page.evaluate(() => window.uiHarness.setLandingStatus({
         visible: true, eligible: true, planetName: 'Seroton', credits: 500, cargoUsed: 3, cargoCapacity: 20,
         commodities: [
@@ -55,7 +55,20 @@ test('landing market renders bounded quotes, emits semantic actions, traps focus
     }));
     const modal = page.getByRole('dialog', { name: 'Landed status' });
     await expect(modal).toBeVisible();
-    await expect(modal).toContainText('SEROTON MARKET');
+    await expect(page.getByRole('heading', { name: 'Landed on Seroton' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Shipyard unavailable' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Market' })).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.getByRole('button', { name: 'LAUNCH', exact: true })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: 'Market' })).toBeFocused();
+    await page.getByRole('button', { name: 'Market' }).click();
+    await expect(page.getByRole('heading', { name: 'Market' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Supplies/ })).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.getByRole('button', { name: 'BACK', exact: true })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: /Supplies/ })).toBeFocused();
     await expect(page.locator('#landing-status-trade > :nth-child(1)')).toHaveAttribute('aria-label', 'Planet stock');
     await expect(page.locator('#landing-status-trade > :nth-child(2)')).toHaveClass(/market-trade-control/);
     await expect(page.locator('#landing-status-trade > :nth-child(3)')).toHaveAttribute('aria-label', 'Ship inventory');
@@ -92,13 +105,16 @@ test('landing market renders bounded quotes, emits semantic actions, traps focus
     await expect(page.locator('#landing-status-supply')).toHaveText('Supply: High');
     await page.getByRole('button', { name: /Alloys/ }).click();
     await page.locator('#landing-status-quantity').fill('4');
-    expect(await page.evaluate(() => window.uiHarness.marketActions())).toEqual({ selectedCommodities: ['alloys'], tradeQuantities: [4], confirmations: 0 });
+    expect(await page.evaluate(() => window.uiHarness.marketActions())).toEqual({ selectedCommodities: ['supplies', 'alloys'], tradeQuantities: [0, 4], confirmations: 0 });
     await page.evaluate(() => window.uiHarness.setLandingStatus({ selectedCommodityId: 'alloys', tradeQuantity: -1, quote: { quantity: -1, total: 5_000, failure: null, postTradeStock: 61, nextUnitPrice: 4_950 } }));
     await page.getByRole('button', { name: 'CONFIRM TRADE' }).click();
-    expect(await page.evaluate(() => window.uiHarness.marketActions())).toEqual({ selectedCommodities: ['alloys'], tradeQuantities: [4], confirmations: 1 });
+    expect(await page.evaluate(() => window.uiHarness.marketActions())).toEqual({ selectedCommodities: ['supplies', 'alloys'], tradeQuantities: [0, 4], confirmations: 1 });
+    await page.getByRole('button', { name: 'BACK', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Landed on Seroton' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Market' })).toBeFocused();
     await page.getByRole('button', { name: 'LAUNCH', exact: true }).focus();
     await page.keyboard.press('Tab');
-    await expect(page.getByRole('button', { name: /Supplies/ })).toBeFocused();
+    await expect(page.getByRole('button', { name: 'Market' })).toBeFocused();
     await page.getByRole('button', { name: 'LAUNCH', exact: true }).click();
     expect(await page.evaluate(() => window.uiHarness.launches())).toBe(1);
     await expect(page.locator('#game-container canvas')).toBeFocused();

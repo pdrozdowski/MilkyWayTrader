@@ -37,6 +37,7 @@ export interface LandedMarketSnapshot
 {
     readonly visible: boolean;
     readonly eligible: boolean;
+    readonly planetId: string | null;
     readonly planetName: string | null;
     readonly credits: number;
     readonly cargoUsed: number;
@@ -93,7 +94,8 @@ export function projectLandedMarket (
             : 'Medium';
     return Object.freeze({
         visible: planetId !== null,
-        eligible: planetId === 'seroton',
+        eligible: planetId !== null,
+        planetId,
         planetName: state.planets.find(planet => planet.id === planetId)?.name ?? null,
         credits: state.credits,
         cargoUsed,
