@@ -16,6 +16,7 @@ test('landed hub and market render at desktop and touch-landscape widths with re
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
     await page.goto('/tests/ui/fixtures/landedMarketApplicationHarness.html', { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => page.evaluate(() => Boolean(window.applicationMarketHarness))).toBe(true);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.evaluate(() => window.applicationMarketHarness.land());
     const modal = page.getByRole('dialog', { name: 'Landed status' });

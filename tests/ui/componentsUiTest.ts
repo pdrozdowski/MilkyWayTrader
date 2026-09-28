@@ -3,6 +3,7 @@ import { displayLabels } from '../../src/ui/components/displayLabels';
 
 test.beforeEach(async ({ page }) => {
     await page.goto('/tests/ui/fixtures/uiHarness.html', { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => page.evaluate(() => Boolean(window.uiHarness))).toBe(true);
 });
 
 test('audio controls render state, emit actions and release listeners', async ({ page }) => {
