@@ -63,48 +63,38 @@ Demo; brak logowania Google OAuth/zapisów/ekonomii/backendu. Konfiguracja Cloud
 
 <!-- BEGIN @przeprogramowani/10x-cli -->
 
-## Zestaw narzędzi AI 10xDevs — Moduł 2, Lekcja 5
+## Zestaw narzędzi AI 10xDevs — Moduł 3, Lekcja 4 (testy E2E)
 
-Rozszerz cykl pojedynczej zmiany do pracy równoległej z użyciem **worktrees, delegowania ukierunkowanego na cel i orkiestracji wielu sesji**:
+**W przypadku testów E2E użyj dwóch umiejętności M3L4 w tej kolejności:**
 
-```
-worktree per change -> /goal or your AI coding assistant in headless mode -> PR -> review -> merge
-```
+1. **`/10x-e2e-setup`** — jednorazowa konfiguracja: konfiguracja Playwright (`webServer`,
+   projekt `setup` autoryzacji, `storageState`), zielony test seed oraz `context/foundation/test-stack.md`.
+2. **`/10x-e2e`** — pętla dla każdego ryzyka: ryzyko → eksploracja działającej aplikacji za pomocą
+   `playwright-cli` → generowanie → przegląd względem pięciu antywzorców →
+   ponowne wywołanie promptu po nazwie → weryfikacja przez celowe zepsucie.
 
-Lekcja koncentruje się na bezpiecznej przepustowości: izolowanych kontekstach, wyborze odpowiedniego trybu wykonania i ograniczaniu równoległości do możliwości przeglądu.
+Katalogi `references/` umiejętności zawierają pełne reguły, antywzorce, wzorzec seed oraz
+szablon promptu.
 
-### Router zadań — od czego zacząć
+Kilka twardych zasad obowiązujących jeszcze przed wywołaniem umiejętności:
 
-| Umiejętność | Użyj jej, gdy |
-| --- | --- |
-| **Izolacja kodu** | |
-| `git worktree add` | Potrzebujesz osobnego katalogu roboczego dla równoległej zmiany. Jedna zmiana na worktree, jeden świeży kontekst agenta na worktree. |
-| **Złożone zmiany** | |
-| `/10x-implement <change-id> phase <n>` | Zmiana ma wiele faz, wymaga ręcznych bramek lub korzysta z interaktywnego podejmowania decyzji podczas wykonania. |
-| **Proste zmiany** | |
-| `/goal` | Masz jasne, ograniczone zadanie i chcesz delegowania ukierunkowanego na cel. Agent pracuje autonomicznie w kierunku określonego celu z warunkiem zatrzymania. |
-| twój asystent kodowania AI w trybie headless | Chcesz wykonania w trybie headless dla dobrze zdefiniowanego zadania. Pętla Ralpha Wigguma (uruchom, sprawdź, ponów próbę) jest uniwersalnym wzorcem autonomicznym. |
-| **Orkiestracja wielu sesji** | |
-| Superset / Conductor / Antigravity / VS Code Agent View | Uruchamiasz równolegle wiele sesji agentów i potrzebujesz widoczności, koordynacji lub zarządzania sesjami między nimi. |
+- **Lokatory:** najpierw `getByRole` / `getByLabel` / `getByText`; `getByTestId`
+  tylko wtedy, gdy atrybuty dostępności są niejednoznaczne. Nigdy selektory CSS, XPath
+  ani struktura DOM.
+- **Nigdy `page.waitForTimeout()`.** Czekaj na stan: `toBeVisible()`,
+  `waitForURL()`, `waitForResponse()`.
+- **Niezależność testów + sprzątanie.** Każdy test uruchamia się samodzielnie — ma własną konfigurację,
+  akcję, asercję i sprzątanie; unikalne id (sufiks timestamp), aby uruchomienia równoległe
+  i ponowne uruchomienia nie kolidowały.
 
-### Zasady pracy równoległej
+Dwie granice, które należy wyraźnie rozróżniać:
 
-- Jedna zmiana na worktree lub izolowany obszar roboczy. Jeden świeży kontekst agenta na zmianę.
-- Wybierz interaktywne `/10x-implement` dla złożonych zmian, a `/goal` lub swojego asystenta kodowania AI w trybie headless dla prostych.
-- Równoległość jest ograniczona możliwościami przeglądu. Więcej agentów bez przeglądu oznacza więcej nieprzejrzanego kodu, a nie większą przepustowość.
-- Problem jakości wynikający z szybszego dostarczania jest zamierzony — stanowi przejście do bramek testowych w Module 3.
-
-### Granice lekcji
-
-- Nie omawiaj ponownie interaktywnych `/10x-implement` ani `/10x-impl-review`; są one przedstawione w Lekcjach 2 i 3.
-- Nie wprowadzaj tutaj strategii testowania. Problem jakości jest motywacją dla Modułu 3.
-- Worktrees są mechanizmem izolacji, a nie tematem pełnego samouczka git.
-
-### Ścieżki używane w tej lekcji
-
-- `context/changes/<change-id>/` - folder aktywnej zmiany
-- `context/changes/<change-id>/plan.md` - dane wejściowe implementacji dla dowolnego trybu wykonania
-
-Umiejętności nie mogą zapisywać w `context/archive/`. Zarchiwizowane zmiany są niezmienne; jeśli rozwiązana ścieżka docelowa zaczyna się od `context/archive/`, przerwij z komunikatem: "Ta zmiana jest zarchiwizowana. Zamiast tego otwórz nową zmianę za pomocą `/10x-new`."
+- **DOM (snapshot) jest domyślny.** Wizja (`--caps=vision`) jest uzupełnieniem dla
+  ryzyk wyłącznie wizualnych (układ, z-index, animacja); w przypadku regresji pikselowych preferuj
+  deterministyczne narzędzia (`toHaveScreenshot`, Argos, Lost Pixel). Wybór/koszt modelu VLM
+  to temat debugowania (Lekcja 5), nie testowania.
+- **Czerwony test to sygnał, a nie obowiązek do odhaczenia.** Zmieniony selektor → zaktualizuj
+  lokator w sprawdzonym diffie. Zmienione zachowanie biznesowe → test wykrył
+  błąd; nigdy nie edytuj asercji, aby je dopasować. Naprawianie nieudanych testów to Lekcja 5.
 
 <!-- END @przeprogramowani/10x-cli -->

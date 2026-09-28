@@ -5,7 +5,7 @@
 
 ## What & Why
 
-S-03 turns the current proximity-only planet indicator into a playable navigation loop: the player receives advisory route guidance, is captured into a moving orbit, manually flies into a planet to land, then launches again. This makes planets reachable without adding autopilot or prematurely implementing their market and shipyard services.
+S-03 turns the current proximity-only planet indicator into a playable navigation loop: permanent dashed orbital paths make each planet's route visible, then the player is captured into a moving orbit, manually flies into a planet to land, and launches again. This makes planets reachable without adding autopilot or prematurely implementing their market and shipyard services.
 
 ## Starting Point
 
@@ -13,15 +13,14 @@ The game already has direct flight, a shared active-time clock, deterministic pl
 
 ## Desired End State
 
-Near an orbit, the player sees a subtle dashed path, planet name, and paired `↺`/`↻` estimated cruise times in seconds. Entering the capture zone makes the ship follow only the planet's displacement while retaining direct steering; flying to the centre opens a paused status modal, and `LAUNCH` returns the player to manual flight without allowing an immediate accidental relanding.
+From boot, the player sees three subtle dashed orbital paths with a 50 px visible / 10 px gap pattern. Entering a capture zone makes the ship follow only the planet's displacement while retaining direct steering; flying to the centre opens a paused status modal, and `LAUNCH` returns the player to manual flight without allowing an immediate accidental relanding.
 
 ## Key Decisions Made
 
 | Decision | Choice | Why | Source |
 | --- | --- | --- | --- |
 | Flight control | Guidance is advisory; capture never steers the ship | Direct control is a PRD guardrail. | PRD / Plan |
-| Guidance | 100 px radial band, dashed path, paired curved-arrow cruise ETAs | Shows the actionable direction choice without meaningless world-distance units. | Plan |
-| ETA basis | Whole active-time seconds at normal unboosted cruise speed | Accounts for planet motion while remaining an explicitly advisory estimate. | Plan |
+| Orbit paths | Three permanent dashed rings, 50 px visible / 10 px gap | Gives a stable visual reference without runtime route solving or dynamic presentation. | Plan |
 | Capture | Existing proximity radius, automatic state, relative displacement | Reuses a tested seam and preserves manual movement. | Research / Plan |
 | Landing | Captured ship manually reaches within 50 px of centre | Landing remains a piloting action rather than automatic travel. | Plan |
 | Launch | Explicit `LAUNCH` resumes time; lock clears outside definition radius | Prevents immediate relanding and makes time resumption clear. | Plan |
@@ -29,20 +28,20 @@ Near an orbit, the player sees a subtle dashed path, planet name, and paired `�
 
 ## Scope
 
-**In scope:** orbit guidance, capture/detach, landing and launch lifecycle, paused status modal, snapshot/codec changes, and targeted mechanics, state, architecture, UI, and browser tests.
+**In scope:** permanent dashed orbital paths, capture/detach, landing and launch lifecycle, paused status modal, snapshot/codec changes, and targeted mechanics, state, architecture, UI, and browser tests.
 
 **Out of scope:** markets, commodity prices, shipyard transactions, hazards, gravity, collision damage, destination selection, and any automated flight.
 
 ## Architecture / Approach
 
-Pure mechanics calculate transition and route geometry from the authoritative snapshot. The provider commits the new lifecycle state; the scene turns player input into intents and renders derived guidance, while planet and DOM projections show local lifecycle state. All time-based effects continue through the shared clock.
+Pure mechanics calculate lifecycle transitions from the authoritative snapshot. The provider commits the new lifecycle state; the scene turns player input into intents and owns a one-time static orbital-path projection, while planet and DOM projections show local lifecycle state. All time-based effects continue through the shared clock.
 
 ## Phases at a Glance
 
 | Phase | What it delivers | Key risk |
 | --- | --- | --- |
 | 1. Orbit, landing, and launch lifecycle | Restorable state, direct-control capture, modal, pause/resume, and relanding lock | State/clock ordering and stale held input |
-| 2. Advisory route guidance | Dashed orbital guidance and correctly derived directional cruise ETAs | Visual clarity without implying guaranteed arrival or changing controls |
+| 2. Permanent static orbital paths | Three always-visible dashed orbit rings | Render cost without per-frame redraws or gameplay coupling |
 
 **Prerequisites:** S-02 direct moving-system flight is complete.
 **Estimated effort:** ~2–3 focused sessions across 2 phases.
@@ -55,5 +54,5 @@ Pure mechanics calculate transition and route geometry from the authoritative sn
 ## Success Criteria (Summary)
 
 - The player can manually reach, orbit, land on, and launch from each configured planet while active time pauses only when landed.
-- Guidance presents both directional cruise ETAs, emphasizes the faster direction, and never changes player velocity, heading, target, or control state.
+- All configured orbital paths remain visible as dashed rings without route text and never change player velocity, heading, target, or control state.
 - Snapshot validation, pure mechanics, UI behavior, and browser interaction checks cover the new lifecycle.
