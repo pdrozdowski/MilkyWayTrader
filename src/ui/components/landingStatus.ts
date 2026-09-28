@@ -78,6 +78,8 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             title.textContent = `${displayLabels.landedOn} ${snapshot.planetName ?? ''}`;
         }
         marketHeading.textContent = displayLabels.market;
+        market.setAttribute('aria-label', displayLabels.market);
+        launch.setAttribute('aria-label', displayLabels.launch);
         shipyard.setAttribute('aria-label', displayLabels.shipyardUnavailable);
         balances.textContent = `${displayLabels.marketCredits}: ${formatCredits(snapshot.credits)} · ${displayLabels.marketCargo}: ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
         balances.replaceChildren(credits, cargo);
