@@ -13,6 +13,7 @@ import { MOOLARIS_CONTROL_CLEARANCE, MOOLARIS_RECOVERY_SECONDS, moolarisDefiniti
 import { isRecoveringFromMoolaris, moolarisControlRadius, resolveMoolarisContact } from '../src/game/mechanics/moolaris/contact.ts';
 import { asteroidBeltDefinition } from '../src/game/visual/asteroidBeltDefinition.ts';
 import { asteroidBeltLayout, projectAsteroidBelt } from '../src/game/visual/asteroidBelt.ts';
+import { createOrbitalPathDashes, ORBITAL_PATH_DASH_LENGTH, ORBITAL_PATH_GAP_LENGTH } from '../src/game/visual/orbitalPaths.ts';
 import { activeTimeCycle, activeTimeWave } from '../src/game/visual/activeTime.ts';
 import { launchFromPlanet, LANDING_CENTRE_RADIUS, tryLandAtCapturedPlanet } from '../src/game/mechanics/planet/landing.ts';
 import { decodeGameState, encodeGameState } from '../src/game/application/gameStateCodec.ts';
@@ -100,6 +101,31 @@ test('landing uses the same surface gap for every planet', () => {
         assert.equal(canLandNearPlanet(threshold,18,radius), true);
         assert.equal(canLandNearPlanet(threshold + 0.01,18,radius), false);
         assert.equal(canLandNearPlanet(radius + 18,18,radius), true);
+    }
+});
+
+test('configured orbital paths are complete Moolaris-centred 50 px dashes with 10 px gaps', () => {
+    const dashes = createOrbitalPathDashes();
+    const tolerance = 1e-8;
+    for (const definition of planetDefinitions) {
+        const path = dashes.filter(dash => dash.radius === definition.orbitRadius);
+        assert(path.length > 0, `${definition.id} has an orbital path`);
+        for (const dash of path) {
+            assert.deepEqual(dash.centre, moolarisDefinition.position);
+            assert.equal(dash.radius, definition.orbitRadius);
+            const length = (dash.endRadians - dash.startRadians) * dash.radius;
+            assert(length <= ORBITAL_PATH_DASH_LENGTH + tolerance);
+            assert(length > 0);
+        }
+        for (let index = 1; index < path.length; index++) {
+            const previous = path[index - 1];
+            const gap = (path[index].startRadians - previous.endRadians) * definition.orbitRadius;
+            assert(Math.abs(gap - ORBITAL_PATH_GAP_LENGTH) < tolerance);
+            assert(Math.abs((previous.endRadians - previous.startRadians) * definition.orbitRadius - ORBITAL_PATH_DASH_LENGTH) < tolerance);
+        }
+        const finalDash = path[path.length - 1];
+        assert(Math.abs(finalDash.endRadians * definition.orbitRadius - Math.PI * 2 * definition.orbitRadius) < tolerance,
+            `${definition.id} path closes its complete circumference`);
     }
 });
 

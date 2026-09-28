@@ -2,7 +2,7 @@
 
 ## Overview
 
-Deliver the S-03 navigation loop: advisory route guidance near moving planets, automatic orbit capture that preserves manual steering, automatic centre-entry landing, and an explicit launch back into flight.
+Deliver the S-03 navigation loop: permanent static orbital paths for moving planets, automatic orbit capture that preserves manual steering, automatic centre-entry landing, and an explicit launch back into flight.
 
 ## Current State Analysis
 
@@ -10,13 +10,13 @@ The simulation already advances direct flight and deterministic planet positions
 
 ## Desired End State
 
-For each configured planet, a player can see nearby CW and CCW cruise-time estimates, enter its capture zone, retain direct flight while following the planet's displacement, manually land from orbit, and explicitly launch. Landing pauses the shared clock and disables boost/fire; launch resumes the clock and requires leaving the physical planet radius before another landing can occur.
+For each configured planet, a player can see its permanent dashed orbital path, enter its capture zone, retain direct flight while following the planet's displacement, manually land from orbit, and explicitly launch. Landing pauses the shared clock and disables boost/fire; launch resumes the clock and requires leaving the physical planet radius before another landing can occur.
 
 ### Key Discoveries:
 
 - `advanceGameSimulation` is the authoritative seam for active-time movement and currently returns without movement while paused (`src/game/mechanics/gameSimulation.ts:65`).
 - `planetLandingRadius` supplies an existing tested proximity threshold suitable for capture (`src/game/mechanics/planet/proximity.ts:4`).
-- `GameStateProvider` and the strict codec own atomic authoritative-state replacement (`src/game/application/gameStateProvider.ts:19`, `src/game/application/gameStateCodec.ts:84`).
+- The three configured planet orbits are fixed circles around the Moolaris origin, so their paths can be drawn once without snapshot or per-frame calculation (`src/game/definitions/planetDefinitions.ts:16`, `src/game/mechanics/planet/orbit.ts:5`).
 - Existing UI pause tests and historical S-02 review require clearing held flight intent when modal state changes (`tests/ui/applicationUiTest.ts:129`, `context/archive/2026-09-23-s02-direct-moving-system-flight/reviews/impl-review-phase-5.md:34`).
 
 ## What We're NOT Doing
@@ -28,11 +28,11 @@ For each configured planet, a player can see nearby CW and CCW cruise-time estim
 
 ## Implementation Approach
 
-Keep lifecycle values in the JSON-safe snapshot and transition them through pure mechanics. Treat routes and visible labels as derived data. The scene stays an adapter: it gathers direct input, emits landing/launch intent, clears transient held intent across the modal boundary, and reconciles projections. Presentation never writes gameplay state.
+Keep lifecycle values in the JSON-safe snapshot and transition them through pure mechanics. The scene owns the static orbital-path projection, gathers direct input, emits landing/launch intent, clears transient held intent across the modal boundary, and reconciles moving projections. Presentation never writes gameplay state.
 
 ## Critical Implementation Details
 
-The simulation must update planet positions before deriving capture displacement, then apply that displacement to a captured ship without altering its player-controlled velocity, heading, or target. On the landing transition, the clock pause reason and modal state must commit in the same provider update; launch must remove only `landed`, preserving any independent pause reason. Guidance ETA is an advisory active-time estimate at instantaneous configured normal cruise speed; it is not an arrival promise and deliberately excludes current velocity, acceleration, boost, hazards, and player steering error.
+The simulation must update planet positions before deriving capture displacement, then apply that displacement to a captured ship without altering its player-controlled velocity, heading, or target. On the landing transition, the clock pause reason and modal state must commit in the same provider update; launch must remove only `landed`, preserving any independent pause reason. Static orbital paths must be created once and never rebuilt from the scene update loop.
 
 ## Phase 1: Orbit, Landing, and Launch Lifecycle
 
@@ -80,11 +80,11 @@ Add the authoritative lifecycle and the complete manual landing/start interactio
 
 **Implementation Note**: After automated verification passes, pause for the human to confirm the manual lifecycle checks before Phase 2.
 
-## Phase 2: Advisory Route Guidance
+## Phase 2: Permanent Static Orbital Paths
 
 ### Overview
 
-Render useful route guidance in the world without adding steering, target selection, or persistent presentation state.
+Render permanent visual orbital paths without adding steering, target selection, route calculations, or persistent presentation state.
 
 ### Changes Required:
 
@@ -92,39 +92,39 @@ Render useful route guidance in the world without adding steering, target select
 
 **Files**: `context/foundation/prd.md`
 
-**Intent**: Align the product contract with player-actionable route information before implementation replaces kilometre labels.
+**Intent**: Align the product contract with the simplified permanent orbital-path navigation aid.
 
-**Contract**: Replace the visible CW/CCW predicted-distance requirements in US-02 acceptance criteria and BR-023 through BR-026 with paired predicted cruise ETAs in whole seconds, lower-ETA emphasis, and neutral treatment of effectively equal ETAs. Preserve the moving-planet, normal-unboosted-speed, advisory-only, and visibility constraints. Validate the PRD with `10x-prd-en-capability` before Phase 2 implementation proceeds.
+**Contract**: Replace US-02's proximity-only route guidance and BR-021 through BR-029 with a capability to see all configured planetary orbital paths as permanent, dashed visual references. Remove direction, ETA, route-selection, guidance-band, proximity-visibility, and capture-visibility requirements. Preserve the direct-control guardrail and the distinct moving-planet, capture, landing, and launch rules. Validate the PRD with `10x-prd-en-capability` before Phase 2 implementation proceeds.
 
-#### 2. Derived route-geometry mechanics
+#### 2. Static orbit-path geometry
 
-**Files**: `src/game/mechanics/planet/`, `src/game/definitions/`
+**Files**: `src/game/visual/` or `src/game/effects/`, `src/game/definitions/`
 
-**Intent**: Calculate the information the player needs to choose an interception direction from present authoritative positions and configured normal ship speed.
+**Intent**: Define reusable, presentation-only geometry for the three configured circular orbit paths without deriving runtime route information.
 
-**Contract**: Define a 100 px radial guidance band. Select the eligible orbit with the smallest ship-to-orbit-circumference distance, project the ship onto it, and derive CW and CCW interception results accounting for current planet motion at configured normal unboosted cruise speed. Each direction returns its geometry and a whole-second active-time ETA from the same interception solve; do not calculate ETA by dividing a displayed distance by speed. Provide ETA equality tolerance so neither route is preferred when effectively equal, and represent zero or near-zero relative closing-rate routes as unavailable. These functions return derived values and do not mutate state.
+**Contract**: Produce complete circular dash segments centered on Moolaris for each configured orbit radius, with 50 px visible arc length followed by a 10 px gap; the final segment may be shorter to close the circumference. The geometry consumes definitions only, accepts no game state, and creates no Phaser objects.
 
-#### 3. World guidance projection
+#### 3. World orbital-path projection
 
-**Files**: `src/game/scenes/gameScene.ts`, `src/game/effects/` or `src/game/visual/`, `src/game/objects/planet/planet.ts`
+**Files**: `src/game/scenes/gameScene.ts`, `src/game/effects/` or `src/game/visual/`
 
-**Intent**: Make the advisory route visible without cluttering remote flight or conflicting with captured/landed states.
+**Intent**: Make each planet's orbital path continuously visible as a quiet world reference while leaving gameplay and planet-local lifecycle presentation untouched.
 
-**Contract**: Render the complete selected orbit as a subtle dashed line with the planet name while inside its 100 px band. Place `↺` and `↻` whole-second ETA labels on their corresponding sides of the guide with a static `EST. AT CRUISE` qualifier; emphasize the lower ETA and omit emphasis on equality. Do not render km distances. Hide the guide after capture or on leaving the band; when bands overlap, show the closest eligible orbit. Reuse display-label constants for visible text.
+**Contract**: Create one scene-owned world `Graphics` projection during scene creation, render all configured dash segments once at a depth below planets and above the asteroid belt, and never clear or redraw it from `update`. Keep it visible during direct flight, capture, landing, launch, paused time, and overlapping paths. Destroy it on scene shutdown. Do not add labels, ETA/CW/CCW text, input handling, or state writes.
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- The PRD capability validator passes after the route-information contract changes, and mechanics tests cover guidance-band boundaries, closest-orbit selection, both directional moving-intercept ETAs, whole-second rounding, equal-ETA presentation state, unavailable intercepts, paused-time stability, and input/state immutability.
-- UI/browser tests cover guide visibility at the band boundary, curved-arrow ETA labels, cruise qualifier, lower-ETA emphasis, hide-on-capture behavior, and unchanged direct-flight input; `npm.cmd run test:project`, `npm.cmd run typecheck`, and `npm.cmd run build-nolog` pass.
+- The PRD capability validator passes after the orbital-path contract changes. Unit tests cover the fixed Moolaris centre, each configured radius, complete circumference coverage, and the 50 px visible / 10 px gap dash pattern within floating-point tolerance.
+- Browser tests cover all three paths immediately after boot and through capture, landing, and launch; they assert no ETA, CW/CCW, route emphasis, or proximity visibility behavior. `npm.cmd run test:project`, `npm.cmd run typecheck`, and `npm.cmd run build-nolog` pass.
 
 #### Manual Verification:
 
-- In the browser, approach each orbital path and confirm a subtle dashed guide, readable `↺`/`↻` cruise ETAs, only the lower ETA emphasis, and no displayed km distances; leave or capture the orbit and confirm the guide disappears.
-- Confirm the guide never moves the ship, changes its heading, or changes boost/fire behavior during direct flight.
+- In the browser, confirm all three paths are visible from boot and retain the 50 px visible / 10 px gap pattern while the camera moves; profile normal flight and confirm the one-time Graphics command buffer causes no visible frame-time regression.
+- Capture, land on, and launch from a planet; confirm the paths remain visible and never move the ship, change its heading, or change boost/fire behavior.
 
-**Implementation Note**: After automated verification passes, pause for the human to confirm manual guidance behavior.
+**Implementation Note**: After automated verification passes, pause for the human to confirm manual permanent-path behavior.
 
 ## Testing Strategy
 
@@ -132,21 +132,21 @@ Render useful route guidance in the world without adding steering, target select
 
 - Test all transition thresholds and invalid lifecycle combinations in pure mechanics, state, and codec tests.
 - Compare uninterrupted and restored orbit/planet simulation while excluding transient held input and presentation effects.
-- Test route derivation with normal cruise speed, moving planets, overlap selection, ETA equality, whole-second rounding, and unavailable intercept handling.
+- Test static orbit-path dash geometry for all configured radii, including circumference closure and fractional final dashes.
 
 ### Integration Tests:
 
-- Use Playwright to validate a real booted run, modal pause/resume, semantic `LAUNCH` control, and route-label rendering.
+- Use Playwright to validate a real booted run, modal pause/resume, semantic `LAUNCH` control, and permanent orbital-path rendering.
 
 ### Manual Testing Steps:
 
 1. Fly manually through capture, landing, launch, physical-radius exit, and a second landing for each planet.
 2. Test keyboard/mouse and touch-sized browser input around the modal; held flight input must not leak through `LAUNCH`.
-3. Approach overlapping orbits and inspect that one closest guide is shown without automatic movement.
+3. Inspect all three paths during normal flight and lifecycle transitions; confirm no route text or automatic movement appears.
 
 ## Performance Considerations
 
-Route geometry is derived only for the closest eligible planet and is not stored in snapshots. Reuse cached Phaser graphics where possible; do not create a new graphics object each frame.
+The three configured orbit paths are generated once into one scene-owned Graphics command buffer and are never rebuilt per frame. If profiling finds a regression, evaluate a baked-texture fallback after checking supported-device texture-size limits; do not pre-emptively add that fallback.
 
 ## Migration Notes
 
@@ -176,14 +176,14 @@ The snapshot advances from schema v3 to v4. No migration is added because persis
 - [x] 1.3 Manual capture and direct-steering verification
 - [x] 1.4 Manual landing, launch, pause, and relanding verification
 
-### Phase 2: Advisory Route Guidance
+### Phase 2: Permanent Static Orbital Paths
 
 #### Automated
 
-- [ ] 2.1 PRD capability and route-geometry ETA verification
-- [ ] 2.2 UI/browser cruise-ETA, project-test, typecheck, and build verification
+- [x] 2.1 PRD capability and static orbit-path geometry verification
+- [x] 2.2 UI/browser permanent-path, project-test, typecheck, and build verification
 
 #### Manual
 
-- [ ] 2.3 Manual route visibility and route-emphasis verification
-- [ ] 2.4 Manual no-autopilot behavior verification
+- [x] 2.3 Manual permanent-path visibility and performance verification
+- [x] 2.4 Manual no-autopilot behavior verification
