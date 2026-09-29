@@ -1,0 +1,3 @@
+[functions.ingest-game-events]
+# Unsigned gameplay is allowed. The function verifies an optional bearer JWT itself.
+verify_jwt = false
