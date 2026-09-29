@@ -19,7 +19,7 @@ test('audio controls render state, emit actions and release listeners', async ({
     await expect(mute).toHaveAttribute('aria-pressed', 'false');
     await expect(page.locator('#audio-volume')).toHaveValue('25');
     await page.evaluate(() => window.uiHarness.destroy());
-    expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 0, display: 0, runStatus: 0, landingStatus: 0 });
+    expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 0, display: 0, runStatus: 0, landingStatus: 0, auth: 0 });
 });
 
 test('display controls render responsive state and actionable errors', async ({ page }) => {
@@ -41,7 +41,24 @@ test('display controls render responsive state and actionable errors', async ({ 
 
 test('repeated mounting keeps one subscription per component', async ({ page }) => {
     await page.evaluate(() => { window.uiHarness.mount(); window.uiHarness.mount(); });
-    expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 1, display: 1, runStatus: 1, landingStatus: 1 });
+    expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 1, display: 1, runStatus: 1, landingStatus: 1, auth: 1 });
+});
+
+test('auth controls expose unsigned, unavailable, signed-in and teardown states', async ({ page }) => {
+    await expect(page.getByText('Unsigned', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Sign in with Google' }).click();
+    expect(await page.evaluate(() => window.uiHarness.authActions())).toEqual({ signInAttempts: 1, signOutAttempts: 0 });
+    await page.evaluate(() => window.uiHarness.setAuth({ status: 'unavailable', message: 'missing configuration' }));
+    await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeDisabled();
+    await page.evaluate(() => window.uiHarness.setAuth({ status: 'error', message: 'OAuth popup was cancelled' }));
+    await expect(page.getByText('Sign-in failed. Please try again.', { exact: true })).toBeVisible();
+    await page.evaluate(() => window.uiHarness.setAuth({ status: 'signed-in', email: 'pilot@example.com', message: null }));
+    await expect(page.getByText('pilot@example.com', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
+    await page.getByRole('button', { name: 'Sign out' }).click();
+    expect(await page.evaluate(() => window.uiHarness.authActions())).toEqual({ signInAttempts: 1, signOutAttempts: 1 });
+    await page.evaluate(() => window.uiHarness.destroy());
+    expect(await page.evaluate(() => window.uiHarness.listeners().auth)).toBe(0);
 });
 
 test('landing hub enters and leaves the shared market, preserves landing, traps focus and returns it on launch', async ({ page }) => {

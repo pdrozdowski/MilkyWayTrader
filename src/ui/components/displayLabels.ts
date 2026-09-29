@@ -1,4 +1,9 @@
 export const displayLabels = {
+    signInWithGoogle: 'Sign in with Google',
+    signOut: 'Sign out',
+    unsigned: 'Unsigned',
+    authUnavailable: 'Sign-in is unavailable: configure Supabase public URL and publishable key.',
+    authError: 'Sign-in failed. Please try again.',
     fullscreen: 'Fullscreen',
     closeFullscreen: 'X',
     rotateToPlay: 'Rotate your device to play.',

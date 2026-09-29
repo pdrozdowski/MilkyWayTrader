@@ -5,6 +5,7 @@
     },
     "include": [
         "playwrightConfig.ts",
+        "src/viteEnv.d.ts",
         "tests/ui/**/*.ts"
     ]
 }

@@ -3,6 +3,8 @@ import { mountDisplayControls } from '../../../src/ui/components/displayControls
 import { mountRunStatus } from '../../../src/ui/components/runStatus';
 import { mountGameMenu } from '../../../src/ui/components/gameMenu';
 import { mountLandingStatus } from '../../../src/ui/components/landingStatus';
+import { mountAuthControls } from '../../../src/ui/components/authControls';
+import type { AuthPort, AuthSnapshot } from '../../../src/game/application/auth/auth';
 import type { AudioSettingsSnapshot, DisplaySnapshot, FullscreenResult, LandingStatusSnapshot, RunStatusSnapshot, UiHandle } from '../../../src/ui/contracts';
 import type { SerotonCommodityId } from '../../../src/game/state/serotonMarketState';
 
@@ -28,6 +30,7 @@ let displayHandle: UiHandle | null = null;
 let runStatusHandle: UiHandle | null = null;
 let gameMenuHandle: UiHandle | null = null;
 let landingStatusHandle: UiHandle | null = null;
+let authHandle: UiHandle | null = null;
 let menuOpen = false;
 let orientationPaused = false;
 let exits = 0;
@@ -53,6 +56,18 @@ let landingStatusState: LandingStatusSnapshot = {
     quote: { quantity: 0, total: 0, failure: 'invalid-quantity', postTradeStock: 0, nextUnitPrice: 0 }
 };
 let landingStatusListener: ((snapshot: Readonly<LandingStatusSnapshot>) => void) | null = null;
+let authState: AuthSnapshot = { status: 'unsigned', email: null, message: null };
+let authListener: ((snapshot: Readonly<AuthSnapshot>) => void) | null = null;
+let signInAttempts = 0;
+let signOutAttempts = 0;
+
+const authPort: AuthPort = {
+    getSnapshot: (): Readonly<AuthSnapshot> => authState,
+    subscribe: listener => { authListener = listener; return () => { if (authListener === listener) authListener = null; }; },
+    signInWithGoogle: async (): Promise<void> => { signInAttempts += 1; },
+    signOut: async (): Promise<void> => { signOutAttempts += 1; },
+    destroy: (): void => { authListener = null; }
+};
 
 const runStatusPort = {
     getSnapshot: (): Readonly<RunStatusSnapshot> => runStatusState,
@@ -116,11 +131,13 @@ function mount (): void
     runStatusHandle?.destroy();
     gameMenuHandle?.destroy();
     landingStatusHandle?.destroy();
+    authHandle?.destroy();
     audioHandle = mountAudioControls(root, audioPort);
     displayHandle = mountDisplayControls(root, displayPort, () => {});
     runStatusHandle = mountRunStatus(root, runStatusPort);
     gameMenuHandle = mountGameMenu(root, gameControlsPort);
     landingStatusHandle = mountLandingStatus(root, landingStatusPort);
+    authHandle = mountAuthControls(root, authPort);
 }
 
 mount();
@@ -132,13 +149,15 @@ window.uiHarness = {
     setFullscreenResult: result => { fullscreenResult = result; },
     setRunStatus: state => { runStatusState = { ...runStatusState, ...state }; runStatusListener?.(runStatusState); },
     setLandingStatus: state => { landingStatusState = { ...landingStatusState, ...state }; landingStatusListener?.(landingStatusState); },
-    listeners: () => ({ audio: Number(Boolean(audioListener)), display: Number(Boolean(displayListener)), runStatus: Number(Boolean(runStatusListener)), landingStatus: Number(Boolean(landingStatusListener)) }),
+    setAuth: state => { authState = { ...authState, ...state }; authListener?.(authState); },
+    authActions: () => ({ signInAttempts, signOutAttempts }),
+    listeners: () => ({ audio: Number(Boolean(audioListener)), display: Number(Boolean(displayListener)), runStatus: Number(Boolean(runStatusListener)), landingStatus: Number(Boolean(landingStatusListener)), auth: Number(Boolean(authListener)) }),
     gameControls: () => ({ menuOpen, orientationPaused, exits }),
     setOrientationPaused: paused => { gameControlsPort.setOrientationPaused(paused); },
     refreshes: () => refreshes,
     launches: () => launches,
     marketActions: () => ({ selectedCommodities: [...selectedCommodities], tradeQuantities: [...tradeQuantities], confirmations }),
-    destroy: () => { audioHandle?.destroy(); displayHandle?.destroy(); runStatusHandle?.destroy(); gameMenuHandle?.destroy(); landingStatusHandle?.destroy(); },
+    destroy: () => { audioHandle?.destroy(); displayHandle?.destroy(); runStatusHandle?.destroy(); gameMenuHandle?.destroy(); landingStatusHandle?.destroy(); authHandle?.destroy(); },
     mount
 };
 
@@ -151,7 +170,9 @@ declare global {
             setFullscreenResult(result: FullscreenResult): void;
             setRunStatus(state: Partial<RunStatusSnapshot>): void;
             setLandingStatus(state: Partial<LandingStatusSnapshot>): void;
-            listeners(): { audio: number; display: number; runStatus: number; landingStatus: number };
+            setAuth(state: Partial<AuthSnapshot>): void;
+            authActions(): { signInAttempts: number; signOutAttempts: number };
+            listeners(): { audio: number; display: number; runStatus: number; landingStatus: number; auth: number };
             refreshes(): number;
             gameControls(): { menuOpen: boolean; orientationPaused: boolean; exits: number };
             setOrientationPaused(paused: boolean): void;

@@ -9,9 +9,11 @@ import { mountDisplayControls } from './components/displayControls';
 import { mountGameMenu } from './components/gameMenu';
 import { mountRunStatus } from './components/runStatus';
 import { mountLandingStatus } from './components/landingStatus';
+import { mountAuthControls } from './components/authControls';
+import type { AuthPort } from '../game/application/auth/auth';
 import type { UiHandle } from './contracts';
 
-export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
+export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort): UiHandle
 {
     const container = root.querySelector<HTMLElement>('#game-container');
     if (!container) throw new Error('Missing game container.');
@@ -25,6 +27,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
     game.events.on('toggle-fullscreen', toggleFullscreen);
     const runStatus = mountRunStatus(root, createRunStatusPort(game));
     const landingStatus = mountLandingStatus(root, createLandingStatusPort(game));
+    const authControls = mountAuthControls(root, auth);
     const mainMenu = root.querySelector<HTMLElement>('#main-menu');
     const mainMenuNewGame = root.querySelector<HTMLButtonElement>('#main-menu-new-game');
     const mainMenuFullscreen = root.querySelector<HTMLButtonElement>('#main-menu-fullscreen');
@@ -95,6 +98,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game): UiHandle
             display.destroy();
             runStatus.destroy();
             landingStatus.destroy();
+            authControls.destroy();
+            auth.destroy();
             unsubscribeOrientation();
             mainMenuNewGame.removeEventListener('click', startNewGame);
             mainMenuFullscreen.removeEventListener('click', toggleMainMenuFullscreen);
