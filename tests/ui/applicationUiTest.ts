@@ -133,12 +133,12 @@ test('main-menu DOM logo leaves every control visible below it', async ({ page }
     });
     expect(layout.logoBounds).not.toBeNull();
     expect(layout.logoBounds?.width).toBeGreaterThanOrEqual(layout.viewportWidth - 1);
-    expect(layout.buttonBounds).toHaveLength(3);
+    expect(layout.buttonBounds).toHaveLength(4);
     for (const button of layout.buttonBounds) {
         expect(button.top).toBeGreaterThanOrEqual(layout.logoBounds?.bottom ?? 0);
         expect(button.bottom).toBeLessThanOrEqual(layout.viewportHeight);
     }
-    const menuContentCenter = ((layout.logoBounds?.top ?? 0) + layout.buttonBounds[2].bottom) / 2;
+    const menuContentCenter = ((layout.logoBounds?.top ?? 0) + layout.buttonBounds[3].bottom) / 2;
     expect(Math.abs(menuContentCenter - layout.viewportHeight / 2)).toBeLessThanOrEqual(1);
 });
 
