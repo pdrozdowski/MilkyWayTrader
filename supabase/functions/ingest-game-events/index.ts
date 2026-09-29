@@ -12,6 +12,8 @@ const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}
 const maxBatchSize = 20;
 const maxEventDataBytes = 4096;
 const maxGameVersionLength = 64;
+const allowedPlanets = new Set(['seroton']);
+const allowedCommodities = new Set(['supplies', 'alloys', 'medicines']);
 
 interface IncomingEvent
 {
@@ -56,6 +58,59 @@ function isPlainObject (value: unknown): value is Record<string, unknown>
     return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype;
 }
 
+function hasOnlyFields (value: Record<string, unknown>, fields: readonly string[]): boolean
+{
+    return Object.keys(value).length === fields.length && Object.keys(value).every(key => fields.includes(key));
+}
+
+function isNonNegativeSafeInteger (value: unknown): value is number
+{
+    return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
+
+function isIsoTimestamp (value: unknown): value is string
+{
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) return false;
+    const timestamp = new Date(value);
+    return !Number.isNaN(timestamp.getTime()) && timestamp.toISOString() === value;
+}
+
+function validateEventData (eventName: string, eventData: Record<string, unknown>): string | null
+{
+    switch (eventName) {
+        case 'session_started':
+            return hasOnlyFields(eventData, ['session_started_at', 'starting_credits'])
+                && isIsoTimestamp(eventData.session_started_at)
+                && isNonNegativeSafeInteger(eventData.starting_credits)
+                ? null : 'session_started event_data is invalid';
+        case 'session_ended':
+            return hasOnlyFields(eventData, ['duration_ms', 'final_credits'])
+                && isNonNegativeSafeInteger(eventData.duration_ms)
+                && isNonNegativeSafeInteger(eventData.final_credits)
+                ? null : 'session_ended event_data is invalid';
+        case 'planet_landed':
+        case 'planet_launched':
+            return hasOnlyFields(eventData, ['planet', 'credits_after'])
+                && typeof eventData.planet === 'string'
+                && allowedPlanets.has(eventData.planet)
+                && isNonNegativeSafeInteger(eventData.credits_after)
+                ? null : `${eventName} event_data is invalid`;
+        case 'commodity_bought':
+        case 'commodity_sold':
+            return hasOnlyFields(eventData, ['planet', 'commodity', 'quantity', 'total', 'credits_after'])
+                && typeof eventData.planet === 'string'
+                && allowedPlanets.has(eventData.planet)
+                && typeof eventData.commodity === 'string'
+                && allowedCommodities.has(eventData.commodity)
+                && isNonNegativeSafeInteger(eventData.quantity) && eventData.quantity > 0
+                && isNonNegativeSafeInteger(eventData.total)
+                && isNonNegativeSafeInteger(eventData.credits_after)
+                ? null : `${eventName} event_data is invalid`;
+        default:
+            return 'event_name is not allowed';
+    }
+}
+
 function validateEvent (value: unknown): IncomingEvent | string
 {
     if (!isPlainObject(value)) return 'event must be an object';
@@ -67,6 +122,8 @@ function validateEvent (value: unknown): IncomingEvent | string
     if (typeof event_name !== 'string' || !allowedEventNames.has(event_name)) return 'event_name is not allowed';
     if (!isPlainObject(event_data)) return 'event_data must be an object';
     if (new TextEncoder().encode(JSON.stringify(event_data)).byteLength > maxEventDataBytes) return 'event_data is too large';
+    const eventDataError = validateEventData(event_name, event_data);
+    if (eventDataError) return eventDataError;
     if (typeof game_version !== 'string' || game_version.length === 0 || game_version.length > maxGameVersionLength) return 'game_version is invalid';
     if (platform !== 'desktop' && platform !== 'mobile') return 'platform is invalid';
     return { anonymous_id, session_id, event_name, event_data, game_version, platform };

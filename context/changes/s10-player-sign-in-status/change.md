@@ -1,7 +1,7 @@
 ---
 change_id: s10-player-sign-in-status
 title: S10 player sign in status
-status: implementing
+status: impl_reviewed
 created: 2026-09-29
 updated: 2026-09-29
 archived_at: null
