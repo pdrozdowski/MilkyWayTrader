@@ -222,9 +222,9 @@ This introduces the first Supabase migration and Edge Function. Apply and test t
 
 #### Automated
 
-- [ ] 3.1 Telemetry tests cover anonymous ID reuse, new session ID per run, auth correlation, immutable event payloads, bounded queue/drop behavior, and teardown.
-- [ ] 3.2 Event tests prove successful semantic actions emit once and invalid/no-op/frame activity emits none.
-- [ ] 3.3 UI/application tests prove telemetry failures never block starting, playing, landing, launch, trade, sign-in, or sign-out.
+- [x] 3.1 Telemetry tests cover anonymous ID reuse, new session ID per run, auth correlation, immutable event payloads, bounded queue/drop behavior, and teardown.
+- [x] 3.2 Event tests prove successful semantic actions emit once and invalid/no-op/frame activity emits none.
+- [x] 3.3 UI/application tests prove telemetry failures never block starting, playing, landing, launch, trade, sign-in, or sign-out.
 
 #### Manual
 

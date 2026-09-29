@@ -19,6 +19,7 @@ import { Sun } from '../objects/sun/sun';
 import type { PlanetState } from '../state/planetState';
 import { ObjectDepth } from '../visual/layers';
 import { gameObjectLayout, gameWorldBounds } from './gameObjects';
+import type { TelemetryPort } from '../application/telemetry/telemetry';
 
 export class Game extends Scene
 {
@@ -32,6 +33,7 @@ export class Game extends Scene
     weapon: ShipWeapon;
     private stateProvider: GameStateProvider;
     private audio: AudioScope;
+    private telemetry: TelemetryPort;
     private steeringPointer: Input.Pointer | null = null;
     private readonly pointerWorld = new PhaserMath.Vector2();
     private readonly cameraDisplacement = new PhaserMath.Vector2();
@@ -70,6 +72,7 @@ export class Game extends Scene
         this.game.events.emit('debug-controls-reset');
         this.audio = getAudioService(this.game).createScope(this);
         this.stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
+        this.telemetry = this.registry.get('telemetry') as TelemetryPort;
         const state = this.stateProvider.snapshot();
         this.camera = this.cameras.main;
         this.camera.setZoom(1).removeBounds();
@@ -316,6 +319,7 @@ export class Game extends Scene
     };
 
     private readonly exitToGameOver = (): void => {
+        this.telemetry.endSession(this.stateProvider.snapshot().credits);
         this.loseFocus();
         this.scene.start('MainMenu');
     };
@@ -386,6 +390,7 @@ export class Game extends Scene
             muzzleOffset: weaponTuning.noseOffset * this.ship.sprite.scaleX
         }));
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.clearFlightInput();
+        if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.telemetry.emit('planet_landed', { planet: state.planetLifecycle.landedPlanetId, credits_after: state.credits });
         this.ship.synchronize(state.ship, time);
         this.lossOfControl.setVisible(time < this.lossOfControlUntilMs);
         this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);

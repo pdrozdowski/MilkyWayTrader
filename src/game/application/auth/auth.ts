@@ -16,6 +16,7 @@ export interface AuthPort
     subscribe(listener: (snapshot: Readonly<AuthSnapshot>) => void): () => void;
     signInWithGoogle(): Promise<void>;
     signOut(): Promise<void>;
+    getAccessToken?(): Promise<string | null>;
     destroy(): void;
 }
 
@@ -78,6 +79,11 @@ export function createAuthPort (configuration: PublicAuthConfiguration, clientFa
             const { error } = await client.auth.signOut({ scope: 'local' });
             if (error) publish(Object.freeze({ status: 'error', email: null, message: error.message }));
             else publish(toSnapshot(undefined));
+        },
+        getAccessToken: async () => {
+            if (destroyed) return null;
+            const { data, error } = await client.auth.getSession();
+            return error ? null : data.session?.access_token ?? null;
         },
         destroy: () => {
             if (destroyed) return;
