@@ -26,4 +26,36 @@ Set these Function secrets separately in each test and production project; never
 
 `SUPABASE_URL` is supplied by Supabase Functions. Keep `verify_jwt = false` for this function because unsigned play is supported; its code validates an optional bearer token before deriving an identity. After each deployment, inspect the migration, confirm RLS has no browser policies, confirm the Cron job exists, and test both unsigned and authenticated batches from the exact allowed origins.
 
+## Auth and environment setup
+
+Use a separate Supabase project and Google OAuth Web client for test/staging and production. The browser's `.env.local` contains only the matching project's public values:
+
+```dotenv
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<project-publishable-key>
+VITE_GAME_VERSION=<release-version>
+```
+
+Do not put a Google client secret, `SUPABASE_SERVICE_ROLE_KEY`, database password, access token, or `TELEMETRY_ALLOWED_ORIGINS` in this file. Keep the first two secrets and the allowed-origin value in the relevant Supabase dashboard/CLI secret store. The Google client ID and secret belong only in the matching Supabase Google provider configuration.
+
+For the test Supabase project, configure these exact URLs while the existing Cloudflare aliases remain in use:
+
+| Setting | Values |
+| --- | --- |
+| Supabase Auth redirect URLs | `http://localhost:8080`, `https://staging.milky-way-trader.pages.dev` |
+| Edge Function `TELEMETRY_ALLOWED_ORIGINS` | `http://localhost:8080,https://staging.milky-way-trader.pages.dev` |
+| Google OAuth authorized redirect URI | `https://<test-project-ref>.supabase.co/auth/v1/callback` |
+
+For production, replace the staging URL above with `https://milky-way-trader.pages.dev` and use the production Supabase project's callback. In Supabase Auth, set the Site URL to the primary origin for that environment, enable Google, and add the matching Google OAuth client ID and secret. The game sends `redirectTo: window.location.origin`; every origin used for sign-in must therefore be listed exactly in that environment's Supabase Auth redirect URLs. Do not add wildcard origins.
+
+Deploy and verify test before production. The owner runs the commands with the intended project reference, then records only the public outcomes using [Telemetry release verification](telemetry-release-verification.md):
+
+```powershell
+supabase db push --project-ref <test-project-ref>
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<service-role-key> TELEMETRY_ALLOWED_ORIGINS='http://localhost:8080,https://staging.milky-way-trader.pages.dev' --project-ref <test-project-ref>
+supabase functions deploy ingest-game-events --project-ref <test-project-ref> --no-verify-jwt
+```
+
+Enter secret values directly in a trusted terminal or dashboard; never paste them into a repository file, issue, test result, or chat transcript.
+
 Before collecting public telemetry, the owner must provide any privacy notice, consent mechanism, lawful basis, and other obligations required in the jurisdictions where the game is offered. This repository cannot determine or satisfy those obligations on the owner’s behalf.
