@@ -1,4 +1,8 @@
-import type { PublicAuthConfiguration } from './auth';
+export interface PublicAuthConfiguration
+{
+    url?: string;
+    publishableKey?: string;
+}
 
 export const gameVersion = import.meta.env.VITE_GAME_VERSION;
 

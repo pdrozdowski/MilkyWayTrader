@@ -12,7 +12,10 @@ import type { TelemetryPort } from '../../game/application/telemetry/telemetry.t
 export function createLandingStatusPort (game: Game): LandingStatusPort
 {
     const provider = game.registry.get('gameStateProvider') as GameStateProvider;
-    const telemetry = game.registry.get('telemetry') as TelemetryPort;
+    const registeredTelemetry = game.registry.get('telemetry') as Partial<TelemetryPort> | undefined;
+    const telemetry: Pick<TelemetryPort, 'emit'> = typeof registeredTelemetry?.emit === 'function'
+        ? registeredTelemetry as Pick<TelemetryPort, 'emit'>
+        : { emit: () => {} };
     const listeners = new Set<(snapshot: Readonly<LandingStatusSnapshot>) => void>();
     let destroyed = false;
     let selectedCommodityId: SerotonCommodityId = 'supplies';

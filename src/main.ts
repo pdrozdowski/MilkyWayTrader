@@ -1,7 +1,7 @@
 import StartGame from './game/main';
 import { setupApplicationUi } from './ui/setupUi';
-import { createBrowserAuthPort } from './game/application/auth/auth';
-import { createBrowserTelemetryPort } from './game/application/telemetry/browserTelemetry';
+import { createBrowserAuthPort } from './ui/adapters/browserAuth';
+import { createBrowserTelemetryPort } from './ui/adapters/browserTelemetry';
 
 document.addEventListener('DOMContentLoaded', () => {
 

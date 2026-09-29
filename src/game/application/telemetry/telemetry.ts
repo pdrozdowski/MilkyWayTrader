@@ -29,7 +29,7 @@ export interface TelemetryDependencies
     readonly storage: Pick<Storage, 'getItem' | 'setItem'>;
     readonly uuid: () => string;
     readonly now: () => number;
-    readonly fetch: typeof window.fetch;
+    readonly fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
     readonly platform: TelemetryPlatform;
 }
 

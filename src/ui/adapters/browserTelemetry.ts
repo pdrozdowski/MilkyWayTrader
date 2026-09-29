@@ -1,6 +1,6 @@
-import type { AuthPort } from '../auth/auth';
-import { browserAuthConfiguration, gameVersion } from '../auth/configuration';
-import { createTelemetryPort, type TelemetryPlatform, type TelemetryPort } from './telemetry';
+import type { AuthPort } from '../../game/application/auth/auth';
+import { browserAuthConfiguration, gameVersion } from '../../game/application/auth/configuration';
+import { createTelemetryPort, type TelemetryPlatform, type TelemetryPort } from '../../game/application/telemetry/telemetry';
 
 export function createBrowserTelemetryPort (auth: AuthPort): TelemetryPort
 {
