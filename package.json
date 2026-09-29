@@ -43,6 +43,7 @@
     "wrangler": "^4.133.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "phaser": "4.0.0",
     "terser": "^5.39.0"
   }

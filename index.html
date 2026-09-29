@@ -16,11 +16,13 @@
             <div id="main-menu-controls">
                 <button id="main-menu-new-game" class="action-button" type="button">New Game</button>
                 <button id="main-menu-continue" class="action-button" type="button" disabled>Continue Game</button>
+                <button id="main-menu-sign-in" class="action-button" type="button" data-game-input="ignore">Sign in with Google</button>
                 <button id="main-menu-fullscreen" class="action-button" type="button" aria-pressed="false">Fullscreen Mode: OFF</button>
             </div>
         </section>
         <section id="run-status" data-game-input="ignore" aria-label="Run status" hidden>
             <button id="game-menu-toggle" type="button" aria-expanded="false" aria-controls="game-menu">Menu</button>
+            <span id="run-status-auth" aria-live="polite"></span>
             <span id="run-status-clock"></span>
             <div id="run-status-primary"><label id="run-status-hp-label" for="run-status-hp"></label><progress id="run-status-hp" value="0" max="100"></progress></div>
             <div id="run-status-secondary"><span id="run-status-credits"></span><span id="run-status-cargo"></span><button id="run-status-ship-toggle" type="button" aria-expanded="false" aria-controls="run-status-ship-details">Ship info</button><button id="run-status-cargo-toggle" type="button" aria-expanded="false" aria-controls="run-status-cargo-details">Cargo info</button><section id="run-status-ship-details" aria-label="Ship information" hidden><p id="run-status-cargo-system"></p><p id="run-status-engine-system"></p><p id="run-status-weapon-system"></p><p id="run-status-booster"></p></section><section id="run-status-cargo-details" aria-label="Cargo contents" hidden><p id="run-status-cargo-contents"></p><table id="run-status-cargo-table" aria-label="Cargo stock table"><thead><tr><th scope="col">Icon</th><th scope="col">Commodity</th><th scope="col">Stock</th></tr></thead><tbody id="run-status-cargo-rows"></tbody></table></section></div>
@@ -31,6 +33,7 @@
                 <h2>Menu</h2>
                 <div class="game-menu-actions">
                 <button id="game-menu-resume" class="action-button" type="button">Resume</button>
+                <button id="game-menu-sign-out" class="action-button" type="button" data-game-input="ignore" hidden>Sign out</button>
                 <div id="audio-controls" role="group" aria-label="Game audio">
                     <button id="audio-mute" type="button" aria-pressed="false">Mute</button>
                     <label for="audio-volume">Volume</label>

@@ -199,12 +199,12 @@ This introduces the first Supabase migration and Edge Function. Apply and test t
 
 #### Automated
 
-- [ ] 1.1 Auth and UI tests cover unavailable, unsigned, signed-in, action-error, local sign-out, accessibility, and teardown states.
-- [ ] 1.2 `npm.cmd run typecheck` passes with public environment declarations and SDK types.
+- [x] 1.1 Auth and UI tests cover unavailable, unsigned, signed-in, action-error, local sign-out, accessibility, and teardown states.
+- [x] 1.2 `npm.cmd run typecheck` passes with public environment declarations and SDK types.
 
 #### Manual
 
-- [ ] 1.3 An Unsigned player can play normally; a signed-in player sees email and can sign out without losing local gameplay.
+- [x] 1.3 An Unsigned player can play normally; a signed-in player sees email and can sign out without losing local gameplay.
 
 ### Phase 2: Telemetry schema, function, and retention
 

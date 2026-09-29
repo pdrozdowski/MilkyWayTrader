@@ -5,6 +5,7 @@ export interface UiHandle
 
 export type { RunStatusSnapshot } from '../game/application/runStatus';
 export type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
+export type { AuthPort, AuthSnapshot } from '../game/application/auth/auth';
 import type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
 import type { SerotonCommodityId } from '../game/state/serotonMarketState';
 import type { RunStatusSnapshot } from '../game/application/runStatus';
