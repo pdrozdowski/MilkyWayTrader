@@ -4,6 +4,8 @@ Zatwierdzony zakres: [deploy-plan.md](deploy-plan.md). Faktyczne wyniki i brakuj
 
 Pierwsza publikacja obejmuje demo Phaser. Supabase i Google OAuth przygotowujemy dla przyszłej integracji; obecny frontend nie korzysta z bazy ani nie oferuje logowania.
 
+Aktualne wdrożenie telemetrii, granice prywatności i sekrety funkcji opisuje [Telemetry Operations and Privacy](../../docs/telemetry.md). Najpierw wdrażaj je do projektu testowego; sekrety funkcji pozostają wyłącznie w Supabase.
+
 ## 1. Konta i Cloudflare
 
 1. Zarejestruj konto [Cloudflare](https://dash.cloudflare.com/sign-up) na darmowym planie. Dla adresu `pages.dev` nie potrzebujesz kupować domeny ani dodawać strefy DNS.
