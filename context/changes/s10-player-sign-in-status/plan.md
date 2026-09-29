@@ -236,8 +236,8 @@ This introduces the first Supabase migration and Edge Function. Apply and test t
 #### Automated
 
 - [ ] 4.1 `npm.cmd run test:project` passes.
-- [ ] 4.2 `npm.cmd run typecheck` passes.
-- [ ] 4.3 `npm.cmd run build-nolog` passes.
+- [x] 4.2 `npm.cmd run typecheck` passes.
+- [x] 4.3 `npm.cmd run build-nolog` passes.
 
 #### Manual
 
