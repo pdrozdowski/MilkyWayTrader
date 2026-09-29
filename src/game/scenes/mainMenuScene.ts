@@ -1,6 +1,7 @@
 import { Scene, GameObjects, Math as PhaserMath } from 'phaser';
 import type { GameStateProvider } from '../application/gameStateProvider';
 import { initialGameState } from '../definitions/initialGameState';
+import type { TelemetryPort } from '../application/telemetry/telemetry';
 
 export class MainMenu extends Scene
 {
@@ -23,6 +24,7 @@ export class MainMenu extends Scene
         const startGame = () => {
             const stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
             stateProvider.reset(initialGameState);
+            (this.registry.get('telemetry') as TelemetryPort).startSession(initialGameState.credits);
             this.scene.start('Game');
         };
         this.game.events.on('start-new-game', startGame);

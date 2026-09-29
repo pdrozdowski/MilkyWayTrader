@@ -11,9 +11,10 @@ import { mountRunStatus } from './components/runStatus';
 import { mountLandingStatus } from './components/landingStatus';
 import { mountAuthControls } from './components/authControls';
 import type { AuthPort } from '../game/application/auth/auth';
+import type { TelemetryPort } from '../game/application/telemetry/telemetry';
 import type { UiHandle } from './contracts';
 
-export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort): UiHandle
+export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort, telemetry: TelemetryPort): UiHandle
 {
     const container = root.querySelector<HTMLElement>('#game-container');
     if (!container) throw new Error('Missing game container.');
@@ -26,6 +27,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const toggleFullscreen = (): void => { void displayPort.toggleFullscreen(); };
     game.events.on('toggle-fullscreen', toggleFullscreen);
     const runStatus = mountRunStatus(root, createRunStatusPort(game));
+    game.registry.set('telemetry', telemetry);
     const landingStatus = mountLandingStatus(root, createLandingStatusPort(game));
     const authControls = mountAuthControls(root, auth);
     const mainMenu = root.querySelector<HTMLElement>('#main-menu');
@@ -100,6 +102,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             landingStatus.destroy();
             authControls.destroy();
             auth.destroy();
+            telemetry.destroy();
             unsubscribeOrientation();
             mainMenuNewGame.removeEventListener('click', startNewGame);
             mainMenuFullscreen.removeEventListener('click', toggleMainMenuFullscreen);

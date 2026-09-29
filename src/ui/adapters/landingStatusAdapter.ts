@@ -7,10 +7,12 @@ import { applySerotonTrade, quoteSerotonTrade, type SerotonTradeQuote } from '..
 import { launchFromPlanet } from '../../game/mechanics/planet/landing.ts';
 import type { LandingStatusPort, LandingStatusSnapshot } from '../contracts.ts';
 import type { SerotonCommodityId } from '../../game/state/serotonMarketState.ts';
+import type { TelemetryPort } from '../../game/application/telemetry/telemetry.ts';
 
 export function createLandingStatusPort (game: Game): LandingStatusPort
 {
     const provider = game.registry.get('gameStateProvider') as GameStateProvider;
+    const telemetry = game.registry.get('telemetry') as TelemetryPort;
     const listeners = new Set<(snapshot: Readonly<LandingStatusSnapshot>) => void>();
     let destroyed = false;
     let selectedCommodityId: SerotonCommodityId = 'supplies';
@@ -88,6 +90,14 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
             if (quote.failure !== null) return;
             refreshSuppressed = true;
             provider.update(state => applySerotonTrade(state, selectedCommodityId, tradeQuantity));
+            const updated = provider.snapshot();
+            telemetry.emit(tradeQuantity > 0 ? 'commodity_bought' : 'commodity_sold', {
+                planet: updated.planetLifecycle.landedPlanetId,
+                commodity: selectedCommodityId,
+                quantity: Math.abs(tradeQuantity),
+                total: quote.total,
+                credits_after: updated.credits
+            });
             refreshSuppressed = false;
             rebuildPriceLadder();
             tradeQuantity = 0;
@@ -95,7 +105,10 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
         },
         launch: () => {
             if (destroyed) return;
+            const before = provider.snapshot();
             provider.update(launchFromPlanet);
+            const updated = provider.snapshot();
+            if (before.planetLifecycle.landedPlanetId !== null && updated.planetLifecycle.landedPlanetId === null) telemetry.emit('planet_launched', { planet: before.planetLifecycle.landedPlanetId, credits_after: updated.credits });
             game.events.emit('landing-modal-transition');
         },
         destroy: () => {
