@@ -1,7 +1,6 @@
 export const displayLabels = {
     signInWithGoogle: 'Sign in with Google',
     signOut: 'Sign out',
-    signedInIcon: '\u{1F464}',
     unsigned: 'Unsigned',
     authUnavailable: 'Sign-in is unavailable: configure Supabase public URL and publishable key.',
     authError: 'Sign-in failed. Please try again.',
