@@ -63,9 +63,21 @@ Demo; brak logowania Google OAuth/zapisów/ekonomii/backendu. Konfiguracja Cloud
 
 <!-- BEGIN @przeprogramowani/10x-cli -->
 
+## Playwright admission gate
+
+Before adding or changing a Playwright test, assess the failure risk and choose the cheapest test level that gives a real regression signal. Use Playwright only when an important player journey or browser integration cannot be proven by unit, integration, component, or application tests.
+
+A proposed Playwright test must record in its implementation plan, change description, or a short comment immediately above the test:
+
+1. the player-visible failure scenario;
+2. why a cheaper test level cannot expose it; and
+3. the unique browser behavior it verifies.
+
+Do not add Playwright tests for calculations, authoritative state transitions, validation, economy or cargo rules, serialization, telemetry, fake-port component rendering, listener cleanup, or implementation details. Cover those with fast tests at the appropriate lower level. Prefer one representative E2E journey over several overlapping UI checks. A test that does not pass this gate must not be introduced to the Playwright suite.
+
 ## Zestaw narzędzi AI 10xDevs — Moduł 3, Lekcja 4 (testy E2E)
 
-**W przypadku testów E2E użyj dwóch umiejętności M3L4 w tej kolejności:**
+**Only after a test passes the Playwright admission gate, use the two M3L4 skills in this order:**
 
 1. **`/10x-e2e-setup`** — jednorazowa konfiguracja: konfiguracja Playwright (`webServer`,
    projekt `setup` autoryzacji, `storageState`), zielony test seed oraz `context/foundation/test-stack.md`.

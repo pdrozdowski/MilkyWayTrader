@@ -4,7 +4,8 @@
 
 - Domain and mechanics use Node's built-in test runner. Test public behavior without Phaser, DOM or adapter mocks.
 - Architecture tests enforce dependencies, ownership and naming.
-- HTML UI uses Playwright against real Chromium. Component tests mount semantic HTML with fake typed ports; application smoke tests verify real boot and adapter wiring.
+- Unit and integration tests cover business rules, authoritative state, adapters, telemetry, and component behavior with typed fakes where appropriate. Component tests that mount semantic HTML with fake ports belong in a fast non-Playwright DOM test environment when one is introduced.
+- Playwright uses real Chromium only for a small set of critical player journeys and browser integrations that cheaper layers cannot expose. Application smoke tests verify real boot and adapter wiring only when that browser boundary is the risk.
 - Build, audit and Pages-size checks are deployment validation, not substitutes for behavioral tests.
 
 ## Business rules
@@ -21,9 +22,9 @@ When a task explicitly requests architecture artifacts, refresh `code-graph.json
 
 ## UI behavior
 
-Prefer roles, labels and visible text as selectors. Use IDs only for stable component-owned elements and `data-*` attributes for cross-layer contracts such as ignored gameplay input. Component tests verify rendering, actions, subscriptions and idempotent cleanup. Application smoke tests verify boot, persistence, browser errors and representative adapter behavior.
+Prefer roles, labels and visible text as Playwright selectors. Use IDs only for stable component-owned elements and `data-*` attributes for cross-layer contracts such as ignored gameplay input. Fast component tests verify rendering, actions, subscriptions and idempotent cleanup. Before adding Playwright coverage, record the player-visible failure scenario, why lower-level tests are insufficient, and the unique browser behavior under test.
 
-Playwright runs desktop and touch-sized Chromium projects. Fullscreen success is tested through a fake port because headless browser fullscreen support varies; the application smoke suite only verifies real wiring. Store reports, traces and screenshots under ignored `.cache/` paths.
+Playwright has one Chromium project. A dedicated journey may opt into a touch viewport when the risk specifically concerns touch/browser layout. Fullscreen success is tested through a fake port because headless browser fullscreen support varies; the application smoke suite only verifies real wiring. Store reports, traces and screenshots under ignored `.cache/` paths.
 
 ## Commands and failures
 
