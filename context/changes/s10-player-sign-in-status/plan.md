@@ -228,14 +228,14 @@ This introduces the first Supabase migration and Edge Function. Apply and test t
 
 #### Manual
 
-- [ ] 3.4 Two runs reuse anonymous ID but differ in session ID; clearing storage creates a new anonymous ID.
-- [ ] 3.5 Pre-sign-in and post-sign-in rows correlate by anonymous/session ID without retroactive user assignment.
+- [x] 3.4 Two runs reuse anonymous ID but differ in session ID; clearing storage creates a new anonymous ID.
+- [x] 3.5 Pre-sign-in and post-sign-in rows correlate by anonymous/session ID without retroactive user assignment.
 
 ### Phase 4: External setup and release verification
 
 #### Automated
 
-- [ ] 4.1 `npm.cmd run test:project` passes.
+- [x] 4.1 `npm.cmd run test:project` passes.
 - [x] 4.2 `npm.cmd run typecheck` passes.
 - [x] 4.3 `npm.cmd run build-nolog` passes.
 
