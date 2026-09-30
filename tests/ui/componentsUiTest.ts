@@ -53,7 +53,8 @@ test('auth controls expose unsigned, unavailable, signed-in and teardown states'
     await page.evaluate(() => window.uiHarness.setAuth({ status: 'error', message: 'OAuth popup was cancelled' }));
     await expect(page.getByText('Sign-in failed. Please try again.', { exact: true })).toBeVisible();
     await page.evaluate(() => window.uiHarness.setAuth({ status: 'signed-in', email: 'pilot@example.com', message: null }));
-    await expect(page.locator('#run-status-auth')).toHaveText('👤 pilot@example.com');
+    await expect(page.locator('#run-status-auth')).toHaveText('pilot@example.com');
+    await expect(page.locator('#run-status-auth')).toHaveClass(/run-status-auth--signed-in/);
     await expect(page.getByRole('button', { name: '👤 pilot@example.com · Sign out' })).toBeVisible();
     await page.getByRole('button', { name: '👤 pilot@example.com · Sign out' }).click();
     expect(await page.evaluate(() => window.uiHarness.authActions())).toEqual({ signInAttempts: 1, signOutAttempts: 1 });

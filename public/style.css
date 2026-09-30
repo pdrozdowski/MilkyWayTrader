@@ -58,6 +58,7 @@ body {
 #run-status-clock, #run-status-auth, #run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
 #run-status-left { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; width: min(100%, 250px); min-width: 0; }
 #run-status-auth { grid-column: 1 / -1; min-width: 0; padding: 10px 12px; overflow: hidden; color: #fff; text-overflow: ellipsis; white-space: nowrap; }
+#run-status-auth.run-status-auth--signed-in::before { display: inline-block; width: 1em; height: 1em; margin-right: .4em; content: ''; background: #fff; vertical-align: -.15em; mask: url('/assets/ui/userIcon.svg') center / contain no-repeat; }
 #run-status-clock { min-width: 0; padding: 10px 12px; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 #run-status-primary { grid-column: 2; box-sizing: border-box; justify-self: stretch; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; min-width: 0; padding: 10px 12px; }
 #run-status-secondary { grid-column: 3; position: relative; justify-self: end; display: grid; gap: 5px; min-width: 0; text-align: center; }
