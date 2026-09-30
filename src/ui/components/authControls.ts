@@ -20,7 +20,12 @@ export function mountAuthControls (root: HTMLElement, port: AuthPort): UiHandle
         const signedIn = snapshot.status === 'signed-in';
         signIn.disabled = unavailable;
         signIn.title = unavailable ? displayLabels.authUnavailable : '';
-        signIn.textContent = signedIn ? `${snapshot.email ?? displayLabels.unsigned} \u00b7 ${displayLabels.signOut}` : displayLabels.signInWithGoogle;
+        if (signedIn) {
+            const icon = document.createElement('span');
+            icon.className = 'main-menu-user-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            signIn.replaceChildren(icon, document.createTextNode(` ${snapshot.email ?? displayLabels.unsigned} \u00b7 ${displayLabels.signOut}`));
+        } else signIn.textContent = displayLabels.signInWithGoogle;
         signIn.classList.toggle('main-menu-sign-in--signed-in', signedIn);
         signOut.hidden = !signedIn;
         signOut.textContent = displayLabels.signOut;
