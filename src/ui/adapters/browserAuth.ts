@@ -33,20 +33,28 @@ function toSnapshot (email: string | undefined): Readonly<AuthSnapshot>
 
 export function createBrowserAuthPort (configuration = browserAuthConfiguration(), clientFactory: ClientFactory = createClient): AuthPort
 {
-    if (!isValidConfiguration(configuration)) return createUnavailableAuthPort();
+    if (!isValidConfiguration(configuration)) {
+        console.info('[AUTH DEBUG] browser auth configuration is unavailable', {
+            hasUrl: Boolean(configuration.url),
+            hasPublishableKey: Boolean(configuration.publishableKey),
+            publishableKeyHasWhitespace: Boolean(configuration.publishableKey && /\s/.test(configuration.publishableKey)),
+            publishableKeyLengthValid: Boolean(configuration.publishableKey && configuration.publishableKey.length >= 20)
+        });
+        return createUnavailableAuthPort();
+    }
     const callbackUrl = new URL(window.location.href);
-    console.debug('[AUTH DEBUG] creating Supabase client', {
+    console.info('[AUTH DEBUG] creating Supabase client', {
         supabaseOrigin: new URL(configuration.url).origin,
         ...authOptions
     });
-    console.debug('[AUTH DEBUG] inspecting OAuth callback URL', {
+    console.info('[AUTH DEBUG] inspecting OAuth callback URL', {
         pageUrl: `${callbackUrl.origin}${callbackUrl.pathname}`,
         hasOAuthCode: callbackUrl.searchParams.has('code'),
         hasOAuthError: callbackUrl.searchParams.has('error'),
         hasOAuthErrorDescription: callbackUrl.searchParams.has('error_description'),
         hasFragment: callbackUrl.hash.length > 0
     });
-    console.debug('[AUTH DEBUG] PKCE callback exchange', {
+    console.info('[AUTH DEBUG] PKCE callback exchange', {
         pkceUsed: false,
         automaticExchange: false,
         explicitExchange: false
@@ -62,7 +70,7 @@ export function createBrowserAuthPort (configuration = browserAuthConfiguration(
     };
     const setSession = (session: { user: { email?: string | null } } | null): void => publish(toSnapshot(session?.user.email ?? undefined));
     const { data: listener } = client.auth.onAuthStateChange((event, session) => {
-        console.debug('[AUTH DEBUG] auth state changed', {
+        console.info('[AUTH DEBUG] auth state changed', {
             event,
             hasSession: session !== null,
             userId: session?.user.id ?? null,
@@ -71,7 +79,7 @@ export function createBrowserAuthPort (configuration = browserAuthConfiguration(
         setSession(session);
     });
     void client.auth.getSession().then(async ({ data, error }) => {
-        console.debug('[AUTH DEBUG] getSession completed', {
+        console.info('[AUTH DEBUG] getSession completed', {
             hasSession: data.session !== null,
             userId: data.session?.user.id ?? null,
             email: data.session?.user.email ?? null,
@@ -83,9 +91,9 @@ export function createBrowserAuthPort (configuration = browserAuthConfiguration(
             return;
         }
         setSession(data.session);
-        console.debug('[AUTH DEBUG] before getUser', { hasSession: data.session !== null, hasAccessToken: Boolean(data.session?.access_token) });
+        console.info('[AUTH DEBUG] before getUser', { hasSession: data.session !== null, hasAccessToken: Boolean(data.session?.access_token) });
         const userResult = await client.auth.getUser();
-        console.debug('[AUTH DEBUG] getUser completed', {
+        console.info('[AUTH DEBUG] getUser completed', {
             hasUser: userResult.data.user !== null,
             userId: userResult.data.user?.id ?? null,
             email: userResult.data.user?.email ?? null,
@@ -94,7 +102,7 @@ export function createBrowserAuthPort (configuration = browserAuthConfiguration(
             errorCode: userResult.error?.code ?? null
         });
     }).catch(error => {
-        console.debug('[AUTH DEBUG] startup auth inspection failed', {
+        console.info('[AUTH DEBUG] startup auth inspection failed', {
             errorMessage: error instanceof Error ? error.message : 'Unable to read sign-in status.'
         });
         publish(Object.freeze({ status: 'error', email: null, message: error instanceof Error ? error.message : 'Unable to read sign-in status.' }));
@@ -105,7 +113,7 @@ export function createBrowserAuthPort (configuration = browserAuthConfiguration(
         signInWithGoogle: async () => {
             if (destroyed) return;
             const redirectTo = window.location.origin;
-            console.debug('[AUTH DEBUG] Google sign-in initiated', { redirectTo });
+            console.info('[AUTH DEBUG] Google sign-in initiated', { redirectTo });
             const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
             if (error) publish(Object.freeze({ status: 'error', email: null, message: error.message }));
         },
