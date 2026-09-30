@@ -21,7 +21,6 @@ supabase functions deploy ingest-game-events --project-ref <test-project-ref> --
 
 Set these Function secrets separately in each test and production project; never add them to `.env.local` or source control:
 
-- `SUPABASE_SERVICE_ROLE_KEY` (server-side insertion only)
 - `TELEMETRY_ALLOWED_ORIGINS` (comma-separated exact origins, such as `http://localhost:8080,https://staging.example.pages.dev`)
 
 `SUPABASE_URL` is supplied by Supabase Functions. Keep `verify_jwt = false` for this function because unsigned play is supported; its code validates an optional bearer token before deriving an identity. After each deployment, inspect the migration, confirm RLS has no browser policies, confirm the Cron job exists, and test both unsigned and authenticated batches from the exact allowed origins.
@@ -36,7 +35,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<project-publishable-key>
 VITE_GAME_VERSION=<release-version>
 ```
 
-Do not put a Google client secret, `SUPABASE_SERVICE_ROLE_KEY`, database password, access token, or `TELEMETRY_ALLOWED_ORIGINS` in this file. Keep the first two secrets and the allowed-origin value in the relevant Supabase dashboard/CLI secret store. The Google client ID and secret belong only in the matching Supabase Google provider configuration.
+Do not put a Google client secret, a Supabase secret key, database password, access token, or `TELEMETRY_ALLOWED_ORIGINS` in this file. Supabase injects `SUPABASE_SECRET_KEYS` for Edge Functions; set only the allowed-origin value in the relevant Supabase dashboard/CLI secret store. The Google client ID and secret belong only in the matching Supabase Google provider configuration.
 
 For the test Supabase project, configure these exact URLs while the existing Cloudflare aliases remain in use:
 
@@ -52,7 +51,7 @@ Deploy and verify test before production. The owner runs the commands with the i
 
 ```powershell
 supabase db push --project-ref <test-project-ref>
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<service-role-key> TELEMETRY_ALLOWED_ORIGINS='http://localhost:8080,https://staging.milky-way-trader.pages.dev' --project-ref <test-project-ref>
+supabase secrets set TELEMETRY_ALLOWED_ORIGINS='http://localhost:8080,https://staging.milky-way-trader.pages.dev' --project-ref <test-project-ref>
 supabase functions deploy ingest-game-events --project-ref <test-project-ref> --no-verify-jwt
 ```
 

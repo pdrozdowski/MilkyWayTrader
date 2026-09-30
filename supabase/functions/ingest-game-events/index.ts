@@ -169,9 +169,10 @@ Deno.serve(async request => {
     if (rejected.length > 0) return response(origin, 400, { accepted: 0, rejected: rejected.length, rejected_events: rejected });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!supabaseUrl || !serviceRoleKey) return response(origin, 500, { accepted: 0, rejected: 0, error: 'telemetry is not configured' });
-    const client = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    const secretKeys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}') as Record<string, string>;
+    const secretKey = secretKeys.default;
+    if (!supabaseUrl || !secretKey) return response(origin, 500, { accepted: 0, rejected: 0, error: 'telemetry is not configured' });
+    const client = createClient(supabaseUrl, secretKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
     let userId: string | null;
     try {
