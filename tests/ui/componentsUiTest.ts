@@ -54,10 +54,13 @@ test('auth controls expose unsigned, unavailable, signed-in and teardown states'
     await expect(page.getByText('Sign-in failed. Please try again.', { exact: true })).toBeVisible();
     await page.evaluate(() => window.uiHarness.setAuth({ status: 'signed-in', email: 'pilot@example.com', message: null }));
     await expect(page.getByText('pilot@example.com', { exact: true })).toBeVisible();
-    await page.locator('#game-menu-toggle').click();
-    await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
-    await page.getByRole('button', { name: 'Sign out' }).click();
+    await expect(page.getByRole('button', { name: '👤 pilot@example.com · Sign out' })).toBeVisible();
+    await page.getByRole('button', { name: '👤 pilot@example.com · Sign out' }).click();
     expect(await page.evaluate(() => window.uiHarness.authActions())).toEqual({ signInAttempts: 1, signOutAttempts: 1 });
+    await page.locator('#game-menu-toggle').click();
+    await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    expect(await page.evaluate(() => window.uiHarness.authActions())).toEqual({ signInAttempts: 1, signOutAttempts: 2 });
     await page.evaluate(() => window.uiHarness.destroy());
     expect(await page.evaluate(() => window.uiHarness.listeners().auth)).toBe(0);
 });
