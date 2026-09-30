@@ -9,7 +9,7 @@ const authOptions = {
     flowType: 'implicit' as const
 };
 
-type ClientFactory = (url: string, key: string, options: { auth: typeof authOptions }) => SupabaseClient;
+type ClientFactory = (url: string, key: string, options: { auth: typeof authOptions, global: { fetch: typeof fetch } }) => SupabaseClient;
 
 const unavailableSnapshot: Readonly<AuthSnapshot> = Object.freeze({
     status: 'unavailable', email: null, message: 'Sign-in is unavailable: configure Supabase public URL and publishable key.'
@@ -29,6 +29,32 @@ function isValidConfiguration (configuration: PublicAuthConfiguration): configur
 function toSnapshot (email: string | undefined): Readonly<AuthSnapshot>
 {
     return Object.freeze(email ? { status: 'signed-in', email, message: null } : { status: 'unsigned', email: null, message: null });
+}
+
+async function debugAuthFetch (input: RequestInfo | URL, init?: RequestInit): Promise<Response>
+{
+    const response = await fetch(input, init);
+    const requestUrl = input instanceof Request ? input.url : input.toString();
+    if (new URL(requestUrl).pathname !== '/auth/v1/user') return response;
+    let error: { code: string | null, message: string | null } | null = null;
+    try {
+        const body: unknown = await response.clone().json();
+        if (typeof body === 'object' && body !== null) {
+            const values = body as Record<string, unknown>;
+            error = {
+                code: typeof values.code === 'string' ? values.code : null,
+                message: typeof values.message === 'string' ? values.message : null
+            };
+        }
+    } catch {
+        // The user endpoint normally returns JSON errors. Nothing else is needed for this temporary trace.
+    }
+    console.info('[AUTH DEBUG] automatic /auth/v1/user response', {
+        status: response.status,
+        statusText: response.statusText,
+        error
+    });
+    return response;
 }
 
 export function createBrowserAuthPort (configuration = browserAuthConfiguration(), clientFactory: ClientFactory = createClient): AuthPort
@@ -59,7 +85,7 @@ export function createBrowserAuthPort (configuration = browserAuthConfiguration(
         automaticExchange: false,
         explicitExchange: false
     });
-    const client = clientFactory(configuration.url, configuration.publishableKey, { auth: authOptions });
+    const client = clientFactory(configuration.url, configuration.publishableKey, { auth: authOptions, global: { fetch: debugAuthFetch } });
     const listeners = new Set<(snapshot: Readonly<AuthSnapshot>) => void>();
     let snapshot: Readonly<AuthSnapshot> = toSnapshot(undefined);
     let destroyed = false;
