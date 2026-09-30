@@ -11,6 +11,7 @@ function dependencies (overrides: Partial<TelemetryDependencies> = {}): Telemetr
     let nextId = 0;
     return {
         endpoint: 'https://project.supabase.co/functions/v1/ingest-game-events',
+        publishableKey: 'sb_publishable_test',
         gameVersion: 'test-version',
         auth: unsignedAuth(),
         storage: memoryStorage(),

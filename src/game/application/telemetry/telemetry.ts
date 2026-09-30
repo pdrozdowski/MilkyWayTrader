@@ -24,6 +24,7 @@ export interface TelemetryPort
 export interface TelemetryDependencies
 {
     readonly endpoint: string | null;
+    readonly publishableKey: string | null;
     readonly gameVersion: string;
     readonly auth: AuthPort;
     readonly storage: Pick<Storage, 'getItem' | 'setItem'>;
@@ -63,6 +64,7 @@ export function createTelemetryPort (dependencies: TelemetryDependencies): Telem
         try {
             const accessToken = await dependencies.auth.getAccessToken?.() ?? null;
             const headers: Record<string, string> = { 'content-type': 'application/json' };
+            if (dependencies.publishableKey) headers.apikey = dependencies.publishableKey;
             if (accessToken) headers.authorization = `Bearer ${accessToken}`;
             await dependencies.fetch(dependencies.endpoint, { method: 'POST', headers, body: JSON.stringify({ events: batch }) });
         } catch {

@@ -5,9 +5,10 @@ import { createTelemetryPort, type TelemetryPlatform, type TelemetryPort } from 
 export function createBrowserTelemetryPort (auth: AuthPort): TelemetryPort
 {
     const configuration = browserAuthConfiguration();
-    const endpoint = telemetryEndpoint(configuration.url);
+    const endpoint = configuration.publishableKey ? telemetryEndpoint(configuration.url) : null;
     return createTelemetryPort({
         endpoint,
+        publishableKey: configuration.publishableKey ?? null,
         gameVersion,
         auth,
         storage: window.localStorage,
