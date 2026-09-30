@@ -21,7 +21,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     game.canvas.tabIndex = 0;
     const audio = mountAudioControls(root, createAudioSettingsPort(game));
     const controlsPort = createGameControlsPort(game);
-    const menuControls = mountGameMenu(root, controlsPort, auth);
+    const menuControls = mountGameMenu(root, controlsPort);
     const displayPort = createDisplayPort(game, root, container);
     const display = mountDisplayControls(root, displayPort, active => game.events.emit('fullscreen-change', active));
     const toggleFullscreen = (): void => { void displayPort.toggleFullscreen(); };
