@@ -56,7 +56,7 @@ body {
 
 #run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 36vw) minmax(0, 1fr); align-items: start; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }
 #run-status-clock, #run-status-auth, #run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
-#run-status-left { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; width: min(100%, 360px); min-width: 0; }
+#run-status-left { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; width: min(100%, 310px); min-width: 0; }
 #run-status-auth { grid-column: 1 / -1; min-width: 0; padding: 10px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #run-status-clock { min-width: 0; padding: 10px 12px; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 #run-status-primary { grid-column: 2; box-sizing: border-box; justify-self: stretch; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; min-width: 0; padding: 10px 12px; }
