@@ -8,6 +8,13 @@ function required<T extends Element> (root: HTMLElement, selector: string): T
     return element;
 }
 
+function renderValue (element: HTMLElement, value: string): void
+{
+    const valueElement = element.querySelector<HTMLElement>('[data-run-status-value]');
+    if (!valueElement) throw new Error('Missing run status value element.');
+    valueElement.textContent = value;
+}
+
 function clock (seconds: number): string
 {
     return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
@@ -38,10 +45,10 @@ export function mountRunStatus (root: HTMLElement, port: RunStatusPort): UiHandl
     };
     const render = (snapshot: Readonly<RunStatusSnapshot>): void => {
         toolbar.hidden = !snapshot.visible;
-        time.textContent = `${clock(snapshot.remainingSeconds)} · ${snapshot.runState}`;
-        credits.textContent = `${snapshot.credits.toLocaleString('en-US')} cr`;
-        cargo.textContent = `Cargo ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
-        hp.textContent = `HP ${snapshot.currentHitPoints} / ${snapshot.maximumHitPoints}`;
+        renderValue(time, `${clock(snapshot.remainingSeconds)} · ${snapshot.runState}`);
+        renderValue(credits, `${snapshot.credits.toLocaleString('en-US')} cr`);
+        renderValue(cargo, `Cargo ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`);
+        renderValue(hp, `HP ${snapshot.currentHitPoints} / ${snapshot.maximumHitPoints}`);
         bar.value = snapshot.currentHitPoints; bar.max = snapshot.maximumHitPoints;
         contents.textContent = 'Cargo contents:';
         cargoRows.replaceChildren(...snapshot.cargo.map(stack => {
@@ -67,8 +74,8 @@ export function mountRunStatus (root: HTMLElement, port: RunStatusPort): UiHandl
         weaponSystem.textContent = `Weapon: Level ${snapshot.weaponSystem.level} · ${snapshot.weaponSystem.available ? 'Available' : 'Unavailable'}`;
         booster.textContent = `Booster: ${snapshot.boosterAvailable ? 'Available' : 'Locked'}`;
     };
-    const toggleShip = (): void => { shipOpen = !shipOpen; details(); };
-    const toggleCargo = (): void => { cargoOpen = !cargoOpen; details(); };
+    const toggleShip = (): void => { shipOpen = !shipOpen; if (shipOpen) cargoOpen = false; details(); };
+    const toggleCargo = (): void => { cargoOpen = !cargoOpen; if (cargoOpen) shipOpen = false; details(); };
     const unsubscribe = port.subscribe(render);
     shipButton.addEventListener('click', toggleShip); cargoButton.addEventListener('click', toggleCargo); details();
     let destroyed = false;
