@@ -22,12 +22,12 @@
         </section>
         <section id="run-status" data-game-input="ignore" aria-label="Run status" hidden>
             <div id="run-status-left">
-                <button id="game-menu-toggle" type="button" aria-expanded="false" aria-controls="game-menu">Menu</button>
-                <span id="run-status-clock"></span>
+                <button id="game-menu-toggle" type="button" aria-expanded="false" aria-controls="game-menu"><img class="run-status-icon" src="/assets/icons/menu_32x32.png" alt="" aria-hidden="true" />Menu</button>
+                <span id="run-status-clock"><img class="run-status-icon" src="/assets/icons/clock_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></span>
                 <span id="run-status-auth" aria-live="polite"></span>
             </div>
-            <div id="run-status-primary"><label id="run-status-hp-label" for="run-status-hp"></label><progress id="run-status-hp" value="0" max="100"></progress></div>
-            <div id="run-status-secondary"><span id="run-status-credits"></span><span id="run-status-cargo"></span><button id="run-status-ship-toggle" type="button" aria-expanded="false" aria-controls="run-status-ship-details">Ship info</button><button id="run-status-cargo-toggle" type="button" aria-expanded="false" aria-controls="run-status-cargo-details">Cargo info</button><section id="run-status-ship-details" aria-label="Ship information" hidden><p id="run-status-cargo-system"></p><p id="run-status-engine-system"></p><p id="run-status-weapon-system"></p><p id="run-status-booster"></p></section><section id="run-status-cargo-details" aria-label="Cargo contents" hidden><p id="run-status-cargo-contents"></p><table id="run-status-cargo-table" aria-label="Cargo stock table"><thead><tr><th scope="col">Icon</th><th scope="col">Commodity</th><th scope="col">Stock</th></tr></thead><tbody id="run-status-cargo-rows"></tbody></table></section></div>
+            <div id="run-status-primary"><label id="run-status-hp-label" for="run-status-hp"><img class="run-status-icon" src="/assets/icons/heart_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></label><progress id="run-status-hp" value="0" max="100"></progress><section id="run-status-ship-details" aria-label="Ship information" hidden><p id="run-status-cargo-system"></p><p id="run-status-engine-system"></p><p id="run-status-weapon-system"></p><p id="run-status-booster"></p></section><section id="run-status-cargo-details" aria-label="Cargo contents" hidden><p id="run-status-cargo-contents"></p><table id="run-status-cargo-table" aria-label="Cargo stock table"><thead><tr><th scope="col">Icon</th><th scope="col">Commodity</th><th scope="col">Stock</th></tr></thead><tbody id="run-status-cargo-rows"></tbody></table></section></div>
+            <div id="run-status-secondary"><span id="run-status-credits"><img class="run-status-icon" src="/assets/icons/coins_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></span><span id="run-status-cargo"><img class="run-status-icon" src="/assets/icons/cargo_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></span><button id="run-status-ship-toggle" type="button" aria-expanded="false" aria-controls="run-status-ship-details"><img class="run-status-icon" src="/assets/icons/ship_32x32.png" alt="" aria-hidden="true" />Ship info</button><button id="run-status-cargo-toggle" type="button" aria-expanded="false" aria-controls="run-status-cargo-details"><img class="run-status-icon" src="/assets/icons/cargo2_32x32.png" alt="" aria-hidden="true" />Cargo info</button></div>
         </section>
         <section id="game-menu" data-game-input="ignore" aria-label="Game menu" aria-modal="true" role="dialog" hidden>
             <div class="game-menu-panel">
@@ -35,7 +35,6 @@
                 <h2>Menu</h2>
                 <div class="game-menu-actions">
                 <button id="game-menu-resume" class="action-button" type="button">Resume</button>
-                <button id="game-menu-sign-out" class="action-button" type="button" data-game-input="ignore" hidden>Sign out</button>
                 <div id="audio-controls" role="group" aria-label="Game audio">
                     <button id="audio-mute" type="button" aria-pressed="false">Mute</button>
                     <label for="audio-volume">Volume</label>

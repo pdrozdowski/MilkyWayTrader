@@ -1,4 +1,4 @@
- :root { --ui-surface: #102039; --ui-surface-raised: #122541; --ui-border: #8bdfff; --ui-overlay: #07111bd9; --ui-orientation-overlay: #0b1529; --ui-focus: #fff; --ui-action: #1c4266; --ui-danger: #8b2635; --ui-disabled: #526273; --ui-title-outline: #253041; }
+ :root { --ui-surface: #102039; --ui-surface-raised: #122541; --ui-border: #8bdfff; --ui-overlay: #07111bd9; --ui-orientation-overlay: #0b1529; --ui-focus: #fff; --ui-action: #1c4266; --ui-danger: #8b2635; --ui-health: #53d769; --ui-disabled: #526273; --ui-title-outline: #253041; }
 
 html,
 body {
@@ -60,18 +60,24 @@ body {
 
 #run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 36vw) minmax(0, 1fr); align-items: start; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }
 #run-status-clock, #run-status-auth, #run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
-#run-status-left { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; width: min(100%, 250px); min-width: 0; }
+#run-status-left { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; width: min(100%, 310px); min-width: 0; }
 #run-status-auth { grid-column: 1 / -1; min-width: 0; padding: 10px 12px; overflow: hidden; color: #fff; text-overflow: ellipsis; white-space: nowrap; }
 #run-status-auth.run-status-auth--signed-in::before { display: inline-block; width: 1em; height: 1em; margin-right: .4em; content: ''; background: #fff; vertical-align: -.15em; mask: url('/assets/ui/userIcon.svg') center / contain no-repeat; }
 #run-status-clock { min-width: 0; padding: 10px 12px; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-#run-status-primary { grid-column: 2; box-sizing: border-box; justify-self: stretch; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; min-width: 0; padding: 10px 12px; }
-#run-status-secondary { grid-column: 3; position: relative; justify-self: end; display: grid; gap: 5px; min-width: 0; text-align: center; }
-#run-status-secondary > span { padding: 10px 12px; border: 1px solid #406587; border-radius: 8px; background: #102039e8; white-space: nowrap; text-align: center; }
+#run-status-primary { grid-column: 2; position: relative; box-sizing: border-box; justify-self: stretch; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; min-width: 0; padding: 10px 12px; }
+#run-status-secondary { grid-column: 3; position: relative; justify-self: end; display: grid; gap: 5px; width: min(100%, 200px); min-width: 0; text-align: left; }
+#run-status-secondary > span { box-sizing: border-box; display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 8px 10px; border: 1px solid #406587; border-radius: 8px; background: #102039e8; white-space: nowrap; }
 #run-status-primary > span, #run-status-hp-label, #run-status p { white-space: nowrap; }
-#run-status-hp { flex: 1; min-width: 0; height: 12px; accent-color: #8bdfff; }
+#run-status-hp-label, #run-status-clock, #run-status button { display: inline-flex; align-items: center; }
+#run-status-hp-label { gap: 10px; }
+#run-status-clock, #run-status button { gap: 6px; }
+#run-status-secondary > button { justify-content: flex-start; gap: 10px; width: 100%; }
+#run-status-secondary > button[aria-expanded="true"] { border-color: var(--ui-border); background: var(--ui-action); }
+.run-status-icon { display: inline-block; flex: 0 0 auto; width: 32px; height: 32px; object-fit: contain; image-rendering: pixelated; }
+#run-status-hp { flex: 1; min-width: 0; height: 12px; accent-color: var(--ui-health); }
 #run-status button { min-height: 38px; padding: 8px 10px; color: #fff; font: inherit; cursor: pointer; pointer-events: auto; }
 #run-status :focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-#run-status-ship-details, #run-status-cargo-details { position: absolute; top: calc(100% + 6px); right: 0; min-width: 220px; padding: 8px 12px; text-align: left; line-height: 1.4; }
+#run-status-ship-details, #run-status-cargo-details { position: absolute; top: calc(100% + 6px); left: 50%; min-width: 220px; padding: 8px 12px; text-align: left; line-height: 1.4; transform: translateX(-50%); }
 #run-status p { margin: 0; }
 #run-status-cargo-table { width: 100%; border-collapse: collapse; }
 #run-status-cargo-table th, #run-status-cargo-table td { padding: 4px; text-align: left; }
@@ -150,9 +156,9 @@ body {
 #landing-status-hub { position: relative; display: block; }
 .landing-visual { position: absolute; inset: 0; display: flex; align-items: end; min-width: 0; padding: clamp(16px, 3vw, 44px); background: url('/assets/landing_bg_seroton.png') center / cover; }
 .landing-visual::after { position: absolute; right: 0; bottom: 0; left: 0; height: 25%; content: ''; background: linear-gradient(to bottom, transparent, #07111b); pointer-events: none; }
-.landing-title-stack { position: relative; z-index: 1; display: grid; justify-items: start; gap: clamp(6px, 1vw, 12px); width: min(38vw, 520px); }
-#landing-status-title { display: block; width: 100%; height: auto; }
-#landing-status-landed { display: block; width: min(26vw, 230px); height: auto; }
+.landing-title-stack { position: static; }
+#landing-status-title { position: absolute; z-index: 1; bottom: clamp(16px, 3vw, 44px); left: clamp(16px, 3vw, 44px); display: block; width: min(38vw, 520px); height: auto; }
+#landing-status-landed { position: absolute; z-index: 1; top: clamp(16px, 3vw, 44px); left: clamp(16px, 3vw, 44px); display: block; width: min(26vw, 230px); height: auto; }
 .landing-actions { position: absolute; inset: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) auto; z-index: 1; display: flex; flex-direction: column; align-items: end; gap: clamp(8px, 1.2vw, 16px); padding: 0; background: transparent; }
 .landing-image-button { appearance: none; width: min(24vw, 230px); min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; cursor: pointer; }
 .landing-image-button img { display: block; width: 100%; height: auto; }
@@ -232,7 +238,7 @@ body {
 
 @media (max-height: 500px) and (orientation: landscape) {
     .landing-visual { padding: 12px; }
-    .landing-title-stack { width: min(42vw, 370px); }
+    #landing-status-title { width: min(42vw, 370px); }
     #landing-status-landed { width: min(25vw, 150px); }
     .landing-image-button { width: min(25vw, 170px); }
     #landing-status-market-view { padding: 16px; }
