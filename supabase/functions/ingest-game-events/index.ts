@@ -33,7 +33,7 @@ interface RejectedEvent
 
 function response (origin: string, status: number, body: Record<string, unknown>): Response
 {
-    return new Response(JSON.stringify(body), {
+    return new Response(status === 204 ? null : JSON.stringify(body), {
         status,
         headers: {
             'content-type': 'application/json',
