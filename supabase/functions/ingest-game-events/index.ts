@@ -39,7 +39,7 @@ function response (origin: string, status: number, body: Record<string, unknown>
             'content-type': 'application/json',
             'access-control-allow-origin': origin,
             'access-control-allow-methods': 'POST, OPTIONS',
-            'access-control-allow-headers': 'authorization, content-type',
+            'access-control-allow-headers': 'apikey, authorization, content-type',
             'vary': 'Origin'
         }
     });
