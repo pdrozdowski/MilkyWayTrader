@@ -23,7 +23,8 @@ export function mountAuthControls (root: HTMLElement, port: AuthPort): UiHandle
         signIn.textContent = signedIn ? `${displayLabels.signedInIcon} ${snapshot.email ?? displayLabels.unsigned} \u00b7 ${displayLabels.signOut}` : displayLabels.signInWithGoogle;
         signOut.hidden = !signedIn;
         signOut.textContent = displayLabels.signOut;
-        status.textContent = signedIn ? `${displayLabels.signedInIcon} ${snapshot.email ?? displayLabels.unsigned}` : snapshot.status === 'error' ? displayLabels.authError : displayLabels.unsigned;
+        status.textContent = signedIn ? snapshot.email ?? displayLabels.unsigned : snapshot.status === 'error' ? displayLabels.authError : displayLabels.unsigned;
+        status.classList.toggle('run-status-auth--signed-in', signedIn);
         status.title = unavailable ? displayLabels.authUnavailable : snapshot.message ?? '';
     };
     const signInClick = (): void => { void (currentSnapshot.status === 'signed-in' ? port.signOut() : port.signInWithGoogle()); };
