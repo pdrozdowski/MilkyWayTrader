@@ -55,8 +55,9 @@ test('auth controls expose unsigned, unavailable, signed-in and teardown states'
     await page.evaluate(() => window.uiHarness.setAuth({ status: 'signed-in', email: 'pilot@example.com', message: null }));
     await expect(page.locator('#run-status-auth')).toHaveText('pilot@example.com');
     await expect(page.locator('#run-status-auth')).toHaveClass(/run-status-auth--signed-in/);
-    await expect(page.getByRole('button', { name: '👤 pilot@example.com · Sign out' })).toBeVisible();
-    await page.getByRole('button', { name: '👤 pilot@example.com · Sign out' }).click();
+    await expect(page.getByRole('button', { name: 'pilot@example.com · Sign out' })).toBeVisible();
+    await expect(page.locator('#main-menu-sign-in')).toHaveClass(/main-menu-sign-in--signed-in/);
+    await page.getByRole('button', { name: 'pilot@example.com · Sign out' }).click();
     expect(await page.evaluate(() => window.uiHarness.authActions())).toEqual({ signInAttempts: 1, signOutAttempts: 1 });
     await page.locator('#game-menu-toggle').click();
     await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
