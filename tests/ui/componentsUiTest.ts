@@ -41,7 +41,7 @@ test('display controls render responsive state and actionable errors', async ({ 
 
 test('repeated mounting keeps one subscription per component', async ({ page }) => {
     await page.evaluate(() => { window.uiHarness.mount(); window.uiHarness.mount(); });
-    expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 1, display: 1, runStatus: 1, landingStatus: 1, auth: 1 });
+    expect(await page.evaluate(() => window.uiHarness.listeners())).toEqual({ audio: 1, display: 1, runStatus: 1, landingStatus: 1, auth: 2 });
 });
 
 test('auth controls expose unsigned, unavailable, signed-in and teardown states', async ({ page }) => {
@@ -59,6 +59,7 @@ test('auth controls expose unsigned, unavailable, signed-in and teardown states'
     await expect(page.locator('#main-menu-sign-in')).toHaveClass(/main-menu-sign-in--signed-in/);
     await page.getByRole('button', { name: 'pilot@example.com · Sign out' }).click();
     expect(await page.evaluate(() => window.uiHarness.authActions())).toEqual({ signInAttempts: 1, signOutAttempts: 1 });
+    await page.evaluate(() => window.uiHarness.setAuth({ status: 'signed-in', email: 'pilot@example.com', message: null }));
     await page.locator('#game-menu-toggle').click();
     await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();

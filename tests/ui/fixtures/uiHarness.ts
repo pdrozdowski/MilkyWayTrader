@@ -57,16 +57,16 @@ let landingStatusState: LandingStatusSnapshot = {
 };
 let landingStatusListener: ((snapshot: Readonly<LandingStatusSnapshot>) => void) | null = null;
 let authState: AuthSnapshot = { status: 'unsigned', email: null, message: null };
-let authListener: ((snapshot: Readonly<AuthSnapshot>) => void) | null = null;
+const authListeners = new Set<(snapshot: Readonly<AuthSnapshot>) => void>();
 let signInAttempts = 0;
 let signOutAttempts = 0;
 
 const authPort: AuthPort = {
     getSnapshot: (): Readonly<AuthSnapshot> => authState,
-    subscribe: listener => { authListener = listener; return () => { if (authListener === listener) authListener = null; }; },
+    subscribe: listener => { authListeners.add(listener); return () => authListeners.delete(listener); },
     signInWithGoogle: async (): Promise<void> => { signInAttempts += 1; },
     signOut: async (): Promise<void> => { signOutAttempts += 1; },
-    destroy: (): void => { authListener = null; }
+    destroy: (): void => { authListeners.clear(); }
 };
 
 const runStatusPort = {
@@ -135,7 +135,7 @@ function mount (): void
     audioHandle = mountAudioControls(root, audioPort);
     displayHandle = mountDisplayControls(root, displayPort, () => {});
     runStatusHandle = mountRunStatus(root, runStatusPort);
-    gameMenuHandle = mountGameMenu(root, gameControlsPort);
+    gameMenuHandle = mountGameMenu(root, gameControlsPort, authPort);
     landingStatusHandle = mountLandingStatus(root, landingStatusPort);
     authHandle = mountAuthControls(root, authPort);
 }
@@ -149,9 +149,9 @@ window.uiHarness = {
     setFullscreenResult: result => { fullscreenResult = result; },
     setRunStatus: state => { runStatusState = { ...runStatusState, ...state }; runStatusListener?.(runStatusState); },
     setLandingStatus: state => { landingStatusState = { ...landingStatusState, ...state }; landingStatusListener?.(landingStatusState); },
-    setAuth: state => { authState = { ...authState, ...state }; authListener?.(authState); },
+    setAuth: state => { authState = { ...authState, ...state }; for (const listener of authListeners) listener(authState); },
     authActions: () => ({ signInAttempts, signOutAttempts }),
-    listeners: () => ({ audio: Number(Boolean(audioListener)), display: Number(Boolean(displayListener)), runStatus: Number(Boolean(runStatusListener)), landingStatus: Number(Boolean(landingStatusListener)), auth: Number(Boolean(authListener)) }),
+    listeners: () => ({ audio: Number(Boolean(audioListener)), display: Number(Boolean(displayListener)), runStatus: Number(Boolean(runStatusListener)), landingStatus: Number(Boolean(landingStatusListener)), auth: authListeners.size }),
     gameControls: () => ({ menuOpen, orientationPaused, exits }),
     setOrientationPaused: paused => { gameControlsPort.setOrientationPaused(paused); },
     refreshes: () => refreshes,

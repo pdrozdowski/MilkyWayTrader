@@ -46,7 +46,7 @@ The top failure scenarios are ordered by impact × likelihood. Sources are evide
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
-| 1 | Auth UI and non-blocking gameplay | Prove auth transitions preserve anonymous play and active game state. | #1, #2, #3, #5 | unit, component, application, targeted e2e | not started | — |
+| 1 | Auth UI and non-blocking gameplay | Prove auth transitions preserve anonymous play and active game state. | #1, #2, #3, #5 | unit, component, application, targeted e2e | complete | `s10-player-sign-in-status` |
 | 2 | Telemetry ingestion and isolation | Prove only bounded, trusted telemetry is accepted without blocking play. | #1, #4, #5 | unit, integration/function | not started | — |
 | 3 | Release-facing quality gates | Lock fast coverage and high-value browser smoke checks into project gates. | #2, #6 | project gates, targeted e2e | not started | — |
 
@@ -79,7 +79,9 @@ The top failure scenarios are ordered by impact × likelihood. Sources are evide
 
 ### 6.1 Auth UI and game-state protection
 
-- TBD — see §3 Phase 1 for unavailable, unsigned, signed-in, action-error, local-sign-out, teardown, and non-blocking-gameplay patterns.
+- Exercise `unavailable`, `unsigned`, `signed-in`, action-error, and local-sign-out transitions through the public auth port; assert that subscriptions are released on UI teardown.
+- Keep auth and telemetry failures non-blocking: application/UI tests must prove starting, playing, landing, launching, trading, signing in, and signing out remain usable when delivery fails.
+- Cover both desktop and touch with semantic Playwright locators. Test the run header and game-menu sign-out controls independently, including their visibility and local sign-out action.
 
 ### 6.2 Telemetry boundary and failure isolation
 
