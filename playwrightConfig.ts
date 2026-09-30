@@ -4,7 +4,7 @@ export default defineConfig({
     testDir: './tests/ui',
     testMatch: /.*UiTest\.ts/,
     fullyParallel: false,
-    // Phaser compilation and two browser contexts can saturate this small project runner.
+    // Phaser startup is the limiting resource; this deliberately small journey suite runs serially.
     workers: 1,
     forbidOnly: Boolean(process.env.CI),
     retries: 0,
@@ -19,8 +19,7 @@ export default defineConfig({
         screenshot: 'only-on-failure'
     },
     projects: [
-        { name: 'chromium-desktop', use: { browserName: 'chromium', viewport: { width: 1280, height: 800 } } },
-        { name: 'chromium-touch', use: { browserName: 'chromium', viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true } }
+        { name: 'chromium', use: { browserName: 'chromium', viewport: { width: 1280, height: 800 } } }
     ],
     webServer: {
         command: 'npm run dev-nolog -- --host 127.0.0.1 --strictPort',

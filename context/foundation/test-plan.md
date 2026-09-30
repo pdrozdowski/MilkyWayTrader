@@ -81,7 +81,7 @@ The top failure scenarios are ordered by impact × likelihood. Sources are evide
 
 - Exercise `unavailable`, `unsigned`, `signed-in`, action-error, and local-sign-out transitions through the public auth port; assert that subscriptions are released on UI teardown.
 - Keep auth and telemetry failures non-blocking: application/UI tests must prove starting, playing, landing, launching, trading, signing in, and signing out remain usable when delivery fails.
-- Cover both desktop and touch with semantic Playwright locators. Test the run header and game-menu sign-out controls independently, including their visibility and local sign-out action.
+- Add targeted Playwright coverage only for a representative critical desktop or touch journey whose browser/device behavior cannot be proven by cheaper layers. Use semantic locators. Test auth-control state transitions, visibility, and local sign-out through fast component/application tests unless a real-browser boundary is uniquely at risk.
 
 ### 6.2 Telemetry boundary and failure isolation
 
