@@ -1,6 +1,5 @@
 import type { GameObjects, Scene } from 'phaser';
 import { asteroidTuning } from '../../definitions/gameplayTuning';
-import { moolarisDefinition } from '../../definitions/moolarisDefinition';
 import type { AsteroidState } from '../../state/asteroidState';
 import { ObjectDepth } from '../../visual/layers';
 
@@ -14,17 +13,9 @@ const healthBarHeight = 4;
 const healthBarOffset = 8;
 
 /** An asteroid pulled into Moolaris is drawn below its active surface, not above the star. */
-export function asteroidProjectionDepth (state: AsteroidState): number
+export function asteroidProjectionDepth (_state: AsteroidState): number
 {
-    if (state.orbit !== null) return ObjectDepth.Asteroid;
-    const toStarX = moolarisDefinition.position.x - state.position.x;
-    const toStarY = moolarisDefinition.position.y - state.position.y;
-    const distance = Math.hypot(toStarX, toStarY);
-    const radius = asteroidTuning.sizes[state.size].radius;
-    const movingTowardStar = state.velocity.x * toStarX + state.velocity.y * toStarY > 0;
-    return distance <= moolarisDefinition.radius + radius && movingTowardStar
-        ? ObjectDepth.Sun
-        : ObjectDepth.Asteroid;
+    return ObjectDepth.Sun;
 }
 
 /** Phaser-only projection of the authoritative asteroid snapshot collection. */
@@ -87,7 +78,9 @@ export class AsteroidProjection
         const x = state.position.x - width / 2;
         const y = state.position.y - radius - healthBarOffset;
         const fraction = Math.max(0, Math.min(1, state.hitPoints / maximum));
-        healthBar.clear().setDepth(depth + 0.1);
+        healthBar.clear();
+        if (fraction >= 1) return;
+        healthBar.setDepth(depth + 0.1);
         healthBar.fillStyle(0x111827, 0.82).fillRect(x - 1, y - 1, width + 2, healthBarHeight + 2);
         healthBar.fillStyle(fraction > 0.5 ? 0x83f28f : 0xffbd5c, 0.95).fillRect(x, y, width * fraction, healthBarHeight);
     }

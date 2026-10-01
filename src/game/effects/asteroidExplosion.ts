@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser';
 import type { AsteroidState } from '../state/asteroidState';
 import type { PlanetState } from '../state/planetState';
+import { asteroidTuning } from '../definitions/gameplayTuning';
 import { ObjectDepth } from '../visual/layers';
 
 const explosionLifetimeMs = 220;
@@ -20,7 +21,8 @@ export function planetImpactParents (
 ): readonly AsteroidState[]
 {
     return fragmentedParents(previous, current).filter(parent => planets.some(planet =>
-        Math.hypot(parent.position.x - planet.position.x, parent.position.y - planet.position.y) <= planet.radius));
+        Math.hypot(parent.position.x - planet.position.x, parent.position.y - planet.position.y)
+            <= planet.radius + asteroidTuning.sizes[parent.size].radius));
 }
 
 /** Transient scene effect. It deliberately has no link to persisted asteroid state. */
@@ -51,23 +53,33 @@ export class AsteroidExplosion
     explodePlanetImpact (position: Readonly<{ x: number; y: number }>): void
     {
         if (this.destroyed) return;
-        const flash = this.scene.add.circle(position.x, position.y, 7, 0xfff1b0, 0.92).setDepth(ObjectDepth.Planet + 0.5);
-        const ring = this.scene.add.circle(position.x, position.y, 8).setStrokeStyle(3, 0xff9d42, 0.9).setDepth(ObjectDepth.Planet + 0.5);
+        const flash = this.scene.add.circle(position.x, position.y, 13, 0xfff1b0, 1).setDepth(ObjectDepth.AsteroidEffect);
+        const ring = this.scene.add.circle(position.x, position.y, 16).setStrokeStyle(5, 0xff5a36, 1).setDepth(ObjectDepth.AsteroidEffect);
         this.scene.tweens.add({
             targets: flash,
-            scale: 6,
+            scale: 9,
             alpha: 0,
-            duration: 260,
+            duration: 360,
             ease: 'Cubic.Out',
             onComplete: () => flash.destroy()
         });
         this.scene.tweens.add({
             targets: ring,
-            scale: 5,
+            scale: 7,
             alpha: 0,
-            duration: 320,
+            duration: 440,
             ease: 'Cubic.Out',
             onComplete: () => ring.destroy()
+        });
+    }
+
+    explodeShipCrash (position: Readonly<{ x: number; y: number }>): void
+    {
+        if (this.destroyed) return;
+        const flash = this.scene.add.circle(position.x, position.y, 18, 0xff2f2f, 1).setDepth(ObjectDepth.Ship + 1);
+        const fire = this.scene.add.circle(position.x, position.y, 9, 0xffa12f, 1).setDepth(ObjectDepth.Ship + 2);
+        for (const target of [flash, fire]) this.scene.tweens.add({
+            targets: target, scale: target === flash ? 5 : 3, alpha: 0, duration: 420, ease: 'Cubic.Out', onComplete: () => target.destroy()
         });
     }
 

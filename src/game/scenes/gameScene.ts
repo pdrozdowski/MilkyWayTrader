@@ -398,6 +398,8 @@ export class Game extends Scene
         if (before.ship.asteroidControlLockedUntilActiveMs === null && state.ship.asteroidControlLockedUntilActiveMs !== null) {
             this.clearFlightInput();
             this.lossOfControlUntilMs = time + 1500;
+            this.asteroidExplosion.explodeShipCrash(state.ship.position);
+            this.audio.play('ship-asteroid-crash');
         }
         this.ship.synchronize(state.ship, time);
         this.lossOfControl.setVisible(time < this.lossOfControlUntilMs);
