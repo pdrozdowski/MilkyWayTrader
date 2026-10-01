@@ -11,6 +11,8 @@ function required<T extends Element> (root: HTMLElement, selector: string): T
 export function mountAuthControls (root: HTMLElement, port: AuthPort): UiHandle
 {
     const signIn = required<HTMLButtonElement>(root, '#main-menu-sign-in');
+    const signInPreview = required<HTMLButtonElement>(root, '#main-menu-sign-in-preview');
+    const signInPreviewLabel = required<HTMLElement>(signInPreview, '.main-menu-sign-in-preview-label');
     const status = required<HTMLElement>(root, '#run-status-auth');
     let currentSnapshot = port.getSnapshot();
     const render = (snapshot: Readonly<AuthSnapshot>): void => {
@@ -19,6 +21,9 @@ export function mountAuthControls (root: HTMLElement, port: AuthPort): UiHandle
         const signedIn = snapshot.status === 'signed-in';
         signIn.disabled = unavailable;
         signIn.title = unavailable ? displayLabels.authUnavailable : '';
+        signInPreview.disabled = unavailable;
+        signInPreview.title = signIn.title;
+        signInPreviewLabel.textContent = signedIn ? snapshot.email ?? displayLabels.unsigned : 'Sign In';
         if (signedIn) {
             const icon = document.createElement('span');
             icon.className = 'main-menu-user-icon';
@@ -32,8 +37,9 @@ export function mountAuthControls (root: HTMLElement, port: AuthPort): UiHandle
     };
     const signInClick = (): void => { void (currentSnapshot.status === 'signed-in' ? port.signOut() : port.signInWithGoogle()); };
     signIn.addEventListener('click', signInClick);
+    signInPreview.addEventListener('click', signInClick);
     const unsubscribe = port.subscribe(render);
     render(currentSnapshot);
     let destroyed = false;
-    return { destroy: () => { if (destroyed) return; destroyed = true; unsubscribe(); signIn.removeEventListener('click', signInClick); } };
+    return { destroy: () => { if (destroyed) return; destroyed = true; unsubscribe(); signIn.removeEventListener('click', signInClick); signInPreview.removeEventListener('click', signInClick); } };
 }

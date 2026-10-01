@@ -8,6 +8,8 @@ export class MainMenu extends Scene
 {
     background: GameObjects.Image;
     private cow: GameObjects.Image;
+    private fullscreenControl?: HTMLButtonElement;
+    private destroyFullscreenControlListeners?: () => void;
 
     constructor ()
     {
@@ -24,6 +26,7 @@ export class MainMenu extends Scene
         this.cow = this.add.image(0, 0, 'cow').setDepth(1).setVisible(false);
 
         this.flyCow(true);
+        this.createFullscreenControl();
 
         const startGame = () => {
             const stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
@@ -36,8 +39,50 @@ export class MainMenu extends Scene
         this.events.once('shutdown', () => {
             this.game.events.off('start-new-game', startGame);
             this.scale.off('resize', this.layoutBackground, this);
+            this.destroyFullscreenControl();
             this.game.events.emit('main-menu-close');
         });
+    }
+
+    private createFullscreenControl (): void
+    {
+        const mainMenu = document.querySelector<HTMLElement>('#main-menu');
+        if (!mainMenu) throw new Error('Missing main menu container.');
+
+        const control = document.createElement('button');
+        const icon = document.createElement('span');
+        const label = document.createElement('span');
+        const updateLabel = (active: boolean): void => {
+            label.textContent = `Fullscreen:\n${active ? 'ON' : 'OFF'}`;
+            control.setAttribute('aria-pressed', String(active));
+        };
+        const toggleFullscreen = (): void => { this.game.events.emit('toggle-fullscreen'); };
+
+        control.id = 'main-menu-fullscreen-preview';
+        control.type = 'button';
+        control.setAttribute('aria-label', 'Toggle fullscreen');
+        icon.className = 'main-menu-fullscreen-preview-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = '\u26F6';
+        label.className = 'main-menu-fullscreen-preview-label';
+        updateLabel(Boolean(document.fullscreenElement));
+        control.append(icon, label);
+        control.addEventListener('click', toggleFullscreen);
+        mainMenu.append(control);
+        this.fullscreenControl = control;
+        this.destroyFullscreenControlListeners = () => {
+            control.removeEventListener('click', toggleFullscreen);
+            this.game.events.off('fullscreen-change', updateLabel);
+        };
+        this.game.events.on('fullscreen-change', updateLabel);
+    }
+
+    private destroyFullscreenControl (): void
+    {
+        this.destroyFullscreenControlListeners?.();
+        this.destroyFullscreenControlListeners = undefined;
+        this.fullscreenControl?.remove();
+        this.fullscreenControl = undefined;
     }
 
     private readonly layoutBackground = (): void =>
