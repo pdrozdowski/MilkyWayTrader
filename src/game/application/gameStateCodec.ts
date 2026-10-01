@@ -1,8 +1,10 @@
 import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 import type { SerotonCommodityId } from '../state/serotonMarketState';
-import { asteroidMaximumHitPoints, type AsteroidSize, type AsteroidVariant } from '../state/asteroidState';
+import type { AsteroidSize, AsteroidVariant } from '../state/asteroidState';
 import { maximumShipHitPoints } from '../domain/runBalance.ts';
+
+const asteroidMaximumHitPoints: Readonly<Record<AsteroidSize, number>> = { big: 3, medium: 2, small: 1 };
 import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
 
 const PAUSE_REASONS: readonly GamePauseReason[] = ['background', 'landed', 'manual', 'menu', 'orientation'];
