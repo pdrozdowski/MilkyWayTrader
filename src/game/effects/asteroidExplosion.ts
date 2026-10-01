@@ -103,10 +103,10 @@ export class AsteroidExplosion
     explodeShipCrash (position: Readonly<{ x: number; y: number }>): void
     {
         if (this.destroyed) return;
-        const flash = this.scene.add.circle(position.x, position.y, 18, 0xff2f2f, 1).setDepth(ObjectDepth.Ship + 1);
-        const fire = this.scene.add.circle(position.x, position.y, 9, 0xffa12f, 1).setDepth(ObjectDepth.Ship + 2);
+        const flash = this.scene.add.circle(position.x, position.y, 28, 0xff1616, 1).setDepth(ObjectDepth.Ship + 1);
+        const fire = this.scene.add.circle(position.x, position.y, 16, 0xff6b12, 1).setDepth(ObjectDepth.Ship + 2);
         for (const target of [flash, fire]) this.scene.tweens.add({
-            targets: target, scale: target === flash ? 5 : 3, alpha: 0, duration: 420, ease: 'Cubic.Out', onComplete: () => target.destroy()
+            targets: target, scale: target === flash ? 6 : 4, alpha: 0, duration: 520, ease: 'Cubic.Out', onComplete: () => target.destroy()
         });
     }
 
