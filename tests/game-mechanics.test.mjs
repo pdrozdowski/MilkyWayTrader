@@ -294,7 +294,7 @@ test('asteroid tuning keeps safe-area lifecycle and deterministic fragment count
     });
     assert.equal(asteroidTuning.fragmentDrift.speed, 180);
     assert.equal(asteroidTuning.fragmentDrift.spreadRadians, Math.PI * 2);
-    assert(asteroidTuning.fragmentDrift.directionNoiseRadians > 0);
+    assert(asteroidTuning.fragmentDrift.directionNoiseRadians >= 0.85);
     const counts = Array.from({ length: 1_000 }, (_, index) => asteroidFragmentChildCount(`asteroid-parent-${index}`));
     assert(counts.every(count => count >= 2 && count <= 4));
     assert.deepEqual(counts, Array.from({ length: 1_000 }, (_, index) => asteroidFragmentChildCount(`asteroid-parent-${index}`)));
