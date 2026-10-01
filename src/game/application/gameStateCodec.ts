@@ -87,7 +87,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         catch { throw new Error('Game state is not valid JSON.'); }
     }
     const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
-    if (root.schemaVersion !== 9) throw new Error('Unsupported game-state schema version.');
+    if (root.schemaVersion !== 10) throw new Error('Unsupported game-state schema version.');
 
     const credits = nonNegativeSafeInteger(root.credits, 'state.credits');
     if (!Array.isArray(root.cargo)) throw new Error('state.cargo must be an array.');
@@ -120,7 +120,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     if (new Set(pauseReasons).size !== pauseReasons.length) throw new Error('state.clock.pauseReasons contains duplicates.');
 
     const ship = requireRecord(root.ship, 'state.ship', [
-        'position', 'velocity', 'rotation', 'enginesOn', 'boosting', 'boostAcceleration', 'coastDeceleration', 'asteroidControlLockedUntilActiveMs'
+        'position', 'velocity', 'rotation', 'enginesOn', 'boosting', 'boostAcceleration', 'coastDeceleration', 'asteroidControlLockedUntilActiveMs', 'asteroidImpactAtActiveMs'
     ]);
     if (typeof ship.enginesOn !== 'boolean' || typeof ship.boosting !== 'boolean') throw new Error('Ship activity flags must be boolean.');
 
@@ -242,7 +242,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 9,
+        schemaVersion: 10,
         clock: { budgetMs, activeElapsedMs, pauseReasons },
         credits,
         cargo,
@@ -255,7 +255,8 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
             boosting: ship.boosting,
             boostAcceleration: nonNegativeNumber(ship.boostAcceleration, 'state.ship.boostAcceleration'),
             coastDeceleration: nonNegativeNumber(ship.coastDeceleration, 'state.ship.coastDeceleration'),
-            asteroidControlLockedUntilActiveMs: nullableTime(ship.asteroidControlLockedUntilActiveMs, 'state.ship.asteroidControlLockedUntilActiveMs')
+            asteroidControlLockedUntilActiveMs: nullableTime(ship.asteroidControlLockedUntilActiveMs, 'state.ship.asteroidControlLockedUntilActiveMs'),
+            asteroidImpactAtActiveMs: nullableTime(ship.asteroidImpactAtActiveMs, 'state.ship.asteroidImpactAtActiveMs')
         },
         shipStatus: {
             currentHitPoints,

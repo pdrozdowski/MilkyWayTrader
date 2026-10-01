@@ -35,7 +35,7 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 9);
+    assert.equal(state.schemaVersion, 10);
     assert.equal(state.credits, 100_000);
     assert.deepEqual(state.cargo, []);
     assert.deepEqual(state.markets, [{
@@ -89,6 +89,7 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
         { ...clone(advanced), clock: { ...clone(advanced.clock), pauseReasons: ['unknown'] } },
         { ...clone(advanced), clock: { ...clone(advanced.clock), pauseReasons: ['landed', 'landed'] } },
         { ...clone(advanced), ship: { ...clone(advanced.ship), position: { ...clone(advanced.ship.position), x: Number.NaN } } },
+        { ...clone(advanced), ship: { ...clone(advanced.ship), asteroidImpactAtActiveMs: -1 } },
         { ...clone(advanced), planets: [...clone(advanced.planets), clone(advanced.planets[0])] },
         { ...clone(advanced), projectiles: [...clone(advanced.projectiles), ...clone(advanced.projectiles)] },
         { ...clone(advanced), projectiles: {} }
@@ -341,10 +342,10 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 9);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 10);
 });
 
-test('v9 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
+test('v10 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
     const decoded = decodeGameState(initialGameState);
     const asteroid = clone(decoded.asteroids[0]);
     assert(Object.isFrozen(decoded.asteroids));

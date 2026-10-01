@@ -512,6 +512,7 @@ test('asteroid impacts select the earliest stable target without tunnelling and 
         ...initialGameState.ship, position: { x: 5_000, y: 0 }
     } }, quietInput, 1);
     assert.equal(shipState.shipStatus.currentHitPoints, initialGameState.shipStatus.currentHitPoints);
+    assert.equal(shipState.ship.asteroidImpactAtActiveMs, 1, 'every committed ship impact records an exact presentation event');
     assert(shipState.asteroids.some(candidate => candidate.id.startsWith('ship-hit-fragment-')));
     const planet = initialGameState.planets[0];
     const planetState = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('planet-hit', planet.position)] }, quietInput, 1);
@@ -585,5 +586,6 @@ test('asteroid durability persists through shots, resets for fragments, and coll
     }, 1);
     assert.equal(boosted.ship.boosting, false);
     assert.equal(Math.hypot(boosted.ship.velocity.x, boosted.ship.velocity.y), 240);
+    assert.equal(boosted.ship.asteroidImpactAtActiveMs, 1, 'boosted impacts share the same exact crash-feedback event');
 });
 
