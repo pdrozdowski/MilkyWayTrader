@@ -92,9 +92,10 @@ export function fragmentAsteroid (asteroid: AsteroidState, source: AsteroidImpac
         ? hashAngle(asteroid.id)
         : Math.atan2(asteroid.position.y - source.position.y, asteroid.position.x - source.position.x);
     return Array.from({ length: count }, (_, index) => {
-        const angle = source.kind === 'projectile'
+        const idealAngle = source.kind === 'projectile'
             ? baseAngle + index / count * asteroidTuning.fragmentDrift.spreadRadians
             : baseAngle + (index - (count - 1) / 2) * Math.PI / Math.max(6, count * 2);
+        const angle = idealAngle + fragmentDirectionNoise(`${asteroid.id}-fragment-${index + 1}`);
         return {
             id: `${asteroid.id}-fragment-${index + 1}`,
             variant: asteroid.variant,
@@ -106,6 +107,12 @@ export function fragmentAsteroid (asteroid: AsteroidState, source: AsteroidImpac
             outsideSafeAreaSinceActiveMs: null
         };
     });
+}
+
+/** Stable per-fragment variation prevents a mechanical radial split while keeping restores deterministic. */
+function fragmentDirectionNoise (fragmentId: string): number
+{
+    return (hashAngle(fragmentId) / fullTurn * 2 - 1) * asteroidTuning.fragmentDrift.directionNoiseRadians;
 }
 
 function hashAngle (id: string): number
