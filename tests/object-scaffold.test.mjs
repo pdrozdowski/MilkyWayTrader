@@ -45,7 +45,7 @@ test('asteroid projection reconciles IDs, shows persisted durability and places 
 });
 
 test('fragment feedback only recognizes committed parent-to-children transitions and identifies planet impacts', () => {
-    const { fragmentedParents, planetImpactParents, projectileImpactPositions } = transpileModule('src/game/effects/asteroidExplosion.ts', {
+    const { fragmentedParents, planetImpactParents, planetImpactSmallAsteroids, projectileImpactPositions } = transpileModule('src/game/effects/asteroidExplosion.ts', {
         '../visual/layers': { ObjectDepth: { AsteroidEffect: 16, Planet: 10 } },
         '../definitions/gameplayTuning': { asteroidTuning: { sizes: { big: { radius: 72 }, medium: { radius: 48 }, small: { radius: 24 } } } },
         '../world/geometry': { sweptCircleIntersection (first, second) {
@@ -67,6 +67,9 @@ test('fragment feedback only recognizes committed parent-to-children transitions
     assert.deepEqual(fragmentedParents([parent], []), [], 'Moolaris removal has no fragmentation feedback');
     assert.deepEqual(planetImpactParents([parent], [child], [{ id: 'planet', name: 'Planet', position: { x: 10, y: 0 }, radius: 20 }]), [parent]);
     assert.deepEqual(planetImpactParents([parent], [child], [{ id: 'planet', name: 'Planet', position: { x: 100, y: 0 }, radius: 20 }]), []);
+    const small = { ...parent, id: 'small', size: 'small' };
+    assert.deepEqual(planetImpactSmallAsteroids([small], [], [{ id: 'planet', name: 'Planet', position: { x: 10, y: 0 }, radius: 20 }]), [small]);
+    assert.deepEqual(planetImpactSmallAsteroids([small], [], [{ id: 'planet', name: 'Planet', position: { x: 100, y: 0 }, radius: 20 }]), []);
     const shot = { id: 'shot', position: { x: -100, y: 0 }, velocity: { x: 1_000, y: 0 }, bornAtActiveMs: 0 };
     const bulletTarget = { ...parent, id: 'bullet-target', hitPoints: 3 };
     const damaged = { ...bulletTarget, hitPoints: 2, position: { x: 0, y: 0 } };

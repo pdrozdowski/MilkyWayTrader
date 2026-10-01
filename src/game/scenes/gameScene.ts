@@ -6,7 +6,7 @@ import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
-import { AsteroidExplosion, fragmentedParents, planetImpactParents, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, projectileImpactPositions, sunConsumedAsteroids } from '../effects/asteroidExplosion';
+import { AsteroidExplosion, fragmentedParents, planetImpactParents, planetImpactSmallAsteroids, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, projectileImpactPositions, sunConsumedAsteroids } from '../effects/asteroidExplosion';
 import { OrbitalPaths } from '../effects/orbitalPaths';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
@@ -435,6 +435,8 @@ export class Game extends Scene
     ): void
     {
         const planetImpactIds = new Set(planetImpactParents(previous, current, planets).map(parent => parent.id));
+        const smallPlanetImpacts = planetImpactSmallAsteroids(previous, current, planets);
+        const smallPlanetImpactIds = new Set(smallPlanetImpacts.map(asteroid => asteroid.id));
         for (const position of projectileImpactPositions(previous, current, previousProjectiles, currentProjectiles, activeDeltaMs, projectileTuning.radius)) {
             if (this.camera.worldView.contains(position.x, position.y)) this.asteroidExplosion.explodeProjectileImpact(position);
         }
@@ -450,7 +452,13 @@ export class Game extends Scene
                 this.audio.play('asteroid-falls-apart-clean');
             }
         }
+        for (const asteroid of smallPlanetImpacts) {
+            if (!this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) continue;
+            this.asteroidExplosion.explodePlanetImpact(asteroid.position);
+            this.audio.play('asteroid-planet-impact-deep-loud');
+        }
         for (const asteroid of projectileDestroyedSmallAsteroids(previous, current, previousProjectiles, currentProjectiles)) {
+            if (smallPlanetImpactIds.has(asteroid.id)) continue;
             if (!this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) continue;
             this.asteroidExplosion.explode(asteroid.position);
             this.audio.play('asteroid-falls-apart-clean');
