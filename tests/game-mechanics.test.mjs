@@ -293,8 +293,6 @@ test('asteroid tuning keeps safe-area lifecycle and deterministic fragment count
         small: { radius: 24, hitPoints: 1 }
     });
     assert.equal(asteroidTuning.fragmentDrift.speed, 180);
-    assert.equal(asteroidTuning.fragmentDrift.spreadRadians, Math.PI * 2);
-    assert(asteroidTuning.fragmentDrift.directionNoiseRadians >= 0.85);
     const counts = Array.from({ length: 1_000 }, (_, index) => asteroidFragmentChildCount(`asteroid-parent-${index}`));
     assert(counts.every(count => count >= 2 && count <= 4));
     assert.deepEqual(counts, Array.from({ length: 1_000 }, (_, index) => asteroidFragmentChildCount(`asteroid-parent-${index}`)));
@@ -551,7 +549,7 @@ test('fragmentation follows the size hierarchy and remains identical through ser
     const split = fragmentAsteroid(asteroid('noisy-parent', { x: 0, y: 0 }), { id: 'shot', kind: 'projectile', position: { x: -100, y: 0 } });
     const angles = split.map(child => Math.atan2(child.velocity.y, child.velocity.x)).sort((left, right) => left - right);
     const gaps = angles.map((angle, index) => (angles[(index + 1) % angles.length] + (index + 1 === angles.length ? Math.PI * 2 : 0)) - angle);
-    assert(gaps.some(gap => Math.abs(gap - Math.PI * 2 / split.length) > 0.001), 'fragment directions must not form a perfect radial division');
+    assert(gaps.some(gap => Math.abs(gap - Math.PI * 2 / split.length) > 0.001), 'fragment directions must use an uneven split pattern');
     assert.deepEqual(fragmentAsteroid(asteroid('noisy-parent', { x: 0, y: 0 }), { id: 'shot', kind: 'projectile', position: { x: -100, y: 0 } }), split);
     const state = { ...initialGameState, projectiles: [projectile], asteroids: [asteroid('restore-parent', { x: 4_500, y: 0 })] };
     const partial = advanceGameSimulation(state, quietInput, 100);

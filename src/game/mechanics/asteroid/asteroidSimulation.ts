@@ -16,6 +16,11 @@ export interface AsteroidImpactSource
 }
 
 const fullTurn = Math.PI * 2;
+const fragmentAnglePatterns: Readonly<Record<2 | 3 | 4, readonly (readonly number[])[]>> = {
+    2: [[0.14, 2.68], [0.56, 3.91], [0.92, 4.98]],
+    3: [[0.12, 1.48, 4.14], [0.46, 2.42, 4.82], [0.94, 2.98, 5.33]],
+    4: [[0.08, 1.04, 2.91, 4.53], [0.42, 1.83, 3.18, 5.47], [0.81, 2.23, 3.75, 5.04]]
+};
 
 export function asteroidRadius (size: AsteroidSize): number
 {
@@ -91,11 +96,10 @@ export function fragmentAsteroid (asteroid: AsteroidState, source: AsteroidImpac
     const baseAngle = source.kind === 'projectile'
         ? hashAngle(asteroid.id)
         : Math.atan2(asteroid.position.y - source.position.y, asteroid.position.x - source.position.x);
+    const patterns = fragmentAnglePatterns[count as 2 | 3 | 4];
+    const pattern = patterns[Math.floor(hashAngle(`${asteroid.id}:${source.id}`) / fullTurn * patterns.length)];
     return Array.from({ length: count }, (_, index) => {
-        const idealAngle = source.kind === 'projectile'
-            ? baseAngle + index / count * asteroidTuning.fragmentDrift.spreadRadians
-            : baseAngle + (index - (count - 1) / 2) * Math.PI / Math.max(6, count * 2);
-        const angle = idealAngle + fragmentDirectionNoise(`${asteroid.id}-fragment-${index + 1}`);
+        const angle = baseAngle + pattern[index];
         return {
             id: `${asteroid.id}-fragment-${index + 1}`,
             variant: asteroid.variant,
@@ -107,12 +111,6 @@ export function fragmentAsteroid (asteroid: AsteroidState, source: AsteroidImpac
             outsideSafeAreaSinceActiveMs: null
         };
     });
-}
-
-/** Stable per-fragment variation prevents a mechanical radial split while keeping restores deterministic. */
-function fragmentDirectionNoise (fragmentId: string): number
-{
-    return (hashAngle(fragmentId) / fullTurn * 2 - 1) * asteroidTuning.fragmentDrift.directionNoiseRadians;
 }
 
 function hashAngle (id: string): number

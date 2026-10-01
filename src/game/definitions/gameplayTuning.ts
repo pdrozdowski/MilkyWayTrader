@@ -32,9 +32,7 @@ export const asteroidTuning = {
         small: { radius: 24, hitPoints: 1 }
     },
     fragmentDrift: {
-        speed: 180,
-        spreadRadians: Math.PI * 2,
-        directionNoiseRadians: 0.85
+        speed: 180
     }
 } as const;
 
