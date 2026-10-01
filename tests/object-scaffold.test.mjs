@@ -45,9 +45,20 @@ test('asteroid projection reconciles IDs, shows persisted durability and places 
 });
 
 test('fragment feedback only recognizes committed parent-to-children transitions and identifies planet impacts', () => {
-    const { fragmentedParents, planetImpactParents } = transpileModule('src/game/effects/asteroidExplosion.ts', {
+    const { fragmentedParents, planetImpactParents, projectileImpactPositions } = transpileModule('src/game/effects/asteroidExplosion.ts', {
         '../visual/layers': { ObjectDepth: { AsteroidEffect: 16, Planet: 10 } },
-        '../definitions/gameplayTuning': { asteroidTuning: { sizes: { big: { radius: 72 }, medium: { radius: 48 }, small: { radius: 24 } } } }
+        '../definitions/gameplayTuning': { asteroidTuning: { sizes: { big: { radius: 72 }, medium: { radius: 48 }, small: { radius: 24 } } } },
+        '../world/geometry': { sweptCircleIntersection (first, second) {
+            const offset = first.start.x - second.start.x;
+            const velocity = (first.end.x - first.start.x) - (second.end.x - second.start.x);
+            const radius = first.radius + second.radius;
+            const constant = offset * offset - radius * radius;
+            if (constant <= 0) return 0;
+            if (velocity === 0) return null;
+            const linear = 2 * offset * velocity;
+            const time = (-linear - Math.sqrt(linear * linear - 4 * velocity * velocity * constant)) / (2 * velocity * velocity);
+            return time >= 0 && time <= 1 ? time : null;
+        } }
     });
     const parent = { id: 'parent', variant: 'rock', size: 'big', hitPoints: 1, position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null };
     const child = { ...parent, id: 'parent-fragment-1', size: 'medium' };
@@ -56,6 +67,10 @@ test('fragment feedback only recognizes committed parent-to-children transitions
     assert.deepEqual(fragmentedParents([parent], []), [], 'Moolaris removal has no fragmentation feedback');
     assert.deepEqual(planetImpactParents([parent], [child], [{ id: 'planet', name: 'Planet', position: { x: 10, y: 0 }, radius: 20 }]), [parent]);
     assert.deepEqual(planetImpactParents([parent], [child], [{ id: 'planet', name: 'Planet', position: { x: 100, y: 0 }, radius: 20 }]), []);
+    const shot = { id: 'shot', position: { x: -100, y: 0 }, velocity: { x: 1_000, y: 0 }, bornAtActiveMs: 0 };
+    const bulletTarget = { ...parent, id: 'bullet-target', hitPoints: 3 };
+    const damaged = { ...bulletTarget, hitPoints: 2, position: { x: 0, y: 0 } };
+    assert.deepEqual(projectileImpactPositions([bulletTarget], [damaged], [shot], [], 100, 4), [{ x: -76, y: 0 }]);
 });
 
 test('scaffold dry-run, validation, overwrite refusal and generated TypeScript integration', async () => {

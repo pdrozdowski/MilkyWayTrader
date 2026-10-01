@@ -6,7 +6,7 @@ import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
-import { AsteroidExplosion, fragmentedParents, planetImpactParents, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, sunConsumedAsteroids } from '../effects/asteroidExplosion';
+import { AsteroidExplosion, fragmentedParents, planetImpactParents, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, projectileImpactPositions, sunConsumedAsteroids } from '../effects/asteroidExplosion';
 import { OrbitalPaths } from '../effects/orbitalPaths';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
@@ -427,14 +427,17 @@ export class Game extends Scene
         this.weapon.synchronize(state.projectiles);
         this.background.update(state.clock.activeElapsedMs);
         this.asteroids.synchronize(state.asteroids);
-        this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets);
+        this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets, state.clock.activeElapsedMs - before.clock.activeElapsedMs);
     }
 
     private playVisibleAsteroidFragmentation (
-        previous: readonly AsteroidState[], current: readonly AsteroidState[], previousProjectiles: readonly import('../state/projectileState').ProjectileState[], currentProjectiles: readonly import('../state/projectileState').ProjectileState[], planets: readonly PlanetState[]
+        previous: readonly AsteroidState[], current: readonly AsteroidState[], previousProjectiles: readonly import('../state/projectileState').ProjectileState[], currentProjectiles: readonly import('../state/projectileState').ProjectileState[], planets: readonly PlanetState[], activeDeltaMs: number
     ): void
     {
         const planetImpactIds = new Set(planetImpactParents(previous, current, planets).map(parent => parent.id));
+        for (const position of projectileImpactPositions(previous, current, previousProjectiles, currentProjectiles, activeDeltaMs, projectileTuning.radius)) {
+            if (this.camera.worldView.contains(position.x, position.y)) this.asteroidExplosion.explodeProjectileImpact(position);
+        }
         for (const asteroid of projectileDamagedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('asteroid-projectile-impact-clean');
         for (const asteroid of sunConsumedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('sun-asteroid-low-slurp-loud-no-noise');
         for (const parent of fragmentedParents(previous, current)) {
