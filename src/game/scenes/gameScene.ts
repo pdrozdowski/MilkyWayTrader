@@ -6,17 +6,19 @@ import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
-import { AsteroidBelt } from '../effects/asteroidBelt';
+import { AsteroidExplosion, fragmentedParents } from '../effects/asteroidExplosion';
 import { OrbitalPaths } from '../effects/orbitalPaths';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
 import { resolveMoolarisContact } from '../mechanics/moolaris/contact';
 import { LANDING_CENTRE_RADIUS } from '../mechanics/planet/landing';
 import { Planet } from '../objects/planet/planet';
+import { AsteroidProjection } from '../objects/asteroid/asteroidProjection';
 import { ShipWeapon } from '../objects/spaceship/shipWeapon';
 import { Spaceship } from '../objects/spaceship/spaceship';
 import { Sun } from '../objects/sun/sun';
 import type { PlanetState } from '../state/planetState';
+import type { AsteroidState } from '../state/asteroidState';
 import { ObjectDepth } from '../visual/layers';
 import { gameObjectLayout, gameWorldBounds } from './gameObjects';
 import type { TelemetryPort } from '../application/telemetry/telemetry';
@@ -25,7 +27,8 @@ export class Game extends Scene
 {
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Starfield;
-    asteroidBelt: AsteroidBelt;
+    asteroids: AsteroidProjection;
+    asteroidExplosion: AsteroidExplosion;
     orbitalPaths: OrbitalPaths;
     sun: Sun;
     ship: Spaceship;
@@ -80,7 +83,8 @@ export class Game extends Scene
         this.camera.setBackgroundColor('#000000');
         this.physics.world.setBounds(gameWorldBounds.x, gameWorldBounds.y, gameWorldBounds.width, gameWorldBounds.height);
         this.background = new Starfield(this, gameWorldBounds.width, gameWorldBounds.height, gameWorldBounds.x, gameWorldBounds.y);
-        this.asteroidBelt = new AsteroidBelt(this);
+        this.asteroids = new AsteroidProjection(this);
+        this.asteroidExplosion = new AsteroidExplosion(this);
         this.orbitalPaths = new OrbitalPaths(this);
         this.sun = new Sun(this, gameObjectLayout.sun);
         this.ship = new Spaceship(this, state.ship);
@@ -144,7 +148,7 @@ export class Game extends Scene
             planet.updateLandingIndicator(this.ship, state.planetLifecycle);
         }
         this.background.update(state.clock.activeElapsedMs);
-        this.asteroidBelt.update(state.clock.activeElapsedMs);
+        this.asteroids.synchronize(state.asteroids);
         this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);
     }
 
@@ -411,7 +415,17 @@ export class Game extends Scene
         }
         this.weapon.synchronize(state.projectiles);
         this.background.update(state.clock.activeElapsedMs);
-        this.asteroidBelt.update(state.clock.activeElapsedMs);
+        this.asteroids.synchronize(state.asteroids);
+        this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids);
+    }
+
+    private playVisibleAsteroidFragmentation (previous: readonly AsteroidState[], current: readonly AsteroidState[]): void
+    {
+        for (const parent of fragmentedParents(previous, current)) {
+            if (!this.camera.worldView.contains(parent.position.x, parent.position.y)) continue;
+            this.asteroidExplosion.explode(parent.position);
+            this.audio.play('asteroid-fragment');
+        }
     }
 
     private landingRequested (state: ReturnType<GameStateProvider['snapshot']>): boolean

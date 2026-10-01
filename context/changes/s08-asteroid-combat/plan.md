@@ -237,8 +237,8 @@ Schema zmienia się z v6 na v7. Aplikacja jest przed dojrzałością persistence
 
 #### Automated
 
-- [ ] 3.1 Verify asteroid projection reconciliation and cleanup
-- [ ] 3.2 Verify visible fragmentation explosion and one-shot audio lifecycle
+- [x] 3.1 Verify asteroid projection reconciliation and cleanup
+- [x] 3.2 Verify visible fragmentation explosion and one-shot audio lifecycle
 
 #### Manual
 

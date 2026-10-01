@@ -8,7 +8,8 @@ export const LASER_PITCH_MULTIPLIER = 1.6;
 const OUTPUT_FILENAMES = {
     'ship-laser': 'laser-shot.wav',
     'ship-engine': 'engine-loop.wav',
-    'ship-booster': 'booster-loop.wav'
+    'ship-booster': 'booster-loop.wav',
+    'asteroid-fragment': 'asteroid-fragment.wav'
 };
 
 export function encodeWav(samples) {
@@ -34,6 +35,11 @@ export function generateEffects() {
         const envelope = Math.min(1, t / 0.003) * Math.pow(1 - t / 0.18, 2.4);
         return (Math.sin(phase) + 0.2 * Math.sin(phase * 2)) * envelope;
     });
+    const fragment = Array.from({ length: Math.round(SAMPLE_RATE * 0.22) }, (_, i) => {
+        const t = i / SAMPLE_RATE;
+        const envelope = Math.min(1, t / 0.004) * Math.pow(1 - t / 0.22, 2.1);
+        return (Math.sin(tau * (170 + t * 620) * t) + 0.32 * Math.sin(tau * (490 + t * 910) * t)) * envelope;
+    });
     const length = SAMPLE_RATE * 2;
     const engine = Array.from({ length }, (_, i) => {
         const t = i / SAMPLE_RATE;
@@ -56,7 +62,7 @@ export function generateEffects() {
         const t = i / SAMPLE_RATE;
         booster[i] = booster[i] * (0.9 + 0.1 * Math.sin(tau * 3 * t)) + 2 * Math.sin(tau * 380 * t);
     }
-    return { 'ship-laser': encodeWav(laser), 'ship-engine': encodeWav(engine), 'ship-booster': encodeWav(booster) };
+    return { 'ship-laser': encodeWav(laser), 'ship-engine': encodeWav(engine), 'ship-booster': encodeWav(booster), 'asteroid-fragment': encodeWav(fragment) };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

@@ -1,8 +1,54 @@
 ﻿import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { execFileSync, spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import ts from 'typescript';
+
+function transpileModule (path, imports) {
+    const source = readFileSync(path, 'utf8');
+    const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText;
+    const module = { exports: {} };
+    new Function('require', 'module', 'exports', compiled)(name => imports[name], module, module.exports);
+    return module.exports;
+}
+
+test('asteroid projection reconciles IDs, replaces absent parents and cleans up idempotently', () => {
+    const { AsteroidProjection } = transpileModule('src/game/objects/asteroid/asteroidProjection.ts', {
+        '../../definitions/gameplayTuning': { asteroidTuning: { sizes: { big: { radius: 72 }, medium: { radius: 48 }, small: { radius: 24 } } } },
+        '../../visual/layers': { ObjectDepth: { Asteroid: 15 } }
+    });
+    const events = { once() {}, off() {} };
+    const created = [];
+    const scene = { events, add: { image(x, y, texture) {
+        const sprite = { x, y, width: 144, destroyed: 0,
+            setDepth() { return this; }, setPosition(nextX, nextY) { this.x = nextX; this.y = nextY; return this; },
+            setTexture(nextTexture) { this.texture = nextTexture; return this; }, setScale(scale) { this.scale = scale; return this; },
+            setRotation(rotation) { this.rotation = rotation; return this; }, destroy() { this.destroyed++; } };
+        created.push(sprite); return sprite;
+    } } };
+    const projection = new AsteroidProjection(scene);
+    projection.synchronize([{ id: 'parent', variant: 'rock', size: 'big', position: { x: 2, y: 3 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }]);
+    projection.synchronize([{ id: 'parent', variant: 'ice', size: 'medium', position: { x: 4, y: 5 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }]);
+    assert.equal(created.length, 1);
+    assert.deepEqual({ x: created[0].x, y: created[0].y, texture: created[0].texture, scale: created[0].scale }, { x: 4, y: 5, texture: 'asteroid:ice', scale: 2 / 3 });
+    projection.synchronize([{ id: 'parent-fragment-1', variant: 'ice', size: 'small', position: { x: 4, y: 5 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }]);
+    assert.equal(created.length, 2);
+    assert.equal(created[0].destroyed, 1, 'absent parent is removed before child projection');
+    projection.destroy();
+    projection.destroy();
+    assert.equal(created[1].destroyed, 1, 'shutdown cleanup remains idempotent');
+});
+
+test('fragment feedback only recognizes an actual parent-to-children transition', () => {
+    const { fragmentedParents } = transpileModule('src/game/effects/asteroidExplosion.ts', { '../visual/layers': { ObjectDepth: { AsteroidEffect: 16 } } });
+    const parent = { id: 'parent', variant: 'rock', size: 'big', position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null };
+    const child = { ...parent, id: 'parent-fragment-1', size: 'medium' };
+    assert.deepEqual(fragmentedParents([parent], [child]), [parent]);
+    assert.deepEqual(fragmentedParents([], [child]), [], 'first synchronization and restore state do not replay a one-shot');
+    assert.deepEqual(fragmentedParents([parent], []), [], 'Moolaris removal has no fragmentation feedback');
+});
 
 test('scaffold dry-run, validation, overwrite refusal and generated TypeScript integration', async () => {
     const root = resolve('.');
@@ -11,6 +57,8 @@ test('scaffold dry-run, validation, overwrite refusal and generated TypeScript i
     await mkdir(join(fixture, 'src/game/scenes'), { recursive: true });
     await cp('src/game/objects/_shared', join(fixture, 'src/game/objects/_shared'), { recursive: true });
     await cp('src/game/visual', join(fixture, 'src/game/visual'), { recursive: true });
+    await mkdir(join(fixture, 'src/game/definitions'), { recursive: true });
+    await cp('src/game/definitions/gameplayTuning.ts', join(fixture, 'src/game/definitions/gameplayTuning.ts'));
     await rm(join(fixture, 'src/game/visual/orbitalPaths.ts'));
     await writeFile(join(fixture, 'src/game/scenes/gameScene.ts'), "import { Scene } from 'phaser';\nexport class Game extends Scene {}\n");
     await cp('src/viteEnv.d.ts', join(fixture, 'src/viteEnv.d.ts'));
