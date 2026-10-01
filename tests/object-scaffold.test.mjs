@@ -44,6 +44,16 @@ test('asteroid projection reconciles IDs, shows persisted durability and keeps e
     assert.equal(asteroidProjectionDepth({ id: 'fragment', variant: 'rock', size: 'small', hitPoints: 1, position: { x: 110, y: 0 }, velocity: { x: 1, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }), 15);
 });
 
+test('main-menu background fits viewport height and centers its horizontal crop', () => {
+    const { mainMenuBackgroundTransform } = transpileModule('src/game/scenes/mainMenuBackground.ts', {});
+    assert.deepEqual(mainMenuBackgroundTransform({ width: 1920, height: 1080 }, 941), {
+        x: 960, y: 540, scale: 1080 / 941
+    });
+    assert.deepEqual(mainMenuBackgroundTransform({ width: 390, height: 844 }, 941), {
+        x: 195, y: 422, scale: 844 / 941
+    });
+});
+
 test('fragment feedback only recognizes committed parent-to-children transitions and identifies planet impacts', () => {
     const { fragmentedParents, fragmentImpactPosition, planetImpactParents, planetImpactSmallAsteroids, projectileImpactPositions } = transpileModule('src/game/effects/asteroidExplosion.ts', {
         '../visual/layers': { ObjectDepth: { AsteroidEffect: 16, Planet: 10 } },

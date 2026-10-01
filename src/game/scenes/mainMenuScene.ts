@@ -2,6 +2,7 @@ import { Scene, GameObjects, Math as PhaserMath } from 'phaser';
 import type { GameStateProvider } from '../application/gameStateProvider';
 import { initialGameState } from '../definitions/initialGameState';
 import type { TelemetryPort } from '../application/telemetry/telemetry';
+import { mainMenuBackgroundTransform } from './mainMenuBackground';
 
 export class MainMenu extends Scene
 {
@@ -15,7 +16,10 @@ export class MainMenu extends Scene
 
     create ()
     {
-        this.background = this.add.image(512, 384, 'background').setDepth(0);
+        this.cameras.main.setBackgroundColor('#000000');
+        this.background = this.add.image(0, 0, 'background').setDepth(0);
+        this.layoutBackground();
+        this.scale.on('resize', this.layoutBackground, this);
 
         this.cow = this.add.image(0, 0, 'cow').setDepth(1).setVisible(false);
 
@@ -31,9 +35,16 @@ export class MainMenu extends Scene
         this.game.events.emit('main-menu-open');
         this.events.once('shutdown', () => {
             this.game.events.off('start-new-game', startGame);
+            this.scale.off('resize', this.layoutBackground, this);
             this.game.events.emit('main-menu-close');
         });
     }
+
+    private readonly layoutBackground = (): void =>
+    {
+        const transform = mainMenuBackgroundTransform(this.scale, this.background.height);
+        this.background.setPosition(transform.x, transform.y).setScale(transform.scale);
+    };
 
     private flyCow (upwards: boolean)
     {
