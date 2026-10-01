@@ -225,7 +225,7 @@ function resolveAsteroidImpacts (
             return { source, time: sweptCircleIntersection(movingAsteroid, { id: source.id, start: source.start, end: source.position, radius }) };
         })
             .filter((impact): impact is { source: typeof sources[number]; time: number } => impact.time !== null)
-            .map(impact => ({ asteroid: motion.asteroid, ...impact }));
+            .map(impact => ({ asteroid: motion.asteroid, asteroidStart: motion.start, ...impact }));
     }).sort((left, right) => left.time - right.time || left.asteroid.id.localeCompare(right.asteroid.id) || left.source.id.localeCompare(right.source.id));
     const blockers = [{ id: moolarisDefinition.id, position: moolarisDefinition.position, radius: moolarisDefinition.radius },
         ...options.obstacles.map((obstacle, index) => ({ id: `legacy-obstacle-${index}`, position: obstacle, radius: obstacle.radius }))];
@@ -262,11 +262,13 @@ function resolveAsteroidImpacts (
             }
             continue;
         }
+        const asteroidAtImpact = { ...event.asteroid, position: interpolatedPosition(event.asteroidStart, event.asteroid.position, event.time) };
+        const sourceAtImpact = { ...event.source, position: interpolatedPosition(event.source.start, event.source.position, event.time) };
         removedAsteroids.add(event.asteroid.id);
         if (event.source.kind === 'ship') {
-            shipImpact = event.asteroid;
+            shipImpact = asteroidAtImpact;
         }
-        children.push(...fragmentAsteroid(event.asteroid, event.source));
+        children.push(...fragmentAsteroid(asteroidAtImpact, sourceAtImpact));
     }
     for (const event of projectileEvents) {
         if (removedProjectiles.has(event.projectile.id)) continue;
@@ -281,4 +283,11 @@ function resolveAsteroidImpacts (
         }
     }
     return { asteroids: [...motions.filter(motion => !removedAsteroids.has(motion.asteroid.id)).map(motion => changedAsteroids.get(motion.asteroid.id) ?? motion.asteroid), ...children], projectiles: projectiles.filter(projectile => !removedProjectiles.has(projectile.id)), shipImpact };
+}
+
+function interpolatedPosition (
+    start: Readonly<{ x: number; y: number }>, end: Readonly<{ x: number; y: number }>, time: number
+): { x: number; y: number }
+{
+    return { x: start.x + (end.x - start.x) * time, y: start.y + (end.y - start.y) * time };
 }
