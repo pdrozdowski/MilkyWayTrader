@@ -551,6 +551,7 @@ test('fragmentation follows the size hierarchy and remains identical through ser
     const gaps = angles.map((angle, index) => (angles[(index + 1) % angles.length] + (index + 1 === angles.length ? Math.PI * 2 : 0)) - angle);
     assert(gaps.some(gap => Math.abs(gap - Math.PI * 2 / split.length) > 0.001), 'fragment directions must use an uneven split pattern');
     assert.deepEqual(fragmentAsteroid(asteroid('noisy-parent', { x: 0, y: 0 }), { id: 'shot', kind: 'projectile', position: { x: -100, y: 0 } }), split);
+    assert.notDeepEqual(fragmentAsteroid(asteroid('noisy-parent', { x: 0, y: 0 }), { id: 'other-shot', kind: 'projectile', position: { x: -100, y: 0 } }).map(child => child.velocity), split.map(child => child.velocity), 'each impact rotates its chosen split pattern independently');
     const state = { ...initialGameState, projectiles: [projectile], asteroids: [asteroid('restore-parent', { x: 4_500, y: 0 })] };
     const partial = advanceGameSimulation(state, quietInput, 100);
     const uninterrupted = advanceGameSimulation(partial, quietInput, 100);
