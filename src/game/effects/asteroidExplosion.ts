@@ -28,6 +28,17 @@ export function planetImpactParents (
             <= planet.radius + asteroidTuning.sizes[parent.size].radius));
 }
 
+/** SMALL asteroids have no children, so their planet impact is identified from committed removal at the surface. */
+export function planetImpactSmallAsteroids (
+    previous: readonly AsteroidState[], current: readonly AsteroidState[], planets: readonly PlanetState[]
+): readonly AsteroidState[]
+{
+    const currentIds = new Set(current.map(asteroid => asteroid.id));
+    return previous.filter(asteroid => asteroid.size === 'small' && !currentIds.has(asteroid.id)
+        && planets.some(planet => Math.hypot(asteroid.position.x - planet.position.x, asteroid.position.y - planet.position.y)
+            <= planet.radius + asteroidTuning.sizes.small.radius));
+}
+
 /** A SMALL asteroid has no children, so pair its committed removal with a consumed shot. */
 export function projectileDestroyedSmallAsteroids (
     previous: readonly AsteroidState[], current: readonly AsteroidState[], previousProjectiles: readonly ProjectileState[], currentProjectiles: readonly ProjectileState[]
