@@ -1,0 +1,2 @@
+import type { SoundDefinition } from '../types';
+export const definition: SoundDefinition = { id: 'asteroid-planet-impact-deep-loud', key: 'audio:asteroid-planet-impact-deep-loud', paths: ['audio/asteroid_planet_impact_deep_loud.wav'], category: 'sfx', mode: 'one-shot', gain: 0.55, maxVoices: 2, credit: { source: 'public/assets/audio/asteroid_planet_impact_deep_loud.wav', author: 'User supplied', license: 'User supplied' } };

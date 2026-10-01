@@ -6,7 +6,7 @@ import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
-import { AsteroidExplosion, fragmentedParents, planetImpactParents, projectileDestroyedSmallAsteroids } from '../effects/asteroidExplosion';
+import { AsteroidExplosion, fragmentedParents, planetImpactParents, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, sunConsumedAsteroids } from '../effects/asteroidExplosion';
 import { OrbitalPaths } from '../effects/orbitalPaths';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
@@ -399,7 +399,7 @@ export class Game extends Scene
             this.clearFlightInput();
             this.lossOfControlUntilMs = time + 1500;
             this.asteroidExplosion.explodeShipCrash(state.ship.position);
-            this.audio.play('ship-asteroid-crash');
+            this.audio.play('asteroid-crash-metal-clean');
         }
         this.ship.synchronize(state.ship, time);
         this.lossOfControl.setVisible(time < this.lossOfControlUntilMs);
@@ -430,16 +430,22 @@ export class Game extends Scene
     ): void
     {
         const planetImpactIds = new Set(planetImpactParents(previous, current, planets).map(parent => parent.id));
+        for (const asteroid of projectileDamagedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('asteroid-projectile-impact-clean');
+        for (const asteroid of sunConsumedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('sun-asteroid-low-slurp-loud-no-noise');
         for (const parent of fragmentedParents(previous, current)) {
             if (!this.camera.worldView.contains(parent.position.x, parent.position.y)) continue;
-            if (planetImpactIds.has(parent.id)) this.asteroidExplosion.explodePlanetImpact(parent.position);
-            else this.asteroidExplosion.explode(parent.position);
-            this.audio.play('asteroid-fragment');
+            if (planetImpactIds.has(parent.id)) {
+                this.asteroidExplosion.explodePlanetImpact(parent.position);
+                this.audio.play('asteroid-planet-impact-deep-loud');
+            } else {
+                this.asteroidExplosion.explode(parent.position);
+                this.audio.play('asteroid-falls-apart-clean');
+            }
         }
         for (const asteroid of projectileDestroyedSmallAsteroids(previous, current, previousProjectiles, currentProjectiles)) {
             if (!this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) continue;
             this.asteroidExplosion.explode(asteroid.position);
-            this.audio.play('asteroid-fragment');
+            this.audio.play('asteroid-falls-apart-clean');
         }
     }
 

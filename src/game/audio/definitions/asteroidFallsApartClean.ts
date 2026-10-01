@@ -1,0 +1,2 @@
+import type { SoundDefinition } from '../types';
+export const definition: SoundDefinition = { id: 'asteroid-falls-apart-clean', key: 'audio:asteroid-falls-apart-clean', paths: ['audio/asteroid_falls_apart_clean.wav'], category: 'sfx', mode: 'one-shot', gain: 0.42, maxVoices: 3, credit: { source: 'public/assets/audio/asteroid_falls_apart_clean.wav', author: 'User supplied', license: 'User supplied' } };

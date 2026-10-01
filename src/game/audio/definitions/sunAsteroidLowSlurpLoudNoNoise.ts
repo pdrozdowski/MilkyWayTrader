@@ -1,0 +1,2 @@
+import type { SoundDefinition } from '../types';
+export const definition: SoundDefinition = { id: 'sun-asteroid-low-slurp-loud-no-noise', key: 'audio:sun-asteroid-low-slurp-loud-no-noise', paths: ['audio/sun_asteroid_low_slurp_loud_no_noise.wav'], category: 'sfx', mode: 'one-shot', gain: 0.5, maxVoices: 2, credit: { source: 'public/assets/audio/sun_asteroid_low_slurp_loud_no_noise.wav', author: 'User supplied', license: 'User supplied' } };

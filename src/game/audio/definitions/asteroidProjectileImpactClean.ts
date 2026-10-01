@@ -1,0 +1,2 @@
+import type { SoundDefinition } from '../types';
+export const definition: SoundDefinition = { id: 'asteroid-projectile-impact-clean', key: 'audio:asteroid-projectile-impact-clean', paths: ['audio/asteroid_projectile_impact_clean.wav'], category: 'sfx', mode: 'one-shot', gain: 0.38, maxVoices: 4, credit: { source: 'public/assets/audio/asteroid_projectile_impact_clean.wav', author: 'User supplied', license: 'User supplied' } };

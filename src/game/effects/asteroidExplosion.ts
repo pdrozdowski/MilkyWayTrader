@@ -3,6 +3,7 @@ import type { AsteroidState } from '../state/asteroidState';
 import type { PlanetState } from '../state/planetState';
 import type { ProjectileState } from '../state/projectileState';
 import { asteroidTuning } from '../definitions/gameplayTuning';
+import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { ObjectDepth } from '../visual/layers';
 
 const explosionLifetimeMs = 220;
@@ -35,6 +36,20 @@ export function projectileDestroyedSmallAsteroids (
     const currentProjectileIds = new Set(currentProjectiles.map(projectile => projectile.id));
     const consumedShot = previousProjectiles.some(projectile => !currentProjectileIds.has(projectile.id));
     return consumedShot ? previous.filter(asteroid => asteroid.size === 'small' && !currentIds.has(asteroid.id)) : [];
+}
+
+export function projectileDamagedAsteroids (previous: readonly AsteroidState[], current: readonly AsteroidState[]): readonly AsteroidState[]
+{
+    const currentById = new Map(current.map(asteroid => [asteroid.id, asteroid]));
+    return previous.filter(asteroid => (currentById.get(asteroid.id)?.hitPoints ?? asteroid.hitPoints) < asteroid.hitPoints);
+}
+
+export function sunConsumedAsteroids (previous: readonly AsteroidState[], current: readonly AsteroidState[]): readonly AsteroidState[]
+{
+    const currentIds = new Set(current.map(asteroid => asteroid.id));
+    return previous.filter(asteroid => !currentIds.has(asteroid.id)
+        && Math.hypot(asteroid.position.x - moolarisDefinition.position.x, asteroid.position.y - moolarisDefinition.position.y)
+            <= moolarisDefinition.radius * asteroidTuning.starIngestionRadiusFactor);
 }
 
 /** Transient scene effect. It deliberately has no link to persisted asteroid state. */

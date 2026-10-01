@@ -13,7 +13,7 @@ export function validateSoundDefinitions(definitions: readonly SoundDefinition[]
             || definition.gain < 0 || definition.gain > 1 || !Number.isInteger(definition.maxVoices) || definition.maxVoices < 1) {
             throw new Error(`Invalid sound playback settings: ${definition.id}`);
         }
-        if (!definition.paths.length || definition.paths.some(path => !path.startsWith(`audio/${definition.id}/`)
+        if (!definition.paths.length || definition.paths.some(path => !(path.startsWith(`audio/${definition.id}/`) || /^audio\/[^/]+\.wav$/.test(path))
             || path.includes('..') || path.includes('\\'))) throw new Error(`Invalid sound asset paths: ${definition.id}`);
         if (!definition.credit.source || !definition.credit.author || !definition.credit.license) {
             throw new Error(`Missing sound provenance: ${definition.id}`);

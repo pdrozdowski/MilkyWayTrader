@@ -1,0 +1,2 @@
+import type { SoundDefinition } from '../types';
+export const definition: SoundDefinition = { id: 'asteroid-crash-metal-clean', key: 'audio:asteroid-crash-metal-clean', paths: ['audio/asteroid_crash_metal_clean.wav'], category: 'sfx', mode: 'one-shot', gain: 0.5, maxVoices: 2, credit: { source: 'public/assets/audio/asteroid_crash_metal_clean.wav', author: 'User supplied', license: 'User supplied' } };
