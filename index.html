@@ -12,11 +12,10 @@
     <div id="app">
         <div id="game-container"></div>
         <section id="main-menu" data-game-input="ignore" aria-label="Main menu" hidden>
-            <img id="main-menu-logo" src="/assets/logo.png" alt="MilkyWayTrader" />
             <button id="main-menu-sign-in-preview" type="button"><svg class="main-menu-sign-in-preview-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5.33 0-10 2.67-10 6v2h20v-2c0-3.33-4.67-6-10-6Z" /></svg><span class="main-menu-sign-in-preview-label">Sign In</span></button>
             <div id="main-menu-controls">
-                <button id="main-menu-new-game" class="action-button" type="button">New Game</button>
-                <button id="main-menu-continue" class="action-button" type="button" disabled>Continue Game</button>
+                <button id="main-menu-new-game" class="action-button" type="button" aria-label="New Game"></button>
+                <button id="main-menu-continue" class="action-button" type="button" aria-label="Continue Game" disabled></button>
             </div>
         </section>
         <section id="run-status" data-game-input="ignore" aria-label="Run status" hidden>
