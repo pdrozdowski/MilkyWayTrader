@@ -1,7 +1,6 @@
 import type { Vector2State } from './vector2State';
 
 export type AsteroidSize = 'big' | 'medium' | 'small';
-export const asteroidMaximumHitPoints: Readonly<Record<AsteroidSize, number>> = { big: 3, medium: 2, small: 1 };
 export type AsteroidVariant = 'rock' | 'ice' | 'metal' | 'dirt';
 
 export interface AsteroidOrbitState
