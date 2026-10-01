@@ -11,4 +11,6 @@ export interface ShipState
     readonly coastDeceleration: number;
     /** Active-game time at which an asteroid-impact control lock expires, or null when controllable. */
     readonly asteroidControlLockedUntilActiveMs: number | null;
+    /** Active-game time of the latest committed asteroid-ship impact, or null before the first impact. */
+    readonly asteroidImpactAtActiveMs: number | null;
 }

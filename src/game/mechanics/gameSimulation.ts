@@ -182,7 +182,8 @@ export function advanceGameSimulation (
         }];
     }
     const collisionShip = resolved.boostedShipImpact === null ? orbitShip : shipAfterBoostedAsteroidImpact(orbitShip, resolved.boostedShipImpact.position, clock.activeElapsedMs);
-    return tryLandAtCapturedPlanet({ ...state, clock, markets, ship: collisionShip, planets, planetLifecycle: lifecycle, weapon, projectiles, asteroids: resolved.asteroids }, input.landingRequested === true);
+    const impactedShip = resolved.shipImpact === null ? collisionShip : { ...collisionShip, asteroidImpactAtActiveMs: clock.activeElapsedMs };
+    return tryLandAtCapturedPlanet({ ...state, clock, markets, ship: impactedShip, planets, planetLifecycle: lifecycle, weapon, projectiles, asteroids: resolved.asteroids }, input.landingRequested === true);
 }
 
 function shipAfterBoostedAsteroidImpact (ship: GameStateSnapshot['ship'], asteroidPosition: Readonly<{ x: number; y: number }>, activeElapsedMs: number): GameStateSnapshot['ship']
@@ -204,7 +205,7 @@ function shipAfterBoostedAsteroidImpact (ship: GameStateSnapshot['ship'], astero
 function resolveAsteroidImpacts (
     motions: ReturnType<typeof advanceAsteroidMotions>, state: GameStateSnapshot, ship: GameStateSnapshot['ship'],
     planets: GameStateSnapshot['planets'], projectiles: readonly ProjectileState[], options: GameSimulationOptions
-): { asteroids: GameStateSnapshot['asteroids']; projectiles: readonly ProjectileState[]; boostedShipImpact: AsteroidState | null }
+): { asteroids: GameStateSnapshot['asteroids']; projectiles: readonly ProjectileState[]; boostedShipImpact: AsteroidState | null; shipImpact: AsteroidState | null }
 {
     const sources: readonly (AsteroidImpactSource & { readonly start: Readonly<{ x: number; y: number }>; readonly radius: number })[] = [
         { id: moolarisDefinition.id, kind: 'moolaris', position: moolarisDefinition.position, start: moolarisDefinition.position, radius: moolarisDefinition.radius },
@@ -245,6 +246,7 @@ function resolveAsteroidImpacts (
     const removedProjectiles = new Set<string>();
     const children: AsteroidState[] = [];
     let boostedShipImpact: AsteroidState | null = null;
+    let shipImpact: AsteroidState | null = null;
     for (const event of asteroidEvents) {
         if (removedAsteroids.has(event.asteroid.id)) continue;
         if (event.source.kind === 'moolaris') {
@@ -260,7 +262,10 @@ function resolveAsteroidImpacts (
             continue;
         }
         removedAsteroids.add(event.asteroid.id);
-        if (event.source.kind === 'ship' && ship.boosting) boostedShipImpact = event.asteroid;
+        if (event.source.kind === 'ship') {
+            shipImpact = event.asteroid;
+            if (ship.boosting) boostedShipImpact = event.asteroid;
+        }
         children.push(...fragmentAsteroid(event.asteroid, event.source));
     }
     for (const event of projectileEvents) {
@@ -275,5 +280,5 @@ function resolveAsteroidImpacts (
             }
         }
     }
-    return { asteroids: [...motions.filter(motion => !removedAsteroids.has(motion.asteroid.id)).map(motion => changedAsteroids.get(motion.asteroid.id) ?? motion.asteroid), ...children], projectiles: projectiles.filter(projectile => !removedProjectiles.has(projectile.id)), boostedShipImpact };
+    return { asteroids: [...motions.filter(motion => !removedAsteroids.has(motion.asteroid.id)).map(motion => changedAsteroids.get(motion.asteroid.id) ?? motion.asteroid), ...children], projectiles: projectiles.filter(projectile => !removedProjectiles.has(projectile.id)), boostedShipImpact, shipImpact };
 }
