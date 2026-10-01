@@ -13,10 +13,11 @@ import { definition as laser } from '../src/game/audio/definitions/shipLaser.ts'
 import { definition as engine } from '../src/game/audio/definitions/shipEngine.ts';
 import { definition as booster } from '../src/game/audio/definitions/shipBooster.ts';
 import { definition as asteroidFragment } from '../src/game/audio/definitions/asteroidFragment.ts';
+import { definition as shipAsteroidCrash } from '../src/game/audio/definitions/shipAsteroidCrash.ts';
 import { validateWav } from '../.agents/skills/utils-add-sound/scripts/scaffold.mjs';
 import { generateEffects } from '../scripts/generate-demo-audio.mjs';
 
-const definitions = [laser, engine, booster, asteroidFragment];
+const definitions = [laser, engine, booster, asteroidFragment, shipAsteroidCrash];
 function fixture(storage) {
     const owner = { events: new EventEmitter() };
     const voices = [];
@@ -223,7 +224,7 @@ test('generated WAVs are reproducible, correctly timed, DC-free and periodic at 
         const info = validateWav(wav);
         assert.equal(info.rate, 44100);
         assert.equal(info.channels, 1);
-        assert.equal(info.frames / info.rate, definition.mode === 'loop' ? 2 : definition.id === 'asteroid-fragment' ? 0.22 : 0.18);
+        assert.equal(info.frames / info.rate, definition.mode === 'loop' ? 2 : definition.id === 'asteroid-fragment' ? 0.22 : definition.id === 'ship-asteroid-crash' ? 0.35 : 0.18);
         const samples = Array.from({ length: info.frames }, (_, i) => wav.readInt16LE(info.dataStart + i * 2));
         const mean = samples.reduce((sum, value) => sum + value, 0) / samples.length;
         assert(Math.abs(mean) < 1);

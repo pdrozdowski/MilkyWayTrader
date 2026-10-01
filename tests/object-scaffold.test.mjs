@@ -41,11 +41,14 @@ test('asteroid projection reconciles IDs, shows persisted durability and places 
     projection.destroy();
     assert.equal(created[1].destroyed, 1, 'shutdown cleanup remains idempotent');
     assert.equal(asteroidProjectionDepth({ id: 'infall', variant: 'rock', size: 'small', hitPoints: 1, position: { x: 110, y: 0 }, velocity: { x: -1, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }), 5);
-    assert.equal(asteroidProjectionDepth({ id: 'fragment', variant: 'rock', size: 'small', hitPoints: 1, position: { x: 110, y: 0 }, velocity: { x: 1, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }), 15);
+    assert.equal(asteroidProjectionDepth({ id: 'fragment', variant: 'rock', size: 'small', hitPoints: 1, position: { x: 110, y: 0 }, velocity: { x: 1, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }), 5);
 });
 
 test('fragment feedback only recognizes committed parent-to-children transitions and identifies planet impacts', () => {
-    const { fragmentedParents, planetImpactParents } = transpileModule('src/game/effects/asteroidExplosion.ts', { '../visual/layers': { ObjectDepth: { AsteroidEffect: 16, Planet: 10 } } });
+    const { fragmentedParents, planetImpactParents } = transpileModule('src/game/effects/asteroidExplosion.ts', {
+        '../visual/layers': { ObjectDepth: { AsteroidEffect: 16, Planet: 10 } },
+        '../definitions/gameplayTuning': { asteroidTuning: { sizes: { big: { radius: 72 }, medium: { radius: 48 }, small: { radius: 24 } } } }
+    });
     const parent = { id: 'parent', variant: 'rock', size: 'big', hitPoints: 1, position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null };
     const child = { ...parent, id: 'parent-fragment-1', size: 'medium' };
     assert.deepEqual(fragmentedParents([parent], [child]), [parent]);
