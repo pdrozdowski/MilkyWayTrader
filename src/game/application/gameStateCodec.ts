@@ -1,6 +1,7 @@
 import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 import type { SerotonCommodityId } from '../state/serotonMarketState';
+import type { AsteroidSize, AsteroidVariant } from '../state/asteroidState';
 import { maximumShipHitPoints } from '../domain/runBalance.ts';
 import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
 
@@ -83,8 +84,8 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         try { source = JSON.parse(source) as unknown; }
         catch { throw new Error('Game state is not valid JSON.'); }
     }
-    const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles']);
-    if (root.schemaVersion !== 6) throw new Error('Unsupported game-state schema version.');
+    const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
+    if (root.schemaVersion !== 7) throw new Error('Unsupported game-state schema version.');
 
     const credits = nonNegativeSafeInteger(root.credits, 'state.credits');
     if (!Array.isArray(root.cargo)) throw new Error('state.cargo must be an array.');
@@ -200,8 +201,42 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         };
     });
 
+    if (!Array.isArray(root.asteroids)) throw new Error('state.asteroids must be an array.');
+    const asteroidIds = new Set<string>();
+    const asteroidVariants: readonly AsteroidVariant[] = ['rock', 'ice', 'metal', 'dirt'];
+    const asteroidSizes: readonly AsteroidSize[] = ['big', 'medium', 'small'];
+    const asteroids = root.asteroids.map((candidateAsteroid, index) => {
+        const path = `state.asteroids[${index}]`;
+        const asteroid = requireRecord(candidateAsteroid, path, ['id', 'variant', 'size', 'position', 'velocity', 'orbit', 'outsideSafeAreaSinceActiveMs']);
+        const id = nonEmptyString(asteroid.id, `${path}.id`);
+        if (asteroidIds.has(id)) throw new Error(`Duplicate asteroid id: ${id}.`);
+        asteroidIds.add(id);
+        if (typeof asteroid.variant !== 'string' || !asteroidVariants.includes(asteroid.variant as AsteroidVariant)) {
+            throw new Error(`${path}.variant is unknown.`);
+        }
+        if (typeof asteroid.size !== 'string' || !asteroidSizes.includes(asteroid.size as AsteroidSize)) {
+            throw new Error(`${path}.size is unknown.`);
+        }
+        const orbit = asteroid.orbit === null ? null : requireRecord(asteroid.orbit, `${path}.orbit`, ['angleRadians', 'radius', 'rotationRadians']);
+        const radius = orbit === null ? null : nonNegativeNumber(orbit.radius, `${path}.orbit.radius`);
+        if (radius === 0) throw new Error(`${path}.orbit.radius must be positive.`);
+        return {
+            id,
+            variant: asteroid.variant as AsteroidVariant,
+            size: asteroid.size as AsteroidSize,
+            position: vector2(asteroid.position, `${path}.position`),
+            velocity: vector2(asteroid.velocity, `${path}.velocity`),
+            orbit: orbit === null ? null : {
+                angleRadians: finiteNumber(orbit.angleRadians, `${path}.orbit.angleRadians`),
+                radius: radius as number,
+                rotationRadians: finiteNumber(orbit.rotationRadians, `${path}.orbit.rotationRadians`)
+            },
+            outsideSafeAreaSinceActiveMs: nullableTime(asteroid.outsideSafeAreaSinceActiveMs, `${path}.outsideSafeAreaSinceActiveMs`)
+        };
+    });
+
     return cloneAndFreeze({
-        schemaVersion: 6,
+        schemaVersion: 7,
         clock: { budgetMs, activeElapsedMs, pauseReasons },
         credits,
         cargo,
@@ -229,7 +264,8 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
             lastShotAtMs: nullableTime(weapon.lastShotAtMs, 'state.weapon.lastShotAtMs'),
             projectileSequence
         },
-        projectiles
+        projectiles,
+        asteroids
     });
 }
 

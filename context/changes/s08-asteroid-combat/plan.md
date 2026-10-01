@@ -213,9 +213,9 @@ Schema zmienia się z v6 na v7. Aplikacja jest przed dojrzałością persistence
 
 #### Automated
 
-- [ ] 1.1 Validate the amended PRD capability contract
-- [ ] 1.2 Validate schema v7 asteroid codec and initial state
-- [ ] 1.3 Verify deterministic asteroid tuning and layout
+- [x] 1.1 Validate the amended PRD capability contract
+- [x] 1.2 Validate schema v7 asteroid codec and initial state
+- [x] 1.3 Verify deterministic asteroid tuning and layout
 
 #### Manual
 

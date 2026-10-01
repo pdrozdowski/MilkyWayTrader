@@ -17,6 +17,7 @@ import { createOrbitalPathDashes, ORBITAL_PATH_DASH_LENGTH, ORBITAL_PATH_GAP_LEN
 import { activeTimeCycle, activeTimeWave } from '../src/game/visual/activeTime.ts';
 import { launchFromPlanet, LANDING_CENTRE_RADIUS, tryLandAtCapturedPlanet } from '../src/game/mechanics/planet/landing.ts';
 import { decodeGameState, encodeGameState } from '../src/game/application/gameStateCodec.ts';
+import { asteroidFragmentChildCount, asteroidTuning } from '../src/game/definitions/gameplayTuning.ts';
 
 const marketStocks = state => state.markets[0].commodityStocks.map(commodity => ({ ...commodity }));
 
@@ -265,6 +266,37 @@ test('decorative asteroid belt has a deterministic active-time projection beyond
     assert(Math.abs(initial[0].x - -quarter[0].y) < 1e-8);
     assert(Math.abs(initial[0].y - quarter[0].x) < 1e-8);
     assert.deepEqual(projectAsteroidBelt(asteroidBeltDefinition.rotationPeriodMs), initial);
+    assert.equal(initialGameState.asteroids.length, 384);
+    for (const [index, asteroid] of initialGameState.asteroids.entries()) {
+        const layout = asteroidBeltLayout[index];
+        assert.equal(asteroid.id, `asteroid-belt-${index + 1}`);
+        assert.equal(asteroid.variant, layout.type);
+        assert.equal(asteroid.size, 'big');
+        assert.deepEqual(asteroid.orbit, {
+            angleRadians: layout.angleRadians,
+            radius: layout.radius,
+            rotationRadians: layout.rotationRadians
+        });
+        assert.deepEqual(asteroid.position, { x: initial[index].x, y: initial[index].y });
+    }
+});
+
+test('asteroid tuning keeps safe-area lifecycle and deterministic fragment counts bounded', () => {
+    assert.equal(asteroidTuning.safeRadius, 1_280);
+    assert.equal(asteroidTuning.outsideSafeAreaCullAfterMs, 15_000);
+    assert.equal(asteroidTuning.fragmentChildCount.minimum, 2);
+    assert.equal(asteroidTuning.fragmentChildCount.maximum, 4);
+    assert.deepEqual(asteroidTuning.sizes, {
+        big: { radius: 72 },
+        medium: { radius: 48 },
+        small: { radius: 24 }
+    });
+    assert.equal(asteroidTuning.fragmentDrift.speed, 180);
+    assert.equal(asteroidTuning.fragmentDrift.spreadRadians, Math.PI * 2);
+    const counts = Array.from({ length: 1_000 }, (_, index) => asteroidFragmentChildCount(`asteroid-parent-${index}`));
+    assert(counts.every(count => count >= 2 && count <= 4));
+    assert.deepEqual(counts, Array.from({ length: 1_000 }, (_, index) => asteroidFragmentChildCount(`asteroid-parent-${index}`)));
+    assert.deepEqual(new Set(counts), new Set([2, 3, 4]));
 });
 
 test('sun and starfield presentation phases freeze and resume from active elapsed time', () => {

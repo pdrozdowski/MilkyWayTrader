@@ -35,7 +35,7 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 6);
+    assert.equal(state.schemaVersion, 7);
     assert.equal(state.credits, 100_000);
     assert.deepEqual(state.cargo, []);
     assert.deepEqual(state.markets, [{
@@ -53,6 +53,8 @@ test('a new run starts with the complete S-01 authoritative state', () => {
         weaponLevel: 1,
         boosterUnlocked: false
     });
+    assert.equal(state.asteroids.length, 384);
+    assert(state.asteroids.every(asteroid => asteroid.size === 'big' && asteroid.orbit));
 });
 
 test('codec round trips exact JSON-safe state and restore failures are atomic', () => {
@@ -64,7 +66,7 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
     assert.deepEqual(decodeGameState(encoded), advanced);
 
     const invalidCases = [
-        { ...clone(advanced), schemaVersion: 2 },
+        { ...clone(advanced), schemaVersion: 6 },
         { ...clone(advanced), credits: -1 },
         { ...clone(advanced), credits: 0.5 },
         { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1, averageBuyPrice: 0 }, { commodityId: 'ore', quantity: 2, averageBuyPrice: 0 }] },
@@ -196,6 +198,26 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
     assert.deepEqual(unchanged.planets, paused.planets);
 });
 
+test('codec accepts and round trips drifting asteroids without an orbit', () => {
+    const drifting = {
+        ...clone(initialGameState),
+        asteroids: [{
+            ...clone(initialGameState.asteroids[0]),
+            id: 'asteroid-fragment-1',
+            size: 'small',
+            position: { x: 3_200, y: -1_600 },
+            velocity: { x: 180, y: -90 },
+            orbit: null,
+            outsideSafeAreaSinceActiveMs: 4_000
+        }]
+    };
+    const provider = new GameStateProvider(initialGameState);
+    provider.restore(drifting);
+    const restored = provider.snapshot();
+    assert.equal(restored.asteroids[0].orbit, null);
+    assert.deepEqual(decodeGameState(encodeGameState(restored)), restored);
+});
+
 test('provider commits a valid Seroton trade as one immutable replacement', () => {
     const provider = new GameStateProvider(initialGameState);
     const landed = provider.update(state => ({
@@ -256,7 +278,7 @@ test('landed market port rejects unlanded trade commands and rebuilds its visit-
     landedPort.destroy();
 });
 
-test('v5 codec preserves lifecycle JSON and rejects v4 and inconsistent lifecycle shapes', () => {
+test('v7 codec preserves lifecycle JSON and rejects v4 and inconsistent lifecycle shapes', () => {
     const planetId = initialGameState.planets[0].id;
     const landed = {
         ...clone(initialGameState),
@@ -318,7 +340,27 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 6);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 7);
+});
+
+test('v7 codec validates asteroid identity, finite vectors, lifecycle time, and exact orbit shape', () => {
+    const decoded = decodeGameState(initialGameState);
+    const asteroid = clone(decoded.asteroids[0]);
+    assert(Object.isFrozen(decoded.asteroids));
+    assert(Object.isFrozen(decoded.asteroids[0]));
+    assert.deepEqual(decodeGameState(encodeGameState(decoded)).asteroids, decoded.asteroids);
+
+    const invalidCases = [
+        { ...clone(decoded), schemaVersion: 6 },
+        { ...clone(decoded), asteroids: [{ ...asteroid, id: '' }] },
+        { ...clone(decoded), asteroids: [asteroid, asteroid] },
+        { ...clone(decoded), asteroids: [{ ...asteroid, position: { ...asteroid.position, x: Number.POSITIVE_INFINITY } }] },
+        { ...clone(decoded), asteroids: [{ ...asteroid, velocity: { ...asteroid.velocity, y: Number.NaN } }] },
+        { ...clone(decoded), asteroids: [{ ...asteroid, outsideSafeAreaSinceActiveMs: -1 }] },
+        { ...clone(decoded), asteroids: [{ ...asteroid, orbit: { ...asteroid.orbit, radius: 0 } }] },
+        { ...clone(decoded), asteroids: [{ ...asteroid, orbit: { ...asteroid.orbit, unexpected: true } }] }
+    ];
+    for (const invalid of invalidCases) assert.throws(() => decodeGameState(invalid));
 });
 
 test('run status projection derives clock, capacity and readable run values', () => {

@@ -3,11 +3,12 @@ import { initialCredits, maximumShipHitPoints } from '../domain/runBalance.ts';
 import { planetDefinitions } from './planetDefinitions.ts';
 import { projectPlanetPosition } from '../mechanics/planet/orbit.ts';
 import { serotonCommodityDefinitions } from './serotonMarketDefinitions.ts';
+import { asteroidBeltDefinition, asteroidBeltLayout } from './gameplayTuning.ts';
 
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
 
 export const initialGameState: GameStateSnapshot = {
-    schemaVersion: 6,
+    schemaVersion: 7,
     clock: {
         budgetMs: ACTIVE_TIME_BUDGET_MS,
         activeElapsedMs: 0,
@@ -51,5 +52,27 @@ export const initialGameState: GameStateSnapshot = {
         lastShotAtMs: null,
         projectileSequence: 0
     },
-    projectiles: []
+    projectiles: [],
+    asteroids: asteroidBeltLayout.map((asteroid, index) => {
+        const angularVelocity = Math.PI * 2 / asteroidBeltDefinition.rotationPeriodMs;
+        return {
+            id: `asteroid-belt-${index + 1}`,
+            variant: asteroid.variant,
+            size: 'big',
+            position: {
+                x: Math.cos(asteroid.angleRadians) * asteroid.radius,
+                y: -Math.sin(asteroid.angleRadians) * asteroid.radius
+            },
+            velocity: {
+                x: -Math.sin(asteroid.angleRadians) * asteroid.radius * angularVelocity * 1000,
+                y: -Math.cos(asteroid.angleRadians) * asteroid.radius * angularVelocity * 1000
+            },
+            orbit: {
+                angleRadians: asteroid.angleRadians,
+                radius: asteroid.radius,
+                rotationRadians: asteroid.rotationRadians
+            },
+            outsideSafeAreaSinceActiveMs: null
+        };
+    })
 };
