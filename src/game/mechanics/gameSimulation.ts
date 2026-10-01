@@ -1,9 +1,11 @@
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 import type { ProjectileState } from '../state/projectileState';
+import type { AsteroidState } from '../state/asteroidState';
 import type { CircleObstacle } from '../world/geometry';
+import { sweptCircleIntersection } from '../world/geometry.ts';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning.ts';
 import { advanceGameClock } from './clock/gameClock.ts';
-import { segmentHitsCircle, shotTrajectory } from './projectile/trajectory.ts';
+import { shotTrajectory } from './projectile/trajectory.ts';
 import { advanceFireCadence } from './spaceship/fireCadence.ts';
 import { boostAccelerationRate, directionRotation, flightVelocity } from './spaceship/flight.ts';
 import { getPlanetDefinition } from '../definitions/planetDefinitions.ts';
@@ -13,6 +15,8 @@ import { tryLandAtCapturedPlanet } from './planet/landing.ts';
 import { isRecoveringFromMoolaris, resolveMoolarisContact } from './moolaris/contact.ts';
 import { MOOLARIS_RECOVERY_SECONDS } from '../definitions/moolarisDefinition.ts';
 import { advanceSerotonMarket } from './serotonMarketSimulation.ts';
+import { asteroidRadius, advanceAsteroidMotions, fragmentAsteroid, type AsteroidImpactSource } from './asteroid/asteroidSimulation.ts';
+import { moolarisDefinition } from '../definitions/moolarisDefinition.ts';
 
 export interface GameSimulationInput
 {
@@ -54,7 +58,6 @@ function advanceProjectiles (
             x: projectile.position.x + projectile.velocity.x * activeDeltaMs / 1000,
             y: projectile.position.y + projectile.velocity.y * activeDeltaMs / 1000
         };
-        if (options.obstacles.some(obstacle => segmentHitsCircle(projectile.position, next, obstacle, options.projectileRadius))) return [];
         return [{ ...projectile, position: next }];
     });
 }
@@ -116,14 +119,7 @@ export function advanceGameSimulation (
     const cadence = advanceFireCadence(state.weapon, clock.activeElapsedMs, !landed && contact.hasControl && !recovering && input.firing && !ship.boosting, options.shotIntervalMs);
     let weapon = cadence.weapon;
     if (cadence.fired) {
-        const trajectory = shotTrajectory(ship.position, ship.rotation, options.muzzleOffset + options.projectileRadius + 1, options.projectileSpeed);
         const sequence = weapon.projectileSequence + 1;
-        projectiles = [...projectiles, {
-            id: `projectile-${sequence}`,
-            position: trajectory.start,
-            velocity: trajectory.velocity,
-            bornAtActiveMs: clock.activeElapsedMs
-        }];
         weapon = { ...weapon, projectileSequence: sequence };
     }
     const planets = state.planets.map(planet => ({
@@ -169,5 +165,70 @@ export function advanceGameSimulation (
             lifecycle = { ...lifecycle, capturedPlanetId: eligible.id };
         }
     }
-    return tryLandAtCapturedPlanet({ ...state, clock, markets, ship: orbitShip, planets, planetLifecycle: lifecycle, weapon, projectiles }, input.landingRequested === true);
+    const asteroidMotions = advanceAsteroidMotions(state.asteroids, clock.activeElapsedMs, activeDeltaMs, orbitShip.position, state.ship.position);
+    const resolved = resolveAsteroidImpacts(asteroidMotions, state, orbitShip, planets,
+        projectiles.filter(projectile => projectile.bornAtActiveMs < clock.activeElapsedMs), options);
+    projectiles = resolved.projectiles;
+    if (cadence.fired) {
+        const trajectory = shotTrajectory(orbitShip.position, orbitShip.rotation, options.muzzleOffset + options.projectileRadius + 1, options.projectileSpeed);
+        projectiles = [...projectiles, {
+            id: `projectile-${weapon.projectileSequence}`,
+            position: trajectory.start,
+            velocity: trajectory.velocity,
+            bornAtActiveMs: clock.activeElapsedMs
+        }];
+    }
+    return tryLandAtCapturedPlanet({ ...state, clock, markets, ship: orbitShip, planets, planetLifecycle: lifecycle, weapon, projectiles, asteroids: resolved.asteroids }, input.landingRequested === true);
+}
+
+function resolveAsteroidImpacts (
+    motions: ReturnType<typeof advanceAsteroidMotions>, state: GameStateSnapshot, ship: GameStateSnapshot['ship'],
+    planets: GameStateSnapshot['planets'], projectiles: readonly ProjectileState[], options: GameSimulationOptions
+): { asteroids: GameStateSnapshot['asteroids']; projectiles: readonly ProjectileState[] }
+{
+    const sources: readonly (AsteroidImpactSource & { readonly start: Readonly<{ x: number; y: number }>; readonly radius: number })[] = [
+        { id: moolarisDefinition.id, kind: 'moolaris', position: moolarisDefinition.position, start: moolarisDefinition.position, radius: moolarisDefinition.radius },
+        { id: 'ship', kind: 'ship', position: ship.position, start: state.ship.position, radius: shipTuning.collisionRadius },
+        ...planets.map(planet => ({ id: `planet-${planet.id}`, kind: 'planet' as const, position: planet.position,
+            start: state.planets.find(previous => previous.id === planet.id)?.position ?? planet.position, radius: planet.radius }))
+    ];
+    const asteroidEvents = motions.flatMap(motion => {
+        const asteroid = { id: motion.asteroid.id, start: motion.start, end: motion.asteroid.position, radius: asteroidRadius(motion.asteroid.size) };
+        return sources.map(source => ({ source, time: sweptCircleIntersection(asteroid, { id: source.id, start: source.start, end: source.position, radius: source.radius }) }))
+            .filter((impact): impact is { source: typeof sources[number]; time: number } => impact.time !== null)
+            .map(impact => ({ asteroid: motion.asteroid, ...impact }));
+    }).sort((left, right) => left.time - right.time || left.asteroid.id.localeCompare(right.asteroid.id) || left.source.id.localeCompare(right.source.id));
+    const blockers = [{ id: moolarisDefinition.id, position: moolarisDefinition.position, radius: moolarisDefinition.radius },
+        ...options.obstacles.map((obstacle, index) => ({ id: `legacy-obstacle-${index}`, position: obstacle, radius: obstacle.radius }))];
+    const projectileEvents = projectiles.flatMap(projectile => {
+        const start = state.projectiles.find(previous => previous.id === projectile.id)?.position ?? projectile.position;
+        const shot = { id: projectile.id, start, end: projectile.position, radius: options.projectileRadius };
+        const targets = motions.flatMap(motion => {
+            const time = sweptCircleIntersection(shot, { id: motion.asteroid.id, start: motion.start, end: motion.asteroid.position, radius: asteroidRadius(motion.asteroid.size) });
+            return time === null ? [] : [{ kind: 'asteroid' as const, projectile, asteroid: motion.asteroid, time }];
+        });
+        const blockerEvents = blockers.flatMap(blocker => {
+            const time = sweptCircleIntersection(shot, { id: blocker.id, start: blocker.position, end: blocker.position, radius: blocker.radius });
+            return time === null ? [] : [{ kind: 'blocker' as const, projectile, blocker, time }];
+        });
+        return [...targets, ...blockerEvents];
+    }).sort((left, right) => left.time - right.time || left.projectile.id.localeCompare(right.projectile.id)
+        || (left.kind === 'asteroid' ? left.asteroid.id : left.blocker.id).localeCompare(right.kind === 'asteroid' ? right.asteroid.id : right.blocker.id));
+    const removedAsteroids = new Set<string>();
+    const removedProjectiles = new Set<string>();
+    const children: AsteroidState[] = [];
+    for (const event of asteroidEvents) {
+        if (removedAsteroids.has(event.asteroid.id)) continue;
+        removedAsteroids.add(event.asteroid.id);
+        children.push(...fragmentAsteroid(event.asteroid, event.source));
+    }
+    for (const event of projectileEvents) {
+        if (removedProjectiles.has(event.projectile.id)) continue;
+        removedProjectiles.add(event.projectile.id);
+        if (event.kind === 'asteroid' && !removedAsteroids.has(event.asteroid.id)) {
+            removedAsteroids.add(event.asteroid.id);
+            children.push(...fragmentAsteroid(event.asteroid, { id: event.projectile.id, kind: 'projectile', position: event.projectile.position }));
+        }
+    }
+    return { asteroids: [...motions.filter(motion => !removedAsteroids.has(motion.asteroid.id)).map(motion => motion.asteroid), ...children], projectiles: projectiles.filter(projectile => !removedProjectiles.has(projectile.id)) };
 }

@@ -19,3 +19,21 @@ export function segmentHitsCircle (start: Point, end: Point, circle: Circle, pad
     const fraction = lengthSquared > 0 ? Math.max(0, Math.min(1, ((circle.x - start.x) * x + (circle.y - start.y) * y) / lengthSquared)) : 0;
     return Math.hypot(start.x + x * fraction - circle.x, start.y + y * fraction - circle.y) <= circle.radius + padding;
 }
+
+export function firstSegmentCircleIntersection (start: Point, end: Point, circle: Circle, padding: number): number | null
+{
+    const deltaX = end.x - start.x;
+    const deltaY = end.y - start.y;
+    const offsetX = start.x - circle.x;
+    const offsetY = start.y - circle.y;
+    const radius = circle.radius + padding;
+    const constant = offsetX * offsetX + offsetY * offsetY - radius * radius;
+    if (constant <= 0) return 0;
+    const quadratic = deltaX * deltaX + deltaY * deltaY;
+    if (quadratic === 0) return null;
+    const linear = 2 * (offsetX * deltaX + offsetY * deltaY);
+    const discriminant = linear * linear - 4 * quadratic * constant;
+    if (discriminant < 0) return null;
+    const time = (-linear - Math.sqrt(discriminant)) / (2 * quadratic);
+    return time >= 0 && time <= 1 ? time : null;
+}

@@ -225,9 +225,9 @@ Schema zmienia się z v6 na v7. Aplikacja jest przed dojrzałością persistence
 
 #### Automated
 
-- [ ] 2.1 Verify asteroid movement, culling and pause behavior
-- [ ] 2.2 Verify deterministic projectile and celestial collision resolution
-- [ ] 2.3 Verify fragmentation hierarchy and restore continuity
+- [x] 2.1 Verify asteroid movement, culling and pause behavior
+- [x] 2.2 Verify deterministic projectile and celestial collision resolution
+- [x] 2.3 Verify fragmentation hierarchy and restore continuity
 
 #### Manual
 
