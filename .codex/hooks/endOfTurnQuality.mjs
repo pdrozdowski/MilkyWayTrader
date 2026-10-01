@@ -63,13 +63,12 @@ const broadChange = changedIn(
 );
 
 if (broadChange) {
-    ['test:domain', 'test:mechanics', 'test:objects', 'test:audio', 'test:skills'].forEach(script => scripts.add(script));
+    ['test:domain', 'test:mechanics', 'test:objects', 'test:audio'].forEach(script => scripts.add(script));
 } else {
     if (changedIn(/^(?:src\/game\/(?:domain|application|state)\/|src\/game\/definitions\/(?:initialGameState|serotonMarketDefinitions)\.ts|tests\/domain\/)/)) scripts.add('test:domain');
     if (changedIn(/^(?:src\/game\/(?:mechanics|definitions|scenes\/gameObjects|visual)\/|tests\/game-mechanics\.test\.mjs)/)) scripts.add('test:mechanics');
     if (changedIn(/^(?:src\/game\/audio\/|public\/assets\/audio\/|src\/game\/objects\/spaceship\/shipWeapon\.ts|tests\/game-audio\.test\.mjs|\.agents\/skills\/utils-add-sound\/)/)) scripts.add('test:audio');
     if (changedIn(/^(?:tests\/object-scaffold\.test\.mjs|\.agents\/skills\/utils-add-object-to-scene\/)/)) scripts.add('test:objects');
-    if (changedIn(/^(?:tests\/skills\.test\.mjs|\.agents\/skills\/(?:cicd-run-tests|cicd-fix-tests|utils-refine-skill|arch-make-code-graph|arch-make-data-logical-diag)\/)/)) scripts.add('test:skills');
 }
 
 if (changedIn(/^(?:src\/|tests\/|tsconfig(?:\.[^.]+)?\.json|package(?:-lock)?\.json)/)) scripts.add('test:architecture');

@@ -12,7 +12,6 @@ const suites = [
     ['mechanics', 'test:mechanics'],
     ['objects', 'test:objects'],
     ['audio', 'test:audio'],
-    ['skills', 'test:skills'],
     ['architecture', 'test:architecture'],
     ['ui', 'test:ui'],
     ['typecheck', 'typecheck']

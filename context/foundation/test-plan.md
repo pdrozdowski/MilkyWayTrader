@@ -54,7 +54,7 @@ The top failure scenarios are ordered by impact × likelihood. Sources are evide
 
 | Layer | Tool | Version | Notes |
 |---|---|---|---|
-| unit + integration | Node test runner | Node runtime | Existing domain, mechanics, object, audio, skill, and architecture suites. |
+| unit + integration | Node test runner | Node runtime | Existing domain, mechanics, object, audio, and architecture suites. Tooling/skill tests are excluded from project gates. |
 | e2e | Playwright | ^1.63.0 | Existing desktop and touch projects; use semantic locators. |
 | typecheck | TypeScript | ~5.7.2 | Includes production and test configurations. |
 | build | Vite | ^6.3.1 | Use `npm.cmd run build-nolog`. |

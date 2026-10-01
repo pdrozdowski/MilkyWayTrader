@@ -43,7 +43,7 @@ jobs:
         run: npm ci
 
       - name: Install Chromium for UI tests
-        run: npx --no-install playwright install --with-deps chromium
+        run: npm run playwright:install:ci
 
       - name: Validate production build
         run: npm run validate:deployment

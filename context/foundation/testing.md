@@ -28,10 +28,20 @@ Playwright has one Chromium project. A dedicated journey may opt into a touch vi
 
 ## Commands and failures
 
-- `npm.cmd run test:unit`: domain/state, mechanics, object scaffolding, audio and skill scripts.
+Choose the narrowest command that gives a real regression signal for the changed area. Local test commands never install npm dependencies or browsers implicitly.
+
+- `npm.cmd run test:domain`, `test:mechanics`, `test:objects`, or `test:audio`: run the matching focused Node suite.
+- `npm.cmd run test:unit`: domain/state, mechanics, object scaffolding and audio scripts.
 - `npm.cmd run test:architecture`: dependency and layout enforcement.
-- `npm.cmd run test:ui`: Playwright UI tests.
-- `npm.cmd run test:project`: every automated test.
+- `npm.cmd run test:fast`: all Node tests plus architecture; use for cross-cutting local changes that do not need browser coverage.
 - `npm.cmd run typecheck`: application and Playwright TypeScript configurations.
+- `npm.cmd run playwright:install` (alias: `test:ui:install`): explicit one-time local Chromium installation.
+- `npm.cmd run playwright:test` (alias: `test:ui`): starts the temporary Vite server and runs Playwright UI tests; use only when the changed risk needs a real browser.
+- `npm.cmd run test:project`: fast tests, typecheck and Playwright; it assumes dependencies and Chromium are already available.
+- `npm.cmd run test:ci` (alias: `validate:deployment`): project tests, HIGH/CRITICAL audit, production build and Pages-size validation; it also assumes installation was performed by the caller.
+
+GitHub Actions performs the missing CI-only installation phases in order: `npm ci`, `playwright:install:ci`, then `validate:deployment`. Do not add these installation steps to normal local test commands.
+
+Do not add skill, agent, generator, or other repository-tooling tests to any project test command. Run tooling validation only through its explicitly requested owning workflow; it is outside local product feedback and CI product-quality gates.
 
 Use `cicd-run-tests` for a complete diagnostic report. Pass a failing report to `cicd-fix-tests`, then rerun all suites. Reports and raw logs are local diagnostics and remain under `.cache/`.

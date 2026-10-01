@@ -43,7 +43,22 @@ Zobacz: `context/foundation/lessons.md`. Czytaj przed planowaniem/implementacją
 - `npm.cmd run test:project`: wszystkie testy jednostkowe, architektury i UI Playwright.
 - Pełna diagnostyka: @.agents/skills/cicd-run-tests/SKILL.md; naprawa raportu: @.agents/skills/cicd-fix-tests/SKILL.md.
 
-Po zmianach kodu: build, typecheck, ręczna weryfikacja interakcji. Wybieraj `-nolog`: skrypty `dev`/`build` @package.json uruchamiają @log.js wysyłający żądanie do `gryzor.co`. Brak lint/format. `npm.cmd run validate:deployment`: typecheck, audyt HIGH/CRITICAL, build i limity Pages Free. Workflow: @.github/workflows/deploy.yml. Publikacja i konta: @context/deployment/README.md; lokalne poświadczenia w ignorowanym `.env.deploy.local`.
+Po zmianach kodu wybieraj walidację zgodnie z sekcją **Test selection**. Pełne `test:ci` / `validate:deployment` pozostaje bramką release; wybieraj `-nolog`, ponieważ skrypty `dev`/`build` uruchamiają `log.js` wysyłający żądanie do `gryzor.co`. Brak lint/format. Workflow: @.github/workflows/deploy.yml. Publikacja i konta: @context/deployment/README.md; lokalne poświadczenia w ignorowanym `.env.deploy.local`.
+
+## Test selection
+
+This section takes precedence over the generic post-change validation sentence above. Run the narrowest group that can detect the changed risk:
+
+- `npm.cmd run test:domain`, `test:mechanics`, `test:objects`, or `test:audio` for the matching focused Node area.
+- `npm.cmd run test:unit` for all product Node suites; `npm.cmd run test:fast` adds architecture checks for cross-cutting local changes.
+- `npm.cmd run typecheck` for TypeScript/configuration changes.
+- `npm.cmd run test:ui` only when the changed risk requires real browser behavior. It does not install Chromium; use `npm.cmd run playwright:install` (or `test:ui:install`) as an explicit one-time local setup step.
+- `npm.cmd run test:project` is the complete local automated test pipeline: fast tests, typecheck, then Playwright. It assumes dependencies and Chromium already exist.
+- `npm.cmd run test:ci` / `validate:deployment` adds the dependency audit, production build and Pages checks. GitHub Actions always performs `npm ci`, then `npm run playwright:install:ci`, then this full pipeline.
+
+Do not install dependencies or browsers as part of ordinary local validation.
+
+Do not add skill, agent, generator, or other repository-tooling tests to the project test pipeline. Tooling is validated in its owning workflow when explicitly requested; `test:unit`, `test:fast`, `test:project`, `test:ci`, GitHub CI, and the end-of-turn hook cover product tests only.
 
 ## Layout and conventions
 
