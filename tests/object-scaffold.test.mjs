@@ -45,7 +45,7 @@ test('asteroid projection reconciles IDs, shows persisted durability and keeps e
 });
 
 test('fragment feedback only recognizes committed parent-to-children transitions and identifies planet impacts', () => {
-    const { fragmentedParents, planetImpactParents, planetImpactSmallAsteroids, projectileImpactPositions } = transpileModule('src/game/effects/asteroidExplosion.ts', {
+    const { fragmentedParents, fragmentImpactPosition, planetImpactParents, planetImpactSmallAsteroids, projectileImpactPositions } = transpileModule('src/game/effects/asteroidExplosion.ts', {
         '../visual/layers': { ObjectDepth: { AsteroidEffect: 16, Planet: 10 } },
         '../definitions/gameplayTuning': { asteroidTuning: { sizes: { big: { radius: 72 }, medium: { radius: 48 }, small: { radius: 24 } } } },
         '../world/geometry': { sweptCircleIntersection (first, second) {
@@ -63,6 +63,7 @@ test('fragment feedback only recognizes committed parent-to-children transitions
     const parent = { id: 'parent', variant: 'rock', size: 'big', hitPoints: 1, position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null };
     const child = { ...parent, id: 'parent-fragment-1', size: 'medium' };
     assert.deepEqual(fragmentedParents([parent], [child]), [parent]);
+    assert.deepEqual(fragmentImpactPosition(parent, [{ ...child, position: { x: 12, y: 4 } }]), { x: 12, y: 4 });
     assert.deepEqual(fragmentedParents([], [child]), [], 'first synchronization and restore state do not replay a one-shot');
     assert.deepEqual(fragmentedParents([parent], []), [], 'Moolaris removal has no fragmentation feedback');
     assert.deepEqual(planetImpactParents([parent], [child], [{ id: 'planet', name: 'Planet', position: { x: 10, y: 0 }, radius: 20 }]), [parent]);

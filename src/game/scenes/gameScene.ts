@@ -6,7 +6,7 @@ import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
-import { AsteroidExplosion, fragmentedParents, planetImpactParents, planetImpactSmallAsteroids, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, projectileImpactPositions, sunConsumedAsteroids } from '../effects/asteroidExplosion';
+import { AsteroidExplosion, fragmentedParents, fragmentImpactPosition, planetImpactParents, planetImpactSmallAsteroids, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, projectileImpactPositions, sunConsumedAsteroids } from '../effects/asteroidExplosion';
 import { OrbitalPaths } from '../effects/orbitalPaths';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
@@ -443,12 +443,13 @@ export class Game extends Scene
         for (const asteroid of projectileDamagedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('asteroid-projectile-impact-clean');
         for (const asteroid of sunConsumedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('sun-asteroid-low-slurp-loud-no-noise');
         for (const parent of fragmentedParents(previous, current)) {
-            if (!this.camera.worldView.contains(parent.position.x, parent.position.y)) continue;
+            const impactPosition = fragmentImpactPosition(parent, current);
+            if (!this.camera.worldView.contains(impactPosition.x, impactPosition.y)) continue;
             if (planetImpactIds.has(parent.id)) {
-                this.asteroidExplosion.explodePlanetImpact(parent.position);
+                this.asteroidExplosion.explodePlanetImpact(impactPosition);
                 this.audio.play('asteroid-planet-impact-deep-loud');
             } else {
-                this.asteroidExplosion.explode(parent.position);
+                this.asteroidExplosion.explode(impactPosition);
                 this.audio.play('asteroid-falls-apart-clean');
             }
         }

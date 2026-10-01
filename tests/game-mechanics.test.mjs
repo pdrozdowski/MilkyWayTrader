@@ -287,7 +287,7 @@ test('asteroid tuning keeps safe-area lifecycle and deterministic fragment count
     assert.equal(asteroidTuning.outsideSafeAreaCullAfterMs, 15_000);
     assert.equal(asteroidTuning.fragmentChildCount.minimum, 2);
     assert.equal(asteroidTuning.fragmentChildCount.maximum, 4);
-    assert.equal(asteroidTuning.planetCollisionPenetration, 1 / 2);
+    assert.equal(asteroidTuning.planetCollisionPenetration, 1 / 4);
     assert.deepEqual(asteroidTuning.sizes, {
         big: { radius: 72, hitPoints: 3 },
         medium: { radius: 48, hitPoints: 2 },
@@ -577,11 +577,11 @@ test('asteroid durability persists through shots, resets for fragments, and coll
 
     const planet = initialGameState.planets[0];
     const planetImpact = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('planet-depth', {
-        x: planet.position.x + planet.radius - 40, y: planet.position.y
+        x: planet.position.x + planet.radius - 25, y: planet.position.y
     }, 'big', { hitPoints: 3 })] }, quietInput, 1);
     assert(planetImpact.asteroids.every(candidate => candidate.size === 'medium' && candidate.hitPoints === 2));
     const surfaceSkim = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('planet-skim', {
-        x: planet.position.x + planet.radius - 30, y: planet.position.y
+        x: planet.position.x + planet.radius - 15, y: planet.position.y
     }, 'big', { hitPoints: 3 })] }, quietInput, 1);
     assert(surfaceSkim.asteroids.some(candidate => candidate.id === 'planet-skim' && candidate.size === 'big'), 'the asteroid must penetrate half its radius before a planet impact');
 
