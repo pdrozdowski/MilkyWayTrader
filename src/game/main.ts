@@ -21,7 +21,7 @@ const config: Phaser.Types.Core.GameConfig = {
     height: 768,
     parent: 'game-container',
     scale: {
-        mode: Scale.ENVELOP,
+        mode: Scale.RESIZE,
         autoCenter: Scale.CENTER_BOTH,
         fullscreenTarget: 'app'
     },

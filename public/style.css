@@ -9,7 +9,7 @@ body {
     overflow: hidden;
     overscroll-behavior: none;
     color: rgba(255, 255, 255, 0.87);
-    background-color: #0f0f0f;
+    background-color: #00286d;
     font-family: Arial, sans-serif;
 }
 
@@ -24,7 +24,7 @@ body {
     -webkit-tap-highlight-color: transparent;
     -webkit-user-select: none;
     user-select: none;
-    background-color: #0f0f0f;
+    background-color: #00286d;
 }
 
 #game-container {
@@ -42,8 +42,7 @@ body {
 }
 
 #main-menu { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); pointer-events: none; }
-#main-menu-logo { position: absolute; top: max(12px, env(safe-area-inset-top)); display: block; align-self: center; flex: 0 0 auto; width: 75vw; max-width: none; height: auto; }
-#main-menu-controls { display: flex; flex: 0 0 auto; flex-direction: column; align-items: center; gap: clamp(12px, 2.5vh, 20px); width: 100%; padding-top: clamp(24px, 5vh, 52px); pointer-events: none; }
+#main-menu-controls { position: absolute; top: 60%; right: 0; left: 0; display: flex; flex-direction: column; align-items: center; gap: clamp(12px, 2.5vh, 20px); padding: 0; pointer-events: none; }
 #main-menu-controls button { min-width: min(440px, 76vw); padding: 0; border: 0; color: #fff; background: transparent; font-family: 'Arial Black', Arial, sans-serif; font-size: clamp(34px, 4vw, 48px); font-weight: 900; line-height: 1; text-shadow: 3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000; cursor: pointer; pointer-events: auto; }
 .main-menu-user-icon { position: relative; display: inline-block; width: .8em; height: .8em; margin-right: .22em; vertical-align: -.05em; }
 .main-menu-user-icon::before, .main-menu-user-icon::after { position: absolute; inset: 0; content: ''; mask: url('/assets/ui/userIcon.svg') center / contain no-repeat; }
@@ -51,6 +50,10 @@ body {
 .main-menu-user-icon::after { background: #fff; }
 #main-menu-controls button:disabled { color: #777; cursor: default; }
 #main-menu-controls button:focus-visible { outline: 3px solid #fff; outline-offset: 6px; border-radius: 4px; }
+#main-menu-controls #main-menu-new-game, #main-menu-controls #main-menu-continue { width: min(374px, 76vw); min-width: 0; aspect-ratio: 374 / 84; background: center / contain no-repeat; text-shadow: none; }
+#main-menu-controls #main-menu-new-game { background-image: url('/assets/button_newgame.png'); }
+#main-menu-controls #main-menu-continue { background-image: url('/assets/button_continue_game.png'); }
+#main-menu-controls #main-menu-continue:disabled { background-image: url('/assets/button_continue_game_disabled.png'); }
 #main-menu-fullscreen-preview, #main-menu-sign-in-preview { position: absolute; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 999px; color: #fff; background: rgb(5 17 52 / 78%); font: 700 clamp(12px, 1.2vw, 16px) / 1.1 Arial, sans-serif; text-align: left; text-shadow: 1px 2px 3px rgb(0 0 0 / 75%); cursor: pointer; pointer-events: auto; }
 #main-menu-fullscreen-preview { right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); }
 #main-menu-sign-in-preview { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 1; width: max-content; max-width: calc(100% - 24px); white-space: nowrap !important; }
@@ -64,7 +67,7 @@ body {
 
 @media (max-width: 599px) {
     #main-menu { padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
-    #main-menu-controls { gap: clamp(8px, 1.8vh, 12px); padding-top: clamp(14px, 3vh, 28px); }
+    #main-menu-controls { gap: clamp(8px, 1.8vh, 12px); }
     #main-menu-controls button { min-width: min(270px, 78vw); font-size: clamp(19px, 5vw, 28px); text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; }
 }
 
