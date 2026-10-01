@@ -8,7 +8,7 @@ import { asteroidBeltDefinition, asteroidBeltLayout, asteroidTuning } from './ga
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
 
 export const initialGameState: GameStateSnapshot = {
-    schemaVersion: 8,
+    schemaVersion: 9,
     clock: {
         budgetMs: ACTIVE_TIME_BUDGET_MS,
         activeElapsedMs: 0,
@@ -27,7 +27,8 @@ export const initialGameState: GameStateSnapshot = {
         enginesOn: false,
         boosting: false,
         boostAcceleration: 0,
-        coastDeceleration: 480
+        coastDeceleration: 480,
+        asteroidControlLockedUntilActiveMs: null
     },
     shipStatus: {
         currentHitPoints: maximumShipHitPoints,

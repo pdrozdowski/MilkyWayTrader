@@ -14,10 +14,11 @@ function transpileModule (path, imports) {
     return module.exports;
 }
 
-test('asteroid projection reconciles IDs, replaces absent parents and cleans up idempotently', () => {
-    const { AsteroidProjection } = transpileModule('src/game/objects/asteroid/asteroidProjection.ts', {
-        '../../definitions/gameplayTuning': { asteroidTuning: { sizes: { big: { radius: 72 }, medium: { radius: 48 }, small: { radius: 24 } } } },
-        '../../visual/layers': { ObjectDepth: { Asteroid: 15 } }
+test('asteroid projection reconciles IDs, shows persisted durability and places star infall below the surface', () => {
+    const { AsteroidProjection, asteroidProjectionDepth } = transpileModule('src/game/objects/asteroid/asteroidProjection.ts', {
+        '../../definitions/gameplayTuning': { asteroidTuning: { sizes: { big: { radius: 72, hitPoints: 3 }, medium: { radius: 48, hitPoints: 2 }, small: { radius: 24, hitPoints: 1 } } } },
+        '../../definitions/moolarisDefinition': { moolarisDefinition: { position: { x: 0, y: 0 }, radius: 100 } },
+        '../../visual/layers': { ObjectDepth: { Asteroid: 15, Sun: 5 } }
     });
     const events = { once() {}, off() {} };
     const created = [];
@@ -27,27 +28,31 @@ test('asteroid projection reconciles IDs, replaces absent parents and cleans up 
             setTexture(nextTexture) { this.texture = nextTexture; return this; }, setScale(scale) { this.scale = scale; return this; },
             setRotation(rotation) { this.rotation = rotation; return this; }, destroy() { this.destroyed++; } };
         created.push(sprite); return sprite;
-    } } };
+    }, graphics() { return { destroyed: 0, clear() { return this; }, setDepth() { return this; }, fillStyle() { return this; }, fillRect() { return this; }, destroy() { this.destroyed++; } }; } } };
     const projection = new AsteroidProjection(scene);
-    projection.synchronize([{ id: 'parent', variant: 'rock', size: 'big', position: { x: 2, y: 3 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }]);
-    projection.synchronize([{ id: 'parent', variant: 'ice', size: 'medium', position: { x: 4, y: 5 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }]);
+    projection.synchronize([{ id: 'parent', variant: 'rock', size: 'big', hitPoints: 3, position: { x: 202, y: 3 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }]);
+    projection.synchronize([{ id: 'parent', variant: 'ice', size: 'medium', hitPoints: 1, position: { x: 4, y: 5 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }]);
     assert.equal(created.length, 1);
     assert.deepEqual({ x: created[0].x, y: created[0].y, texture: created[0].texture, scale: created[0].scale }, { x: 4, y: 5, texture: 'asteroid:ice', scale: 2 / 3 });
-    projection.synchronize([{ id: 'parent-fragment-1', variant: 'ice', size: 'small', position: { x: 4, y: 5 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }]);
+    projection.synchronize([{ id: 'parent-fragment-1', variant: 'ice', size: 'small', hitPoints: 1, position: { x: 4, y: 5 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }]);
     assert.equal(created.length, 2);
     assert.equal(created[0].destroyed, 1, 'absent parent is removed before child projection');
     projection.destroy();
     projection.destroy();
     assert.equal(created[1].destroyed, 1, 'shutdown cleanup remains idempotent');
+    assert.equal(asteroidProjectionDepth({ id: 'infall', variant: 'rock', size: 'small', hitPoints: 1, position: { x: 110, y: 0 }, velocity: { x: -1, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }), 5);
+    assert.equal(asteroidProjectionDepth({ id: 'fragment', variant: 'rock', size: 'small', hitPoints: 1, position: { x: 110, y: 0 }, velocity: { x: 1, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }), 15);
 });
 
-test('fragment feedback only recognizes an actual parent-to-children transition', () => {
-    const { fragmentedParents } = transpileModule('src/game/effects/asteroidExplosion.ts', { '../visual/layers': { ObjectDepth: { AsteroidEffect: 16 } } });
-    const parent = { id: 'parent', variant: 'rock', size: 'big', position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null };
+test('fragment feedback only recognizes committed parent-to-children transitions and identifies planet impacts', () => {
+    const { fragmentedParents, planetImpactParents } = transpileModule('src/game/effects/asteroidExplosion.ts', { '../visual/layers': { ObjectDepth: { AsteroidEffect: 16, Planet: 10 } } });
+    const parent = { id: 'parent', variant: 'rock', size: 'big', hitPoints: 1, position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null };
     const child = { ...parent, id: 'parent-fragment-1', size: 'medium' };
     assert.deepEqual(fragmentedParents([parent], [child]), [parent]);
     assert.deepEqual(fragmentedParents([], [child]), [], 'first synchronization and restore state do not replay a one-shot');
     assert.deepEqual(fragmentedParents([parent], []), [], 'Moolaris removal has no fragmentation feedback');
+    assert.deepEqual(planetImpactParents([parent], [child], [{ id: 'planet', name: 'Planet', position: { x: 10, y: 0 }, radius: 20 }]), [parent]);
+    assert.deepEqual(planetImpactParents([parent], [child], [{ id: 'planet', name: 'Planet', position: { x: 50, y: 0 }, radius: 20 }]), []);
 });
 
 test('scaffold dry-run, validation, overwrite refusal and generated TypeScript integration', async () => {

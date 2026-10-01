@@ -1,8 +1,7 @@
 import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 import type { SerotonCommodityId } from '../state/serotonMarketState';
-import type { AsteroidSize, AsteroidVariant } from '../state/asteroidState';
-import { asteroidTuning } from '../definitions/gameplayTuning.ts';
+import { asteroidMaximumHitPoints, type AsteroidSize, type AsteroidVariant } from '../state/asteroidState';
 import { maximumShipHitPoints } from '../domain/runBalance.ts';
 import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
 
@@ -86,7 +85,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         catch { throw new Error('Game state is not valid JSON.'); }
     }
     const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
-    if (root.schemaVersion !== 8) throw new Error('Unsupported game-state schema version.');
+    if (root.schemaVersion !== 9) throw new Error('Unsupported game-state schema version.');
 
     const credits = nonNegativeSafeInteger(root.credits, 'state.credits');
     if (!Array.isArray(root.cargo)) throw new Error('state.cargo must be an array.');
@@ -119,7 +118,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     if (new Set(pauseReasons).size !== pauseReasons.length) throw new Error('state.clock.pauseReasons contains duplicates.');
 
     const ship = requireRecord(root.ship, 'state.ship', [
-        'position', 'velocity', 'rotation', 'enginesOn', 'boosting', 'boostAcceleration', 'coastDeceleration'
+        'position', 'velocity', 'rotation', 'enginesOn', 'boosting', 'boostAcceleration', 'coastDeceleration', 'asteroidControlLockedUntilActiveMs'
     ]);
     if (typeof ship.enginesOn !== 'boolean' || typeof ship.boosting !== 'boolean') throw new Error('Ship activity flags must be boolean.');
 
@@ -220,7 +219,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         }
         const size = asteroid.size as AsteroidSize;
         const hitPoints = positiveSafeInteger(asteroid.hitPoints, `${path}.hitPoints`);
-        if (hitPoints > asteroidTuning.sizes[size].hitPoints) throw new Error(`${path}.hitPoints exceeds configured durability.`);
+        if (hitPoints > asteroidMaximumHitPoints[size]) throw new Error(`${path}.hitPoints exceeds configured durability.`);
         const orbit = asteroid.orbit === null ? null : requireRecord(asteroid.orbit, `${path}.orbit`, ['angleRadians', 'radius', 'rotationRadians']);
         const radius = orbit === null ? null : nonNegativeNumber(orbit.radius, `${path}.orbit.radius`);
         if (radius === 0) throw new Error(`${path}.orbit.radius must be positive.`);
@@ -241,7 +240,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 8,
+        schemaVersion: 9,
         clock: { budgetMs, activeElapsedMs, pauseReasons },
         credits,
         cargo,
@@ -253,7 +252,8 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
             enginesOn: ship.enginesOn,
             boosting: ship.boosting,
             boostAcceleration: nonNegativeNumber(ship.boostAcceleration, 'state.ship.boostAcceleration'),
-            coastDeceleration: nonNegativeNumber(ship.coastDeceleration, 'state.ship.coastDeceleration')
+            coastDeceleration: nonNegativeNumber(ship.coastDeceleration, 'state.ship.coastDeceleration'),
+            asteroidControlLockedUntilActiveMs: nullableTime(ship.asteroidControlLockedUntilActiveMs, 'state.ship.asteroidControlLockedUntilActiveMs')
         },
         shipStatus: {
             currentHitPoints,

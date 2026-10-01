@@ -35,7 +35,7 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 8);
+    assert.equal(state.schemaVersion, 9);
     assert.equal(state.credits, 100_000);
     assert.deepEqual(state.cargo, []);
     assert.deepEqual(state.markets, [{
@@ -341,10 +341,10 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 8);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 9);
 });
 
-test('v8 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
+test('v9 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
     const decoded = decodeGameState(initialGameState);
     const asteroid = clone(decoded.asteroids[0]);
     assert(Object.isFrozen(decoded.asteroids));

@@ -11,7 +11,7 @@ import type { AsteroidState } from './asteroidState';
 
 export interface GameStateSnapshot
 {
-    readonly schemaVersion: 8;
+    readonly schemaVersion: 9;
     readonly clock: GameClockState;
     readonly credits: number;
     readonly cargo: readonly CargoState[];

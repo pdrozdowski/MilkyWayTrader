@@ -1,12 +1,36 @@
 import type { GameObjects, Scene } from 'phaser';
 import { asteroidTuning } from '../../definitions/gameplayTuning';
+import { moolarisDefinition } from '../../definitions/moolarisDefinition';
 import type { AsteroidState } from '../../state/asteroidState';
 import { ObjectDepth } from '../../visual/layers';
+
+interface AsteroidDisplay
+{
+    readonly sprite: GameObjects.Image;
+    readonly healthBar: GameObjects.Graphics;
+}
+
+const healthBarHeight = 4;
+const healthBarOffset = 8;
+
+/** An asteroid pulled into Moolaris is drawn below its active surface, not above the star. */
+export function asteroidProjectionDepth (state: AsteroidState): number
+{
+    if (state.orbit !== null) return ObjectDepth.Asteroid;
+    const toStarX = moolarisDefinition.position.x - state.position.x;
+    const toStarY = moolarisDefinition.position.y - state.position.y;
+    const distance = Math.hypot(toStarX, toStarY);
+    const radius = asteroidTuning.sizes[state.size].radius;
+    const movingTowardStar = state.velocity.x * toStarX + state.velocity.y * toStarY > 0;
+    return distance <= moolarisDefinition.radius + radius && movingTowardStar
+        ? ObjectDepth.Sun
+        : ObjectDepth.Asteroid;
+}
 
 /** Phaser-only projection of the authoritative asteroid snapshot collection. */
 export class AsteroidProjection
 {
-    private readonly sprites = new Map<string, GameObjects.Image>();
+    private readonly displays = new Map<string, AsteroidDisplay>();
     private destroyed = false;
 
     constructor (private readonly scene: Scene)
@@ -18,21 +42,29 @@ export class AsteroidProjection
     {
         if (this.destroyed) return;
         const activeIds = new Set(states.map(state => state.id));
-        for (const [id, sprite] of this.sprites) if (!activeIds.has(id)) {
-            sprite.destroy();
-            this.sprites.delete(id);
+        for (const [id, display] of this.displays) if (!activeIds.has(id)) {
+            display.sprite.destroy();
+            display.healthBar.destroy();
+            this.displays.delete(id);
         }
         for (const state of states) {
-            let sprite = this.sprites.get(state.id);
-            if (!sprite) {
-                sprite = this.scene.add.image(state.position.x, state.position.y, `asteroid:${state.variant}`)
-                    .setDepth(ObjectDepth.Asteroid);
-                this.sprites.set(state.id, sprite);
+            let display = this.displays.get(state.id);
+            if (!display) {
+                display = {
+                    sprite: this.scene.add.image(state.position.x, state.position.y, `asteroid:${state.variant}`),
+                    healthBar: this.scene.add.graphics()
+                };
+                this.displays.set(state.id, display);
             }
+            const { sprite, healthBar } = display;
+            const radius = asteroidTuning.sizes[state.size].radius;
+            const depth = asteroidProjectionDepth(state);
             sprite.setPosition(state.position.x, state.position.y)
                 .setTexture(`asteroid:${state.variant}`)
-                .setScale(asteroidTuning.sizes[state.size].radius * 2 / sprite.width)
-                .setRotation(state.orbit?.rotationRadians ?? 0);
+                .setScale(radius * 2 / sprite.width)
+                .setRotation(state.orbit?.rotationRadians ?? 0)
+                .setDepth(depth);
+            this.drawHealthBar(healthBar, state, radius, depth);
         }
     }
 
@@ -41,7 +73,22 @@ export class AsteroidProjection
         if (this.destroyed) return;
         this.destroyed = true;
         this.scene.events.off('shutdown', this.destroy, this);
-        for (const sprite of this.sprites.values()) sprite.destroy();
-        this.sprites.clear();
+        for (const display of this.displays.values()) {
+            display.sprite.destroy();
+            display.healthBar.destroy();
+        }
+        this.displays.clear();
     };
+
+    private drawHealthBar (healthBar: GameObjects.Graphics, state: AsteroidState, radius: number, depth: number): void
+    {
+        const maximum = asteroidTuning.sizes[state.size].hitPoints;
+        const width = Math.max(18, radius * 1.15);
+        const x = state.position.x - width / 2;
+        const y = state.position.y - radius - healthBarOffset;
+        const fraction = Math.max(0, Math.min(1, state.hitPoints / maximum));
+        healthBar.clear().setDepth(depth + 0.1);
+        healthBar.fillStyle(0x111827, 0.82).fillRect(x - 1, y - 1, width + 2, healthBarHeight + 2);
+        healthBar.fillStyle(fraction > 0.5 ? 0x83f28f : 0xffbd5c, 0.95).fillRect(x, y, width * fraction, healthBarHeight);
+    }
 }
