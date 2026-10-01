@@ -18,7 +18,7 @@ import { activeTimeCycle, activeTimeWave } from '../src/game/visual/activeTime.t
 import { launchFromPlanet, LANDING_CENTRE_RADIUS, tryLandAtCapturedPlanet } from '../src/game/mechanics/planet/landing.ts';
 import { decodeGameState, encodeGameState } from '../src/game/application/gameStateCodec.ts';
 import { asteroidFragmentChildCount, asteroidTuning } from '../src/game/definitions/gameplayTuning.ts';
-import { advanceAsteroidMotions, asteroidRadius } from '../src/game/mechanics/asteroid/asteroidSimulation.ts';
+import { advanceAsteroidMotions, asteroidRadius, fragmentAsteroid } from '../src/game/mechanics/asteroid/asteroidSimulation.ts';
 
 const marketStocks = state => state.markets[0].commodityStocks.map(commodity => ({ ...commodity }));
 
@@ -294,6 +294,7 @@ test('asteroid tuning keeps safe-area lifecycle and deterministic fragment count
     });
     assert.equal(asteroidTuning.fragmentDrift.speed, 180);
     assert.equal(asteroidTuning.fragmentDrift.spreadRadians, Math.PI * 2);
+    assert(asteroidTuning.fragmentDrift.directionNoiseRadians > 0);
     const counts = Array.from({ length: 1_000 }, (_, index) => asteroidFragmentChildCount(`asteroid-parent-${index}`));
     assert(counts.every(count => count >= 2 && count <= 4));
     assert.deepEqual(counts, Array.from({ length: 1_000 }, (_, index) => asteroidFragmentChildCount(`asteroid-parent-${index}`)));
@@ -514,6 +515,7 @@ test('asteroid impacts select the earliest stable target without tunnelling and 
     assert.equal(shipState.shipStatus.currentHitPoints, initialGameState.shipStatus.currentHitPoints);
     assert.equal(shipState.ship.asteroidImpactAtActiveMs, 1, 'every committed ship impact records an exact presentation event');
     assert.equal(Math.hypot(shipState.ship.velocity.x, shipState.ship.velocity.y), 240, 'every asteroid impact repels the ship at the sun escape speed');
+    assert.equal(shipState.ship.asteroidControlLockedUntilActiveMs, 501, 'every asteroid impact applies a half-length sun-style recovery lock');
     assert(shipState.asteroids.some(candidate => candidate.id.startsWith('ship-hit-fragment-')));
     const planet = initialGameState.planets[0];
     const planetState = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('planet-hit', planet.position)] }, quietInput, 1);
@@ -546,6 +548,11 @@ test('fragmentation follows the size hierarchy and remains identical through ser
     const medium = impact('medium');
     assert(medium.asteroids.every(candidate => candidate.size === 'small'));
     assert.equal(impact('small').asteroids.length, 0);
+    const split = fragmentAsteroid(asteroid('noisy-parent', { x: 0, y: 0 }), { id: 'shot', kind: 'projectile', position: { x: -100, y: 0 } });
+    const angles = split.map(child => Math.atan2(child.velocity.y, child.velocity.x)).sort((left, right) => left - right);
+    const gaps = angles.map((angle, index) => (angles[(index + 1) % angles.length] + (index + 1 === angles.length ? Math.PI * 2 : 0)) - angle);
+    assert(gaps.some(gap => Math.abs(gap - Math.PI * 2 / split.length) > 0.001), 'fragment directions must not form a perfect radial division');
+    assert.deepEqual(fragmentAsteroid(asteroid('noisy-parent', { x: 0, y: 0 }), { id: 'shot', kind: 'projectile', position: { x: -100, y: 0 } }), split);
     const state = { ...initialGameState, projectiles: [projectile], asteroids: [asteroid('restore-parent', { x: 4_500, y: 0 })] };
     const partial = advanceGameSimulation(state, quietInput, 100);
     const uninterrupted = advanceGameSimulation(partial, quietInput, 100);
@@ -588,5 +595,6 @@ test('asteroid durability persists through shots, resets for fragments, and coll
     assert.equal(boosted.ship.boosting, false);
     assert.equal(Math.hypot(boosted.ship.velocity.x, boosted.ship.velocity.y), 240);
     assert.equal(boosted.ship.asteroidImpactAtActiveMs, 1, 'boosted impacts share the same exact crash-feedback event');
+    assert.equal(boosted.ship.asteroidControlLockedUntilActiveMs, 501);
 });
 

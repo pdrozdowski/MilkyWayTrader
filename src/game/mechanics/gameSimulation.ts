@@ -18,6 +18,8 @@ import { advanceSerotonMarket } from './serotonMarketSimulation.ts';
 import { asteroidRadius, advanceAsteroidMotions, fragmentAsteroid, type AsteroidImpactSource } from './asteroid/asteroidSimulation.ts';
 import { moolarisDefinition } from '../definitions/moolarisDefinition.ts';
 
+const asteroidRecoverySeconds = MOOLARIS_RECOVERY_SECONDS / 2;
+
 export interface GameSimulationInput
 {
     readonly target: Readonly<{ x: number; y: number }> | null;
@@ -93,7 +95,7 @@ export function advanceGameSimulation (
         ? boostAccelerationRate(currentSpeed, shipTuning.maxSpeed, shipBoostTuning.speedMultiplier, shipBoostTuning.accelerationSeconds)
             || shipTuning.maxSpeed * (shipBoostTuning.speedMultiplier - 1) / shipBoostTuning.accelerationSeconds
         : state.ship.boostAcceleration;
-    const coastDeceleration = recovering ? shipTuning.maxSpeed / MOOLARIS_RECOVERY_SECONDS : !targetDelta && state.ship.enginesOn
+    const coastDeceleration = recovering ? shipTuning.maxSpeed / (asteroidControlLocked ? asteroidRecoverySeconds : MOOLARIS_RECOVERY_SECONDS) : !targetDelta && state.ship.enginesOn
         ? Math.max(shipTuning.maxSpeed, currentSpeed) / shipTuning.stoppingSeconds
         : state.ship.coastDeceleration;
     const movementSeconds = Math.min(activeDeltaMs, 100) / 1000;
@@ -181,16 +183,12 @@ export function advanceGameSimulation (
             bornAtActiveMs: clock.activeElapsedMs
         }];
     }
-    const collisionShip = resolved.shipImpact === null ? orbitShip : shipAfterAsteroidImpact(
-        orbitShip, resolved.shipImpact.position, clock.activeElapsedMs, resolved.boostedShipImpact !== null
-    );
+    const collisionShip = resolved.shipImpact === null ? orbitShip : shipAfterAsteroidImpact(orbitShip, resolved.shipImpact.position, clock.activeElapsedMs);
     const impactedShip = resolved.shipImpact === null ? collisionShip : { ...collisionShip, asteroidImpactAtActiveMs: clock.activeElapsedMs };
     return tryLandAtCapturedPlanet({ ...state, clock, markets, ship: impactedShip, planets, planetLifecycle: lifecycle, weapon, projectiles, asteroids: resolved.asteroids }, input.landingRequested === true);
 }
 
-function shipAfterAsteroidImpact (
-    ship: GameStateSnapshot['ship'], asteroidPosition: Readonly<{ x: number; y: number }>, activeElapsedMs: number, lockControls: boolean
-): GameStateSnapshot['ship']
+function shipAfterAsteroidImpact (ship: GameStateSnapshot['ship'], asteroidPosition: Readonly<{ x: number; y: number }>, activeElapsedMs: number): GameStateSnapshot['ship']
 {
     const x = ship.position.x - asteroidPosition.x;
     const y = ship.position.y - asteroidPosition.y;
@@ -199,17 +197,17 @@ function shipAfterAsteroidImpact (
     return {
         ...ship,
         velocity: { x: direction.x * shipTuning.maxSpeed, y: direction.y * shipTuning.maxSpeed },
-        enginesOn: lockControls ? true : ship.enginesOn,
-        boosting: lockControls ? false : ship.boosting,
-        boostAcceleration: lockControls ? 0 : ship.boostAcceleration,
-        asteroidControlLockedUntilActiveMs: lockControls ? activeElapsedMs + MOOLARIS_RECOVERY_SECONDS * 1000 : ship.asteroidControlLockedUntilActiveMs
+        enginesOn: true,
+        boosting: false,
+        boostAcceleration: 0,
+        asteroidControlLockedUntilActiveMs: activeElapsedMs + asteroidRecoverySeconds * 1000
     };
 }
 
 function resolveAsteroidImpacts (
     motions: ReturnType<typeof advanceAsteroidMotions>, state: GameStateSnapshot, ship: GameStateSnapshot['ship'],
     planets: GameStateSnapshot['planets'], projectiles: readonly ProjectileState[], options: GameSimulationOptions
-): { asteroids: GameStateSnapshot['asteroids']; projectiles: readonly ProjectileState[]; boostedShipImpact: AsteroidState | null; shipImpact: AsteroidState | null }
+): { asteroids: GameStateSnapshot['asteroids']; projectiles: readonly ProjectileState[]; shipImpact: AsteroidState | null }
 {
     const sources: readonly (AsteroidImpactSource & { readonly start: Readonly<{ x: number; y: number }>; readonly radius: number })[] = [
         { id: moolarisDefinition.id, kind: 'moolaris', position: moolarisDefinition.position, start: moolarisDefinition.position, radius: moolarisDefinition.radius },
@@ -249,7 +247,6 @@ function resolveAsteroidImpacts (
     const changedAsteroids = new Map<string, AsteroidState>();
     const removedProjectiles = new Set<string>();
     const children: AsteroidState[] = [];
-    let boostedShipImpact: AsteroidState | null = null;
     let shipImpact: AsteroidState | null = null;
     for (const event of asteroidEvents) {
         if (removedAsteroids.has(event.asteroid.id)) continue;
@@ -268,7 +265,6 @@ function resolveAsteroidImpacts (
         removedAsteroids.add(event.asteroid.id);
         if (event.source.kind === 'ship') {
             shipImpact = event.asteroid;
-            if (ship.boosting) boostedShipImpact = event.asteroid;
         }
         children.push(...fragmentAsteroid(event.asteroid, event.source));
     }
@@ -284,5 +280,5 @@ function resolveAsteroidImpacts (
             }
         }
     }
-    return { asteroids: [...motions.filter(motion => !removedAsteroids.has(motion.asteroid.id)).map(motion => changedAsteroids.get(motion.asteroid.id) ?? motion.asteroid), ...children], projectiles: projectiles.filter(projectile => !removedProjectiles.has(projectile.id)), boostedShipImpact, shipImpact };
+    return { asteroids: [...motions.filter(motion => !removedAsteroids.has(motion.asteroid.id)).map(motion => changedAsteroids.get(motion.asteroid.id) ?? motion.asteroid), ...children], projectiles: projectiles.filter(projectile => !removedProjectiles.has(projectile.id)), shipImpact };
 }
