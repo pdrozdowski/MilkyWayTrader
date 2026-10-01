@@ -5,6 +5,7 @@ import type { ProjectileState } from '../state/projectileState';
 import { asteroidTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { ObjectDepth } from '../visual/layers';
+import { sweptCircleIntersection } from '../world/geometry';
 
 const explosionLifetimeMs = 220;
 const explosionRadius = 54;
@@ -44,6 +45,41 @@ export function projectileDamagedAsteroids (previous: readonly AsteroidState[], 
     return previous.filter(asteroid => (currentById.get(asteroid.id)?.hitPoints ?? asteroid.hitPoints) < asteroid.hitPoints);
 }
 
+/** Locates each committed projectile hit from the same swept paths used by the simulation. */
+export function projectileImpactPositions (
+    previous: readonly AsteroidState[], current: readonly AsteroidState[], previousProjectiles: readonly ProjectileState[], currentProjectiles: readonly ProjectileState[], activeDeltaMs: number, projectileRadius: number
+): readonly Readonly<{ x: number; y: number }>[]
+{
+    const currentIds = new Set(current.map(asteroid => asteroid.id));
+    const affected = previous.filter(asteroid => !currentIds.has(asteroid.id)
+        || (current.find(candidate => candidate.id === asteroid.id)?.hitPoints ?? asteroid.hitPoints) < asteroid.hitPoints);
+    const activeProjectileIds = new Set(currentProjectiles.map(projectile => projectile.id));
+    return previousProjectiles.flatMap(projectile => {
+        if (activeProjectileIds.has(projectile.id)) return [];
+        const end = {
+            x: projectile.position.x + projectile.velocity.x * activeDeltaMs / 1000,
+            y: projectile.position.y + projectile.velocity.y * activeDeltaMs / 1000
+        };
+        const hit = affected.map(asteroid => {
+            const currentAsteroid = current.find(candidate => candidate.id === asteroid.id);
+            const asteroidEnd = currentAsteroid?.position ?? {
+                x: asteroid.position.x + asteroid.velocity.x * activeDeltaMs / 1000,
+                y: asteroid.position.y + asteroid.velocity.y * activeDeltaMs / 1000
+            };
+            const time = sweptCircleIntersection(
+                { id: projectile.id, start: projectile.position, end, radius: projectileRadius },
+                { id: asteroid.id, start: asteroid.position, end: asteroidEnd, radius: asteroidTuning.sizes[asteroid.size].radius }
+            );
+            return time === null ? null : { time, position: {
+                x: projectile.position.x + (end.x - projectile.position.x) * time,
+                y: projectile.position.y + (end.y - projectile.position.y) * time
+            } };
+        }).filter((candidate): candidate is { time: number; position: Readonly<{ x: number; y: number }> } => candidate !== null)
+            .sort((left, right) => left.time - right.time)[0];
+        return hit ? [hit.position] : [];
+    });
+}
+
 export function sunConsumedAsteroids (previous: readonly AsteroidState[], current: readonly AsteroidState[]): readonly AsteroidState[]
 {
     const currentIds = new Set(current.map(asteroid => asteroid.id));
@@ -69,6 +105,21 @@ export class AsteroidExplosion
         this.scene.tweens.add({
             targets: burst,
             scale: explosionRadius / 8,
+            alpha: 0,
+            duration: explosionLifetimeMs,
+            ease: 'Cubic.Out',
+            onComplete: () => burst.destroy()
+        });
+    }
+
+    /** A half-size version of the asteroid breakup ring for a projectile contact. */
+    explodeProjectileImpact (position: Readonly<{ x: number; y: number }>): void
+    {
+        if (this.destroyed) return;
+        const burst = this.scene.add.circle(position.x, position.y, 4, 0xffc56b, 0.9).setDepth(ObjectDepth.AsteroidEffect);
+        this.scene.tweens.add({
+            targets: burst,
+            scale: explosionRadius / 2 / 4,
             alpha: 0,
             duration: explosionLifetimeMs,
             ease: 'Cubic.Out',

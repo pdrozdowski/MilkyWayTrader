@@ -181,12 +181,16 @@ export function advanceGameSimulation (
             bornAtActiveMs: clock.activeElapsedMs
         }];
     }
-    const collisionShip = resolved.boostedShipImpact === null ? orbitShip : shipAfterBoostedAsteroidImpact(orbitShip, resolved.boostedShipImpact.position, clock.activeElapsedMs);
+    const collisionShip = resolved.shipImpact === null ? orbitShip : shipAfterAsteroidImpact(
+        orbitShip, resolved.shipImpact.position, clock.activeElapsedMs, resolved.boostedShipImpact !== null
+    );
     const impactedShip = resolved.shipImpact === null ? collisionShip : { ...collisionShip, asteroidImpactAtActiveMs: clock.activeElapsedMs };
     return tryLandAtCapturedPlanet({ ...state, clock, markets, ship: impactedShip, planets, planetLifecycle: lifecycle, weapon, projectiles, asteroids: resolved.asteroids }, input.landingRequested === true);
 }
 
-function shipAfterBoostedAsteroidImpact (ship: GameStateSnapshot['ship'], asteroidPosition: Readonly<{ x: number; y: number }>, activeElapsedMs: number): GameStateSnapshot['ship']
+function shipAfterAsteroidImpact (
+    ship: GameStateSnapshot['ship'], asteroidPosition: Readonly<{ x: number; y: number }>, activeElapsedMs: number, lockControls: boolean
+): GameStateSnapshot['ship']
 {
     const x = ship.position.x - asteroidPosition.x;
     const y = ship.position.y - asteroidPosition.y;
@@ -195,10 +199,10 @@ function shipAfterBoostedAsteroidImpact (ship: GameStateSnapshot['ship'], astero
     return {
         ...ship,
         velocity: { x: direction.x * shipTuning.maxSpeed, y: direction.y * shipTuning.maxSpeed },
-        enginesOn: true,
-        boosting: false,
-        boostAcceleration: 0,
-        asteroidControlLockedUntilActiveMs: activeElapsedMs + MOOLARIS_RECOVERY_SECONDS * 1000
+        enginesOn: lockControls ? true : ship.enginesOn,
+        boosting: lockControls ? false : ship.boosting,
+        boostAcceleration: lockControls ? 0 : ship.boostAcceleration,
+        asteroidControlLockedUntilActiveMs: lockControls ? activeElapsedMs + MOOLARIS_RECOVERY_SECONDS * 1000 : ship.asteroidControlLockedUntilActiveMs
     };
 }
 

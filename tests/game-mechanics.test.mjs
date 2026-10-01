@@ -513,6 +513,7 @@ test('asteroid impacts select the earliest stable target without tunnelling and 
     } }, quietInput, 1);
     assert.equal(shipState.shipStatus.currentHitPoints, initialGameState.shipStatus.currentHitPoints);
     assert.equal(shipState.ship.asteroidImpactAtActiveMs, 1, 'every committed ship impact records an exact presentation event');
+    assert.equal(Math.hypot(shipState.ship.velocity.x, shipState.ship.velocity.y), 240, 'every asteroid impact repels the ship at the sun escape speed');
     assert(shipState.asteroids.some(candidate => candidate.id.startsWith('ship-hit-fragment-')));
     const planet = initialGameState.planets[0];
     const planetState = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('planet-hit', planet.position)] }, quietInput, 1);
