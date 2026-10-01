@@ -51,6 +51,16 @@ body {
 .main-menu-user-icon::after { background: #fff; }
 #main-menu-controls button:disabled { color: #777; cursor: default; }
 #main-menu-controls button:focus-visible { outline: 3px solid #fff; outline-offset: 6px; border-radius: 4px; }
+#main-menu-fullscreen-preview, #main-menu-sign-in-preview { position: absolute; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 999px; color: #fff; background: rgb(5 17 52 / 78%); font: 700 clamp(12px, 1.2vw, 16px) / 1.1 Arial, sans-serif; text-align: left; text-shadow: 1px 2px 3px rgb(0 0 0 / 75%); cursor: pointer; pointer-events: auto; }
+#main-menu-fullscreen-preview { right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); }
+#main-menu-sign-in-preview { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 1; width: max-content; max-width: calc(100% - 24px); white-space: nowrap !important; }
+#main-menu-sign-in-preview::before { display: block; width: 22px; min-width: 22px; height: 22px; flex: 0 0 22px; content: ''; background: #fff; mask: url('/assets/ui/userIcon.svg') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
+#main-menu-sign-in-preview-label { display: block; min-width: max-content; white-space: nowrap !important; word-break: keep-all; }
+#main-menu-fullscreen-preview-label { white-space: pre-line; }
+#main-menu-fullscreen-preview-icon { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; color: #fff; font-family: 'Segoe UI Symbol', sans-serif; font-size: 42px; line-height: 1; transform: scale(1.5); filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
+#main-menu-sign-in-preview-icon { display: none; }
+#main-menu-sign-in-preview:disabled { opacity: .55; cursor: default; }
+#main-menu-fullscreen-preview:focus-visible, #main-menu-sign-in-preview:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 
 @media (max-width: 599px) {
     #main-menu { padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
