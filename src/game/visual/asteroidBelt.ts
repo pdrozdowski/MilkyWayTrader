@@ -1,4 +1,4 @@
-import { asteroidBeltDefinition } from './asteroidBeltDefinition.ts';
+import { asteroidBeltDefinition, asteroidBeltLayout as configuredAsteroidBeltLayout } from '../definitions/gameplayTuning.ts';
 
 export type AsteroidType = 'rock' | 'ice' | 'metal' | 'dirt';
 
@@ -19,24 +19,14 @@ export interface AsteroidBeltPosition
 }
 
 const fullTurn = Math.PI * 2;
-const asteroidTypes: readonly AsteroidType[] = ['rock', 'ice', 'metal', 'dirt'];
 
-export const asteroidBeltLayout: readonly AsteroidBeltAsteroid[] = Array.from(
-    { length: asteroidBeltDefinition.asteroidCount * 2 },
-    (_, index) => {
-        const beltIndex = Math.floor(index / asteroidBeltDefinition.asteroidCount);
-        const beltOffset = beltIndex * (asteroidBeltDefinition.width + asteroidBeltDefinition.outerBeltGap
-            + asteroidBeltDefinition.asteroidRadius * 2 - asteroidBeltDefinition.outerBeltInset);
-        return {
-            beltIndex,
-            type: asteroidTypes[Math.floor(pseudoRandom(index, 3) * asteroidTypes.length)],
-            angleRadians: pseudoRandom(index, 1) * fullTurn,
-            rotationRadians: pseudoRandom(index, 4) * fullTurn,
-            radius: asteroidBeltDefinition.innerRadius + beltOffset
-                + pseudoRandom(index, 2) * asteroidBeltDefinition.width
-        };
-    }
-);
+export const asteroidBeltLayout: readonly AsteroidBeltAsteroid[] = configuredAsteroidBeltLayout.map(asteroid => ({
+    beltIndex: asteroid.beltIndex,
+    type: asteroid.variant,
+    angleRadians: asteroid.angleRadians,
+    rotationRadians: asteroid.rotationRadians,
+    radius: asteroid.radius
+}));
 
 export function projectAsteroidBelt (activeElapsedMs: number): readonly AsteroidBeltPosition[]
 {
@@ -50,10 +40,4 @@ export function projectAsteroidBelt (activeElapsedMs: number): readonly Asteroid
             radius: asteroidBeltDefinition.asteroidRadius
         };
     });
-}
-
-function pseudoRandom (index: number, salt: number): number
-{
-    const value = Math.sin((index + asteroidBeltDefinition.seed) * 91.345 + salt * 47.853) * 43758.5453;
-    return value - Math.floor(value);
 }

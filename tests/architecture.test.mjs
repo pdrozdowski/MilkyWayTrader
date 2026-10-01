@@ -80,7 +80,8 @@ test('spatial state uses serializable vectors instead of parallel coordinate fie
     const expected = new Map([
         ['shipState.ts', ['readonly position: Vector2State', 'readonly velocity: Vector2State']],
         ['planetState.ts', ['readonly position: Vector2State']],
-        ['projectileState.ts', ['readonly position: Vector2State', 'readonly velocity: Vector2State']]
+        ['projectileState.ts', ['readonly position: Vector2State', 'readonly velocity: Vector2State']],
+        ['asteroidState.ts', ['readonly position: Vector2State', 'readonly velocity: Vector2State']]
     ]);
     for (const [name, fields] of expected) {
         const source = await readFile(join(sourceRoot, 'game/state', name), 'utf8');

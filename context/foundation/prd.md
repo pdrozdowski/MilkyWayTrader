@@ -258,10 +258,11 @@ Each run combines a shared active-time clock, independently evolving planetary m
 
 - BR-038: A discrete sun impact removes 80% of maximum HP and pushes the ship clear of the sun.
 - BR-039: Sun damage cannot trigger again until the ship has separated from the previous contact.
-- BR-040: Asteroid collision applies configured size-based damage and destroys the asteroid without fragments or salvage.
-- BR-041: A large asteroid destroyed by a projectile produces a configured random number of medium fragments.
-- BR-042: A medium asteroid destroyed by a projectile produces a configured random number of small fragments.
-- BR-043: A small asteroid destroyed by a projectile disappears without fragments.
+- BR-040: A collision between an asteroid and the ship or a planet fragments the asteroid according to its size; ship damage remains a separate S-07 rule and is not changed by asteroid fragmentation.
+- BR-041: A large asteroid hit by a projectile, ship, or planet produces a configured deterministic number of medium fragments.
+- BR-042: A medium asteroid hit by a projectile, ship, or planet produces a configured deterministic number of small fragments.
+- BR-043: A small asteroid hit by a projectile, ship, or planet disappears without fragments.
+- BR-043a: An asteroid that reaches Moolaris disappears without fragments.
 - BR-044: Weapon level one fires one projectile per shot, and each additional level adds one projectile to the same configured narrow spread.
 - BR-045: Scattered asteroids follow configured drifting paths while the clock is running.
 - BR-046: Asteroids in the outer belt orbit beyond Maslo-Prime's orbital path while the clock is running.
