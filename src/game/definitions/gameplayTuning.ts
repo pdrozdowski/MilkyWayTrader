@@ -23,7 +23,7 @@ export const asteroidTuning = {
     outsideSafeAreaCullAfterMs: 15_000,
     worldBoundsRadius: 10_000,
     fragmentChildCount: { minimum: 2, maximum: 4 },
-    planetCollisionPenetration: 1 / 2,
+    planetCollisionPenetration: 1 / 4,
     starIngestionRadiusFactor: 1 / 2,
     starIngestionSpeed: 360,
     sizes: {

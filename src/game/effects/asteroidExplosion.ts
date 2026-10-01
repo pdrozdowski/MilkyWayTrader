@@ -18,6 +18,12 @@ export function fragmentedParents (previous: readonly AsteroidState[], current: 
         && current.some(candidate => candidate.id.startsWith(`${parent.id}-fragment-`)));
 }
 
+/** Children begin at the committed collision point; use it for one-shot feedback rather than the prior-frame parent position. */
+export function fragmentImpactPosition (parent: AsteroidState, current: readonly AsteroidState[]): Readonly<{ x: number; y: number }>
+{
+    return current.find(candidate => candidate.id.startsWith(`${parent.id}-fragment-`))?.position ?? parent.position;
+}
+
 /** A parent can only be classified after its authoritative removal and children are committed. */
 export function planetImpactParents (
     previous: readonly AsteroidState[], current: readonly AsteroidState[], planets: readonly PlanetState[]
