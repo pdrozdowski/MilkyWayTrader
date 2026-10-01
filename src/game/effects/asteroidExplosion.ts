@@ -52,6 +52,15 @@ export function sunConsumedAsteroids (previous: readonly AsteroidState[], curren
             <= moolarisDefinition.radius * asteroidTuning.starIngestionRadiusFactor);
 }
 
+export function shipImpactParents (
+    previous: readonly AsteroidState[], current: readonly AsteroidState[], shipPosition: Readonly<{ x: number; y: number }>, shipRadius: number
+): readonly AsteroidState[]
+{
+    return fragmentedParents(previous, current).filter(parent =>
+        Math.hypot(parent.position.x - shipPosition.x, parent.position.y - shipPosition.y)
+            <= shipRadius + asteroidTuning.sizes[parent.size].radius);
+}
+
 /** Transient scene effect. It deliberately has no link to persisted asteroid state. */
 export class AsteroidExplosion
 {

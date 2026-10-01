@@ -6,7 +6,7 @@ import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
-import { AsteroidExplosion, fragmentedParents, planetImpactParents, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, sunConsumedAsteroids } from '../effects/asteroidExplosion';
+import { AsteroidExplosion, fragmentedParents, planetImpactParents, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, shipImpactParents, sunConsumedAsteroids } from '../effects/asteroidExplosion';
 import { OrbitalPaths } from '../effects/orbitalPaths';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
@@ -395,8 +395,9 @@ export class Game extends Scene
         }));
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.clearFlightInput();
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.telemetry.emit('planet_landed', { planet: state.planetLifecycle.landedPlanetId, credits_after: state.credits });
-        if (state.ship.asteroidControlLockedUntilActiveMs !== null
-            && state.ship.asteroidControlLockedUntilActiveMs !== before.ship.asteroidControlLockedUntilActiveMs) {
+        const renewedAsteroidControlLock = state.ship.asteroidControlLockedUntilActiveMs !== null
+            && state.ship.asteroidControlLockedUntilActiveMs !== before.ship.asteroidControlLockedUntilActiveMs;
+        if (renewedAsteroidControlLock) {
             this.clearFlightInput();
             this.lossOfControlUntilMs = time + 1500;
             this.asteroidExplosion.explodeShipCrash(state.ship.position);
@@ -424,18 +425,24 @@ export class Game extends Scene
         this.weapon.synchronize(state.projectiles);
         this.background.update(state.clock.activeElapsedMs);
         this.asteroids.synchronize(state.asteroids);
-        this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets);
+        this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets, before.ship.position, renewedAsteroidControlLock);
     }
 
     private playVisibleAsteroidFragmentation (
-        previous: readonly AsteroidState[], current: readonly AsteroidState[], previousProjectiles: readonly import('../state/projectileState').ProjectileState[], currentProjectiles: readonly import('../state/projectileState').ProjectileState[], planets: readonly PlanetState[]
+        previous: readonly AsteroidState[], current: readonly AsteroidState[], previousProjectiles: readonly import('../state/projectileState').ProjectileState[], currentProjectiles: readonly import('../state/projectileState').ProjectileState[], planets: readonly PlanetState[], shipPosition: Readonly<{ x: number; y: number }>, renewedAsteroidControlLock: boolean
     ): void
     {
         const planetImpactIds = new Set(planetImpactParents(previous, current, planets).map(parent => parent.id));
+        const shipImpactIds = new Set(shipImpactParents(previous, current, shipPosition, shipTuning.collisionRadius).map(parent => parent.id));
         for (const asteroid of projectileDamagedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('asteroid-projectile-impact-clean');
         for (const asteroid of sunConsumedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('sun-asteroid-low-slurp-loud-no-noise');
         for (const parent of fragmentedParents(previous, current)) {
             if (!this.camera.worldView.contains(parent.position.x, parent.position.y)) continue;
+            if (shipImpactIds.has(parent.id) && !renewedAsteroidControlLock) {
+                this.asteroidExplosion.explodeShipCrash(shipPosition);
+                this.audio.play('asteroid-crash-metal-clean');
+                continue;
+            }
             if (planetImpactIds.has(parent.id)) {
                 this.asteroidExplosion.explodePlanetImpact(parent.position);
                 this.audio.play('asteroid-planet-impact-deep-loud');
