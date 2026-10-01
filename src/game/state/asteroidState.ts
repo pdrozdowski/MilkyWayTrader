@@ -15,6 +15,7 @@ export interface AsteroidState
     readonly id: string;
     readonly variant: AsteroidVariant;
     readonly size: AsteroidSize;
+    readonly hitPoints: number;
     readonly position: Vector2State;
     readonly velocity: Vector2State;
     readonly orbit: AsteroidOrbitState | null;

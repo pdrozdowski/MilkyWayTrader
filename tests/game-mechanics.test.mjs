@@ -288,9 +288,9 @@ test('asteroid tuning keeps safe-area lifecycle and deterministic fragment count
     assert.equal(asteroidTuning.fragmentChildCount.minimum, 2);
     assert.equal(asteroidTuning.fragmentChildCount.maximum, 4);
     assert.deepEqual(asteroidTuning.sizes, {
-        big: { radius: 72 },
-        medium: { radius: 48 },
-        small: { radius: 24 }
+        big: { radius: 72, hitPoints: 3 },
+        medium: { radius: 48, hitPoints: 2 },
+        small: { radius: 24, hitPoints: 1 }
     });
     assert.equal(asteroidTuning.fragmentDrift.speed, 180);
     assert.equal(asteroidTuning.fragmentDrift.spreadRadians, Math.PI * 2);
@@ -464,7 +464,7 @@ test('simulation only activates boost after the authoritative booster unlock', (
 });
 
 const asteroid = (id, position, size = 'big', extras = {}) => ({
-    id, variant: 'rock', size, position, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null, ...extras
+    id, variant: 'rock', size, hitPoints: 1, position, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null, ...extras
 });
 const quietInput = { target: null, boostRequested: false, firing: false };
 
@@ -550,5 +550,40 @@ test('fragmentation follows the size hierarchy and remains identical through ser
     const restored = decodeGameState(encodeGameState(partial));
     assert.deepEqual(advanceGameSimulation(restored, quietInput, 100), uninterrupted);
     assert.equal(asteroidRadius('big'), 72);
+});
+
+test('asteroid durability persists through shots, resets for fragments, and collision rules do not damage it', () => {
+    const shot = { id: 'durability-shot', position: { x: 4_000, y: 0 }, velocity: { x: 20_000, y: 0 }, bornAtActiveMs: 0 };
+    const fire = (target) => advanceGameSimulation({ ...initialGameState, projectiles: [shot], asteroids: [target] }, quietInput, 100);
+    const big = asteroid('durable-big', { x: 4_500, y: 0 }, 'big', { hitPoints: 3 });
+    const first = fire(big);
+    assert.equal(first.asteroids[0].hitPoints, 2);
+    const second = fire(first.asteroids[0]);
+    assert.equal(second.asteroids[0].hitPoints, 1);
+    const third = fire(second.asteroids[0]);
+    assert(third.asteroids.every(candidate => candidate.size === 'medium' && candidate.hitPoints === 2));
+    const medium = fire(asteroid('durable-medium', { x: 4_500, y: 0 }, 'medium', { hitPoints: 2 }));
+    assert.equal(medium.asteroids[0].hitPoints, 1);
+    assert(fire(medium.asteroids[0]).asteroids.every(candidate => candidate.size === 'small' && candidate.hitPoints === 1));
+
+    const planet = initialGameState.planets[0];
+    const planetImpact = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('planet-depth', {
+        x: planet.position.x + planet.radius - 25, y: planet.position.y
+    }, 'big', { hitPoints: 3 })] }, quietInput, 1);
+    assert(planetImpact.asteroids.every(candidate => candidate.size === 'medium' && candidate.hitPoints === 2));
+
+    const ingested = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('star-inbound', { x: 890, y: 0 }, 'big', { hitPoints: 3 })] }, quietInput, 1);
+    assert.equal(ingested.asteroids[0].hitPoints, 3);
+    assert(ingested.asteroids[0].velocity.x < 0);
+    const culled = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('star-core', { x: 400, y: 0 }, 'big', { hitPoints: 3 })] }, quietInput, 1);
+    assert.equal(culled.asteroids.length, 0);
+
+    const boosted = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('boost-impact', { x: 4_000, y: 0 }, 'big', { hitPoints: 3 })], ship: {
+        ...initialGameState.ship, position: { x: 4_000, y: 0 }
+    }, shipStatus: { ...initialGameState.shipStatus, boosterUnlocked: true } }, {
+        target: { x: 5_000, y: 0 }, boostRequested: true, firing: false
+    }, 1);
+    assert.equal(boosted.ship.boosting, false);
+    assert.equal(Math.hypot(boosted.ship.velocity.x, boosted.ship.velocity.y), 240);
 });
 

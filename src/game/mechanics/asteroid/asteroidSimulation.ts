@@ -22,6 +22,11 @@ export function asteroidRadius (size: AsteroidSize): number
     return asteroidTuning.sizes[size].radius;
 }
 
+export function asteroidHitPoints (size: AsteroidSize): number
+{
+    return asteroidTuning.sizes[size].hitPoints;
+}
+
 export function advanceAsteroidMotions (
     asteroids: readonly AsteroidState[], activeElapsedMs: number, activeDeltaMs: number, shipPosition: Vector2State,
     previousShipPosition: Vector2State = shipPosition
@@ -94,6 +99,7 @@ export function fragmentAsteroid (asteroid: AsteroidState, source: AsteroidImpac
             id: `${asteroid.id}-fragment-${index + 1}`,
             variant: asteroid.variant,
             size,
+            hitPoints: asteroidHitPoints(size),
             position: { ...asteroid.position },
             velocity: { x: Math.cos(angle) * asteroidTuning.fragmentDrift.speed, y: Math.sin(angle) * asteroidTuning.fragmentDrift.speed },
             orbit: null,

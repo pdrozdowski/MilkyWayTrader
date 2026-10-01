@@ -3,12 +3,12 @@ import { initialCredits, maximumShipHitPoints } from '../domain/runBalance.ts';
 import { planetDefinitions } from './planetDefinitions.ts';
 import { projectPlanetPosition } from '../mechanics/planet/orbit.ts';
 import { serotonCommodityDefinitions } from './serotonMarketDefinitions.ts';
-import { asteroidBeltDefinition, asteroidBeltLayout } from './gameplayTuning.ts';
+import { asteroidBeltDefinition, asteroidBeltLayout, asteroidTuning } from './gameplayTuning.ts';
 
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
 
 export const initialGameState: GameStateSnapshot = {
-    schemaVersion: 7,
+    schemaVersion: 8,
     clock: {
         budgetMs: ACTIVE_TIME_BUDGET_MS,
         activeElapsedMs: 0,
@@ -59,6 +59,7 @@ export const initialGameState: GameStateSnapshot = {
             id: `asteroid-belt-${index + 1}`,
             variant: asteroid.variant,
             size: 'big',
+            hitPoints: asteroidTuning.sizes.big.hitPoints,
             position: {
                 x: Math.cos(asteroid.angleRadians) * asteroid.radius,
                 y: -Math.sin(asteroid.angleRadians) * asteroid.radius
