@@ -219,7 +219,7 @@ Schema zmienia się z v6 na v7. Aplikacja jest przed dojrzałością persistence
 
 #### Manual
 
-- [ ] 1.4 Confirm S-08 fragmentation scope and S-07 damage boundary
+- [x] 1.4 Confirm S-08 fragmentation scope and S-07 damage boundary
 
 ### Phase 2: Deterministyczny lifecycle i kolizje
 
@@ -231,7 +231,7 @@ Schema zmienia się z v6 na v7. Aplikacja jest przed dojrzałością persistence
 
 #### Manual
 
-- [ ] 2.4 Confirm ship contact fragments asteroids without HP loss
+- [x] 2.4 Confirm ship contact fragments asteroids without HP loss
 
 ### Phase 3: Obiekty, eksplozje i dźwięk
 
@@ -242,8 +242,8 @@ Schema zmienia się z v6 na v7. Aplikacja jest przed dojrzałością persistence
 
 #### Manual
 
-- [ ] 3.3 Confirm visible and off-screen feedback behavior
-- [ ] 3.4 Confirm clean scene exit and re-entry
+- [x] 3.3 Confirm visible and off-screen feedback behavior
+- [x] 3.4 Confirm clean scene exit and re-entry
 
 ### Phase 4: Zintegrowana walidacja
 
@@ -254,4 +254,4 @@ Schema zmienia się z v6 na v7. Aplikacja jest przed dojrzałością persistence
 
 #### Manual
 
-- [ ] 4.3 Complete player-facing collision acceptance pass
+- [x] 4.3 Complete player-facing collision acceptance pass
