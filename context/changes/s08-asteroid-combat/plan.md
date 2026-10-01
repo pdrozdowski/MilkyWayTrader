@@ -249,8 +249,8 @@ Schema zmienia się z v6 na v7. Aplikacja jest przed dojrzałością persistence
 
 #### Automated
 
-- [ ] 4.1 Run focused mechanics object and audio suites
-- [ ] 4.2 Run fast tests typecheck and production build
+- [x] 4.1 Run focused mechanics object and audio suites
+- [x] 4.2 Run fast tests typecheck and production build
 
 #### Manual
 
