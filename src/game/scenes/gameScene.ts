@@ -395,11 +395,13 @@ export class Game extends Scene
         }));
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.clearFlightInput();
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.telemetry.emit('planet_landed', { planet: state.planetLifecycle.landedPlanetId, credits_after: state.credits });
-        if (before.ship.asteroidControlLockedUntilActiveMs === null && state.ship.asteroidControlLockedUntilActiveMs !== null) {
+        if (state.ship.asteroidControlLockedUntilActiveMs !== null
+            && state.ship.asteroidControlLockedUntilActiveMs !== before.ship.asteroidControlLockedUntilActiveMs) {
             this.clearFlightInput();
             this.lossOfControlUntilMs = time + 1500;
             this.asteroidExplosion.explodeShipCrash(state.ship.position);
             this.audio.play('asteroid-crash-metal-clean');
+            this.camera.shake(180, 0.008);
         }
         this.ship.synchronize(state.ship, time);
         this.lossOfControl.setVisible(time < this.lossOfControlUntilMs);
