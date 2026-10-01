@@ -12,10 +12,10 @@ interface AsteroidDisplay
 const healthBarHeight = 4;
 const healthBarOffset = 8;
 
-/** An asteroid pulled into Moolaris is drawn below its active surface, not above the star. */
+/** Asteroids always remain readable above planets and other world bodies. */
 export function asteroidProjectionDepth (_state: AsteroidState): number
 {
-    return ObjectDepth.Sun;
+    return ObjectDepth.Asteroid;
 }
 
 /** Phaser-only projection of the authoritative asteroid snapshot collection. */

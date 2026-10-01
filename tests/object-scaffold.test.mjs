@@ -14,7 +14,7 @@ function transpileModule (path, imports) {
     return module.exports;
 }
 
-test('asteroid projection reconciles IDs, shows persisted durability and places star infall below the surface', () => {
+test('asteroid projection reconciles IDs, shows persisted durability and keeps every asteroid above planets', () => {
     const { AsteroidProjection, asteroidProjectionDepth } = transpileModule('src/game/objects/asteroid/asteroidProjection.ts', {
         '../../definitions/gameplayTuning': { asteroidTuning: { sizes: { big: { radius: 72, hitPoints: 3 }, medium: { radius: 48, hitPoints: 2 }, small: { radius: 24, hitPoints: 1 } } } },
         '../../definitions/moolarisDefinition': { moolarisDefinition: { position: { x: 0, y: 0 }, radius: 100 } },
@@ -40,8 +40,8 @@ test('asteroid projection reconciles IDs, shows persisted durability and places 
     projection.destroy();
     projection.destroy();
     assert.equal(created[1].destroyed, 1, 'shutdown cleanup remains idempotent');
-    assert.equal(asteroidProjectionDepth({ id: 'infall', variant: 'rock', size: 'small', hitPoints: 1, position: { x: 110, y: 0 }, velocity: { x: -1, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }), 5);
-    assert.equal(asteroidProjectionDepth({ id: 'fragment', variant: 'rock', size: 'small', hitPoints: 1, position: { x: 110, y: 0 }, velocity: { x: 1, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }), 5);
+    assert.equal(asteroidProjectionDepth({ id: 'infall', variant: 'rock', size: 'small', hitPoints: 1, position: { x: 110, y: 0 }, velocity: { x: -1, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }), 15);
+    assert.equal(asteroidProjectionDepth({ id: 'fragment', variant: 'rock', size: 'small', hitPoints: 1, position: { x: 110, y: 0 }, velocity: { x: 1, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null }), 15);
 });
 
 test('fragment feedback only recognizes committed parent-to-children transitions and identifies planet impacts', () => {
