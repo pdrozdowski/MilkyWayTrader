@@ -2,6 +2,7 @@ import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 import type { SerotonCommodityId } from '../state/serotonMarketState';
 import type { AsteroidSize, AsteroidVariant } from '../state/asteroidState';
+import { asteroidTuning } from '../definitions/gameplayTuning.ts';
 import { maximumShipHitPoints } from '../domain/runBalance.ts';
 import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
 
@@ -85,7 +86,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         catch { throw new Error('Game state is not valid JSON.'); }
     }
     const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
-    if (root.schemaVersion !== 7) throw new Error('Unsupported game-state schema version.');
+    if (root.schemaVersion !== 8) throw new Error('Unsupported game-state schema version.');
 
     const credits = nonNegativeSafeInteger(root.credits, 'state.credits');
     if (!Array.isArray(root.cargo)) throw new Error('state.cargo must be an array.');
@@ -207,7 +208,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     const asteroidSizes: readonly AsteroidSize[] = ['big', 'medium', 'small'];
     const asteroids = root.asteroids.map((candidateAsteroid, index) => {
         const path = `state.asteroids[${index}]`;
-        const asteroid = requireRecord(candidateAsteroid, path, ['id', 'variant', 'size', 'position', 'velocity', 'orbit', 'outsideSafeAreaSinceActiveMs']);
+        const asteroid = requireRecord(candidateAsteroid, path, ['id', 'variant', 'size', 'hitPoints', 'position', 'velocity', 'orbit', 'outsideSafeAreaSinceActiveMs']);
         const id = nonEmptyString(asteroid.id, `${path}.id`);
         if (asteroidIds.has(id)) throw new Error(`Duplicate asteroid id: ${id}.`);
         asteroidIds.add(id);
@@ -217,13 +218,17 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         if (typeof asteroid.size !== 'string' || !asteroidSizes.includes(asteroid.size as AsteroidSize)) {
             throw new Error(`${path}.size is unknown.`);
         }
+        const size = asteroid.size as AsteroidSize;
+        const hitPoints = positiveSafeInteger(asteroid.hitPoints, `${path}.hitPoints`);
+        if (hitPoints > asteroidTuning.sizes[size].hitPoints) throw new Error(`${path}.hitPoints exceeds configured durability.`);
         const orbit = asteroid.orbit === null ? null : requireRecord(asteroid.orbit, `${path}.orbit`, ['angleRadians', 'radius', 'rotationRadians']);
         const radius = orbit === null ? null : nonNegativeNumber(orbit.radius, `${path}.orbit.radius`);
         if (radius === 0) throw new Error(`${path}.orbit.radius must be positive.`);
         return {
             id,
             variant: asteroid.variant as AsteroidVariant,
-            size: asteroid.size as AsteroidSize,
+            size,
+            hitPoints,
             position: vector2(asteroid.position, `${path}.position`),
             velocity: vector2(asteroid.velocity, `${path}.velocity`),
             orbit: orbit === null ? null : {
@@ -236,7 +241,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 7,
+        schemaVersion: 8,
         clock: { budgetMs, activeElapsedMs, pauseReasons },
         credits,
         cargo,

@@ -35,7 +35,7 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 7);
+    assert.equal(state.schemaVersion, 8);
     assert.equal(state.credits, 100_000);
     assert.deepEqual(state.cargo, []);
     assert.deepEqual(state.markets, [{
@@ -205,6 +205,7 @@ test('codec accepts and round trips drifting asteroids without an orbit', () => 
             ...clone(initialGameState.asteroids[0]),
             id: 'asteroid-fragment-1',
             size: 'small',
+            hitPoints: 1,
             position: { x: 3_200, y: -1_600 },
             velocity: { x: 180, y: -90 },
             orbit: null,
@@ -340,10 +341,10 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 7);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 8);
 });
 
-test('v7 codec validates asteroid identity, finite vectors, lifecycle time, and exact orbit shape', () => {
+test('v8 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
     const decoded = decodeGameState(initialGameState);
     const asteroid = clone(decoded.asteroids[0]);
     assert(Object.isFrozen(decoded.asteroids));
@@ -353,6 +354,8 @@ test('v7 codec validates asteroid identity, finite vectors, lifecycle time, and 
     const invalidCases = [
         { ...clone(decoded), schemaVersion: 6 },
         { ...clone(decoded), asteroids: [{ ...asteroid, id: '' }] },
+        { ...clone(decoded), asteroids: [{ ...asteroid, hitPoints: 0 }] },
+        { ...clone(decoded), asteroids: [{ ...asteroid, hitPoints: 4 }] },
         { ...clone(decoded), asteroids: [asteroid, asteroid] },
         { ...clone(decoded), asteroids: [{ ...asteroid, position: { ...asteroid.position, x: Number.POSITIVE_INFINITY } }] },
         { ...clone(decoded), asteroids: [{ ...asteroid, velocity: { ...asteroid.velocity, y: Number.NaN } }] },

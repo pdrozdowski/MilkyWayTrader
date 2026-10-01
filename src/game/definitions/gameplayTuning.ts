@@ -23,10 +23,13 @@ export const asteroidTuning = {
     outsideSafeAreaCullAfterMs: 15_000,
     worldBoundsRadius: 10_000,
     fragmentChildCount: { minimum: 2, maximum: 4 },
+    planetCollisionPenetration: 1 / 3,
+    starIngestionRadiusFactor: 1 / 2,
+    starIngestionSpeed: 360,
     sizes: {
-        big: { radius: 72 },
-        medium: { radius: 48 },
-        small: { radius: 24 }
+        big: { radius: 72, hitPoints: 3 },
+        medium: { radius: 48, hitPoints: 2 },
+        small: { radius: 24, hitPoints: 1 }
     },
     fragmentDrift: {
         speed: 180,
