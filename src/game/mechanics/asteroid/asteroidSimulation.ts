@@ -98,8 +98,9 @@ export function fragmentAsteroid (asteroid: AsteroidState, source: AsteroidImpac
         : Math.atan2(asteroid.position.y - source.position.y, asteroid.position.x - source.position.x);
     const patterns = fragmentAnglePatterns[count as 2 | 3 | 4];
     const pattern = patterns[Math.floor(hashAngle(`${asteroid.id}:${source.id}`) / fullTurn * patterns.length)];
+    const patternRotation = hashAngle(`${asteroid.id}:${source.id}:rotation`);
     return Array.from({ length: count }, (_, index) => {
-        const angle = baseAngle + pattern[index];
+        const angle = baseAngle + patternRotation + pattern[index];
         return {
             id: `${asteroid.id}-fragment-${index + 1}`,
             variant: asteroid.variant,
