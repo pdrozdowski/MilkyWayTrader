@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser';
 import type { AsteroidState } from '../state/asteroidState';
 import type { PlanetState } from '../state/planetState';
+import type { ProjectileState } from '../state/projectileState';
 import { asteroidTuning } from '../definitions/gameplayTuning';
 import { ObjectDepth } from '../visual/layers';
 
@@ -23,6 +24,17 @@ export function planetImpactParents (
     return fragmentedParents(previous, current).filter(parent => planets.some(planet =>
         Math.hypot(parent.position.x - planet.position.x, parent.position.y - planet.position.y)
             <= planet.radius + asteroidTuning.sizes[parent.size].radius));
+}
+
+/** A SMALL asteroid has no children, so pair its committed removal with a consumed shot. */
+export function projectileDestroyedSmallAsteroids (
+    previous: readonly AsteroidState[], current: readonly AsteroidState[], previousProjectiles: readonly ProjectileState[], currentProjectiles: readonly ProjectileState[]
+): readonly AsteroidState[]
+{
+    const currentIds = new Set(current.map(asteroid => asteroid.id));
+    const currentProjectileIds = new Set(currentProjectiles.map(projectile => projectile.id));
+    const consumedShot = previousProjectiles.some(projectile => !currentProjectileIds.has(projectile.id));
+    return consumedShot ? previous.filter(asteroid => asteroid.size === 'small' && !currentIds.has(asteroid.id)) : [];
 }
 
 /** Transient scene effect. It deliberately has no link to persisted asteroid state. */

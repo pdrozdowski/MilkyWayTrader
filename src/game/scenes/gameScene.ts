@@ -6,7 +6,7 @@ import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
-import { AsteroidExplosion, fragmentedParents, planetImpactParents } from '../effects/asteroidExplosion';
+import { AsteroidExplosion, fragmentedParents, planetImpactParents, projectileDestroyedSmallAsteroids } from '../effects/asteroidExplosion';
 import { OrbitalPaths } from '../effects/orbitalPaths';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
@@ -422,11 +422,11 @@ export class Game extends Scene
         this.weapon.synchronize(state.projectiles);
         this.background.update(state.clock.activeElapsedMs);
         this.asteroids.synchronize(state.asteroids);
-        this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, state.planets);
+        this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets);
     }
 
     private playVisibleAsteroidFragmentation (
-        previous: readonly AsteroidState[], current: readonly AsteroidState[], planets: readonly PlanetState[]
+        previous: readonly AsteroidState[], current: readonly AsteroidState[], previousProjectiles: readonly import('../state/projectileState').ProjectileState[], currentProjectiles: readonly import('../state/projectileState').ProjectileState[], planets: readonly PlanetState[]
     ): void
     {
         const planetImpactIds = new Set(planetImpactParents(previous, current, planets).map(parent => parent.id));
@@ -434,6 +434,11 @@ export class Game extends Scene
             if (!this.camera.worldView.contains(parent.position.x, parent.position.y)) continue;
             if (planetImpactIds.has(parent.id)) this.asteroidExplosion.explodePlanetImpact(parent.position);
             else this.asteroidExplosion.explode(parent.position);
+            this.audio.play('asteroid-fragment');
+        }
+        for (const asteroid of projectileDestroyedSmallAsteroids(previous, current, previousProjectiles, currentProjectiles)) {
+            if (!this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) continue;
+            this.asteroidExplosion.explode(asteroid.position);
             this.audio.play('asteroid-fragment');
         }
     }
