@@ -78,13 +78,16 @@ export function advanceGameSimulation (
 
     const landed = state.planetLifecycle.landedPlanetId !== null;
     const contact = resolveMoolarisContact(state.ship);
-    const recovering = contact.hasControl && isRecoveringFromMoolaris(state.ship, input.target);
-    const targetDelta = contact.hasControl && !recovering && input.target ? {
+    const asteroidControlLocked = state.ship.asteroidControlLockedUntilActiveMs !== null
+        && clock.activeElapsedMs < state.ship.asteroidControlLockedUntilActiveMs;
+    const recovering = asteroidControlLocked || (contact.hasControl && isRecoveringFromMoolaris(state.ship, input.target));
+    const hasControl = contact.hasControl && !asteroidControlLocked;
+    const targetDelta = hasControl && !recovering && input.target ? {
         x: input.target.x - state.ship.position.x,
         y: input.target.y - state.ship.position.y
     } : null;
     const currentSpeed = Math.hypot(state.ship.velocity.x, state.ship.velocity.y);
-    const wantsBoost = !landed && contact.hasControl && !recovering && state.shipStatus.boosterUnlocked && input.boostRequested
+    const wantsBoost = !landed && hasControl && !recovering && state.shipStatus.boosterUnlocked && input.boostRequested
         && !!targetDelta && Math.hypot(targetDelta.x, targetDelta.y) > 2;
     const boostAcceleration = wantsBoost && !state.ship.boosting
         ? boostAccelerationRate(currentSpeed, shipTuning.maxSpeed, shipBoostTuning.speedMultiplier, shipBoostTuning.accelerationSeconds)
@@ -116,7 +119,7 @@ export function advanceGameSimulation (
     };
 
     let projectiles = advanceProjectiles(state.projectiles, clock.activeElapsedMs, activeDeltaMs, options);
-    const cadence = advanceFireCadence(state.weapon, clock.activeElapsedMs, !landed && contact.hasControl && !recovering && input.firing && !ship.boosting, options.shotIntervalMs);
+    const cadence = advanceFireCadence(state.weapon, clock.activeElapsedMs, !landed && hasControl && !recovering && input.firing && !ship.boosting, options.shotIntervalMs);
     let weapon = cadence.weapon;
     if (cadence.fired) {
         const sequence = weapon.projectileSequence + 1;
@@ -178,17 +181,24 @@ export function advanceGameSimulation (
             bornAtActiveMs: clock.activeElapsedMs
         }];
     }
-    const collisionShip = resolved.boostedShipImpact === null ? orbitShip : shipAfterBoostedAsteroidImpact(orbitShip, resolved.boostedShipImpact.position);
+    const collisionShip = resolved.boostedShipImpact === null ? orbitShip : shipAfterBoostedAsteroidImpact(orbitShip, resolved.boostedShipImpact.position, clock.activeElapsedMs);
     return tryLandAtCapturedPlanet({ ...state, clock, markets, ship: collisionShip, planets, planetLifecycle: lifecycle, weapon, projectiles, asteroids: resolved.asteroids }, input.landingRequested === true);
 }
 
-function shipAfterBoostedAsteroidImpact (ship: GameStateSnapshot['ship'], asteroidPosition: Readonly<{ x: number; y: number }>): GameStateSnapshot['ship']
+function shipAfterBoostedAsteroidImpact (ship: GameStateSnapshot['ship'], asteroidPosition: Readonly<{ x: number; y: number }>, activeElapsedMs: number): GameStateSnapshot['ship']
 {
     const x = ship.position.x - asteroidPosition.x;
     const y = ship.position.y - asteroidPosition.y;
     const distance = Math.hypot(x, y);
     const direction = distance === 0 ? { x: 1, y: 0 } : { x: x / distance, y: y / distance };
-    return { ...ship, velocity: { x: direction.x * shipTuning.maxSpeed, y: direction.y * shipTuning.maxSpeed }, enginesOn: true, boosting: false, boostAcceleration: 0 };
+    return {
+        ...ship,
+        velocity: { x: direction.x * shipTuning.maxSpeed, y: direction.y * shipTuning.maxSpeed },
+        enginesOn: true,
+        boosting: false,
+        boostAcceleration: 0,
+        asteroidControlLockedUntilActiveMs: activeElapsedMs + MOOLARIS_RECOVERY_SECONDS * 1000
+    };
 }
 
 function resolveAsteroidImpacts (

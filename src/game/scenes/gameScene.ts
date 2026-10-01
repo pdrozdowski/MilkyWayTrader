@@ -6,7 +6,7 @@ import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
-import { AsteroidExplosion, fragmentedParents } from '../effects/asteroidExplosion';
+import { AsteroidExplosion, fragmentedParents, planetImpactParents } from '../effects/asteroidExplosion';
 import { OrbitalPaths } from '../effects/orbitalPaths';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
@@ -395,6 +395,10 @@ export class Game extends Scene
         }));
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.clearFlightInput();
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.telemetry.emit('planet_landed', { planet: state.planetLifecycle.landedPlanetId, credits_after: state.credits });
+        if (before.ship.asteroidControlLockedUntilActiveMs === null && state.ship.asteroidControlLockedUntilActiveMs !== null) {
+            this.clearFlightInput();
+            this.lossOfControlUntilMs = time + 1500;
+        }
         this.ship.synchronize(state.ship, time);
         this.lossOfControl.setVisible(time < this.lossOfControlUntilMs);
         this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);
@@ -416,14 +420,18 @@ export class Game extends Scene
         this.weapon.synchronize(state.projectiles);
         this.background.update(state.clock.activeElapsedMs);
         this.asteroids.synchronize(state.asteroids);
-        this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids);
+        this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, state.planets);
     }
 
-    private playVisibleAsteroidFragmentation (previous: readonly AsteroidState[], current: readonly AsteroidState[]): void
+    private playVisibleAsteroidFragmentation (
+        previous: readonly AsteroidState[], current: readonly AsteroidState[], planets: readonly PlanetState[]
+    ): void
     {
+        const planetImpactIds = new Set(planetImpactParents(previous, current, planets).map(parent => parent.id));
         for (const parent of fragmentedParents(previous, current)) {
             if (!this.camera.worldView.contains(parent.position.x, parent.position.y)) continue;
-            this.asteroidExplosion.explode(parent.position);
+            if (planetImpactIds.has(parent.id)) this.asteroidExplosion.explodePlanetImpact(parent.position);
+            else this.asteroidExplosion.explode(parent.position);
             this.audio.play('asteroid-fragment');
         }
     }

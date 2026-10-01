@@ -9,4 +9,6 @@ export interface ShipState
     readonly boosting: boolean;
     readonly boostAcceleration: number;
     readonly coastDeceleration: number;
+    /** Active-game time at which an asteroid-impact control lock expires, or null when controllable. */
+    readonly asteroidControlLockedUntilActiveMs: number | null;
 }
