@@ -18,6 +18,7 @@ import { activeTimeCycle, activeTimeWave } from '../src/game/visual/activeTime.t
 import { launchFromPlanet, LANDING_CENTRE_RADIUS, tryLandAtCapturedPlanet } from '../src/game/mechanics/planet/landing.ts';
 import { decodeGameState, encodeGameState } from '../src/game/application/gameStateCodec.ts';
 import { asteroidFragmentChildCount, asteroidTuning } from '../src/game/definitions/gameplayTuning.ts';
+import { advanceAsteroidMotions, asteroidRadius } from '../src/game/mechanics/asteroid/asteroidSimulation.ts';
 
 const marketStocks = state => state.markets[0].commodityStocks.map(commodity => ({ ...commodity }));
 
@@ -460,5 +461,94 @@ test('simulation only activates boost after the authoritative booster unlock', (
         shipStatus: { ...initialGameState.shipStatus, boosterUnlocked: true }
     }, input, 100);
     assert.equal(unlocked.ship.boosting, true);
+});
+
+const asteroid = (id, position, size = 'big', extras = {}) => ({
+    id, variant: 'rock', size, position, velocity: { x: 0, y: 0 }, orbit: null, outsideSafeAreaSinceActiveMs: null, ...extras
+});
+const quietInput = { target: null, boostRequested: false, firing: false };
+
+test('asteroids orbit only on active time while fragments drift, reset safe-area time, and cull at both boundaries', () => {
+    const orbital = asteroid('orbital', { x: 100, y: 0 }, 'big', {
+        orbit: { angleRadians: 0, radius: 100, rotationRadians: 0 }
+    });
+    const fragment = asteroid('fragment', { x: 100, y: 0 }, 'small', { velocity: { x: 20, y: -10 } });
+    const moved = advanceAsteroidMotions([orbital, fragment], 1_000, 1_000, { x: 0, y: 0 });
+    assert(Math.abs(moved[0].asteroid.position.x - 100 * Math.cos(Math.PI * 2 / 420)) < 1e-8);
+    assert.deepEqual(moved[1].asteroid.position, { x: 120, y: -10 });
+    const paused = advanceGameSimulation({ ...initialGameState, asteroids: [orbital, fragment], clock: { ...initialGameState.clock, pauseReasons: ['manual'] } }, quietInput, 10_000);
+    assert.deepEqual(paused.asteroids, [orbital, fragment]);
+    const outside = asteroid('outside', { x: 2_000, y: 0 }, 'small', { outsideSafeAreaSinceActiveMs: 0 });
+    assert.equal(advanceAsteroidMotions([outside], 14_999, 1, { x: 0, y: 0 }).length, 1);
+    assert.equal(advanceAsteroidMotions([outside], 15_000, 1, { x: 0, y: 0 }).length, 0);
+    const returned = asteroid('returned', { x: 100, y: 0 }, 'small', { outsideSafeAreaSinceActiveMs: 0 });
+    assert.equal(advanceAsteroidMotions([returned], 15_000, 1, { x: 0, y: 0 })[0].asteroid.outsideSafeAreaSinceActiveMs, null);
+    assert.equal(advanceAsteroidMotions([asteroid('bounds', { x: 10_001, y: 0 })], 1, 1, { x: 0, y: 0 }).length, 0);
+});
+
+test('safe-area culling records the boundary crossing and cannot survive a long frame beyond fifteen seconds', () => {
+    const crossing = asteroid('crossing', { x: 1_270, y: 0 }, 'small', { velocity: { x: 1_000, y: 0 } });
+    const afterCrossing = advanceAsteroidMotions([crossing], 100, 100, { x: 0, y: 0 })[0].asteroid;
+    assert.equal(afterCrossing.outsideSafeAreaSinceActiveMs, 10);
+    const beforeCull = advanceAsteroidMotions([{ ...afterCrossing, velocity: { x: 0, y: 0 } }], 15_009, 14_909, { x: 0, y: 0 })[0].asteroid;
+    assert.equal(beforeCull.outsideSafeAreaSinceActiveMs, 10);
+    assert.equal(advanceAsteroidMotions([beforeCull], 15_010, 1, { x: 0, y: 0 }).length, 0);
+});
+
+test('asteroid impacts select the earliest stable target without tunnelling and preserve the S-07 ship HP boundary', () => {
+    const projectile = { id: 'shot', position: { x: 4_000, y: 0 }, velocity: { x: 20_000, y: 0 }, bornAtActiveMs: 0 };
+    const crossed = advanceGameSimulation({ ...initialGameState, projectiles: [projectile], asteroids: [
+        asteroid('far', { x: 5_000, y: 0 }), asteroid('near', { x: 4_500, y: 0 })
+    ] }, quietInput, 100);
+    assert.equal(crossed.projectiles.length, 0, 'a fast shot cannot tunnel through an asteroid');
+    assert(!crossed.asteroids.some(candidate => candidate.id === 'near'));
+    assert(crossed.asteroids.some(candidate => candidate.id === 'far'));
+    const tied = advanceGameSimulation({ ...initialGameState, projectiles: [projectile], asteroids: [
+        asteroid('z-target', { x: 4_500, y: 0 }), asteroid('a-target', { x: 4_500, y: 0 })
+    ] }, quietInput, 100);
+    assert(!tied.asteroids.some(candidate => candidate.id === 'a-target'));
+    assert(tied.asteroids.some(candidate => candidate.id === 'z-target'));
+    const shipState = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('ship-hit', { x: 5_000, y: 0 })], ship: {
+        ...initialGameState.ship, position: { x: 5_000, y: 0 }
+    } }, quietInput, 1);
+    assert.equal(shipState.shipStatus.currentHitPoints, initialGameState.shipStatus.currentHitPoints);
+    assert(shipState.asteroids.some(candidate => candidate.id.startsWith('ship-hit-fragment-')));
+    const planet = initialGameState.planets[0];
+    const planetState = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('planet-hit', planet.position)] }, quietInput, 1);
+    assert(planetState.asteroids.some(candidate => candidate.id.startsWith('planet-hit-fragment-')));
+    const moolarisState = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('moolaris-hit', { x: 0, y: 0 })] }, quietInput, 1);
+    assert.equal(moolarisState.asteroids.length, 0);
+});
+
+test('projectile blockers share ordered swept candidates with asteroid targets and new shots wait one active frame', () => {
+    const projectile = { id: 'blocked-shot', position: { x: 4_000, y: 0 }, velocity: { x: 20_000, y: 0 }, bornAtActiveMs: 0 };
+    const legacyBlocked = advanceGameSimulation({ ...initialGameState, projectiles: [projectile], asteroids: [asteroid('behind-legacy', { x: 5_000, y: 0 })] }, quietInput, 100, {
+        obstacles: [{ x: 4_500, y: 0, radius: 50 }]
+    });
+    assert.equal(legacyBlocked.projectiles.length, 0);
+    assert(legacyBlocked.asteroids.some(candidate => candidate.id === 'behind-legacy'));
+    const moolarisBlocked = advanceGameSimulation({ ...initialGameState, ship: { ...initialGameState.ship, position: { x: 3_000, y: -3_000 } }, projectiles: [{ ...projectile, id: 'sun-blocked', position: { x: -2_000, y: 0 }, velocity: { x: 60_000, y: 0 } }], asteroids: [asteroid('behind-sun', { x: 3_000, y: 0 })] }, quietInput, 100);
+    assert(moolarisBlocked.asteroids.some(candidate => candidate.id === 'behind-sun'));
+    const firingState = { ...initialGameState, ship: { ...initialGameState.ship, position: { x: 4_000, y: 0 }, rotation: Math.PI / 2 }, asteroids: [asteroid('new-shot-target', { x: 4_100, y: 0 })] };
+    const fired = advanceGameSimulation(firingState, { ...quietInput, firing: true }, 200);
+    assert(fired.asteroids.some(candidate => candidate.id === 'new-shot-target'));
+    assert.equal(fired.projectiles.length, 1);
+    assert(!advanceGameSimulation(fired, quietInput, 200).asteroids.some(candidate => candidate.id === 'new-shot-target'));
+});
+
+test('fragmentation follows the size hierarchy and remains identical through serialization restore', () => {
+    const projectile = { id: 'shot', position: { x: 4_000, y: 0 }, velocity: { x: 20_000, y: 0 }, bornAtActiveMs: 0 };
+    const impact = (size) => advanceGameSimulation({ ...initialGameState, projectiles: [projectile], asteroids: [asteroid(`${size}-parent`, { x: 4_500, y: 0 }, size)] }, quietInput, 100);
+    const big = impact('big');
+    assert(big.asteroids.every(candidate => candidate.size === 'medium'));
+    const medium = impact('medium');
+    assert(medium.asteroids.every(candidate => candidate.size === 'small'));
+    assert.equal(impact('small').asteroids.length, 0);
+    const state = { ...initialGameState, projectiles: [projectile], asteroids: [asteroid('restore-parent', { x: 4_500, y: 0 })] };
+    const partial = advanceGameSimulation(state, quietInput, 100);
+    const uninterrupted = advanceGameSimulation(partial, quietInput, 100);
+    const restored = decodeGameState(encodeGameState(partial));
+    assert.deepEqual(advanceGameSimulation(restored, quietInput, 100), uninterrupted);
+    assert.equal(asteroidRadius('big'), 72);
 });
 
