@@ -39,7 +39,7 @@ export function localSupabaseStatus ()
 {
     let output;
     try {
-        output = executeSupabase(['status'], {
+        output = executeSupabase(['status', '--output', 'json'], {
             cwd: repositoryRoot,
             encoding: 'utf8',
             stdio: ['ignore', 'pipe', 'pipe']
@@ -47,7 +47,7 @@ export function localSupabaseStatus ()
     } catch {
         throw new Error('Local Supabase is not available. Start the Docker stack with `npx supabase start` and retry.');
     }
-    const jsonStart = output.lastIndexOf('{');
+    const jsonStart = output.indexOf('{');
     if (jsonStart < 0) throw new Error('Local Supabase returned an unreadable status response.');
     const values = JSON.parse(output.slice(jsonStart));
     return Object.freeze({ serviceRoleKey: required(values, 'SERVICE_ROLE_KEY') });
