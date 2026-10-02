@@ -77,11 +77,11 @@ body {
 }
 
 #run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 36vw) minmax(0, 1fr); align-items: start; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }
-#run-status-clock, #run-status-auth, #run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
+#run-status-auth, #run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
 #run-status-left { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; width: min(100%, 310px); min-width: 0; }
 #run-status-auth { grid-column: 1 / -1; min-width: 0; padding: 10px 12px; overflow: hidden; color: #fff; text-overflow: ellipsis; white-space: nowrap; }
 #run-status-auth.run-status-auth--signed-in::before { display: inline-block; width: 1em; height: 1em; margin-right: .4em; content: ''; background: #fff; vertical-align: -.15em; mask: url('/assets/ui/userIcon.svg') center / contain no-repeat; }
-#run-status-clock { min-width: 0; padding: 10px 12px; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+#run-status-clock { min-width: 0; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 #run-status-primary { grid-column: 2; position: relative; box-sizing: border-box; justify-self: stretch; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; min-width: 0; padding: 10px 12px; }
 #run-status-secondary { grid-column: 3; position: relative; justify-self: end; display: grid; gap: 5px; width: min(100%, 200px); min-width: 0; text-align: left; }
 #run-status-secondary > span { box-sizing: border-box; display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 8px 10px; border: 1px solid #406587; border-radius: 8px; background: #102039e8; white-space: nowrap; }
@@ -247,7 +247,7 @@ body {
 
 @media (max-width: 420px) {
     #audio-controls { gap: 6px; padding: 4px 6px; }
-    #run-status { gap: 4px; font-size: 11px; } #run-status-primary { gap: 5px; padding: 8px; } #run-status-clock { padding: 8px; } #run-status button { min-height: 36px; padding: 7px; }
+    #run-status { gap: 4px; font-size: 11px; } #run-status-primary { gap: 5px; padding: 8px; } #run-status button { min-height: 36px; padding: 7px; }
     #game-menu, #debug-menu { padding: 10px; }
     #landing-status-market-view { padding: 20px 14px; gap: 10px; }
     #landing-status-catalogue { grid-template-columns: 1fr; }

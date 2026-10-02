@@ -1,5 +1,6 @@
 import type { RunStatusPort, RunStatusSnapshot, UiHandle } from '../contracts';
 import { displayLabels } from './displayLabels';
+import { RunStatusClock } from './runStatusClock';
 
 function required<T extends Element> (root: HTMLElement, selector: string): T
 {
@@ -13,11 +14,6 @@ function renderValue (element: HTMLElement, value: string): void
     const valueElement = element.querySelector<HTMLElement>('[data-run-status-value]');
     if (!valueElement) throw new Error('Missing run status value element.');
     valueElement.textContent = value;
-}
-
-function clock (seconds: number): string
-{
-    return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
 }
 
 function commodityLabel (commodityId: string): string
@@ -37,6 +33,15 @@ export function mountRunStatus (root: HTMLElement, port: RunStatusPort): UiHandl
     const cargoButton = required<HTMLButtonElement>(root, '#run-status-cargo-toggle');
     const shipDetails = required<HTMLElement>(root, '#run-status-ship-details');
     const cargoDetails = required<HTMLElement>(root, '#run-status-cargo-details');
+    const clockImage = required<HTMLImageElement>(time, '[data-run-status-clock-image]');
+    let renderClock = (): void => {};
+    const presentation = new RunStatusClock(window, () => { renderClock(); });
+    renderClock = (): void => {
+        const snapshot = presentation.snapshot();
+        clockImage.src = snapshot.imageSource;
+        time.setAttribute('aria-label', snapshot.accessibleName);
+        renderValue(time, snapshot.value);
+    };
     let shipOpen = false;
     let cargoOpen = false;
     const details = (): void => {
@@ -45,7 +50,7 @@ export function mountRunStatus (root: HTMLElement, port: RunStatusPort): UiHandl
     };
     const render = (snapshot: Readonly<RunStatusSnapshot>): void => {
         toolbar.hidden = !snapshot.visible;
-        renderValue(time, `${clock(snapshot.remainingSeconds)} · ${snapshot.runState}`);
+        presentation.update(snapshot.remainingSeconds, snapshot.runState, snapshot.visible);
         renderValue(credits, `${snapshot.credits.toLocaleString('en-US')} cr`);
         renderValue(cargo, `Cargo ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`);
         renderValue(hp, `HP ${snapshot.currentHitPoints} / ${snapshot.maximumHitPoints}`);
@@ -81,6 +86,6 @@ export function mountRunStatus (root: HTMLElement, port: RunStatusPort): UiHandl
     let destroyed = false;
     return { destroy: () => {
         if (destroyed) return;
-        destroyed = true; unsubscribe(); shipButton.removeEventListener('click', toggleShip); cargoButton.removeEventListener('click', toggleCargo); port.destroy();
+        destroyed = true; unsubscribe(); presentation.destroy(); shipButton.removeEventListener('click', toggleShip); cargoButton.removeEventListener('click', toggleCargo); port.destroy();
     } };
 }
