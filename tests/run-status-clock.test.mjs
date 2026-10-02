@@ -13,6 +13,10 @@ function transpileModule (path, imports) {
 
 const { displayLabels } = transpileModule('src/ui/components/displayLabels.ts', {});
 const { RunStatusClock } = transpileModule('src/ui/components/runStatusClock.ts', { './displayLabels': { displayLabels } });
+const { mountAuthControls } = transpileModule('src/ui/components/authControls.ts', {
+    '../contracts': {},
+    './displayLabels': { displayLabels }
+});
 
 class FakeScheduler {
     nextId = 1;
@@ -83,4 +87,69 @@ test('hide and idempotent destroy clean up animation while stale callbacks canno
     const updatesBeforeStaleCallback = updates;
     scheduler.fire(2);
     assert.equal(updates, updatesBeforeStaleCallback);
+});
+
+class FakeElement {
+    constructor (children = {}) {
+        this.children = children;
+        this.textContent = '';
+        this.title = '';
+        this.disabled = false;
+        this.listeners = new Map();
+        this.classList = { values: new Set(), toggle: (name, enabled) => enabled ? this.classList.values.add(name) : this.classList.values.delete(name) };
+    }
+
+    querySelector (selector) {
+        return this.children[selector] ?? null;
+    }
+
+    addEventListener (type, listener) {
+        this.listeners.set(type, listener);
+    }
+
+    removeEventListener (type, listener) {
+        if (this.listeners.get(type) === listener) this.listeners.delete(type);
+    }
+
+    click () {
+        this.listeners.get('click')?.();
+    }
+}
+
+test('a signed-in player can locally sign out without changing the game-facing controls', async () => {
+    const label = new FakeElement();
+    const signIn = new FakeElement({ '.main-menu-sign-in-preview-label': label });
+    const status = new FakeElement();
+    const root = new FakeElement({ '#main-menu-sign-in-preview': signIn, '#run-status-auth': status });
+    let snapshot = { status: 'signed-in', email: 'pilot@example.test', message: null };
+    let listener = null;
+    let signOuts = 0;
+    let unsubscribed = false;
+    const port = {
+        getSnapshot: () => snapshot,
+        subscribe: next => { listener = next; return () => { unsubscribed = true; }; },
+        signInWithGoogle: async () => { throw new Error('A signed-in player must not start sign-in again.'); },
+        signOut: async () => {
+            signOuts++;
+            snapshot = { status: 'unsigned', email: null, message: null };
+            listener(snapshot);
+        },
+        destroy: () => {}
+    };
+
+    const handle = mountAuthControls(root, port);
+    assert.equal(label.textContent, 'pilot@example.test');
+    assert.equal(status.textContent, 'pilot@example.test');
+    assert(status.classList.values.has('run-status-auth--signed-in'));
+
+    signIn.click();
+    await Promise.resolve();
+    assert.equal(signOuts, 1);
+    assert.equal(label.textContent, 'Sign In');
+    assert.equal(status.textContent, displayLabels.unsigned);
+    assert(!status.classList.values.has('run-status-auth--signed-in'));
+
+    handle.destroy();
+    assert(unsubscribed);
+    assert.equal(signIn.listeners.size, 0);
 });

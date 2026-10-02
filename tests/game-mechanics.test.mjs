@@ -19,8 +19,39 @@ import { launchFromPlanet, LANDING_CENTRE_RADIUS, tryLandAtCapturedPlanet } from
 import { decodeGameState, encodeGameState } from '../src/game/application/gameStateCodec.ts';
 import { asteroidFragmentChildCount, asteroidTuning } from '../src/game/definitions/gameplayTuning.ts';
 import { advanceAsteroidMotions, asteroidRadius, fragmentAsteroid } from '../src/game/mechanics/asteroid/asteroidSimulation.ts';
+import { teleportShipToPlanet } from '../src/game/mechanics/debug/teleportShipToPlanet.ts';
 
 const marketStocks = state => state.markets[0].commodityStocks.map(commodity => ({ ...commodity }));
+
+test('debug teleport moves an airborne ship to a current planet centre without retaining flight momentum', () => {
+    const target = initialGameState.planets.find(planet => planet.id === 'lactozis-7c');
+    assert(target);
+    const inFlight = {
+        ...initialGameState,
+        ship: {
+            ...initialGameState.ship,
+            velocity: { x: 220, y: -80 },
+            enginesOn: true,
+            boosting: true,
+            boostAcceleration: 120,
+            asteroidControlLockedUntilActiveMs: 500
+        },
+        shipStatus: { ...initialGameState.shipStatus, boosterUnlocked: true },
+        planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: null, relandingLockedPlanetId: 'seroton' }
+    };
+    const teleported = teleportShipToPlanet(inFlight, target.id);
+    assert.deepEqual(teleported.ship.position, target.position);
+    assert.deepEqual(teleported.ship.velocity, { x: 0, y: 0 });
+    assert.equal(teleported.ship.enginesOn, false);
+    assert.equal(teleported.ship.boosting, false);
+    assert.equal(teleported.ship.boostAcceleration, 0);
+    assert.equal(teleported.ship.asteroidControlLockedUntilActiveMs, null);
+    assert.deepEqual(teleported.planetLifecycle, { capturedPlanetId: null, landedPlanetId: null, relandingLockedPlanetId: 'seroton' });
+    assert.deepEqual(inFlight.ship.velocity, { x: 220, y: -80 }, 'teleport leaves its input immutable');
+    assert.equal(teleportShipToPlanet(inFlight, 'unknown'), inFlight);
+    const landed = { ...inFlight, planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null } };
+    assert.equal(teleportShipToPlanet(landed, target.id), landed);
+});
 
 const tuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5 };
 const speed = velocity => Math.hypot(velocity.x, velocity.y);

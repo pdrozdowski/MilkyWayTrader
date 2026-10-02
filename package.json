@@ -17,6 +17,7 @@
     "dev": "node log.js dev & vite --config vite/config.dev.mjs",
     "build": "node log.js build & vite build --config vite/config.prod.mjs",
     "dev-nolog": "vite --config vite/config.dev.mjs",
+    "dev:test-nolog": "vite --config vite/config.dev.mjs --mode test",
     "build-nolog": "vite build --config vite/config.prod.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json",
     "test:domain": "node --test \"tests/domain/**/*.test.mjs\"",
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.2",
+    "supabase": "^2.119.0",
     "typescript": "~5.7.2",
     "vite": "^6.3.1",
     "wrangler": "^4.133.0"
