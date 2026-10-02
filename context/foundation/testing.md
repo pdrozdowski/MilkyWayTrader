@@ -26,6 +26,22 @@ Prefer roles, labels and visible text as Playwright selectors. Use IDs only for 
 
 Playwright has one Chromium project. A dedicated journey may opt into a touch viewport when the risk specifically concerns touch/browser layout. Fullscreen success is tested through a fake port because headless browser fullscreen support varies; the application smoke suite only verifies real wiring. Store reports, traces and screenshots under ignored `.cache/` paths.
 
+## Local Supabase Playwright lifecycle
+
+`npm.cmd run test:ui` is the only local-Supabase test entry point. It starts Vite using `npm.cmd run dev:test-nolog`, which selects Vite's ignored `.env.test`; normal `npm.cmd run dev-nolog` uses `.env.local` and remains connected to the real development Supabase project and Google OAuth.
+
+Before tests, `tests/ui/globalSetup.ts` runs `node scripts/prepare-test-database.mjs`. It rejects any `.env.test` URL other than loopback HTTP, verifies Docker Supabase is available, and resets the local database with all repository migrations. This deliberately deletes local test data only. Never run this lifecycle against remote Supabase.
+
+Every UI spec must import `test` from `tests/ui/testSessionFixture.ts`. It creates an isolated session before each test and removes it afterward; global teardown cleans any artifact left by an interrupted run. Use the default anonymous session unless the browser journey genuinely requires signed-in state. For that case add `test.use({ testSessionMode: 'authenticated' })`: the fixture provisions a local email/password user and injects a Supabase browser session, without Google OAuth.
+
+The fixture exclusively owns these commands:
+
+- `node scripts/create-test-session.mjs anonymous`
+- `node scripts/create-test-session.mjs authenticated`
+- `node scripts/cleanup-test-session.mjs`
+
+Do not invoke them from a test body, store or print their session artifacts, add service-role keys to `.env.test`, or expose any admin credential through `VITE_*`. The scripts obtain local-only admin access from the active Supabase CLI and keep sensitive artifacts under ignored `.cache/playwright/`.
+
 ## Commands and failures
 
 Choose the narrowest command that gives a real regression signal for the changed area. Local test commands never install npm dependencies or browsers implicitly.

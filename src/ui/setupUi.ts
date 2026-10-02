@@ -37,7 +37,10 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const touchControlsToggle = root.querySelector<HTMLButtonElement>('#debug-touch-controls-toggle');
     const mouseMovementToggle = root.querySelector<HTMLButtonElement>('#debug-mouse-movement-toggle');
     const boosterToggle = root.querySelector<HTMLButtonElement>('#debug-booster-toggle');
-    if (!mainMenu || !mainMenuNewGame || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle) throw new Error('Missing game menu controls.');
+    const teleportSeroton = root.querySelector<HTMLButtonElement>('#debug-teleport-seroton');
+    const teleportLactozis = root.querySelector<HTMLButtonElement>('#debug-teleport-lactozis-7c');
+    const teleportMasloPrime = root.querySelector<HTMLButtonElement>('#debug-teleport-maslo-prime');
+    if (!mainMenu || !mainMenuNewGame || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime) throw new Error('Missing game menu controls.');
     const showMainMenu = (): void => { mainMenu.hidden = false; };
     const hideMainMenu = (): void => { mainMenu.hidden = true; };
     const startNewGame = (): void => { game.events.emit('start-new-game'); };
@@ -62,6 +65,10 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const toggleTouchControls = (): void => { touchControlsEnabled = !touchControlsEnabled; game.events.emit('debug-touch-controls', touchControlsEnabled); renderDebugToggles(); };
     const toggleMouseMovement = (): void => { mouseMovementEnabled = !mouseMovementEnabled; game.events.emit('debug-mouse-movement', mouseMovementEnabled); renderDebugToggles(); };
     const toggleBooster = (): void => { boosterEnabled = !boosterEnabled; game.events.emit('debug-booster', boosterEnabled); renderDebugToggles(); };
+    const teleportTo = (planetId: string): void => { game.events.emit('debug-teleport-to-planet', planetId); closeDebugMenu(); };
+    const teleportToSeroton = (): void => { teleportTo('seroton'); };
+    const teleportToLactozis = (): void => { teleportTo('lactozis-7c'); };
+    const teleportToMasloPrime = (): void => { teleportTo('maslo-prime'); };
     const resetDebugControls = (): void => {
         touchControlsEnabled = false;
         mouseMovementEnabled = true;
@@ -78,6 +85,9 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     touchControlsToggle.addEventListener('click', toggleTouchControls);
     mouseMovementToggle.addEventListener('click', toggleMouseMovement);
     boosterToggle.addEventListener('click', toggleBooster);
+    teleportSeroton.addEventListener('click', teleportToSeroton);
+    teleportLactozis.addEventListener('click', teleportToLactozis);
+    teleportMasloPrime.addEventListener('click', teleportToMasloPrime);
     game.events.on('debug-controls-reset', resetDebugControls);
     window.addEventListener('keydown', debugKeyDown);
     const returnToGame = (): void => {
@@ -106,6 +116,9 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             touchControlsToggle.removeEventListener('click', toggleTouchControls);
             mouseMovementToggle.removeEventListener('click', toggleMouseMovement);
             boosterToggle.removeEventListener('click', toggleBooster);
+            teleportSeroton.removeEventListener('click', teleportToSeroton);
+            teleportLactozis.removeEventListener('click', teleportToLactozis);
+            teleportMasloPrime.removeEventListener('click', teleportToMasloPrime);
             game.events.off('debug-controls-reset', resetDebugControls);
             game.events.off('toggle-fullscreen', toggleFullscreen);
             window.removeEventListener('keydown', debugKeyDown);

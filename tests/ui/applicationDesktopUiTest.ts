@@ -1,5 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { displayLabels } from '../../src/ui/components/displayLabels';
+import { test } from './testSessionFixture';
+import { completeSignedInTradeJourney } from './tradingJourney';
 
 const clockName = (state: typeof displayLabels.clockRunning | typeof displayLabels.clockPaused): RegExp => new RegExp(`^\\d{2}:\\d{2} · ${state}$`);
 
@@ -29,4 +31,14 @@ test('an anonymous player can start a new game, pause from the menu, resume, and
     await page.getByRole('button', { name: 'Return to Main Menu' }).click();
     await expect(page.getByLabel('Main menu')).toBeVisible();
     await expect(page.getByLabel('Run status')).toBeHidden();
+});
+
+test.describe('authenticated trading journey', () => {
+    test.use({ testSessionMode: 'authenticated' });
+
+    test('a signed-in player trades at Seroton, Lactozis-7C, and Maslo-Prime with updated cargo and cash', async ({ page, testSession }) => {
+        test.setTimeout(60_000);
+        expect(testSession.mode).toBe('authenticated');
+        await completeSignedInTradeJourney(page);
+    });
 });

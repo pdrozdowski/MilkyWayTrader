@@ -18,6 +18,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+supabase/.branches/
+supabase/.temp/
 
 # Locally installed 10xDevs skills
 .agents/skills/10x-*/

@@ -12,6 +12,7 @@ import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
 import { advanceGameSimulation } from '../mechanics/gameSimulation';
 import { resolveMoolarisContact } from '../mechanics/moolaris/contact';
 import { LANDING_CENTRE_RADIUS } from '../mechanics/planet/landing';
+import { teleportShipToPlanet } from '../mechanics/debug/teleportShipToPlanet';
 import { Planet } from '../objects/planet/planet';
 import { AsteroidProjection } from '../objects/asteroid/asteroidProjection';
 import { ShipWeapon } from '../objects/spaceship/shipWeapon';
@@ -119,6 +120,7 @@ export class Game extends Scene
         this.game.events.on('debug-touch-controls', this.setTouchControlsVisible, this);
         this.game.events.on('debug-mouse-movement', this.setMouseMovementEnabled, this);
         this.game.events.on('debug-booster', this.setBoosterEnabled, this);
+        this.game.events.on('debug-teleport-to-planet', this.teleportToPlanet, this);
         window.addEventListener('blur', this.loseFocus);
         window.addEventListener('focus', this.gainFocus);
         window.addEventListener('touchcancel', this.cancelTouch);
@@ -137,6 +139,7 @@ export class Game extends Scene
             this.game.events.off('debug-touch-controls', this.setTouchControlsVisible, this);
             this.game.events.off('debug-mouse-movement', this.setMouseMovementEnabled, this);
             this.game.events.off('debug-booster', this.setBoosterEnabled, this);
+            this.game.events.off('debug-teleport-to-planet', this.teleportToPlanet, this);
             window.removeEventListener('blur', this.loseFocus);
             window.removeEventListener('focus', this.gainFocus);
             window.removeEventListener('touchcancel', this.cancelTouch);
@@ -429,6 +432,11 @@ export class Game extends Scene
         this.asteroids.synchronize(state.asteroids);
         this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets, state.clock.activeElapsedMs - before.clock.activeElapsedMs);
     }
+
+    private readonly teleportToPlanet = (planetId: string): void => {
+        this.clearFlightInput();
+        this.stateProvider.update(state => teleportShipToPlanet(state, planetId));
+    };
 
     private playVisibleAsteroidFragmentation (
         previous: readonly AsteroidState[], current: readonly AsteroidState[], previousProjectiles: readonly import('../state/projectileState').ProjectileState[], currentProjectiles: readonly import('../state/projectileState').ProjectileState[], planets: readonly PlanetState[], activeDeltaMs: number

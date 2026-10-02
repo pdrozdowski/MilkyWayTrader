@@ -53,6 +53,8 @@ This section takes precedence over the generic post-change validation sentence a
 - `npm.cmd run test:unit` for all product Node suites; `npm.cmd run test:fast` adds architecture checks for cross-cutting local changes.
 - `npm.cmd run typecheck` for TypeScript/configuration changes.
 - `npm.cmd run test:ui` only when the changed risk requires real browser behavior. It does not install Chromium; use `npm.cmd run playwright:install` (or `test:ui:install`) as an explicit one-time local setup step.
+- `npm.cmd run test:ui` is test-only: it runs Vite in `test` mode, resets/migrates local Docker Supabase, and provisions isolated local sessions. Start Docker Supabase first; it deletes local Supabase data, never a remote project.
+- `npm.cmd run dev-nolog` is normal development only: it loads `.env.local` and must retain the real Supabase/Google OAuth configuration. Never use `--mode test` for ordinary development or release checks.
 - `npm.cmd run test:project` is the complete local automated test pipeline: fast tests, typecheck, then Playwright. It assumes dependencies and Chromium already exist.
 - `npm.cmd run test:ci` / `validate:deployment` adds the dependency audit, production build and Pages checks. GitHub Actions always performs `npm ci`, then `npm run playwright:install:ci`, then this full pipeline.
 
@@ -90,6 +92,14 @@ A proposed Playwright test must record in its implementation plan, change descri
 
 After adding, removing, renaming, or changing a Playwright E2E test, invoke
 `/utils-describe-e2e-scenarios` to refresh `context/foundation/e2e_scenarios.md`.
+
+## Local Supabase Playwright setup
+
+- `.env.test` is ignored and reserved for `test:ui`; it supplies only local Docker Supabase public settings plus `TEST_USER_EMAIL` and `TEST_USER_PASSWORD`. Test scripts reject a non-loopback URL. `.env.local` remains the normal-development/release-like environment.
+- `playwrightConfig.ts` invokes `tests/ui/globalSetup.ts`, which runs `node scripts/prepare-test-database.mjs` and therefore resets local Supabase from `supabase/migrations/`. Its global teardown sweeps abandoned session artifacts.
+- New UI specs import `test` from `tests/ui/testSessionFixture.ts`, not `@playwright/test`. The default is an isolated anonymous session. Opt into a local programmatic authenticated session with `test.use({ testSessionMode: 'authenticated' })`; never automate Google OAuth.
+- The fixture calls `node scripts/create-test-session.mjs anonymous` or `node scripts/create-test-session.mjs authenticated` before the test, injects the appropriate local browser storage, and calls `node scripts/cleanup-test-session.mjs` after it. Do not call these scripts directly inside individual test bodies or log their artifact/session values.
+- The scripts obtain local-only admin access from the running Supabase CLI; do not add service-role keys to `.env.test`, `VITE_*`, source, or test output. Session artifacts, traces, and reports belong only under ignored `.cache/playwright/`.
 
 Do not add Playwright tests for calculations, authoritative state transitions, validation, economy or cargo rules, serialization, telemetry, fake-port component rendering, listener cleanup, or implementation details. Cover those with fast tests at the appropriate lower level. Prefer one representative E2E journey over several overlapping UI checks. A test that does not pass this gate must not be introduced to the Playwright suite.
 
