@@ -223,43 +223,45 @@ The new result relation is additive. Existing active snapshots are intentionally
 
 #### Automated
 
-- [ ] 1.1 Mechanics and deterministic restored-run tests pass
-- [ ] 1.2 Snapshot codec and type checks pass
-- [ ] 1.3 Type checking passes
+- [ ] 1.1 `npm.cmd run test:mechanics` proves inclusive ranges, first-impact ordering, Moolaris entry/exit rearm, HP 30/29 thresholds, input immutability, and frozen terminal ticks.
+- [ ] 1.2 `npm.cmd run test:domain` proves codec round trips, invalid-shape rejection, immutable snapshots, and equal outcomes for uninterrupted versus restored seeded runs.
+- [ ] 1.3 `npm.cmd run typecheck` passes.
 
 #### Manual
 
-- [ ] 1.4 Moolaris rearm behavior is manually confirmed
+- [ ] 1.4 A developer can observe that Moolaris deals one hit per entry, not continuous damage while the ship remains inside its control radius.
 
 ### Phase 2: Private retained-result boundary
 
 #### Automated
 
-- [ ] 2.1 Local migration and two-user RLS tests pass
-- [ ] 2.2 Result-store adapter and type checks pass
+- [ ] 2.1 Migration applies through the local Supabase test lifecycle and owner RLS allows one user to read/write only their own result.
+- [ ] 2.2 Focused adapter tests prove unsigned no-op, signed insert, retry idempotency, and a surfaced write failure.
+- [ ] 2.3 `npm.cmd run typecheck` passes.
 
 #### Manual
 
-- [ ] 2.3 Signed-in local result retention is manually confirmed
+- [ ] 2.4 A signed-in local player can inspect that a death result appears once in their local `run_results` history and is inaccessible to another user.
 
 ### Phase 3: Death sequence, final result, and HUD status
 
 #### Automated
 
-- [ ] 3.1 HP bands, terminal UI signaling, retry state, and cleanup tests pass
-- [ ] 3.2 Fast suite and type checks pass
+- [ ] 3.1 Fast UI/component tests prove HP boundary bands (70, 69, 30, 29), terminal UI hide/show signaling, retry state, and idempotent cleanup.
+- [ ] 3.2 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass.
 
 #### Manual
 
-- [ ] 3.3 Two-second death sequence and canonical result presentation are manually confirmed
+- [ ] 3.3 Death visibly produces three diverging flaming fragments, world fade, and no interactive game controls for exactly the transition period before `GameOver` appears.
+- [ ] 3.4 The result screen shows active time and cash captured at death and exposes a retry after a deliberately failed local write.
 
 ### Phase 4: Browser journey and regression verification
 
 #### Automated
 
-- [ ] 4.1 Bounded asteroid-teleport Playwright journey and E2E inventory pass
-- [ ] 4.2 Complete local project pipeline passes when prerequisites exist
+- [ ] 4.1 `npm.cmd run test:ui` passes against local Docker Supabase; the journey proves each attempted teleport reduces HP and reaches `GameOver` within ten attempts.
+- [ ] 4.2 `npm.cmd run test:project` passes when the existing local browser/Docker prerequisites are available.
 
 #### Manual
 
-- [ ] 4.3 Ten-attempt non-lethal diagnostic is manually demonstrated
+- [ ] 4.3 A reviewer can see the test's explicit ten-attempt failure message by temporarily preventing damage, confirming it never silently passes a non-lethal hazard loop.
