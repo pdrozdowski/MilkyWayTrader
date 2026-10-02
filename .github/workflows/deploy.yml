@@ -45,6 +45,21 @@ jobs:
       - name: Install Chromium for UI tests
         run: npm run playwright:install:ci
 
+      - name: Start local Supabase for UI tests
+        run: |
+          set -euo pipefail
+          umask 077
+          npx --no-install supabase start
+          SUPABASE_STATUS="$(npx --no-install supabase status --output json)"
+          SUPABASE_URL="$(jq -er '.API_URL' <<< "$SUPABASE_STATUS")"
+          SUPABASE_PUBLISHABLE_KEY="$(jq -er '.PUBLISHABLE_KEY' <<< "$SUPABASE_STATUS")"
+          cat > .env.test <<EOF
+          VITE_SUPABASE_URL=$SUPABASE_URL
+          VITE_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY
+          TEST_USER_EMAIL=playwright@example.test
+          TEST_USER_PASSWORD=playwright-ci-test-password
+          EOF
+
       - name: Validate production build
         run: npm run validate:deployment
 
