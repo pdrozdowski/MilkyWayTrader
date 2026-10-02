@@ -88,6 +88,9 @@ A proposed Playwright test must record in its implementation plan, change descri
 2. why a cheaper test level cannot expose it; and
 3. the unique browser behavior it verifies.
 
+After adding, removing, renaming, or changing a Playwright E2E test, invoke
+`/utils-describe-e2e-scenarios` to refresh `context/foundation/e2e_scenarios.md`.
+
 Do not add Playwright tests for calculations, authoritative state transitions, validation, economy or cargo rules, serialization, telemetry, fake-port component rendering, listener cleanup, or implementation details. Cover those with fast tests at the appropriate lower level. Prefer one representative E2E journey over several overlapping UI checks. A test that does not pass this gate must not be introduced to the Playwright suite.
 
 ## Zestaw narzędzi AI 10xDevs — Moduł 3, Lekcja 4 (testy E2E)

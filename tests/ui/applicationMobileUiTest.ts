@@ -9,7 +9,20 @@ async function startRun (page: Page): Promise<void>
     await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
 }
 
-test('a player can start a game, pause from the menu, resume, and return to the main menu', async ({ page }) => {
+test.use({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+
+test('a touch player is paused in portrait and can resume play on return to landscape', async ({ page }) => {
+    await startRun(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByRole('dialog', { name: 'Screen orientation' })).toBeVisible();
+    await expect(page.locator('#run-status-clock')).toContainText('PAUSED');
+
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(page.getByRole('dialog', { name: 'Screen orientation' })).toBeHidden();
+    await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
+});
+
+test('an anonymous player can start a new game, pause from the menu, resume, and return to the main menu', async ({ page }) => {
     await startRun(page);
 
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
@@ -23,19 +36,4 @@ test('a player can start a game, pause from the menu, resume, and return to the 
     await page.getByRole('button', { name: 'Return to Main Menu' }).click();
     await expect(page.getByLabel('Main menu')).toBeVisible();
     await expect(page.getByLabel('Run status')).toBeHidden();
-});
-
-test.describe('touch layout', () => {
-    test.use({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
-
-    test('a touch player is paused in portrait and can resume play on return to landscape', async ({ page }) => {
-        await startRun(page);
-        await page.setViewportSize({ width: 390, height: 844 });
-        await expect(page.getByRole('dialog', { name: 'Screen orientation' })).toBeVisible();
-        await expect(page.locator('#run-status-clock')).toContainText('PAUSED');
-
-        await page.setViewportSize({ width: 844, height: 390 });
-        await expect(page.getByRole('dialog', { name: 'Screen orientation' })).toBeHidden();
-        await expect(page.locator('#run-status-clock')).toContainText('RUNNING');
-    });
 });
