@@ -1,4 +1,4 @@
- :root { --ui-surface: #102039; --ui-surface-raised: #122541; --ui-border: #8bdfff; --ui-overlay: #07111bd9; --ui-orientation-overlay: #0b1529; --ui-focus: #fff; --ui-action: #1c4266; --ui-danger: #8b2635; --ui-health: #53d769; --ui-disabled: #526273; --ui-title-outline: #253041; }
+ :root { --ui-surface: #102039; --ui-surface-raised: #122541; --ui-border: #8bdfff; --ui-overlay: #07111bd9; --ui-orientation-overlay: #0b1529; --ui-focus: #fff; --ui-action: #1c4266; --ui-danger: #8b2635; --ui-health: #53d769; --ui-disabled: #526273; --ui-title-outline: #253041; --page-surround: #000; }
 
 html,
 body {
@@ -9,7 +9,7 @@ body {
     overflow: hidden;
     overscroll-behavior: none;
     color: rgba(255, 255, 255, 0.87);
-    background-color: #00286d;
+    background-color: var(--page-surround);
     font-family: Arial, sans-serif;
 }
 
@@ -24,7 +24,7 @@ body {
     -webkit-tap-highlight-color: transparent;
     -webkit-user-select: none;
     user-select: none;
-    background-color: #00286d;
+    background-color: var(--page-surround);
 }
 
 #game-container {
