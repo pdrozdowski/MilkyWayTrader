@@ -1,0 +1,4 @@
+interface:
+  display_name: "Describe E2E Scenarios"
+  short_description: "Document implemented Playwright scenarios and platforms."
+  default_prompt: "Update the E2E scenario inventory from the current Playwright tests."
