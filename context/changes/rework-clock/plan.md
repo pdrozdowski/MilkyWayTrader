@@ -192,13 +192,13 @@ or application contract changes.
 
 #### Automated
 
-- [x] 1.1 The focused presentation suite proves icon selection, 500 ms paused-frame alternation, cleanup, and accessible labels without real-time waits.
-- [x] 1.2 `npm.cmd run test:fast` passes, including the new focused suite.
-- [x] 1.3 `npm.cmd run typecheck` passes.
-- [x] 1.4 `npm.cmd run test:ui` passes if the pre-existing local Chromium installation is available; it verifies the updated desktop and mobile pause/resume journeys.
+- [x] 1.1 The focused presentation suite proves icon selection, 500 ms paused-frame alternation, cleanup, and accessible labels without real-time waits. — 69beab6
+- [x] 1.2 `npm.cmd run test:fast` passes, including the new focused suite. — 69beab6
+- [x] 1.3 `npm.cmd run typecheck` passes. — 69beab6
+- [x] 1.4 `npm.cmd run test:ui` passes if the pre-existing local Chromium installation is available; it verifies the updated desktop and mobile pause/resume journeys. — 69beab6
 
 #### Manual
 
-- [x] 1.5 During a running HUD, the clock shows the running icon and `MM:SS` with no clock card background or frame.
-- [x] 1.6 Opening a pause-producing UI state visibly alternates the two paused icons every half second while the countdown remains stable; resuming immediately restores the running icon.
-- [x] 1.7 The compact clock remains readable and correctly positioned in desktop and mobile HUD layouts.
+- [x] 1.5 During a running HUD, the clock shows the running icon and `MM:SS` with no clock card background or frame. — 69beab6
+- [x] 1.6 Opening a pause-producing UI state visibly alternates the two paused icons every half second while the countdown remains stable; resuming immediately restores the running icon. — 69beab6
+- [x] 1.7 The compact clock remains readable and correctly positioned in desktop and mobile HUD layouts. — 69beab6
