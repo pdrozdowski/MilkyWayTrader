@@ -1,10 +1,10 @@
 ---
 change_id: s08-asteroid-durability-feedback
 title: Add asteroid durability and collision feedback
-status: impl_reviewed
+status: archived
 created: 2026-10-01
-updated: 2026-10-01
-archived_at: null
+updated: 2026-10-02
+archived_at: 2026-10-02T00:00:00Z
 ---
 
 ## Notes
