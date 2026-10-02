@@ -1,49 +1,44 @@
 # MilkyWayTrader — pokrycie zasad zaliczenia
 
-Data oceny: 2026-09-16.
+Data aktualizacji: 2026-10-02.
+Oceniany PRD: [context/foundation/prd.md](../../foundation/prd.md), wersja 1 z 2026-09-21.
 
-**Wniosek warunkowy:** pomysł nadaje się na projekt zaliczeniowy według dostępnych lokalnych zasad 10XDevs 4.0. Obowiązkowy zakres obecnego PRD nie zapewnia jednak wszystkich wymaganych elementów: kontrola dostępu i pełny CRUD są odłożone do funkcji nice-to-have, a test z perspektywy użytkownika nie jest zapisany jako warunek dostarczenia.
+**Wniosek:** obecny zakres PRD pokrywa pięć obowiązkowych kryteriów 10xBuilder. Kontrola dostępu, CRUD, logika biznesowa i dokumenty kontekstowe są zapisane w PRD; uruchamialne testy Playwright dostarczają wymaganego dowodu z perspektywy użytkownika. Wdrożenie pełnego produktu oraz egzekwowanie uprawnień pozostają do wykonania i weryfikacji przed zgłoszeniem.
 
-## Źródła i ograniczenie oceny
+## Źródła i granice oceny
 
-- Wskazana strona: https://platforma.przeprogramowani.pl/courses/10xdevs-foundations/pl/15. Próba odczytu przekierowała do ekranu logowania. Połączenie narzędzia przeglądarki było niedostępne. Nie odczytano treści tej lekcji ani nie potwierdzono jej aktualnych wymagań.
-- Lokalna kopia zasad: [.agents/skills/10x-idea-check/references/10xdevs-4-certification.md](../../../.agents/skills/10x-idea-check/references/10xdevs-4-certification.md), szczególnie lista wymagań obowiązkowych w wierszach 27–39.
-- Lokalna kopia terminów: [.agents/skills/10x-idea-check/references/10xdevs-4-dates.md](../../../.agents/skills/10x-idea-check/references/10xdevs-4-dates.md). W razie oceny terminu należy użyć tego dokumentu, ponieważ tekst certyfikacji zawiera starszą datę lipcową.
-- Oceniany dokument: [context/foundation/prd.md](../../foundation/prd.md).
-- `.10x-cli.json` przypisuje projekt do `10xdevs4`. Zgodność lokalnej kopii zasad z podanym adresem kursu wymaga potwierdzenia po udostępnieniu treści strony.
+- Lokalna lista kryteriów 10XDevs 4.0: [.agents/skills/10x-idea-check/references/10xdevs-4-certification.md](../../../.agents/skills/10x-idea-check/references/10xdevs-4-certification.md).
+- Lokalne terminy: [.agents/skills/10x-idea-check/references/10xdevs-4-dates.md](../../../.agents/skills/10x-idea-check/references/10xdevs-4-dates.md). Pierwszy termin to 2026-11-04.
+- Podana wcześniej strona kursu wymaga logowania, dlatego niniejsza ocena nie potwierdza, że jej bieżąca treść jest identyczna z lokalną kopią.
 
-Ocena dotyczy pokrycia wymagań w dokumentacji. Zapis wymagania w PRD nie dowodzi jego realizacji ani akceptacji przez prowadzących. Nie zmieniono PRD, zakresu gry, kodu ani konfiguracji.
+Ocena rozdziela wymagania produktu od dowodów implementacji. Sam PRD nie dowodzi działania aplikacji ani akceptacji przez prowadzących.
 
 ## Pokrycie obowiązkowej listy 10xBuilder
 
-| Wymaganie lokalnych zasad | Pokrycie w PRD | Ocena i potrzebne działanie |
+| Wymaganie lokalnych zasad | Pokrycie | Ocena |
 | --- | --- | --- |
-| Kontrola dostępu odpowiednia dla aplikacji | FR-016 i Access Control przewidują Google login i funkcje dostępne po zalogowaniu. FR-016 ma nice-to-have; FR-001 jednocześnie wspomina logowanie w must-have. | Częściowe i niespójne. W zakresie zaliczeniowym zapewnić działające logowanie i ochronę prywatnych zapisów. Anonimowa rozgrywka może pozostać dostępna. |
-| Tworzenie, odczyt, aktualizacja i usuwanie danych (CRUD), sensowne dla domeny | FR-017 opisuje wszystkie cztery operacje na zapisie sesji. FR-018 opisuje wznowienie. Oba mają nice-to-have. | Trafna domena CRUD, ale brak gwarancji w obowiązkowym MVP. Włączyć zapis sesji do zakresu zaliczeniowego. Kupno i sprzedaż zmieniają stan gry, ale same nie dokumentują pełnego CRUD trwałych danych. |
-| Logika biznesowa | FR-012–FR-014 oraz FR-021–FR-023: handel, wynik, cargo, ulepszenia i ceny zależne od rynku; guardrails ograniczają wydatki i pojemność. | Pokryte na poziomie pomysłu i zakresu. Doprecyzować wzory, moment naliczania zmian, zaokrąglenia i wynik, aby można było zweryfikować poprawność. |
-| Dokumenty kontekstowe | PRD istnieje; są też shape-notes.md, tech-stack.md oraz dzienniki bootstrapu. | Pokryte jako dokumentacja. PRD ma status draft i otwarte decyzje. Przykładowe nazwy infrastructure.md i roadmap.md w zasadach nie stanowią wymogu dokładnie tych plików. |
-| Co najmniej jeden test sprawdzający działanie z perspektywy użytkownika | US-01 zawiera kryteria akceptacji, ale PRD nie wymaga uruchamialnego testu użytkownika. tech-stack.md wspomina Playwright. | Brak obowiązkowego kryterium testowego. Dodać warunek dostarczenia testu E2E najważniejszego przepływu. Kryteria akceptacji i udany build nie zastępują testu użytkownika. |
+| Kontrola dostępu odpowiednia dla aplikacji | FR-037–FR-039, US-05 i Access Control definiują Google OAuth, status uwierzytelnienia, sign-out w głównym menu, prywatne zapisy oraz publiczny ranking. `src/ui/components/authControls.ts` i `src/ui/adapters/browserAuth.ts` potwierdzają istniejącą obsługę lokalnego sign-out. | **Pokryte w zakresie.** Usługa trwałych danych musi egzekwować własność rekordów, a nie tylko ukrywać kontrolki. |
+| CRUD sensowny dla domeny | Utworzenie, odczyt i aktualizacja zapisu wynikają z US-05 oraz FR-040–FR-041. FR-042 i BR-103 nakazują usunięcie aktywnego zapisu po utrwaleniu wyniku końcowego. FR-045 i BR-106 pozwalają właścicielowi usunąć osobisty rekord high score; globalny wynik pozostaje bez zmian. | **Pokryte.** Są zdefiniowane dwa znaczące przypadki usunięcia: zakończony aktywny zapis oraz osobisty rekord wyniku. |
+| Logika biznesowa | BR-001–BR-109 określają zegar aktywnego czasu, wynik, ekonomię, obrażenia, salvage, zapisy i reguły rankingów. | **Pokryte.** Reguły mają weryfikowalne granice, w tym kolejność utrwalenia wyniku i usunięcia aktywnego zapisu. |
+| Dokumenty kontekstowe | Istnieją `prd.md`, `architecture.md`, `infrastructure.md`, `roadmap.md`, `tech-stack.md`, `test-plan.md` i `testing.md`. | **Pokryte.** Przed zgłoszeniem muszą odzwierciedlać wdrożony produkt. |
+| Co najmniej jeden test z perspektywy użytkownika | Playwright uruchamia scenariusze w `tests/ui/applicationDesktopUiTest.ts` i `tests/ui/applicationMobileUiTest.ts`; opis inwentarza znajduje się w `context/foundation/e2e_scenarios.md`. | **Pokryte dowodem implementacyjnym.** Testy weryfikują uruchomienie gry, menu, wznowienie i powrót do ekranu głównego. |
 
-## Najmniejsza korekta zakresu
+## Zakres rozstrzygnięty od poprzedniej oceny
 
-1. Przyjąć FR-016 i FR-017 jako must-have dla wersji oddawanej na zaliczenie. FR-018 również powinien wejść do tego zakresu, jeśli zapis ma służyć późniejszemu powrotowi do gry. Rozgrywka bez logowania pozostaje dostępna; logowanie odblokowuje zapis.
-2. Doprecyzować ochronę danych: zalogowany użytkownik może tworzyć, odczytywać, aktualizować i usuwać wyłącznie własne zapisy. Egzekwować tę regułę także w usłudze przechowującej dane. Ukrycie przycisku w interfejsie nie zapewnia ochrony danych.
-3. Uzgodnić FR-001, Success Criteria, Non-Goals i Open Question 8 z zakresem zaliczeniowym. Można nadal dostarczyć wcześniejszą anonimową wersję demonstracyjną, ale wersja anonimowa bez CRUD nie pokrywa dostępnej obowiązkowej listy.
-4. Dodać mierzalne kryterium: co najmniej jeden uruchamialny test E2E sprawdza rezultat działania widoczny dla gracza. Przykład: rozpoczęcie sesji, zakup, lot, sprzedaż i poprawna zmiana kredytów oraz cargo. Dla zapisu sesji opisać także kryteria tworzenia, odczytu po ponownym otwarciu, aktualizacji i usunięcia.
-5. Zamknąć decyzje domenowe z Open Questions 2–6: wynik i zysk, reguły cen, stan początkowy, przebieg 30. tury oraz zakończenie/wznowienie sesji. Uzupełnić historie i kryteria akceptacji dla wymaganych funkcji.
+- Sign-out jest obowiązkową capability (FR-039) i zachowuje dane użytkownika.
+- Gameplay audio jest obowiązkową capability (US-07, FR-046); istnieją definicje zasobów audio i testy `tests/game-audio.test.mjs`.
+- Terminalny wynik jest zachowywany przed usunięciem aktywnego save’a (FR-042, BR-103).
+- Użytkownik może usunąć wyłącznie swój osobisty rekord high score; kolejny najwyższy zachowany wynik zostaje personal best (FR-045, BR-106).
 
-Tabela wyników FR-019–FR-020 nie jest konieczna do pokrycia pięciu powyższych wymagań. Może pozostać nice-to-have; zapis sesji zapewnia naturalny CRUD bez rozbudowywania zakresu o ranking.
+## Weryfikacja przed zgłoszeniem
 
-## Architektura i realizacja
+1. Wdrożyć i sprawdzić rzeczywistą autoryzację odczytu, zapisu i usuwania dla dwóch różnych kont.
+2. Przejść pełny przepływ trwałych danych: wynik terminalny jest utrwalony, aktywny save znika, a wynik pozostaje widoczny zgodnie z regułami.
+3. Uruchomić istniejący test użytkownika oraz zachować jego wynik jako dowód zgłoszeniowy.
+4. Utrzymać dokumentację wdrożenia i dowody użycia AI w procesie wytwarzania. Publiczny URL jest mile widziany, lecz nie jest jednym z pięciu obowiązkowych punktów lokalnej listy.
 
-Lokalne zasady opisują 10xBuilder we wstępie jako full-stackowe MVP z wdrożeniem w chmurze, ale publiczny URL wymieniają jako opcjonalny i dopuszczają inne typy aplikacji. Nie traktuję publicznego URL jako dodatkowego obowiązkowego punktu dla każdego projektu. Dla tej gry planowane Cloudflare Pages jest zgodne z celem udostępnienia aplikacji; sam statyczny frontend nie zapewnia jednak chronionego zapisu w chmurze. Trzeba zaplanować usługę uwierzytelniania, trwałe dane i egzekwowanie uprawnień, bez konieczności zmiany Phaser/Vite.
-
-AI w samym produkcie nie jest wymagane: logika biznesowa może działać bez modelu językowego. Stos technologiczny jest dowolny; Phaser nie jest powodem odrzucenia. Obecna praca nad kontekstem i bootstrapem pokazuje użycie agenta w procesie wytwarzania. Z dostępnych zasad nie wynika próg liczby promptów, tokenów ani wymagany dostawca AI.
-
-CI/CD jest opisane w dodatkowym bloku 10xChampion; nie dopisuję go do pięciu jawnych obowiązkowych kryteriów 10xBuilder. Przy wdrożeniu warto zachować dokumentację procesu i dowody testów.
-
-Obecny kod zawiera demonstracyjne sceny startera Phaser. `package.json` nie zawiera runnera ani skryptów testów. Build i kontrola TypeScript przeszły podczas bootstrapu, ale nie są dowodem wykonania wymagań gry, kontroli dostępu czy CRUD. Projekt nie jest jeszcze gotowy do oddania jako działający produkt.
+AI nie musi być funkcją gry; lokalne zasady wymagają jego użycia w procesie wytwarzania. Phaser/Vite nie są przeszkodą, o ile dostarczony zostanie działający pełnostackowy MVP.
 
 ## Co wymaga potwierdzenia
 
-Po udostępnieniu treści wskazanej lekcji porównać jej listę z lokalną kopią 10XDevs 4.0. Jeśli kryteria różnią się, zaktualizować tę ocenę na podstawie właściwego kursu. Ostateczna akceptacja należy do prowadzących.
+Po uzyskaniu dostępu do wskazanej lekcji kursu porównać jej aktualną listę z lokalną kopią. Jeżeli kryteria różnią się, zaktualizować ten dokument. Ostateczna akceptacja należy do prowadzących.

@@ -123,6 +123,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - Landing triggers a save.
 - Departure triggers another save only when trading, repairs, or upgrades changed persisted state while landed.
 - Freedom, imprisonment, death, and abandonment outcomes are retained.
+- After the final result is retained, its active-run save is removed and cannot be resumed.
 - An active saved run resumes with its saved remaining active time and world state.
 - A completed run cannot be resumed as active gameplay.
 
@@ -139,6 +140,19 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - The global table contains only authenticated runs that survived the full active-time limit and achieved freedom.
 - Global results are ranked by final cash before debt repayment.
 - Anonymous players can view global results but cannot submit a result or access a personal best.
+- A signed-in player can clear their personal best result; the next highest retained result becomes the new personal best.
+
+### US-07: Player receives gameplay audio feedback
+
+- **Given** audio is available and not muted
+- **When** the player pilots the ship or performs a gameplay action with sound feedback
+- **Then** the player can hear the corresponding gameplay audio without interrupting control or game progression
+
+#### Acceptance Criteria
+
+- Engine, booster, weapon, asteroid, and collision feedback can play during the corresponding gameplay events.
+- A player can mute gameplay audio or set its volume without pausing or blocking the run.
+- Unavailable or locked audio leaves the game fully playable.
 
 ## Functional Requirements
 
@@ -194,13 +208,20 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - FR-037: A player can sign in to access persistent features. Priority: must-have
 - FR-038: A player can inspect their authentication status. Priority: must-have
-- FR-039: The game can automatically preserve progress for a signed-in player. Priority: must-have
-- FR-040: A signed-in player can inspect the current save status. Priority: must-have
+- FR-039: A signed-in player can sign out. Priority: must-have
+- FR-040: The game can automatically preserve progress for a signed-in player. Priority: must-have
+- FR-041: A signed-in player can inspect the current save status. Priority: must-have
+- FR-042: The game can remove an active save after its run reaches a terminal outcome. Priority: must-have
 
 ### High scores
 
-- FR-041: A signed-in player can view their personal best result. Priority: must-have
-- FR-042: A player can view the global high-score table. Priority: must-have
+- FR-043: A signed-in player can view their personal best result. Priority: must-have
+- FR-044: A player can view the global high-score table. Priority: must-have
+- FR-045: A signed-in player can clear their personal best result. Priority: must-have
+
+### Gameplay audio
+
+- FR-046: A player can hear gameplay audio feedback. Priority: must-have
 
 ## Non-Functional Requirements
 
@@ -331,17 +352,21 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-100: Starting a new signed-in run while another run remains active first abandons and retains the previous run.
 - BR-101: A resumed run restores the saved remaining active time and all state required to continue consistently.
 - BR-102: A completed run cannot be resumed as active gameplay.
-- BR-103: Personal history retains every signed-in result across all outcomes.
-- BR-104: Personal best is the retained result with the highest final liquid-cash score regardless of outcome.
-- BR-105: A global result is eligible only when an authenticated player survives the complete active-time limit and receives freedom.
-- BR-106: Global results are ranked by final liquid cash before debt repayment.
-- BR-107: Anonymous and signed-in players can view the global high-score table, but only signed-in players can submit eligible results or view a personal best.
+- BR-103: After a signed-in run reaches a terminal outcome and its result is retained, its active save is removed.
+- BR-104: Personal history retains every signed-in result across all outcomes except results the player explicitly clears.
+- BR-105: Personal best is the retained result with the highest final liquid-cash score regardless of outcome.
+- BR-106: Clearing a personal best removes that result from the signed-in player's personal history; the highest remaining retained result becomes the personal best, or no personal best is shown when none remains.
+- BR-107: A global result is eligible only when an authenticated player survives the complete active-time limit and receives freedom.
+- BR-108: Global results are ranked by final liquid cash before debt repayment.
+- BR-109: Anonymous and signed-in players can view the global high-score table, but only signed-in players can submit eligible results or view or clear a personal best.
 
 ## Access Control
 
 The game is available anonymously without creating an account. Anonymous players can complete the full gameplay loop and view global high scores, but their active runs and results are not persisted.
 
 Google OAuth is the only sign-in method. Sign-in may occur before a run or during an anonymous active run. A successful mid-run sign-in attaches and saves the current run immediately. Signed-in players can access only their own active save, result history, and personal best. They cannot read or modify another player's private data.
+
+A signed-in player can sign out from the main menu without deleting their saved data. A signed-in player can clear only their own personal-best result; this operation cannot change another player's records or global results.
 
 Global high scores are publicly readable. Only authenticated, eligible freedom outcomes can be submitted. All signed-in players have the same permissions; the MVP has no administrative or multiplayer roles.
 
@@ -359,6 +384,3 @@ Global high scores are publicly readable. Only authenticated, eligible freedom o
 - The MVP does not defer personal or global high scores; both are required capabilities.
 
 ## Open Questions
-
-1. **Must the MVP provide sign-out?** — Owner: product owner. Resolve before authentication implementation.
-2. **Is game audio an explicit MVP product capability or presentation polish outside the PRD?** — Owner: product owner. Resolve before the MVP scope is locked.

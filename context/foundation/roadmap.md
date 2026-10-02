@@ -25,7 +25,7 @@ milestone_status: open
 - **Intent:** Deliver the complete browser-game outcome described by the PRD: an anonymous player can finish the debt run through trading, flight, hazards, and salvage, while a signed-in player can preserve progress and compare eligible results.
 - **Source materials:** `context/foundation/prd.md` (v1)
 - **Done when:** every S-NN below is `done` and the complete PRD-defined run is usable end to end.
-- **Scope anchors:** US-01–US-06 and FR-001–FR-042.
+- **Scope anchors:** US-01–US-07 and FR-001–FR-046.
 
 ## Vision recap
 
@@ -50,10 +50,12 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-07 | s07-environmental-hazards-and-death | User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed. | S-01, S-02 | US-01, US-04, FR-008, FR-032, FR-034 | proposed |
 | S-08 | s08-asteroid-combat | User can fire the ship weapon and fragment or destroy asteroids. | S-07 | US-04, FR-031, FR-033, FR-034 | done |
 | S-09 | s09-asteroid-salvage | User can recover commodities from salvage released by weapon-destroyed asteroids. | S-04, S-08 | US-04, FR-028, FR-035, FR-036 | proposed |
-| S-10 | s10-player-sign-in-status | User can sign in for persistent features and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-037, FR-038 | in-progress |
-| S-11 | s11-automatic-save-and-resume | Signed-in user can see save status, preserve progress, and resume an active run. | S-06, S-09, S-10 | US-05, FR-006, FR-039, FR-040 | proposed |
-| S-12 | s12-personal-best-result | Signed-in user can view their personal best result across retained outcomes. | S-11 | US-06, FR-041 | proposed |
-| S-13 | s13-global-high-scores | User can view the globally eligible high-score results. | S-11 | US-06, FR-042 | proposed |
+| S-10 | s10-player-sign-in-status | User can sign in, sign out, and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-037, FR-038, FR-039 | in-progress |
+| S-11 | s11-automatic-save-and-resume | Signed-in user can see save status, preserve progress, and resume an active run. | S-06, S-09, S-10 | US-05, FR-006, FR-040, FR-041 | proposed |
+| S-12 | s12-personal-best-result | Signed-in user can view their personal best result across retained outcomes. | S-11 | US-06, FR-043 | proposed |
+| S-13 | s13-global-high-scores | User can view the globally eligible high-score results. | S-11 | US-06, FR-044 | proposed |
+| S-14 | s14-delete-terminal-active-save | Signed-in user retains a terminal result while its active save is removed. | S-06, S-11 | US-05, FR-042 | proposed |
+| S-15 | s15-clear-personal-best | Signed-in user can clear their personal best without changing global results. | S-12 | US-06, FR-045 | proposed |
 
 ## Baseline
 
@@ -180,16 +182,15 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Risk:** The live-to-frozen crate lifecycle must use the shared active-time clock and never bypass cargo-capacity or transfer limits.
 - **Status:** proposed
 
-### S-10: Sign in for persistent features
+### S-10: Sign in and out for persistent features
 
-- **Outcome:** User can sign in for persistent features and inspect authentication status.
+- **Outcome:** User can sign in, sign out, and inspect authentication status.
 - **Change ID:** s10-player-sign-in-status
-- **PRD refs:** US-05, FR-037, FR-038
+- **PRD refs:** US-05, FR-037, FR-038, FR-039
 - **Prerequisites:** Selected identity-provider test projects configured
 - **Parallel with:** S-01, S-02, S-03, S-04, S-05, S-06, S-07, S-08, S-09
 - **Blockers:** Test identity projects and redirect configuration require user-managed service setup.
-- **Unknowns:**
-  - Must the MVP provide sign-out? — Owner: product owner. Block: yes.
+- **Unknowns:** —
 - **Risk:** Identity integration must preserve complete anonymous play and must not expose one player's private state to another account.
 - **Status:** in-progress
 
@@ -197,7 +198,7 @@ No standalone foundations are required. Deployment is already present, the autho
 
 - **Outcome:** Signed-in user can see save status, preserve progress, and resume an active run.
 - **Change ID:** s11-automatic-save-and-resume
-- **PRD refs:** US-05, FR-006, FR-039, FR-040
+- **PRD refs:** US-05, FR-006, FR-040, FR-041
 - **Prerequisites:** S-06, S-09, S-10
 - **Parallel with:** —
 - **Blockers:** —
@@ -209,7 +210,7 @@ No standalone foundations are required. Deployment is already present, the autho
 
 - **Outcome:** Signed-in user can view their personal best result across retained outcomes.
 - **Change ID:** s12-personal-best-result
-- **PRD refs:** US-06, FR-041
+- **PRD refs:** US-06, FR-043
 - **Prerequisites:** S-11
 - **Parallel with:** S-13
 - **Blockers:** —
@@ -221,12 +222,36 @@ No standalone foundations are required. Deployment is already present, the autho
 
 - **Outcome:** User can view the globally eligible high-score results.
 - **Change ID:** s13-global-high-scores
-- **PRD refs:** US-06, FR-042
+- **PRD refs:** US-06, FR-044
 - **Prerequisites:** S-11
 - **Parallel with:** S-12
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Public results must enforce the PRD's eligibility rule without exposing private run history or accepting ineligible outcomes.
+- **Status:** proposed
+
+### S-14: Remove the terminal active save
+
+- **Outcome:** Signed-in user retains a terminal result while its active save is removed.
+- **Change ID:** s14-delete-terminal-active-save
+- **PRD refs:** US-05, FR-042
+- **Prerequisites:** S-06, S-11
+- **Parallel with:** S-12, S-13
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** A terminal result must be durably retained before its active save is removed, so a failed deletion cannot erase the score or leave a resumable terminal run.
+- **Status:** proposed
+
+### S-15: Clear a personal best
+
+- **Outcome:** Signed-in user can clear their personal best without changing global results.
+- **Change ID:** s15-clear-personal-best
+- **PRD refs:** US-06, FR-045
+- **Prerequisites:** S-12
+- **Parallel with:** S-13, S-14
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Clearing a personal result must affect only its owner; the next retained result must become the personal best without changing public eligible scores.
 - **Status:** proposed
 
 ## Backlog Handoff
@@ -242,15 +267,16 @@ No standalone foundations are required. Deployment is already present, the autho
 | S-07 | s07-environmental-hazards-and-death | Deliver environmental damage and death | no | Requires S-01 and S-02 |
 | S-08 | s08-asteroid-combat | Deliver asteroid weapon combat and fragmentation | no | Requires S-07 |
 | S-09 | s09-asteroid-salvage | Deliver collectible asteroid salvage | no | Requires S-04 and S-08 |
-| S-10 | s10-player-sign-in-status | Deliver player sign-in and authentication status | no | Resolve sign-out scope and complete external setup |
+| S-10 | s10-player-sign-in-status | Deliver player sign-in, sign-out, and authentication status | no | Complete external setup |
 | S-11 | s11-automatic-save-and-resume | Deliver automatic save and run resume | no | Requires S-06, S-09, and S-10 |
 | S-12 | s12-personal-best-result | Deliver the signed-in player's personal best | no | Requires S-11 |
 | S-13 | s13-global-high-scores | Deliver public eligible high scores | no | Requires S-11 |
+| S-14 | s14-delete-terminal-active-save | Remove the terminal active save after retaining its result | no | Requires S-06 and S-11 |
+| S-15 | s15-clear-personal-best | Allow the owner to clear their personal best | no | Requires S-12 |
 
 ## Open Roadmap Questions
 
-1. **Must the MVP provide sign-out?** — Owner: product owner. Block: S-10.
-2. **Is game audio an explicit MVP product capability or presentation polish outside the PRD?** — Owner: product owner. Block: roadmap-wide scope only; current slices can proceed.
+No open roadmap questions.
 
 ## Parked
 
