@@ -41,7 +41,7 @@ body {
     user-select: none;
 }
 
-#main-menu { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); pointer-events: none; }
+#main-menu { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); pointer-events: auto; }
 #main-menu-controls { position: absolute; top: 60%; right: 0; left: 0; display: flex; flex-direction: column; align-items: center; gap: clamp(12px, 2.5vh, 20px); padding: 0; pointer-events: none; }
 #main-menu-controls button { min-width: min(440px, 76vw); padding: 0; border: 0; color: #fff; background: transparent; font-family: 'Arial Black', Arial, sans-serif; font-size: clamp(34px, 4vw, 48px); font-weight: 900; line-height: 1; text-shadow: 3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000; cursor: pointer; pointer-events: auto; }
 .main-menu-user-icon { position: relative; display: inline-block; width: .8em; height: .8em; margin-right: .22em; vertical-align: -.05em; }
