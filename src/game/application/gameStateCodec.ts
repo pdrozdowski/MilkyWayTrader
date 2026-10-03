@@ -55,6 +55,22 @@ function nonEmptyString (value: unknown, path: string): string
     return value;
 }
 
+function runId (value: unknown, path: string): string
+{
+    const id = nonEmptyString(value, path);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+        throw new Error(`${path} must be a UUID.`);
+    }
+    return id;
+}
+
+function uint32 (value: unknown, path: string): number
+{
+    const number = nonNegativeSafeInteger(value, path);
+    if (number > 0xFFFFFFFF) throw new Error(`${path} must be a uint32.`);
+    return number;
+}
+
 function nullableTime (value: unknown, path: string): number | null
 {
     return value === null ? null : nonNegativeNumber(value, path);
@@ -86,8 +102,11 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         try { source = JSON.parse(source) as unknown; }
         catch { throw new Error('Game state is not valid JSON.'); }
     }
-    const root = requireRecord(source, 'state', ['schemaVersion', 'clock', 'credits', 'cargo', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
-    if (root.schemaVersion !== 10) throw new Error('Unsupported game-state schema version.');
+    const root = requireRecord(source, 'state', ['schemaVersion', 'runId', 'randomState', 'moolarisDamageArmed', 'terminalResult', 'clock', 'credits', 'cargo', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
+    if (root.schemaVersion !== 11) throw new Error('Unsupported game-state schema version.');
+    const decodedRunId = runId(root.runId, 'state.runId');
+    const randomState = uint32(root.randomState, 'state.randomState');
+    if (typeof root.moolarisDamageArmed !== 'boolean') throw new Error('state.moolarisDamageArmed must be boolean.');
 
     const credits = nonNegativeSafeInteger(root.credits, 'state.credits');
     if (!Array.isArray(root.cargo)) throw new Error('state.cargo must be an array.');
@@ -131,6 +150,15 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     if (currentHitPoints > maximumShipHitPoints) throw new Error('state.shipStatus.currentHitPoints exceeds the configured maximum.');
     if (typeof shipStatus.boosterUnlocked !== 'boolean') throw new Error('state.shipStatus.boosterUnlocked must be boolean.');
     if (!shipStatus.boosterUnlocked && ship.boosting) throw new Error('state.ship.boosting requires an unlocked booster.');
+    const terminalResult = root.terminalResult === null ? null : requireRecord(root.terminalResult, 'state.terminalResult', ['runId', 'outcome', 'activeElapsedMs', 'finalCredits']);
+    if (terminalResult === null && currentHitPoints === 0) throw new Error('Zero hit points requires a terminal result.');
+    if (terminalResult !== null && currentHitPoints !== 0) throw new Error('A terminal result requires zero hit points.');
+    if (terminalResult !== null) {
+        if (runId(terminalResult.runId, 'state.terminalResult.runId') !== decodedRunId) throw new Error('Terminal result run id must match the run.');
+        if (terminalResult.outcome !== 'death') throw new Error('state.terminalResult.outcome is unknown.');
+        if (nonNegativeSafeInteger(terminalResult.activeElapsedMs, 'state.terminalResult.activeElapsedMs') !== Math.floor(activeElapsedMs)) throw new Error('Terminal result active time must be the clock rounded down to milliseconds.');
+        if (nonNegativeSafeInteger(terminalResult.finalCredits, 'state.terminalResult.finalCredits') !== credits) throw new Error('Terminal result credits must match the run.');
+    }
 
     if (!Array.isArray(root.planets)) throw new Error('state.planets must be an array.');
     const planetIds = new Set<string>();
@@ -242,7 +270,16 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 10,
+        schemaVersion: 11,
+        runId: decodedRunId,
+        randomState,
+        moolarisDamageArmed: root.moolarisDamageArmed,
+        terminalResult: terminalResult === null ? null : {
+            runId: decodedRunId,
+            outcome: 'death',
+            activeElapsedMs: Math.floor(activeElapsedMs),
+            finalCredits: credits
+        },
         clock: { budgetMs, activeElapsedMs, pauseReasons },
         credits,
         cargo,

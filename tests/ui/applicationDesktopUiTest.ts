@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { displayLabels } from '../../src/ui/components/displayLabels';
+import { resultLabels } from '../../src/game/application/results/resultLabels';
 import { test } from './testSessionFixture';
 import { completeSignedInTradeJourney } from './tradingJourney';
 
@@ -40,5 +41,37 @@ test.describe('authenticated trading journey', () => {
         test.setTimeout(60_000);
         expect(testSession.mode).toBe('authenticated');
         await completeSignedInTradeJourney(page);
+    });
+
+    // Player-visible risk: the accessible debug control could fail to route through Phaser, leaving a signed-in player unable to die, see the final result, or retain it.
+    // Lower-level tests cannot prove browser input, Phaser event routing, DOM HP projection, the timed scene transition, and authenticated local Supabase persistence together.
+    // This uniquely verifies that an accessible browser control drives all of those real boundaries without direct state mutation.
+    test('a signed-in player reaches a retained death result through bounded live-asteroid collisions', async ({ page, testSession }) => {
+        test.setTimeout(60_000);
+        expect(testSession.mode).toBe('authenticated');
+        await page.goto('/', { waitUntil: 'domcontentloaded' });
+        await page.getByRole('button', { name: 'New Game', exact: true }).click();
+        await expect(page.getByLabel('Run status')).toBeVisible();
+        const healthBar = page.getByRole('progressbar');
+        await expect(healthBar).toBeVisible();
+
+        let reachedGameOver = false;
+        for (let attempt = 1; attempt <= 10; attempt += 1) {
+            const hitPointsBefore = await healthBar.evaluate(element => (element as HTMLProgressElement).value);
+            await page.keyboard.press('d');
+            await expect(page.getByRole('dialog', { name: 'Debug menu' })).toBeVisible();
+            await page.getByRole('button', { name: displayLabels.teleportToAsteroid, exact: true }).click();
+            await expect.poll(async () => healthBar.evaluate(element => (element as HTMLProgressElement).value), {
+                message: `Asteroid teleport attempt ${attempt} did not reduce HP from ${hitPointsBefore}.`
+            }).toBeLessThan(hitPointsBefore);
+            if (!await healthBar.isVisible()) {
+                const resultStatus = page.getByLabel('Result delivery status');
+                await expect(resultStatus).toBeVisible();
+                reachedGameOver = true;
+                await expect(resultStatus).toContainText(resultLabels.saved);
+                break;
+            }
+        }
+        expect(reachedGameOver, 'Expected GameOver with a retained signed-in result after at most ten confirmed asteroid collisions; damage may be disabled.').toBe(true);
     });
 });

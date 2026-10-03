@@ -35,7 +35,11 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 10);
+    assert.equal(state.schemaVersion, 11);
+    assert.equal(state.runId, '00000000-0000-4000-8000-000000000001');
+    assert.equal(state.randomState, 1);
+    assert.equal(state.moolarisDamageArmed, true);
+    assert.equal(state.terminalResult, null);
     assert.equal(state.credits, 100_000);
     assert.deepEqual(state.cargo, []);
     assert.deepEqual(state.markets, [{
@@ -199,6 +203,57 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
     assert.deepEqual(unchanged.planets, paused.planets);
 });
 
+test('codec validates run randomness and terminal death facts as one immutable snapshot', () => {
+    const terminal = {
+        ...clone(initialGameState),
+        randomState: 4_294_967_295,
+        clock: { ...clone(initialGameState.clock), activeElapsedMs: 123 },
+        credits: 321,
+        shipStatus: { ...clone(initialGameState.shipStatus), currentHitPoints: 0 },
+        terminalResult: {
+            runId: initialGameState.runId,
+            outcome: 'death',
+            activeElapsedMs: 123,
+            finalCredits: 321
+        }
+    };
+    const decoded = decodeGameState(terminal);
+    assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
+    assert(Object.isFrozen(decoded.terminalResult));
+    for (const invalid of [
+        { ...clone(terminal), runId: 'not-a-uuid' },
+        { ...clone(terminal), randomState: -1 },
+        { ...clone(terminal), randomState: 4_294_967_296 },
+        { ...clone(terminal), terminalResult: null },
+        { ...clone(terminal), terminalResult: { ...clone(terminal.terminalResult), runId: '00000000-0000-4000-8000-000000000002' } },
+        { ...clone(terminal), terminalResult: { ...clone(terminal.terminalResult), outcome: 'timeout' } },
+        { ...clone(terminal), terminalResult: { ...clone(terminal.terminalResult), activeElapsedMs: 124 } },
+        { ...clone(terminal), terminalResult: { ...clone(terminal.terminalResult), finalCredits: 322 } }
+    ]) assert.throws(() => decodeGameState(invalid));
+});
+
+test('terminal results preserve an integer millisecond fact when the active clock is fractional', () => {
+    const terminal = {
+        ...clone(initialGameState),
+        clock: { ...clone(initialGameState.clock), activeElapsedMs: 123.75 },
+        shipStatus: { ...clone(initialGameState.shipStatus), currentHitPoints: 0 },
+        terminalResult: {
+            runId: initialGameState.runId,
+            outcome: 'death',
+            activeElapsedMs: 123,
+            finalCredits: initialGameState.credits
+        }
+    };
+    const decoded = decodeGameState(terminal);
+    assert.equal(decoded.clock.activeElapsedMs, 123.75);
+    assert.equal(decoded.terminalResult.activeElapsedMs, 123);
+    assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
+    assert.throws(() => decodeGameState({
+        ...terminal,
+        terminalResult: { ...terminal.terminalResult, activeElapsedMs: 123.75 }
+    }));
+});
+
 test('codec accepts and round trips drifting asteroids without an orbit', () => {
     const drifting = {
         ...clone(initialGameState),
@@ -342,10 +397,10 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 10);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 11);
 });
 
-test('v10 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
+test('v11 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
     const decoded = decodeGameState(initialGameState);
     const asteroid = clone(decoded.asteroids[0]);
     assert(Object.isFrozen(decoded.asteroids));

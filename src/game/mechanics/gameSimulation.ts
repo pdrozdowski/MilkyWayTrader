@@ -17,6 +17,8 @@ import { MOOLARIS_RECOVERY_SECONDS } from '../definitions/moolarisDefinition.ts'
 import { advanceSerotonMarket } from './serotonMarketSimulation.ts';
 import { asteroidRadius, advanceAsteroidMotions, fragmentAsteroid, type AsteroidImpactSource } from './asteroid/asteroidSimulation.ts';
 import { moolarisDefinition } from '../definitions/moolarisDefinition.ts';
+import { asteroidDamageRanges, moolarisDamageRange, nextRandomInteger } from './hazards/damage.ts';
+import { resolveTerminalResult } from './hazards/terminal.ts';
 
 const asteroidRecoverySeconds = MOOLARIS_RECOVERY_SECONDS / 2;
 
@@ -71,6 +73,7 @@ export function advanceGameSimulation (
     overrides: Partial<GameSimulationOptions> = {}
 ): GameStateSnapshot
 {
+    if (state.terminalResult !== null) return state;
     const options = { ...defaultGameSimulationOptions, ...overrides };
     const clock = advanceGameClock(state.clock, deltaMs);
     const activeDeltaMs = clock.activeElapsedMs - state.clock.activeElapsedMs;
@@ -185,7 +188,37 @@ export function advanceGameSimulation (
     }
     const collisionShip = resolved.shipImpact === null ? orbitShip : shipAfterAsteroidImpact(orbitShip, resolved.shipImpact.position, clock.activeElapsedMs);
     const impactedShip = resolved.shipImpact === null ? collisionShip : { ...collisionShip, asteroidImpactAtActiveMs: clock.activeElapsedMs };
-    return tryLandAtCapturedPlanet({ ...state, clock, markets, ship: impactedShip, planets, planetLifecycle: lifecycle, weapon, projectiles, asteroids: resolved.asteroids }, input.landingRequested === true);
+    let randomState = state.randomState;
+    let currentHitPoints = state.shipStatus.currentHitPoints;
+    if (resolved.shipImpact !== null) {
+        const damage = nextRandomInteger(randomState, asteroidDamageRanges[resolved.shipImpact.size].minimum, asteroidDamageRanges[resolved.shipImpact.size].maximum);
+        randomState = damage.nextState;
+        currentHitPoints = Math.max(0, currentHitPoints - damage.value);
+    }
+    const inMoolarisControlRadius = !resolveMoolarisContact(impactedShip).hasControl;
+    let moolarisDamageArmed = state.moolarisDamageArmed;
+    if (!inMoolarisControlRadius) moolarisDamageArmed = true;
+    else if (moolarisDamageArmed) {
+        const damage = nextRandomInteger(randomState, moolarisDamageRange.minimum, moolarisDamageRange.maximum);
+        randomState = damage.nextState;
+        currentHitPoints = currentHitPoints >= 30 ? damage.value : 0;
+        moolarisDamageArmed = false;
+    }
+    const next = tryLandAtCapturedPlanet({
+        ...state,
+        clock,
+        randomState,
+        moolarisDamageArmed,
+        markets,
+        ship: impactedShip,
+        shipStatus: { ...state.shipStatus, currentHitPoints },
+        planets,
+        planetLifecycle: lifecycle,
+        weapon,
+        projectiles,
+        asteroids: resolved.asteroids
+    }, input.landingRequested === true);
+    return resolveTerminalResult(next);
 }
 
 function shipAfterAsteroidImpact (ship: GameStateSnapshot['ship'], asteroidPosition: Readonly<{ x: number; y: number }>, activeElapsedMs: number): GameStateSnapshot['ship']
@@ -265,7 +298,7 @@ function resolveAsteroidImpacts (
         const asteroidAtImpact = { ...event.asteroid, position: interpolatedPosition(event.asteroidStart, event.asteroid.position, event.time) };
         const sourceAtImpact = { ...event.source, position: interpolatedPosition(event.source.start, event.source.position, event.time) };
         removedAsteroids.add(event.asteroid.id);
-        if (event.source.kind === 'ship') {
+        if (event.source.kind === 'ship' && shipImpact === null) {
             shipImpact = asteroidAtImpact;
         }
         children.push(...fragmentAsteroid(asteroidAtImpact, sourceAtImpact));

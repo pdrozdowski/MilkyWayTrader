@@ -12,9 +12,13 @@ import { mountLandingStatus } from './components/landingStatus';
 import { mountAuthControls } from './components/authControls';
 import type { AuthPort } from '../game/application/auth/auth';
 import type { TelemetryPort } from '../game/application/telemetry/telemetry';
+import type { GameOverReturnPort } from '../game/application/results/gameOverReturn';
+import type { TerminalResultState } from '../game/state/terminalResultState';
 import type { UiHandle } from './contracts';
+import { resultLabels } from '../game/application/results/resultLabels';
+import { displayLabels } from './components/displayLabels';
 
-export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort, telemetry: TelemetryPort): UiHandle
+export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort, telemetry: TelemetryPort, gameOverReturn: GameOverReturnPort): UiHandle
 {
     const container = root.querySelector<HTMLElement>('#game-container');
     if (!container) throw new Error('Missing game container.');
@@ -27,11 +31,28 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const toggleFullscreen = (): void => { void displayPort.toggleFullscreen(); };
     game.events.on('toggle-fullscreen', toggleFullscreen);
     const runStatus = mountRunStatus(root, createRunStatusPort(game));
+    const gameOverStatus = root.querySelector<HTMLElement>('#game-over-status');
+    const gameOverMessage = root.querySelector<HTMLElement>('#game-over-status-message');
+    const gameOverRetry = root.querySelector<HTMLButtonElement>('#game-over-status-retry');
+    if (!gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
+    const renderGameOverPersistence = (result: { status: 'pending' | 'saved' | 'failed' | 'unsigned'; message: string | null } | null): void => {
+        gameOverStatus.hidden = result === null;
+        if (!result) return;
+        const message = result.status === 'pending' ? resultLabels.saving : result.status === 'saved' ? resultLabels.saved : result.status === 'unsigned' ? resultLabels.unsigned : result.message ?? resultLabels.failed;
+        gameOverMessage.textContent = message;
+        gameOverRetry.hidden = result.status !== 'failed';
+        gameOverRetry.textContent = resultLabels.retry;
+    };
+    const retryGameOverPersistence = (): void => { game.events.emit('game-over-retry'); };
+    gameOverRetry.addEventListener('click', retryGameOverPersistence);
+    game.events.on('game-over-persistence', renderGameOverPersistence);
     game.registry.set('telemetry', telemetry);
     const landingStatus = mountLandingStatus(root, createLandingStatusPort(game));
-    const authControls = mountAuthControls(root, auth);
+    let currentGameOverResult: TerminalResultState | null = null;
+    const authControls = mountAuthControls(root, auth, () => { if (currentGameOverResult) gameOverReturn.save(currentGameOverResult); });
     const mainMenu = root.querySelector<HTMLElement>('#main-menu');
     const mainMenuNewGame = root.querySelector<HTMLButtonElement>('#main-menu-new-game');
+    const mainMenuSignIn = root.querySelector<HTMLButtonElement>('#main-menu-sign-in-preview');
     const debugMenu = root.querySelector<HTMLElement>('#debug-menu');
     const debugClose = root.querySelector<HTMLButtonElement>('#debug-menu-close');
     const touchControlsToggle = root.querySelector<HTMLButtonElement>('#debug-touch-controls-toggle');
@@ -40,18 +61,24 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const teleportSeroton = root.querySelector<HTMLButtonElement>('#debug-teleport-seroton');
     const teleportLactozis = root.querySelector<HTMLButtonElement>('#debug-teleport-lactozis-7c');
     const teleportMasloPrime = root.querySelector<HTMLButtonElement>('#debug-teleport-maslo-prime');
-    if (!mainMenu || !mainMenuNewGame || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime) throw new Error('Missing game menu controls.');
+    const teleportAsteroid = root.querySelector<HTMLButtonElement>('#debug-teleport-asteroid');
+    if (!mainMenu || !mainMenuNewGame || !mainMenuSignIn || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime || !teleportAsteroid) throw new Error('Missing game menu controls.');
     const showMainMenu = (): void => { mainMenu.hidden = false; };
     const hideMainMenu = (): void => { mainMenu.hidden = true; };
+    const showGameOverSignIn = (terminalResult: TerminalResultState): void => { currentGameOverResult = terminalResult; root.append(mainMenuSignIn); };
+    const hideGameOverSignIn = (): void => { currentGameOverResult = null; mainMenu.prepend(mainMenuSignIn); };
     const startNewGame = (): void => { game.events.emit('start-new-game'); };
     mainMenuNewGame.addEventListener('click', startNewGame);
     game.events.on('main-menu-open', showMainMenu);
     game.events.on('main-menu-close', hideMainMenu);
+    game.events.on('game-over-open', showGameOverSignIn);
+    game.events.on('game-over-close', hideGameOverSignIn);
     const updateOrientationPause = (): void => controlsPort.setOrientationPaused(displayPort.getSnapshot().mobile && displayPort.getSnapshot().portrait);
     const unsubscribeOrientation = displayPort.subscribe(updateOrientationPause);
     let touchControlsEnabled = false;
     let mouseMovementEnabled = true;
     let boosterEnabled = false;
+    let terminalDeathTransitionActive = false;
     const renderDebugToggles = (): void => {
         touchControlsToggle.textContent = `Show touch screen controls: ${touchControlsEnabled ? 'ON' : 'OFF'}`;
         touchControlsToggle.setAttribute('aria-pressed', String(touchControlsEnabled));
@@ -61,14 +88,16 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         boosterToggle.setAttribute('aria-pressed', String(boosterEnabled));
     };
     const closeDebugMenu = (): void => { debugMenu.hidden = true; game.canvas.focus(); };
-    const openDebugMenu = (): void => { debugMenu.hidden = false; renderDebugToggles(); debugClose.focus(); };
-    const toggleTouchControls = (): void => { touchControlsEnabled = !touchControlsEnabled; game.events.emit('debug-touch-controls', touchControlsEnabled); renderDebugToggles(); };
-    const toggleMouseMovement = (): void => { mouseMovementEnabled = !mouseMovementEnabled; game.events.emit('debug-mouse-movement', mouseMovementEnabled); renderDebugToggles(); };
-    const toggleBooster = (): void => { boosterEnabled = !boosterEnabled; game.events.emit('debug-booster', boosterEnabled); renderDebugToggles(); };
-    const teleportTo = (planetId: string): void => { game.events.emit('debug-teleport-to-planet', planetId); closeDebugMenu(); };
+    const openDebugMenu = (): void => { if (!terminalDeathTransitionActive) { debugMenu.hidden = false; renderDebugToggles(); debugClose.focus(); } };
+    const toggleTouchControls = (): void => { if (!terminalDeathTransitionActive) { touchControlsEnabled = !touchControlsEnabled; game.events.emit('debug-touch-controls', touchControlsEnabled); renderDebugToggles(); } };
+    const toggleMouseMovement = (): void => { if (!terminalDeathTransitionActive) { mouseMovementEnabled = !mouseMovementEnabled; game.events.emit('debug-mouse-movement', mouseMovementEnabled); renderDebugToggles(); } };
+    const toggleBooster = (): void => { if (!terminalDeathTransitionActive) { boosterEnabled = !boosterEnabled; game.events.emit('debug-booster', boosterEnabled); renderDebugToggles(); } };
+    const teleportTo = (planetId: string): void => { if (!terminalDeathTransitionActive) { game.events.emit('debug-teleport-to-planet', planetId); closeDebugMenu(); } };
     const teleportToSeroton = (): void => { teleportTo('seroton'); };
     const teleportToLactozis = (): void => { teleportTo('lactozis-7c'); };
     const teleportToMasloPrime = (): void => { teleportTo('maslo-prime'); };
+    const teleportToAsteroid = (): void => { if (!terminalDeathTransitionActive) { game.events.emit('debug-teleport-to-asteroid'); closeDebugMenu(); } };
+    teleportAsteroid.textContent = displayLabels.teleportToAsteroid;
     const resetDebugControls = (): void => {
         touchControlsEnabled = false;
         mouseMovementEnabled = true;
@@ -88,7 +117,10 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     teleportSeroton.addEventListener('click', teleportToSeroton);
     teleportLactozis.addEventListener('click', teleportToLactozis);
     teleportMasloPrime.addEventListener('click', teleportToMasloPrime);
+    teleportAsteroid.addEventListener('click', teleportToAsteroid);
     game.events.on('debug-controls-reset', resetDebugControls);
+    const setTerminalDeathTransition = (active: boolean): void => { terminalDeathTransitionActive = active; if (active) closeDebugMenu(); };
+    game.events.on('terminal-death-transition', setTerminalDeathTransition);
     window.addEventListener('keydown', debugKeyDown);
     const returnToGame = (): void => {
         const focused = document.activeElement;
@@ -104,6 +136,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             menuControls.destroy();
             display.destroy();
             runStatus.destroy();
+            gameOverRetry.removeEventListener('click', retryGameOverPersistence);
+            game.events.off('game-over-persistence', renderGameOverPersistence);
             landingStatus.destroy();
             authControls.destroy();
             auth.destroy();
@@ -112,6 +146,9 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             mainMenuNewGame.removeEventListener('click', startNewGame);
             game.events.off('main-menu-open', showMainMenu);
             game.events.off('main-menu-close', hideMainMenu);
+            game.events.off('game-over-open', showGameOverSignIn);
+            game.events.off('game-over-close', hideGameOverSignIn);
+            hideGameOverSignIn();
             debugClose.removeEventListener('click', closeDebugMenu);
             touchControlsToggle.removeEventListener('click', toggleTouchControls);
             mouseMovementToggle.removeEventListener('click', toggleMouseMovement);
@@ -119,7 +156,9 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             teleportSeroton.removeEventListener('click', teleportToSeroton);
             teleportLactozis.removeEventListener('click', teleportToLactozis);
             teleportMasloPrime.removeEventListener('click', teleportToMasloPrime);
+            teleportAsteroid.removeEventListener('click', teleportToAsteroid);
             game.events.off('debug-controls-reset', resetDebugControls);
+            game.events.off('terminal-death-transition', setTerminalDeathTransition);
             game.events.off('toggle-fullscreen', toggleFullscreen);
             window.removeEventListener('keydown', debugKeyDown);
             game.canvas.removeEventListener('pointerdown', returnToGame);

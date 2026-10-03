@@ -18,6 +18,19 @@ const { mountAuthControls } = transpileModule('src/ui/components/authControls.ts
     './displayLabels': { displayLabels }
 });
 
+class FakeVector2 {
+    constructor (x, y) { this.x = x; this.y = y; }
+    normalize () { const length = Math.hypot(this.x, this.y); this.x /= length; this.y /= length; return this; }
+    scale (value) { this.x *= value; this.y *= value; return this; }
+    clone () { return new FakeVector2(this.x, this.y); }
+    add (other) { this.x += other.x; this.y += other.y; return this; }
+}
+
+const { ShipDestruction, shipDestructionDurationMs } = transpileModule('src/game/effects/shipDestruction.ts', {
+    phaser: { Math: { Vector2: FakeVector2 } },
+    '../visual/layers': { ObjectDepth: { Ship: 20, UI: 100 } }
+});
+
 class FakeScheduler {
     nextId = 1;
     callbacks = new Map();
@@ -87,6 +100,27 @@ test('hide and idempotent destroy clean up animation while stale callbacks canno
     const updatesBeforeStaleCallback = updates;
     scheduler.fire(2);
     assert.equal(updates, updatesBeforeStaleCallback);
+});
+
+test('ship destruction creates three fragments, uses the exact transition duration, and cleans up idempotently', () => {
+    const events = { handlers: new Map(), once (name, callback) { this.handlers.set(name, callback); }, off (name, callback) { if (this.handlers.get(name) === callback) this.handlers.delete(name); } };
+    const tweens = { added: [], killed: [], add (config) { this.added.push(config); }, killTweensOf (target) { this.killed.push(target); } };
+    const graphics = [];
+    const graphic = () => {
+        const item = { destroyed: 0, alpha: 1, rotation: 0, fillStyle () { return this; }, fillTriangle () { return this; }, fillCircle () { return this; }, setDepth () { return this; }, setPosition (x, y) { this.x = x; this.y = y; return this; }, setRotation (value) { this.rotation = value; return this; }, destroy () { this.destroyed++; } };
+        graphics.push(item); return item;
+    };
+    const overlay = { destroyed: 0, setOrigin () { return this; }, setScrollFactor () { return this; }, setDepth () { return this; }, destroy () { this.destroyed++; } };
+    const scene = { events, tweens, scale: { width: 1024, height: 768 }, add: { graphics: graphic, rectangle: () => overlay } };
+    const effect = new ShipDestruction(scene);
+    effect.play({ x: 8, y: 12 }, () => {});
+    assert.equal(graphics.length, 3);
+    assert.equal(tweens.added.length, 4);
+    assert(tweens.added.every(tween => tween.duration === shipDestructionDurationMs));
+    effect.destroy(); effect.destroy();
+    assert.deepEqual(graphics.map(item => item.destroyed), [1, 1, 1]);
+    assert.equal(overlay.destroyed, 1);
+    assert.equal(events.handlers.size, 0);
 });
 
 class FakeElement {

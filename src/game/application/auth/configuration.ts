@@ -4,7 +4,7 @@ export interface PublicAuthConfiguration
     publishableKey?: string;
 }
 
-export const gameVersion = import.meta.env.VITE_GAME_VERSION;
+export const gameVersion = import.meta.env?.VITE_GAME_VERSION;
 
 export function browserAuthConfiguration (): PublicAuthConfiguration
 {

@@ -19,6 +19,11 @@ export const weaponTuning = {
 };
 
 export const asteroidTuning = {
+    shipDamage: {
+        small: { minimum: 5, maximum: 10 },
+        medium: { minimum: 10, maximum: 20 },
+        big: { minimum: 15, maximum: 30 }
+    },
     safeRadius: 1_280,
     outsideSafeAreaCullAfterMs: 15_000,
     worldBoundsRadius: 10_000,

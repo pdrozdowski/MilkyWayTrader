@@ -6,6 +6,7 @@ import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { Starfield } from '../effects/starfield';
+import { ShipDestruction } from '../effects/shipDestruction';
 import { AsteroidExplosion, fragmentedParents, fragmentImpactPosition, planetImpactParents, planetImpactSmallAsteroids, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, projectileImpactPositions, sunConsumedAsteroids } from '../effects/asteroidExplosion';
 import { OrbitalPaths } from '../effects/orbitalPaths';
 import { pauseGameClock, resumeGameClock } from '../mechanics/clock/gameClock';
@@ -13,6 +14,7 @@ import { advanceGameSimulation } from '../mechanics/gameSimulation';
 import { resolveMoolarisContact } from '../mechanics/moolaris/contact';
 import { LANDING_CENTRE_RADIUS } from '../mechanics/planet/landing';
 import { teleportShipToPlanet } from '../mechanics/debug/teleportShipToPlanet';
+import { teleportShipToAsteroid } from '../mechanics/debug/teleportShipToAsteroid';
 import { Planet } from '../objects/planet/planet';
 import { AsteroidProjection } from '../objects/asteroid/asteroidProjection';
 import { ShipWeapon } from '../objects/spaceship/shipWeapon';
@@ -23,6 +25,7 @@ import type { AsteroidState } from '../state/asteroidState';
 import { ObjectDepth } from '../visual/layers';
 import { gameObjectLayout, gameWorldBounds } from './gameObjects';
 import type { TelemetryPort } from '../application/telemetry/telemetry';
+import type { TerminalResultState } from '../state/terminalResultState';
 
 export class Game extends Scene
 {
@@ -60,6 +63,8 @@ export class Game extends Scene
     private fireHeld = false;
     private touchControlsVisible = false;
     private mouseMovementEnabled = true;
+    private destruction: ShipDestruction | null = null;
+    private deathTransitionStarted = false;
 
     constructor ()
     {
@@ -73,6 +78,7 @@ export class Game extends Scene
         this.fireHeld = false;
         this.touchControlsVisible = false;
         this.mouseMovementEnabled = true;
+        this.deathTransitionStarted = false;
         this.game.events.emit('debug-controls-reset');
         this.audio = getAudioService(this.game).createScope(this);
         this.stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
@@ -86,6 +92,7 @@ export class Game extends Scene
         this.background = new Starfield(this, gameWorldBounds.width, gameWorldBounds.height, gameWorldBounds.x, gameWorldBounds.y);
         this.asteroids = new AsteroidProjection(this);
         this.asteroidExplosion = new AsteroidExplosion(this);
+        this.destruction = new ShipDestruction(this);
         this.orbitalPaths = new OrbitalPaths(this);
         this.sun = new Sun(this, gameObjectLayout.sun);
         this.ship = new Spaceship(this, state.ship);
@@ -121,12 +128,14 @@ export class Game extends Scene
         this.game.events.on('debug-mouse-movement', this.setMouseMovementEnabled, this);
         this.game.events.on('debug-booster', this.setBoosterEnabled, this);
         this.game.events.on('debug-teleport-to-planet', this.teleportToPlanet, this);
+        this.game.events.on('debug-teleport-to-asteroid', this.teleportToAsteroid, this);
         window.addEventListener('blur', this.loseFocus);
         window.addEventListener('focus', this.gainFocus);
         window.addEventListener('touchcancel', this.cancelTouch);
         window.addEventListener('keydown', this.flightKeyDown);
         window.addEventListener('keyup', this.flightKeyUp);
         this.events.once('shutdown', () => {
+            this.game.events.emit('terminal-death-transition', false);
             this.loseFocus();
             this.input.off('pointerdown', this.startSteering, this);
             this.input.off('pointerup', this.endSteering, this);
@@ -140,11 +149,14 @@ export class Game extends Scene
             this.game.events.off('debug-mouse-movement', this.setMouseMovementEnabled, this);
             this.game.events.off('debug-booster', this.setBoosterEnabled, this);
             this.game.events.off('debug-teleport-to-planet', this.teleportToPlanet, this);
+            this.game.events.off('debug-teleport-to-asteroid', this.teleportToAsteroid, this);
             window.removeEventListener('blur', this.loseFocus);
             window.removeEventListener('focus', this.gainFocus);
             window.removeEventListener('touchcancel', this.cancelTouch);
             window.removeEventListener('keydown', this.flightKeyDown);
             window.removeEventListener('keyup', this.flightKeyUp);
+            this.destruction?.destroy();
+            this.destruction = null;
         });
         for (const planet of this.planets) {
             planet.update(state.clock.activeElapsedMs, 0);
@@ -288,7 +300,7 @@ export class Game extends Scene
         const visibleBottom = viewport.bottom;
         this.lossOfControl.setPosition(width / 2, height / 3);
         this.exit.setPosition(width - 24, height - 24);
-        const touchLayoutVisible = this.sys.game.device.input.touch || this.touchControlsVisible;
+        const touchLayoutVisible = !this.deathTransitionStarted && (this.sys.game.device.input.touch || this.touchControlsVisible);
         this.joystickBase.setVisible(touchLayoutVisible);
         this.joystickStick.setVisible(touchLayoutVisible);
         this.joystickZone.setActive(touchLayoutVisible).setPosition(visibleLeft + 108, visibleBottom - 108);
@@ -346,6 +358,7 @@ export class Game extends Scene
 
     private hasInputBlockingPause (): boolean
     {
+        if (this.deathTransitionStarted) return true;
         const reasons = this.stateProvider.snapshot().clock.pauseReasons;
         return reasons.includes('menu') || reasons.includes('orientation') || reasons.includes('landed');
     }
@@ -396,6 +409,12 @@ export class Game extends Scene
             shotIntervalMs: 1000 / weaponTuning.shotsPerSecond,
             muzzleOffset: weaponTuning.noseOffset * this.ship.sprite.scaleX
         }));
+        if (before.moolarisDamageArmed && !state.moolarisDamageArmed && state.terminalResult === null) this.playShipCrashFeedback(state.ship.position);
+        if (before.terminalResult === null && state.terminalResult !== null) {
+            this.beginDeathTransition(state.terminalResult, state.ship.position);
+            return;
+        }
+        if (this.deathTransitionStarted) return;
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.clearFlightInput();
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.telemetry.emit('planet_landed', { planet: state.planetLifecycle.landedPlanetId, credits_after: state.credits });
         const renewedAsteroidControlLock = state.ship.asteroidControlLockedUntilActiveMs !== null
@@ -405,9 +424,7 @@ export class Game extends Scene
             this.lossOfControlUntilMs = time + 750;
         }
         if (state.ship.asteroidImpactAtActiveMs !== null && state.ship.asteroidImpactAtActiveMs !== before.ship.asteroidImpactAtActiveMs) {
-            this.asteroidExplosion.explodeShipCrash(state.ship.position);
-            this.audio.play('asteroid-crash-metal-clean');
-            this.camera.shake(180, 0.008);
+            this.playShipCrashFeedback(state.ship.position);
         }
         this.ship.synchronize(state.ship, time);
         this.lossOfControl.setVisible(time < this.lossOfControlUntilMs);
@@ -437,6 +454,40 @@ export class Game extends Scene
         this.clearFlightInput();
         this.stateProvider.update(state => teleportShipToPlanet(state, planetId));
     };
+
+    private readonly teleportToAsteroid = (): void => {
+        this.clearFlightInput();
+        this.stateProvider.update(teleportShipToAsteroid);
+    };
+
+    private playShipCrashFeedback (position: Readonly<{ x: number; y: number }>): void
+    {
+        this.asteroidExplosion.explodeShipCrash(position);
+        this.audio.play('asteroid-crash-metal-clean');
+        this.camera.shake(180, 0.008);
+    }
+
+    private beginDeathTransition (terminalResult: TerminalResultState, position: Readonly<{ x: number; y: number }>): void
+    {
+        if (this.deathTransitionStarted) return;
+        this.deathTransitionStarted = true;
+        this.game.events.emit('terminal-death-transition', true);
+        this.clearFlightInput();
+        this.ship.sprite.setVisible(false);
+        this.lossOfControl.setVisible(false);
+        this.exit.setVisible(false).disableInteractive();
+        this.joystickBase.setVisible(false);
+        this.joystickStick.setVisible(false);
+        this.joystickZone.disableInteractive().setActive(false);
+        this.fireButton.setVisible(false).disableInteractive();
+        this.boostButton.setVisible(false).disableInteractive();
+        this.audio.silence();
+        this.audio.play('asteroid-crash-metal-clean');
+        this.destruction?.play(position, () => {
+            if (!this.sys.isActive()) return;
+            this.scene.start('GameOver', { terminalResult });
+        });
+    }
 
     private playVisibleAsteroidFragmentation (
         previous: readonly AsteroidState[], current: readonly AsteroidState[], previousProjectiles: readonly import('../state/projectileState').ProjectileState[], currentProjectiles: readonly import('../state/projectileState').ProjectileState[], planets: readonly PlanetState[], activeDeltaMs: number
