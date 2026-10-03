@@ -295,6 +295,8 @@ No open roadmap questions.
 
 ## Done
 
+- **S-07: User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed.** — Archived 2026-10-03 → `context/archive/2026-10-01-s07-environmental-hazards-and-death/`. Lesson: —.
+
 - **S-08: User can fire the ship weapon and fragment or destroy asteroids.** — Archived 2026-10-02 → `context/archive/2026-10-01-s08-asteroid-combat/`. Lesson: —.
 
 - **S-03: User can follow route guidance, enter and leave orbit, land, and launch.** — Archived 2026-09-28 → `context/archive/2026-09-25-s03-guided-orbit-and-landing/`. Lesson: —.
