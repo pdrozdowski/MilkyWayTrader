@@ -26,7 +26,7 @@ class FakeVector2 {
     add (other) { this.x += other.x; this.y += other.y; return this; }
 }
 
-const { ShipDestruction, shipDestructionDurationMs } = transpileModule('src/game/effects/shipDestruction.ts', {
+const { ShipDestruction, shipDestructionDurationMs, shipDestructionFragmentCounts } = transpileModule('src/game/effects/shipDestruction.ts', {
     phaser: { Math: { Vector2: FakeVector2 } },
     '../visual/layers': { ObjectDepth: { Ship: 20, UI: 100 } }
 });
@@ -102,7 +102,7 @@ test('hide and idempotent destroy clean up animation while stale callbacks canno
     assert.equal(updates, updatesBeforeStaleCallback);
 });
 
-test('ship destruction creates three fragments, uses the exact transition duration, and cleans up idempotently', () => {
+test('ship destruction creates five large and eight small fragments, uses the exact transition duration, and cleans up idempotently', () => {
     const events = { handlers: new Map(), once (name, callback) { this.handlers.set(name, callback); }, off (name, callback) { if (this.handlers.get(name) === callback) this.handlers.delete(name); } };
     const tweens = { added: [], killed: [], add (config) { this.added.push(config); }, killTweensOf (target) { this.killed.push(target); } };
     const graphics = [];
@@ -114,11 +114,12 @@ test('ship destruction creates three fragments, uses the exact transition durati
     const scene = { events, tweens, scale: { width: 1024, height: 768 }, add: { graphics: graphic, rectangle: () => overlay } };
     const effect = new ShipDestruction(scene);
     effect.play({ x: 8, y: 12 }, () => {});
-    assert.equal(graphics.length, 3);
-    assert.equal(tweens.added.length, 4);
+    assert.deepEqual(shipDestructionFragmentCounts, { large: 5, small: 8 });
+    assert.equal(graphics.length, shipDestructionFragmentCounts.large + shipDestructionFragmentCounts.small);
+    assert.equal(tweens.added.length, graphics.length + 1);
     assert(tweens.added.every(tween => tween.duration === shipDestructionDurationMs));
     effect.destroy(); effect.destroy();
-    assert.deepEqual(graphics.map(item => item.destroyed), [1, 1, 1]);
+    assert.deepEqual(graphics.map(item => item.destroyed), Array(graphics.length).fill(1));
     assert.equal(overlay.destroyed, 1);
     assert.equal(events.handlers.size, 0);
 });
