@@ -24,5 +24,6 @@ export const displayLabels = {
     planetStock: 'Planet stock', playerStock: 'Ship inventory', produces: 'Produces', consumes: 'Consumes', supply: 'Supply',
     averageBuyPrice: 'Average buy price', inBudget: 'IN BUDGET', outOfBudget: 'OUT OF BUDGET',
     tradeResult: 'Trade result:', profit: 'PROFIT', loss: 'LOSS', clockRunning: 'RUNNING', clockPaused: 'PAUSED',
-    supplies: 'Supplies', alloys: 'Alloys', medicines: 'Medicines'
+    supplies: 'Supplies', alloys: 'Alloys', medicines: 'Medicines',
+    teleportToAsteroid: 'Teleport to live asteroid'
 } as const;

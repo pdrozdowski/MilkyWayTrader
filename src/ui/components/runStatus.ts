@@ -55,6 +55,7 @@ export function mountRunStatus (root: HTMLElement, port: RunStatusPort): UiHandl
         renderValue(cargo, `Cargo ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`);
         renderValue(hp, `HP ${snapshot.currentHitPoints} / ${snapshot.maximumHitPoints}`);
         bar.value = snapshot.currentHitPoints; bar.max = snapshot.maximumHitPoints;
+        bar.dataset.healthBand = snapshot.healthBand;
         contents.textContent = 'Cargo contents:';
         cargoRows.replaceChildren(...snapshot.cargo.map(stack => {
             const row = document.createElement('tr');

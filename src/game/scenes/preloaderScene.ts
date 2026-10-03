@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import { loadObjectAssets, registerObjectAnimations } from '../objects/_shared/registry';
 import { loadSoundAssets } from '../audio/registry';
+import type { GameOverReturnPort } from '../application/results/gameOverReturn';
 
 export class Preloader extends Scene
 {
@@ -41,6 +42,7 @@ export class Preloader extends Scene
         this.load.image('asteroid:dirt', 'asteroid_dirt.png');
         this.load.image('control:fire', 'button_fire.png');
         this.load.image('control:boost', 'button_boost.png');
+        this.load.image('game-over:destroyed-ship', 'the_end_ship_destroyed.png');
         loadObjectAssets(this);
         loadSoundAssets(this);
     }
@@ -51,7 +53,8 @@ export class Preloader extends Scene
         //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.
         //  For example, you can define global animations here, so we can use them in other scenes.
 
-        //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.
-        this.scene.start('MainMenu');
+        const terminalResult = (this.registry.get('gameOverReturn') as GameOverReturnPort | undefined)?.take() ?? null;
+        if (terminalResult) this.scene.start('GameOver', { terminalResult });
+        else this.scene.start('MainMenu');
     }
 }

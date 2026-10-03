@@ -1,4 +1,4 @@
- :root { --ui-surface: #102039; --ui-surface-raised: #122541; --ui-border: #8bdfff; --ui-overlay: #07111bd9; --ui-orientation-overlay: #0b1529; --ui-focus: #fff; --ui-action: #1c4266; --ui-danger: #8b2635; --ui-health: #53d769; --ui-disabled: #526273; --ui-title-outline: #253041; --page-surround: #000; }
+:root { --ui-surface: #102039; --ui-surface-raised: #122541; --ui-border: #8bdfff; --ui-overlay: #07111bd9; --ui-orientation-overlay: #0b1529; --ui-focus: #fff; --ui-action: #1c4266; --ui-danger: #8b2635; --ui-health: #53d769; --ui-health-warning: #f59e0b; --ui-health-critical: #ef4444; --ui-health-track: #526273; --ui-disabled: #526273; --ui-title-outline: #253041; --page-surround: #000; }
 
 html,
 body {
@@ -92,7 +92,18 @@ body {
 #run-status-secondary > button { justify-content: flex-start; gap: 10px; width: 100%; }
 #run-status-secondary > button[aria-expanded="true"] { border-color: var(--ui-border); background: var(--ui-action); }
 .run-status-icon { display: inline-block; flex: 0 0 auto; width: 32px; height: 32px; object-fit: contain; image-rendering: pixelated; }
-#run-status-hp { flex: 1; min-width: 0; height: 12px; accent-color: var(--ui-health); }
+#run-status-hp { flex: 1; min-width: 0; height: 12px; appearance: none; overflow: hidden; border: 0; border-radius: 999px; background: var(--ui-health-track); }
+#run-status-hp::-webkit-progress-bar { background: var(--ui-health-track); }
+#run-status-hp::-webkit-progress-value { background: var(--ui-health); }
+#run-status-hp::-moz-progress-bar { background: var(--ui-health); }
+#run-status-hp[data-health-band="warning"]::-webkit-progress-value { background: var(--ui-health-warning); }
+#run-status-hp[data-health-band="warning"]::-moz-progress-bar { background: var(--ui-health-warning); }
+#run-status-hp[data-health-band="critical"]::-webkit-progress-value { background: var(--ui-health-critical); }
+#run-status-hp[data-health-band="critical"]::-moz-progress-bar { background: var(--ui-health-critical); }
+#game-over-status { position: absolute; z-index: 4; right: 12px; bottom: 12px; left: 12px; display: grid; justify-items: center; gap: 10px; padding: 12px; color: #fff; background: var(--ui-surface); text-align: center; }
+#game-over-status p { margin: 0; }
+#game-over-status button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-action); font: inherit; cursor: pointer; }
+#game-over-status button:focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
 #run-status button { min-height: 38px; padding: 8px 10px; color: #fff; font: inherit; cursor: pointer; pointer-events: auto; }
 #run-status :focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 #run-status-ship-details, #run-status-cargo-details { position: absolute; top: calc(100% + 6px); left: 50%; min-width: 220px; padding: 8px 12px; text-align: left; line-height: 1.4; transform: translateX(-50%); }

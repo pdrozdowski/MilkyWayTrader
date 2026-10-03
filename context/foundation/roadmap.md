@@ -47,7 +47,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-04 | s04-first-planetary-trade | User can inspect Seroton's landed market and complete a commodity trade. | S-03 | US-03, FR-019, FR-020, FR-021, FR-022, FR-023 | in-progress |
 | S-05 | s05-planet-ship-services | User can repair and upgrade the ship through planet-specific services. | S-04 | US-03, FR-013, FR-024, FR-025, FR-026, FR-030 | proposed |
 | S-06 | s06-timed-debt-outcome | User can abandon a run or reach timeout and see the debt outcome and final cash score. | S-01, S-04 | US-01, FR-005, FR-007, FR-009 | proposed |
-| S-07 | s07-environmental-hazards-and-death | User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed. | S-01, S-02 | US-01, US-04, FR-008, FR-032, FR-034 | planning |
+| S-07 | s07-environmental-hazards-and-death | User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed. | S-01, S-02 | US-01, US-04, FR-008, FR-032, FR-034 | in-progress |
 | S-08 | s08-asteroid-combat | User can fire the ship weapon and fragment or destroy asteroids. | S-07 | US-04, FR-031, FR-033, FR-034 | done |
 | S-09 | s09-asteroid-salvage | User can recover commodities from salvage released by weapon-destroyed asteroids. | S-04, S-08 | US-04, FR-028, FR-035, FR-036 | proposed |
 | S-10 | s10-player-sign-in-status | User can sign in, sign out, and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-037, FR-038, FR-039 | in-progress |
@@ -156,7 +156,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Collision outcomes must be deterministic enough to preserve readable damage feedback without destabilizing movement or object populations.
-- **Status:** planning
+- **Status:** in-progress
 
 ### S-08: Fight and fragment asteroids
 

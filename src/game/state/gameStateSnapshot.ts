@@ -8,10 +8,16 @@ import type { WeaponState } from './weaponState';
 import type { PlanetLifecycleState } from './planetLifecycleState';
 import type { SerotonMarketState } from './serotonMarketState';
 import type { AsteroidState } from './asteroidState';
+import type { TerminalResultState } from './terminalResultState';
 
 export interface GameStateSnapshot
 {
-    readonly schemaVersion: 10;
+    readonly schemaVersion: 11;
+    readonly runId: string;
+    readonly randomState: number;
+    /** True until Moolaris has dealt its one damage hit for the current entry. */
+    readonly moolarisDamageArmed: boolean;
+    readonly terminalResult: TerminalResultState | null;
     readonly clock: GameClockState;
     readonly credits: number;
     readonly cargo: readonly CargoState[];

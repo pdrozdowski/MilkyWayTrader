@@ -2,6 +2,7 @@ import { cargoCapacityByLevel, maximumShipHitPoints } from '../domain/runBalance
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 
 export type RunState = 'RUNNING' | 'PAUSED';
+export type HealthBand = 'healthy' | 'warning' | 'critical';
 export interface RunStatusCargoStack { readonly commodityId: string; readonly quantity: number; }
 export interface RunStatusSystem { readonly level: number; readonly available: boolean; }
 export interface RunStatusSnapshot
@@ -15,6 +16,7 @@ export interface RunStatusSnapshot
     readonly cargoCapacity: number;
     readonly currentHitPoints: number;
     readonly maximumHitPoints: number;
+    readonly healthBand: HealthBand;
     readonly cargoSystem: RunStatusSystem;
     readonly engineSystem: RunStatusSystem;
     readonly weaponSystem: RunStatusSystem;
@@ -34,6 +36,7 @@ export function projectRunStatus (state: GameStateSnapshot, visible: boolean): R
         cargoCapacity: cargoCapacityByLevel[state.shipStatus.cargoLevel] ?? 0,
         currentHitPoints: state.shipStatus.currentHitPoints,
         maximumHitPoints: maximumShipHitPoints,
+        healthBand: state.shipStatus.currentHitPoints >= 70 ? 'healthy' : state.shipStatus.currentHitPoints >= 30 ? 'warning' : 'critical',
         cargoSystem: { level: state.shipStatus.cargoLevel, available: true },
         engineSystem: { level: state.shipStatus.engineLevel, available: true },
         weaponSystem: { level: state.shipStatus.weaponLevel, available: true },

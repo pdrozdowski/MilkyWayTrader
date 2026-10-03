@@ -2,7 +2,7 @@ import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
-import { test as base } from '@playwright/test';
+import { test as base, type Page } from '@playwright/test';
 
 const execute = promisify(execFile);
 const sessionDirectory = resolve(process.cwd(), '.cache', 'playwright', 'sessions');
@@ -30,6 +30,8 @@ export interface TestSession
 type Fixtures = {
     readonly testSessionMode: SessionMode;
     readonly testSession: TestSession;
+    readonly secondaryAuthenticatedPage: Page;
+    readonly anonymousPage: Page;
 };
 
 export const test = base.extend<Fixtures>({
@@ -45,8 +47,35 @@ export const test = base.extend<Fixtures>({
         } finally {
             await cleanupSession(artifact);
         }
+    },
+    secondaryAuthenticatedPage: async ({ browser }, use) => {
+        const artifact = await createSession('authenticated');
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        await page.addInitScript(initializeSession, artifact);
+        try {
+            await use(page);
+        } finally {
+            await context.close();
+            await cleanupSession(artifact);
+        }
+    },
+    anonymousPage: async ({ browser }, use) => {
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        try {
+            await use(page);
+        } finally {
+            await context.close();
+        }
     }
 });
+
+function initializeSession (session: SessionArtifact): void
+{
+    window.localStorage.setItem('milky-way-trader:anonymous_id', session.anonymousId);
+    if (session.authStorageKey && session.authSession) window.localStorage.setItem(session.authStorageKey, JSON.stringify(session.authSession));
+}
 
 async function createSession (mode: SessionMode): Promise<SessionArtifact>
 {

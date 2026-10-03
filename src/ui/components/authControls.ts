@@ -8,7 +8,7 @@ function required<T extends Element> (root: HTMLElement, selector: string): T
     return element;
 }
 
-export function mountAuthControls (root: HTMLElement, port: AuthPort): UiHandle
+export function mountAuthControls (root: HTMLElement, port: AuthPort, beforeSignIn: () => void = () => {}): UiHandle
 {
     const signIn = required<HTMLButtonElement>(root, '#main-menu-sign-in-preview');
     const signInLabel = required<HTMLElement>(signIn, '.main-menu-sign-in-preview-label');
@@ -25,7 +25,13 @@ export function mountAuthControls (root: HTMLElement, port: AuthPort): UiHandle
         status.classList.toggle('run-status-auth--signed-in', signedIn);
         status.title = unavailable ? displayLabels.authUnavailable : snapshot.message ?? '';
     };
-    const signInClick = (): void => { void (currentSnapshot.status === 'signed-in' ? port.signOut() : port.signInWithGoogle()); };
+    const signInClick = (): void => {
+        if (currentSnapshot.status === 'signed-in') void port.signOut();
+        else {
+            beforeSignIn();
+            void port.signInWithGoogle();
+        }
+    };
     signIn.addEventListener('click', signInClick);
     const unsubscribe = port.subscribe(render);
     render(currentSnapshot);

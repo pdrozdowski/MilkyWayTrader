@@ -20,8 +20,72 @@ import { decodeGameState, encodeGameState } from '../src/game/application/gameSt
 import { asteroidFragmentChildCount, asteroidTuning } from '../src/game/definitions/gameplayTuning.ts';
 import { advanceAsteroidMotions, asteroidRadius, fragmentAsteroid } from '../src/game/mechanics/asteroid/asteroidSimulation.ts';
 import { teleportShipToPlanet } from '../src/game/mechanics/debug/teleportShipToPlanet.ts';
+import { teleportShipToAsteroid } from '../src/game/mechanics/debug/teleportShipToAsteroid.ts';
+import { asteroidDamageRanges, nextRandomInteger } from '../src/game/mechanics/hazards/damage.ts';
+import { resolveTerminalResult } from '../src/game/mechanics/hazards/terminal.ts';
 
 const marketStocks = state => state.markets[0].commodityStocks.map(commodity => ({ ...commodity }));
+
+test('hazard damage uses inclusive seeded ranges and a terminal run cannot advance', () => {
+    for (const [size, range] of Object.entries(asteroidDamageRanges)) {
+        const values = new Set();
+        for (let seed = 0; seed < 10_000; seed++) {
+            const result = nextRandomInteger(seed, range.minimum, range.maximum);
+            assert(result.value >= range.minimum && result.value <= range.maximum, size);
+            values.add(result.value);
+        }
+        assert(values.has(range.minimum), `${size} reaches its inclusive minimum`);
+        assert(values.has(range.maximum), `${size} reaches its inclusive maximum`);
+    }
+    const terminal = {
+        ...initialGameState,
+        clock: { ...initialGameState.clock, activeElapsedMs: 10 },
+        shipStatus: { ...initialGameState.shipStatus, currentHitPoints: 0 },
+        terminalResult: { runId: initialGameState.runId, outcome: 'death', activeElapsedMs: 10, finalCredits: initialGameState.credits }
+    };
+    assert.equal(advanceGameSimulation(terminal, { target: null, boostRequested: false, firing: false }, 100), terminal);
+});
+
+test('terminal reducer captures fractional active time as canonical integer milliseconds', () => {
+    const terminal = resolveTerminalResult({
+        ...initialGameState,
+        clock: { ...initialGameState.clock, activeElapsedMs: 123.75 },
+        shipStatus: { ...initialGameState.shipStatus, currentHitPoints: 0 }
+    });
+    assert.equal(terminal.terminalResult?.activeElapsedMs, 123);
+});
+
+test('Moolaris damages once per entry, re-arms after exit, and terminalizes a low-health return', () => {
+    const input = { target: null, boostRequested: false, firing: false };
+    const inside = {
+        ...initialGameState,
+        asteroids: [],
+        ship: { ...initialGameState.ship, position: { ...moolarisDefinition.position } },
+        shipStatus: { ...initialGameState.shipStatus, currentHitPoints: 30 }
+    };
+    const firstEntry = advanceGameSimulation(inside, input, 1);
+    assert(firstEntry.shipStatus.currentHitPoints >= 5 && firstEntry.shipStatus.currentHitPoints <= 10);
+    const heldInside = advanceGameSimulation(firstEntry, input, 1);
+    assert.equal(heldInside.shipStatus.currentHitPoints, firstEntry.shipStatus.currentHitPoints);
+    const exited = {
+        ...heldInside,
+        ship: { ...heldInside.ship, position: { x: moolarisControlRadius + 1, y: 0 } }
+    };
+    const rearmed = advanceGameSimulation(exited, input, 1);
+    assert.equal(rearmed.moolarisDamageArmed, true);
+    const lethalEntry = advanceGameSimulation({
+        ...rearmed,
+        ship: { ...rearmed.ship, position: { ...moolarisDefinition.position } },
+        shipStatus: { ...rearmed.shipStatus, currentHitPoints: 29 }
+    }, input, 1);
+    assert.equal(lethalEntry.shipStatus.currentHitPoints, 0);
+    assert.deepEqual(lethalEntry.terminalResult, {
+        runId: initialGameState.runId,
+        outcome: 'death',
+        activeElapsedMs: lethalEntry.clock.activeElapsedMs,
+        finalCredits: lethalEntry.credits
+    });
+});
 
 test('debug teleport moves an airborne ship to a current planet centre without retaining flight momentum', () => {
     const target = initialGameState.planets.find(planet => planet.id === 'lactozis-7c');
@@ -51,6 +115,27 @@ test('debug teleport moves an airborne ship to a current planet centre without r
     assert.equal(teleportShipToPlanet(inFlight, 'unknown'), inFlight);
     const landed = { ...inFlight, planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null } };
     assert.equal(teleportShipToPlanet(landed, target.id), landed);
+});
+
+test('debug teleport moves an airborne ship to the first live asteroid without retaining flight momentum', () => {
+    const target = initialGameState.asteroids[0];
+    assert(target);
+    const inFlight = {
+        ...initialGameState,
+        ship: { ...initialGameState.ship, velocity: { x: 220, y: -80 }, enginesOn: true, boosting: true, boostAcceleration: 120, asteroidControlLockedUntilActiveMs: 500 },
+        planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: null, relandingLockedPlanetId: null }
+    };
+    const teleported = teleportShipToAsteroid(inFlight);
+    assert.deepEqual(teleported.ship.position, target.position);
+    assert.deepEqual(teleported.ship.velocity, { x: 0, y: 0 });
+    assert.equal(teleported.ship.enginesOn, false);
+    assert.equal(teleported.ship.boosting, false);
+    assert.equal(teleported.ship.boostAcceleration, 0);
+    assert.equal(teleported.ship.asteroidControlLockedUntilActiveMs, null);
+    assert.equal(teleported.planetLifecycle.capturedPlanetId, null);
+    assert.deepEqual(inFlight.ship.velocity, { x: 220, y: -80 }, 'teleport leaves its input immutable');
+    const withoutAsteroids = { ...inFlight, asteroids: [] };
+    assert.equal(teleportShipToAsteroid(withoutAsteroids), withoutAsteroids);
 });
 
 const tuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5 };
@@ -324,6 +409,11 @@ test('asteroid tuning keeps safe-area lifecycle and deterministic fragment count
         medium: { radius: 48, hitPoints: 2 },
         small: { radius: 24, hitPoints: 1 }
     });
+    assert.deepEqual(asteroidTuning.shipDamage, {
+        small: { minimum: 5, maximum: 10 },
+        medium: { minimum: 10, maximum: 20 },
+        big: { minimum: 15, maximum: 30 }
+    });
     assert.equal(asteroidTuning.fragmentDrift.speed, 180);
     const counts = Array.from({ length: 1_000 }, (_, index) => asteroidFragmentChildCount(`asteroid-parent-${index}`));
     assert(counts.every(count => count >= 2 && count <= 4));
@@ -526,7 +616,7 @@ test('safe-area culling records the boundary crossing and cannot survive a long 
     assert.equal(advanceAsteroidMotions([beforeCull], 15_010, 1, { x: 0, y: 0 }).length, 0);
 });
 
-test('asteroid impacts select the earliest stable target without tunnelling and preserve the S-07 ship HP boundary', () => {
+test('asteroid impacts select the earliest stable target without tunnelling and apply deterministic S-07 damage', () => {
     const projectile = { id: 'shot', position: { x: 4_000, y: 0 }, velocity: { x: 20_000, y: 0 }, bornAtActiveMs: 0 };
     const crossed = advanceGameSimulation({ ...initialGameState, projectiles: [projectile], asteroids: [
         asteroid('far', { x: 5_000, y: 0 }), asteroid('near', { x: 4_500, y: 0 })
@@ -542,7 +632,7 @@ test('asteroid impacts select the earliest stable target without tunnelling and 
     const shipState = advanceGameSimulation({ ...initialGameState, asteroids: [asteroid('ship-hit', { x: 5_000, y: 0 })], ship: {
         ...initialGameState.ship, position: { x: 5_000, y: 0 }
     } }, quietInput, 1);
-    assert.equal(shipState.shipStatus.currentHitPoints, initialGameState.shipStatus.currentHitPoints);
+    assert(shipState.shipStatus.currentHitPoints >= 70 && shipState.shipStatus.currentHitPoints <= 85);
     assert.equal(shipState.ship.asteroidImpactAtActiveMs, 1, 'every committed ship impact records an exact presentation event');
     assert.equal(Math.hypot(shipState.ship.velocity.x, shipState.ship.velocity.y), 240, 'every asteroid impact repels the ship at the sun escape speed');
     assert.equal(shipState.ship.asteroidControlLockedUntilActiveMs, 501, 'every asteroid impact applies a half-length sun-style recovery lock');

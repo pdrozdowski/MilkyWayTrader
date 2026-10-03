@@ -6,11 +6,15 @@ import { AUTO, Game, Scale } from 'phaser';
 import { Preloader } from './scenes/preloaderScene';
 import { initializeGameAudio } from './audio/gameAudio';
 import { GameStateProvider } from './application/gameStateProvider';
+import type { ResultStorePort } from './application/results/resultStore';
+import type { GameOverReturnPort } from './application/results/gameOverReturn';
 import { initialGameState } from './definitions/initialGameState';
 
 export interface GameBootstrapHooks
 {
     onReady?(game: Game): void;
+    resultStore?: ResultStorePort;
+    gameOverReturn?: GameOverReturnPort;
 }
 
 //  Find out more information about the Game Config at:
@@ -50,6 +54,8 @@ const StartGame = (parent: string, hooks: GameBootstrapHooks = {}) => {
             postBoot: game => {
                 initializeGameAudio(game);
                 game.registry.set('gameStateProvider', new GameStateProvider(initialGameState));
+                game.registry.set('resultStore', hooks.resultStore);
+                game.registry.set('gameOverReturn', hooks.gameOverReturn);
                 hooks.onReady?.(game);
             }
         }

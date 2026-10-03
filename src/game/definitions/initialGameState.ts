@@ -7,8 +7,20 @@ import { asteroidBeltDefinition, asteroidBeltLayout, asteroidTuning } from './ga
 
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
 
-export const initialGameState: GameStateSnapshot = {
-    schemaVersion: 10,
+export interface InitialGameStateInput
+{
+    readonly runId: string;
+    readonly randomSeed: number;
+}
+
+export function createInitialGameState ({ runId, randomSeed }: InitialGameStateInput): GameStateSnapshot
+{
+    return {
+    schemaVersion: 11,
+    runId,
+    randomState: randomSeed,
+    moolarisDamageArmed: true,
+    terminalResult: null,
     clock: {
         budgetMs: ACTIVE_TIME_BUDGET_MS,
         activeElapsedMs: 0,
@@ -78,4 +90,11 @@ export const initialGameState: GameStateSnapshot = {
             outsideSafeAreaSinceActiveMs: null
         };
     })
-};
+    };
+}
+
+/** Deterministic fixture state. Browser runs receive their identity and seed at start. */
+export const initialGameState = createInitialGameState({
+    runId: '00000000-0000-4000-8000-000000000001',
+    randomSeed: 1
+});

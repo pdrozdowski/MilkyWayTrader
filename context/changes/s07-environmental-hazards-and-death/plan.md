@@ -223,9 +223,9 @@ The new result relation is additive. Existing active snapshots are intentionally
 
 #### Automated
 
-- [ ] 1.1 `npm.cmd run test:mechanics` proves inclusive ranges, first-impact ordering, Moolaris entry/exit rearm, HP 30/29 thresholds, input immutability, and frozen terminal ticks.
-- [ ] 1.2 `npm.cmd run test:domain` proves codec round trips, invalid-shape rejection, immutable snapshots, and equal outcomes for uninterrupted versus restored seeded runs.
-- [ ] 1.3 `npm.cmd run typecheck` passes.
+- [x] 1.1 `npm.cmd run test:mechanics` proves inclusive ranges, first-impact ordering, Moolaris entry/exit rearm, HP 30/29 thresholds, input immutability, and frozen terminal ticks.
+- [x] 1.2 `npm.cmd run test:domain` proves codec round trips, invalid-shape rejection, immutable snapshots, and equal outcomes for uninterrupted versus restored seeded runs.
+- [x] 1.3 `npm.cmd run typecheck` passes.
 
 #### Manual
 
@@ -235,9 +235,9 @@ The new result relation is additive. Existing active snapshots are intentionally
 
 #### Automated
 
-- [ ] 2.1 Migration applies through the local Supabase test lifecycle and owner RLS allows one user to read/write only their own result.
-- [ ] 2.2 Focused adapter tests prove unsigned no-op, signed insert, retry idempotency, and a surfaced write failure.
-- [ ] 2.3 `npm.cmd run typecheck` passes.
+- [x] 2.1 Migration applies through the local Supabase test lifecycle and owner RLS allows one user to read/write only their own result.
+- [x] 2.2 Focused adapter tests prove unsigned no-op, signed insert, retry idempotency, and a surfaced write failure.
+- [x] 2.3 `npm.cmd run typecheck` passes.
 
 #### Manual
 
@@ -247,8 +247,8 @@ The new result relation is additive. Existing active snapshots are intentionally
 
 #### Automated
 
-- [ ] 3.1 Fast UI/component tests prove HP boundary bands (70, 69, 30, 29), terminal UI hide/show signaling, retry state, and idempotent cleanup.
-- [ ] 3.2 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass.
+- [x] 3.1 Fast UI/component tests prove HP boundary bands (70, 69, 30, 29), terminal UI hide/show signaling, retry state, and idempotent cleanup.
+- [x] 3.2 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass.
 
 #### Manual
 
@@ -259,8 +259,8 @@ The new result relation is additive. Existing active snapshots are intentionally
 
 #### Automated
 
-- [ ] 4.1 `npm.cmd run test:ui` passes against local Docker Supabase; the journey proves each attempted teleport reduces HP and reaches `GameOver` within ten attempts.
-- [ ] 4.2 `npm.cmd run test:project` passes when the existing local browser/Docker prerequisites are available.
+- [x] 4.1 `npm.cmd run test:ui` passes against local Docker Supabase; the journey proves each attempted teleport reduces HP and reaches `GameOver` within ten attempts.
+- [x] 4.2 `npm.cmd run test:project` passes when the existing local browser/Docker prerequisites are available.
 
 #### Manual
 
