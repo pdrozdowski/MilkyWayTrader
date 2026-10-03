@@ -23,8 +23,9 @@ interface RestResult
 test.describe('local run-results RLS', () => {
     test.use({ testSessionMode: 'authenticated' });
 
-    test('an owner can insert and select a result while another user and an anonymous browser cannot access it', async ({ page, secondaryAuthenticatedPage, anonymousPage }) => {
+    test('an owner can insert and select a result while another user and an anonymous browser cannot access it', async ({ page, testSession, secondaryAuthenticatedPage, anonymousPage }) => {
         test.setTimeout(60_000);
+        expect(testSession.mode).toBe('authenticated');
         const runId = randomUUID();
         const owner = await runResultsRequest(page, '/run_results', {
             method: 'POST',

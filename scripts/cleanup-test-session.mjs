@@ -29,7 +29,7 @@ async function cleanup (file)
     if (events.error) throw new Error(`Unable to remove test telemetry: ${events.error.message}`);
     if (session.userId) {
         const deleted = await admin.auth.admin.deleteUser(session.userId);
-        if (deleted.error) throw new Error(`Unable to remove local test user: ${deleted.error.message}`);
+        if (deleted.error && deleted.error.message !== 'User not found') throw new Error(`Unable to remove local test user: ${deleted.error.message}`);
     }
     await rm(file, { force: true });
 }

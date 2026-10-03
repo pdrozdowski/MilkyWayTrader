@@ -64,9 +64,10 @@ test.describe('authenticated trading journey', () => {
             await expect.poll(async () => healthBar.evaluate(element => (element as HTMLProgressElement).value), {
                 message: `Asteroid teleport attempt ${attempt} did not reduce HP from ${hitPointsBefore}.`
             }).toBeLessThan(hitPointsBefore);
-            if (!await healthBar.isVisible()) {
-                const resultStatus = page.getByLabel('Result delivery status');
-                await expect(resultStatus).toBeVisible();
+            const resultStatus = page.getByLabel('Result delivery status');
+            const reachedResultScreen = await resultStatus.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true).catch(() => false);
+            if (reachedResultScreen) {
+                await expect(healthBar).toBeHidden();
                 reachedGameOver = true;
                 await expect(resultStatus).toContainText(resultLabels.saved);
                 break;
