@@ -61,10 +61,19 @@ test.describe('authenticated trading journey', () => {
             await page.keyboard.press('d');
             await expect(page.getByRole('dialog', { name: 'Debug menu' })).toBeVisible();
             await page.getByRole('button', { name: displayLabels.teleportToAsteroid, exact: true }).click();
-            await expect.poll(async () => healthBar.evaluate(element => (element as HTMLProgressElement).value), {
-                message: `Asteroid teleport attempt ${attempt} did not reduce HP from ${hitPointsBefore}.`
-            }).toBeLessThan(hitPointsBefore);
             const resultStatus = page.getByLabel('Result delivery status');
+            const impactOutcome = await Promise.race([
+                resultStatus.waitFor({ state: 'visible', timeout: 5_000 }).then(() => 'game-over' as const),
+                expect.poll(async () => healthBar.evaluate(element => (element as HTMLProgressElement).value), {
+                    message: `Asteroid teleport attempt ${attempt} neither reduced HP nor ended the run.`
+                }).toBeLessThan(hitPointsBefore).then(() => 'damaged' as const)
+            ]);
+            if (impactOutcome === 'game-over') {
+                await expect(healthBar).toBeHidden();
+                reachedGameOver = true;
+                await expect(resultStatus).toContainText(resultLabels.saved);
+                break;
+            }
             const reachedResultScreen = await resultStatus.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true).catch(() => false);
             if (reachedResultScreen) {
                 await expect(healthBar).toBeHidden();
