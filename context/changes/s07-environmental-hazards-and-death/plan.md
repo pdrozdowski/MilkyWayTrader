@@ -229,7 +229,7 @@ The new result relation is additive. Existing active snapshots are intentionally
 
 #### Manual
 
-- [ ] 1.4 A developer can observe that Moolaris deals one hit per entry, not continuous damage while the ship remains inside its control radius.
+- [x] 1.4 A developer can observe that Moolaris deals one hit per entry, not continuous damage while the ship remains inside its control radius.
 
 ### Phase 2: Private retained-result boundary
 
@@ -241,7 +241,7 @@ The new result relation is additive. Existing active snapshots are intentionally
 
 #### Manual
 
-- [ ] 2.4 A signed-in local player can inspect that a death result appears once in their local `run_results` history and is inaccessible to another user.
+- [x] 2.4 A signed-in local player can inspect that a death result appears once in their local `run_results` history and is inaccessible to another user.
 
 ### Phase 3: Death sequence, final result, and HUD status
 
@@ -252,8 +252,8 @@ The new result relation is additive. Existing active snapshots are intentionally
 
 #### Manual
 
-- [ ] 3.3 Death visibly produces three diverging flaming fragments, world fade, and no interactive game controls for exactly the transition period before `GameOver` appears.
-- [ ] 3.4 The result screen shows active time and cash captured at death and exposes a retry after a deliberately failed local write.
+- [x] 3.3 Death visibly produces three diverging flaming fragments, world fade, and no interactive game controls for exactly the transition period before `GameOver` appears.
+- [x] 3.4 The result screen shows active time and cash captured at death and exposes a retry after a deliberately failed local write.
 
 ### Phase 4: Browser journey and regression verification
 
@@ -264,4 +264,4 @@ The new result relation is additive. Existing active snapshots are intentionally
 
 #### Manual
 
-- [ ] 4.3 A reviewer can see the test's explicit ten-attempt failure message by temporarily preventing damage, confirming it never silently passes a non-lethal hazard loop.
+- [x] 4.3 A reviewer can see the test's explicit ten-attempt failure message by temporarily preventing damage, confirming it never silently passes a non-lethal hazard loop.
