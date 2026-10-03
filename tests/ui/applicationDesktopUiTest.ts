@@ -51,12 +51,23 @@ test.describe('authenticated trading journey', () => {
         expect(testSession.mode).toBe('authenticated');
         await page.goto('/', { waitUntil: 'domcontentloaded' });
         await page.getByRole('button', { name: 'New Game', exact: true }).click();
-        await expect(page.getByLabel('Run status')).toBeVisible();
+        const runStatus = page.getByLabel('Run status');
+        await expect(runStatus).toBeVisible();
         const healthBar = page.getByRole('progressbar');
         await expect(healthBar).toBeVisible();
 
         const resultStatus = page.getByLabel('Result delivery status');
         for (let attempt = 1; attempt <= 5; attempt += 1) {
+            if (await runStatus.isHidden()) {
+                await expect.poll(async () => await resultStatus.isVisible(), {
+                    timeout: 5_000,
+                    intervals: [1_000],
+                    message: 'Game-over result screen did not report result delivery after five one-second checks.'
+                }).toBe(true);
+                await expect(healthBar).toBeHidden();
+                await expect(resultStatus).toContainText(resultLabels.saved);
+                return;
+            }
             const hitPointsBefore = await healthBar.evaluate(element => (element as HTMLProgressElement).value);
             if (hitPointsBefore > 0) {
                 await page.keyboard.press('d');
@@ -64,8 +75,10 @@ test.describe('authenticated trading journey', () => {
                 await page.waitForTimeout(500);
                 await page.getByRole('button', { name: displayLabels.teleportToAsteroid, exact: true }).click();
                 await expect.poll(async () => {
+                    if (await runStatus.isHidden()) return 'game-over';
                     if (await resultStatus.isVisible()) return 'game-over';
-                    const hitPointsAfter = await healthBar.evaluate(element => (element as HTMLProgressElement).value);
+                    const hitPointsAfter = await healthBar.evaluate(element => (element as HTMLProgressElement).value, undefined, { timeout: 100 }).catch(() => null);
+                    if (hitPointsAfter === null) return 'game-over';
                     return hitPointsAfter < hitPointsBefore ? 'damaged' : 'waiting';
                 }, {
                     timeout: 1_000,
