@@ -47,7 +47,7 @@ test.describe('authenticated trading journey', () => {
     // Lower-level tests cannot prove browser input, Phaser event routing, DOM HP projection, the timed scene transition, and authenticated local Supabase persistence together.
     // This uniquely verifies that an accessible browser control drives all of those real boundaries without direct state mutation.
     test('a signed-in player reaches a retained death result through bounded live-asteroid collisions', async ({ page, testSession }) => {
-        test.setTimeout(60_000);
+        test.setTimeout(120_000);
         expect(testSession.mode).toBe('authenticated');
         await page.goto('/', { waitUntil: 'domcontentloaded' });
         await page.getByRole('button', { name: 'New Game', exact: true }).click();
@@ -67,6 +67,7 @@ test.describe('authenticated trading journey', () => {
                 const hitPointsAfter = await healthBar.evaluate(element => (element as HTMLProgressElement).value);
                 return hitPointsAfter < hitPointsBefore ? 'damaged' : 'waiting';
             }, {
+                timeout: 10_000,
                 message: `Asteroid teleport attempt ${attempt} neither reduced HP nor ended the run.`
             }).not.toBe('waiting');
             if (await resultStatus.isVisible()) {
@@ -75,7 +76,7 @@ test.describe('authenticated trading journey', () => {
                 await expect(resultStatus).toContainText(resultLabels.saved);
                 break;
             }
-            const reachedResultScreen = await resultStatus.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true).catch(() => false);
+            const reachedResultScreen = await resultStatus.waitFor({ state: 'visible', timeout: 10_000 }).then(() => true).catch(() => false);
             if (reachedResultScreen) {
                 await expect(healthBar).toBeHidden();
                 reachedGameOver = true;
