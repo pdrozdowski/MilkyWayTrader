@@ -5,7 +5,6 @@ import { getAudioService } from '../audio/gameAudio';
 import { updateShipAudio } from '../audio/shipAudio';
 import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
-import { Starfield } from '../effects/starfield';
 import { ShipDestruction } from '../effects/shipDestruction';
 import { AsteroidExplosion, fragmentedParents, fragmentImpactPosition, planetImpactParents, planetImpactSmallAsteroids, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, projectileImpactPositions, sunConsumedAsteroids } from '../effects/asteroidExplosion';
 import { OrbitalPaths } from '../effects/orbitalPaths';
@@ -30,7 +29,8 @@ import type { TerminalResultState } from '../state/terminalResultState';
 export class Game extends Scene
 {
     camera: Phaser.Cameras.Scene2D.Camera;
-    background: Starfield;
+    nebulaBackground: GameObjects.TileSprite;
+    starfieldBackground: GameObjects.TileSprite;
     asteroids: AsteroidProjection;
     asteroidExplosion: AsteroidExplosion;
     orbitalPaths: OrbitalPaths;
@@ -89,7 +89,15 @@ export class Game extends Scene
         this.camera.roundPixels = true;
         this.camera.setBackgroundColor('#000000');
         this.physics.world.setBounds(gameWorldBounds.x, gameWorldBounds.y, gameWorldBounds.width, gameWorldBounds.height);
-        this.background = new Starfield(this, gameWorldBounds.width, gameWorldBounds.height, gameWorldBounds.x, gameWorldBounds.y);
+        this.nebulaBackground = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'background:nebula')
+            .setOrigin(0)
+            .setScrollFactor(0)
+            .setTileScale(3)
+            .setDepth(ObjectDepth.Background);
+        this.starfieldBackground = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'background:starfield')
+            .setOrigin(0)
+            .setScrollFactor(0)
+            .setDepth(ObjectDepth.Background);
         this.asteroids = new AsteroidProjection(this);
         this.asteroidExplosion = new AsteroidExplosion(this);
         this.destruction = new ShipDestruction(this);
@@ -103,6 +111,7 @@ export class Game extends Scene
         }));
         this.weapon = new ShipWeapon(this, () => this.audio.play('ship-laser'));
         this.camera.centerOn(this.ship.sprite.x, this.ship.sprite.y);
+        this.updateBackgroundTiles();
         this.lossOfControl = this.add.text(512, this.scale.height / 3, 'CONTROLS DISABLED - RECOVERING...', {
             fontFamily: 'Arial', fontSize: 18, color: '#ffd6d6', backgroundColor: '#7a1212', padding: { x: 12, y: 10 }
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(ObjectDepth.UI).setVisible(false);
@@ -162,7 +171,6 @@ export class Game extends Scene
             planet.update(state.clock.activeElapsedMs, 0);
             planet.updateLandingIndicator(this.ship, state.planetLifecycle);
         }
-        this.background.update(state.clock.activeElapsedMs);
         this.asteroids.synchronize(state.asteroids);
         this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);
     }
@@ -298,6 +306,8 @@ export class Game extends Scene
         const visibleLeft = viewport.left;
         const visibleRight = viewport.right;
         const visibleBottom = viewport.bottom;
+        this.nebulaBackground.setSize(width, height);
+        this.starfieldBackground.setSize(width, height);
         this.lossOfControl.setPosition(width / 2, height / 3);
         this.exit.setPosition(width - 24, height - 24);
         const touchLayoutVisible = !this.deathTransitionStarted && (this.sys.game.device.input.touch || this.touchControlsVisible);
@@ -308,6 +318,12 @@ export class Game extends Scene
         this.boostButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 186, visibleBottom - 74);
         if (this.joystickPointer) this.drawJoystick();
         else this.releaseJoystick();
+    }
+
+    private updateBackgroundTiles (): void
+    {
+        this.nebulaBackground.setTilePosition(this.camera.scrollX / 3, this.camera.scrollY / 3);
+        this.starfieldBackground.setTilePosition(this.camera.scrollX, this.camera.scrollY);
     }
 
     private readonly flightKeyDown = (event: KeyboardEvent): void => {
@@ -438,6 +454,7 @@ export class Game extends Scene
         this.camera.setZoom(Math.abs(nextZoom - zoomTarget) < 0.001 ? zoomTarget : nextZoom);
         this.camera.roundPixels = true;
         this.camera.centerOn(state.ship.position.x, state.ship.position.y);
+        this.updateBackgroundTiles();
         const planetsById = this.planetsById(state.planets);
         for (const planet of this.planets) {
             planet.synchronize(planetsById.get(planet.id)!);
@@ -445,7 +462,6 @@ export class Game extends Scene
             planet.updateLandingIndicator(this.ship, state.planetLifecycle);
         }
         this.weapon.synchronize(state.projectiles);
-        this.background.update(state.clock.activeElapsedMs);
         this.asteroids.synchronize(state.asteroids);
         this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets, state.clock.activeElapsedMs - before.clock.activeElapsedMs);
     }
