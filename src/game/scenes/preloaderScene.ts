@@ -1,10 +1,21 @@
-import { Scene } from 'phaser';
+import { GameObjects, Scene } from 'phaser';
 import { loadObjectAssets, registerObjectAnimations } from '../objects/_shared/registry';
 import { loadSoundAssets } from '../audio/registry';
 import type { GameOverReturnPort } from '../application/results/gameOverReturn';
+import { mainMenuBackgroundTransform } from './mainMenuBackground';
+
+const preloaderInspectionFlag = 'inspect-preloader';
+const progressBarWidth = 702;
+const progressBarHeight = 64;
+const progressBarInset = 4;
 
 export class Preloader extends Scene
 {
+    private background: GameObjects.Image;
+    private progressOutline: GameObjects.Rectangle;
+    private progressBar: GameObjects.Rectangle;
+    private readonly holdAtHalfProgress = new URLSearchParams(window.location.search).has(preloaderInspectionFlag);
+
     constructor ()
     {
         super('Preloader');
@@ -12,21 +23,14 @@ export class Preloader extends Scene
 
     init ()
     {
-        //  We loaded this image in our Boot Scene, so we can display it here
-        this.add.image(512, 384, 'background');
+        this.background = this.add.image(0, 0, 'preloader-background');
+        this.progressOutline = this.add.rectangle(0, 0, progressBarWidth, progressBarHeight).setStrokeStyle(1, 0xffffff);
+        this.progressBar = this.add.rectangle(0, 0, progressBarInset, progressBarHeight - (progressBarInset * 2), 0xffffff).setOrigin(0, 0.5);
+        this.layout();
+        this.scale.on('resize', this.layout, this);
 
-        //  A simple progress bar. This is the outline of the bar.
-        this.add.rectangle(512, 384, 468, 32).setStrokeStyle(1, 0xffffff);
-
-        //  This is the progress bar itself. It will increase in size from the left based on the % of progress.
-        const bar = this.add.rectangle(512-230, 384, 4, 28, 0xffffff);
-
-        //  Use the 'progress' event emitted by the LoaderPlugin to update the loading bar
         this.load.on('progress', (progress: number) => {
-
-            //  Update the progress bar (our bar is 464px wide, so 100% = 464px)
-            bar.width = 4 + (460 * progress);
-
+            this.setProgress(this.holdAtHalfProgress ? Math.min(progress, 0.5) : progress);
         });
     }
 
@@ -50,11 +54,33 @@ export class Preloader extends Scene
     create ()
     {
         registerObjectAnimations(this);
+        if (this.holdAtHalfProgress) {
+            this.setProgress(0.5);
+            return;
+        }
+
+        this.scale.off('resize', this.layout, this);
         //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.
         //  For example, you can define global animations here, so we can use them in other scenes.
 
         const terminalResult = (this.registry.get('gameOverReturn') as GameOverReturnPort | undefined)?.take() ?? null;
         if (terminalResult) this.scene.start('GameOver', { terminalResult });
         else this.scene.start('MainMenu');
+    }
+
+    private readonly layout = (): void =>
+    {
+        const transform = mainMenuBackgroundTransform(this.scale, this.background.height);
+        const x = this.scale.width / 2;
+        const y = this.scale.height * 0.8;
+
+        this.background.setPosition(transform.x, transform.y).setScale(transform.scale);
+        this.progressOutline.setPosition(x, y);
+        this.progressBar.setPosition(x - (progressBarWidth / 2) + progressBarInset, y);
+    };
+
+    private setProgress (progress: number): void
+    {
+        this.progressBar.width = progressBarInset + ((progressBarWidth - (progressBarInset * 2)) * progress);
     }
 }
