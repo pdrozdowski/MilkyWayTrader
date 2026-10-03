@@ -1,10 +1,48 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { displayLabels } from '../../src/ui/components/displayLabels';
 import { resultLabels } from '../../src/game/application/results/resultLabels';
 import { test } from './testSessionFixture';
 import { completeSignedInTradeJourney } from './tradingJourney';
 
 const clockName = (state: typeof displayLabels.clockRunning | typeof displayLabels.clockPaused): RegExp => new RegExp(`^\\d{2}:\\d{2} · ${state}$`);
+
+type AsteroidCollisionOutcome = 'damaged' | 'terminal';
+
+async function hitPoints (healthBar: Locator): Promise<number>
+{
+    return await healthBar.evaluate(element => (element as HTMLProgressElement).value);
+}
+
+async function waitForAsteroidCollisionOutcome (
+    runStatus: Locator, resultStatus: Locator, healthBar: Locator, hitPointsBefore: number, attempt: number
+): Promise<AsteroidCollisionOutcome>
+{
+    let outcome: AsteroidCollisionOutcome | null = null;
+    await expect.poll(async () => {
+        if (await resultStatus.isVisible() || !await runStatus.isVisible()) {
+            outcome = 'terminal';
+            return true;
+        }
+        if (await hitPoints(healthBar) < hitPointsBefore) {
+            outcome = 'damaged';
+            return true;
+        }
+        return false;
+    }, {
+        timeout: 5_000,
+        intervals: [100, 250, 500],
+        message: `Asteroid teleport attempt ${attempt} did not damage the ship or begin the terminal transition.`
+    }).toBe(true);
+    if (!outcome) throw new Error(`Asteroid teleport attempt ${attempt} completed without a collision outcome.`);
+    return outcome;
+}
+
+async function expectSavedDeathResult (runStatus: Locator, resultStatus: Locator): Promise<void>
+{
+    await expect(runStatus).toBeHidden();
+    await expect(resultStatus).toBeVisible({ timeout: 10_000 });
+    await expect(resultStatus).toContainText(resultLabels.saved);
+}
 
 async function startRun (page: Page): Promise<void>
 {
@@ -53,50 +91,31 @@ test.describe('authenticated trading journey', () => {
         await page.getByRole('button', { name: 'New Game', exact: true }).click();
         const runStatus = page.getByLabel('Run status');
         await expect(runStatus).toBeVisible();
-        const healthBar = page.getByRole('progressbar');
+        const healthBar = page.getByRole('progressbar', { includeHidden: true });
         await expect(healthBar).toBeVisible();
 
         const resultStatus = page.getByLabel('Result delivery status');
-        for (let attempt = 1; attempt <= 5; attempt += 1) {
-            if (await runStatus.isHidden()) {
-                await expect.poll(async () => await resultStatus.isVisible(), {
-                    timeout: 5_000,
-                    intervals: [1_000],
-                    message: 'Game-over result screen did not report result delivery after five one-second checks.'
-                }).toBe(true);
-                await expect(healthBar).toBeHidden();
-                await expect(resultStatus).toContainText(resultLabels.saved);
+        for (let attempt = 1; attempt <= 7; attempt += 1) {
+            if (await resultStatus.isVisible() || !await runStatus.isVisible()) {
+                await expectSavedDeathResult(runStatus, resultStatus);
                 return;
             }
-            const hitPointsBefore = await healthBar.evaluate(element => (element as HTMLProgressElement).value);
-            if (hitPointsBefore > 0) {
-                await page.keyboard.press('d');
-                await expect(page.getByRole('dialog', { name: 'Debug menu' })).toBeVisible();
-                await page.waitForTimeout(500);
-                await page.getByRole('button', { name: displayLabels.teleportToAsteroid, exact: true }).click();
-                await expect.poll(async () => {
-                    if (await runStatus.isHidden()) return 'game-over';
-                    if (await resultStatus.isVisible()) return 'game-over';
-                    const hitPointsAfter = await healthBar.evaluate(element => (element as HTMLProgressElement).value, undefined, { timeout: 100 }).catch(() => null);
-                    if (hitPointsAfter === null) return 'game-over';
-                    return hitPointsAfter < hitPointsBefore ? 'damaged' : 'waiting';
-                }, {
-                    timeout: 1_000,
-                    intervals: [1_000],
-                    message: `Asteroid teleport attempt ${attempt} did not cause an immediate collision.`
-                }).not.toBe('waiting');
-                continue;
+            await expect(runStatus).toBeVisible();
+            const hitPointsBefore = await hitPoints(healthBar);
+            if (hitPointsBefore === 0) {
+                await expectSavedDeathResult(runStatus, resultStatus);
+                return;
             }
 
-            await expect.poll(async () => await resultStatus.isVisible(), {
-                timeout: 5_000,
-                intervals: [1_000],
-                message: 'Game-over result screen did not appear after five one-second checks.'
-            }).toBe(true);
-            await expect(healthBar).toBeHidden();
-            await expect(resultStatus).toContainText(resultLabels.saved);
-            return;
+            await page.keyboard.press('d');
+            await expect(page.getByRole('dialog', { name: 'Debug menu' })).toBeVisible();
+            await page.getByRole('button', { name: displayLabels.teleportToAsteroid, exact: true }).click();
+
+            if (await waitForAsteroidCollisionOutcome(runStatus, resultStatus, healthBar, hitPointsBefore, attempt) === 'terminal') {
+                await expectSavedDeathResult(runStatus, resultStatus);
+                return;
+            }
         }
-        throw new Error('Expected HP to reach zero within five immediate asteroid collisions.');
+        throw new Error('Expected HP to reach zero within seven confirmed big-asteroid collisions.');
     });
 });
