@@ -55,35 +55,35 @@ test.describe('authenticated trading journey', () => {
         const healthBar = page.getByRole('progressbar');
         await expect(healthBar).toBeVisible();
 
-        let reachedGameOver = false;
-        for (let attempt = 1; attempt <= 10; attempt += 1) {
+        const resultStatus = page.getByLabel('Result delivery status');
+        for (let attempt = 1; attempt <= 5; attempt += 1) {
             const hitPointsBefore = await healthBar.evaluate(element => (element as HTMLProgressElement).value);
-            await page.keyboard.press('d');
-            await expect(page.getByRole('dialog', { name: 'Debug menu' })).toBeVisible();
-            await page.getByRole('button', { name: displayLabels.teleportToAsteroid, exact: true }).click();
-            const resultStatus = page.getByLabel('Result delivery status');
-            await expect.poll(async () => {
-                if (await resultStatus.isVisible()) return 'game-over';
-                const hitPointsAfter = await healthBar.evaluate(element => (element as HTMLProgressElement).value);
-                return hitPointsAfter < hitPointsBefore ? 'damaged' : 'waiting';
-            }, {
-                timeout: 10_000,
-                message: `Asteroid teleport attempt ${attempt} neither reduced HP nor ended the run.`
-            }).not.toBe('waiting');
-            if (await resultStatus.isVisible()) {
-                await expect(healthBar).toBeHidden();
-                reachedGameOver = true;
-                await expect(resultStatus).toContainText(resultLabels.saved);
-                break;
+            if (hitPointsBefore > 0) {
+                await page.keyboard.press('d');
+                await expect(page.getByRole('dialog', { name: 'Debug menu' })).toBeVisible();
+                await page.waitForTimeout(500);
+                await page.getByRole('button', { name: displayLabels.teleportToAsteroid, exact: true }).click();
+                await expect.poll(async () => {
+                    if (await resultStatus.isVisible()) return 'game-over';
+                    const hitPointsAfter = await healthBar.evaluate(element => (element as HTMLProgressElement).value);
+                    return hitPointsAfter < hitPointsBefore ? 'damaged' : 'waiting';
+                }, {
+                    timeout: 1_000,
+                    intervals: [1_000],
+                    message: `Asteroid teleport attempt ${attempt} did not cause an immediate collision.`
+                }).not.toBe('waiting');
+                continue;
             }
-            const reachedResultScreen = await resultStatus.waitFor({ state: 'visible', timeout: 10_000 }).then(() => true).catch(() => false);
-            if (reachedResultScreen) {
-                await expect(healthBar).toBeHidden();
-                reachedGameOver = true;
-                await expect(resultStatus).toContainText(resultLabels.saved);
-                break;
-            }
+
+            await expect.poll(async () => await resultStatus.isVisible(), {
+                timeout: 5_000,
+                intervals: [1_000],
+                message: 'Game-over result screen did not appear after five one-second checks.'
+            }).toBe(true);
+            await expect(healthBar).toBeHidden();
+            await expect(resultStatus).toContainText(resultLabels.saved);
+            return;
         }
-        expect(reachedGameOver, 'Expected GameOver with a retained signed-in result after at most ten confirmed asteroid collisions; damage may be disabled.').toBe(true);
+        throw new Error('Expected HP to reach zero within five immediate asteroid collisions.');
     });
 });
