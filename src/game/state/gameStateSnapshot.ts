@@ -1,5 +1,7 @@
 import type { GameClockState } from './gameClockState';
-import type { CargoState } from './cargoState';
+import type { CommodityContainerState } from './commodityContainerState';
+import type { LooseItemState } from './looseItemState';
+import type { OrbitalCargoState } from './orbitalCargoState';
 import type { PlanetState } from './planetState';
 import type { ProjectileState } from './projectileState';
 import type { ShipState } from './shipState';
@@ -12,7 +14,7 @@ import type { TerminalResultState } from './terminalResultState';
 
 export interface GameStateSnapshot
 {
-    readonly schemaVersion: 11;
+    readonly schemaVersion: 12;
     readonly runId: string;
     readonly randomState: number;
     /** True until Moolaris has dealt its one damage hit for the current entry. */
@@ -20,7 +22,9 @@ export interface GameStateSnapshot
     readonly terminalResult: TerminalResultState | null;
     readonly clock: GameClockState;
     readonly credits: number;
-    readonly cargo: readonly CargoState[];
+    readonly cargo: readonly CommodityContainerState[];
+    readonly orbitalCargo: readonly OrbitalCargoState[];
+    readonly looseItems: readonly LooseItemState[];
     readonly markets: readonly SerotonMarketState[];
     readonly ship: ShipState;
     readonly shipStatus: ShipStatusState;

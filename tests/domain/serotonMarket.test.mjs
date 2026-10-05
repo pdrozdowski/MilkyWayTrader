@@ -4,6 +4,7 @@ import { serotonCommodityDefinitionById } from '../../src/game/definitions/serot
 import { commodityPriceMultiplier, commodityUnitPrice, marginalTradeTotal } from '../../src/game/domain/marketPricing.ts';
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
 import { applySerotonTrade, quoteSerotonTrade } from '../../src/game/application/serotonMarket.ts';
+import { addFreeCommodity, removeCommodityQuantity, transferCommodityQuantity } from '../../src/game/application/commodityContainers.ts';
 
 const supplies = serotonCommodityDefinitionById.supplies;
 const landed = () => ({
@@ -35,13 +36,13 @@ test('Seroton trades enforce landing, stock, cargo, credits and atomically prese
     assert.equal(quoteSerotonTrade(landed(), 'supplies', 0).failure, 'invalid-quantity');
     assert.equal(quoteSerotonTrade(landed(), 'supplies', 101).failure, 'insufficient-stock');
     assert.equal(quoteSerotonTrade({ ...landed(), credits: 1 }, 'supplies', 1).failure, 'insufficient-credits');
-    assert.equal(quoteSerotonTrade({ ...landed(), cargo: [{ commodityId: 'ore', quantity: 20, averageBuyPrice: 0 }] }, 'supplies', 1).failure, 'insufficient-cargo');
+    assert.equal(quoteSerotonTrade({ ...landed(), cargo: [{ commodityId: 'ore', quantity: 20, totalCost: 0 }] }, 'supplies', 1).failure, 'insufficient-cargo');
     assert.equal(quoteSerotonTrade(landed(), 'supplies', -1).failure, 'insufficient-cargo-commodity');
 
     const before = landed();
     const bought = applySerotonTrade(before, 'supplies', 2);
     assert.equal(bought.credits, before.credits - 2_000);
-    assert.deepEqual(bought.cargo, [{ commodityId: 'supplies', quantity: 2, averageBuyPrice: 1_000 }]);
+    assert.deepEqual(bought.cargo, [{ commodityId: 'supplies', quantity: 2, totalCost: 2_000 }]);
     assert.equal(bought.markets[0].commodityStocks.find(stock => stock.commodityId === 'supplies').stock, 98);
     assert.deepEqual(before.cargo, []);
     assert.equal(before.markets[0].commodityStocks.find(stock => stock.commodityId === 'supplies').stock, 100);
@@ -57,9 +58,25 @@ test('Seroton purchases weight cargo cost basis and sales retain it until the st
     const first = applySerotonTrade(landed(), 'supplies', 2);
     const shifted = { ...first, markets: [{ ...first.markets[0], commodityStocks: first.markets[0].commodityStocks.map(stock => stock.commodityId === 'supplies' ? { ...stock, stock: 49 } : stock) }] };
     const bought = applySerotonTrade(shifted, 'supplies', 1);
-    assert.equal(bought.cargo[0].averageBuyPrice, (2_000 + 1_020) / 3);
+    assert.equal(bought.cargo[0].totalCost, 3_020);
     const partial = applySerotonTrade(bought, 'supplies', -1);
-    assert.equal(partial.cargo[0].averageBuyPrice, bought.cargo[0].averageBuyPrice);
+    assert.ok(Math.abs(partial.cargo[0].totalCost - (3_020 * 2 / 3)) < 1e-9);
     assert.deepEqual(applySerotonTrade(partial, 'supplies', -2).cargo, []);
-    assert.deepEqual(first.cargo, [{ commodityId: 'supplies', quantity: 2, averageBuyPrice: 1_000 }]);
+    assert.deepEqual(first.cargo, [{ commodityId: 'supplies', quantity: 2, totalCost: 2_000 }]);
+});
+
+test('container transfers, free pickup, and loss retain independent proportional cost', () => {
+    const source = { commodityId: 'supplies', quantity: 3, totalCost: 10 };
+    const partial = transferCommodityQuantity(source, { commodityId: 'supplies', quantity: 2, totalCost: 4 }, 1);
+    assert.equal(partial.source.commodityId, 'supplies');
+    assert.equal(partial.source.quantity, 2);
+    assert.ok(Math.abs(partial.source.totalCost - (20 / 3)) < 1e-9);
+    assert.equal(partial.destination.commodityId, 'supplies');
+    assert.equal(partial.destination.quantity, 3);
+    assert.ok(Math.abs(partial.destination.totalCost - (22 / 3)) < 1e-9);
+    const complete = transferCommodityQuantity(partial.source, partial.destination, 2);
+    assert.equal(complete.source, null);
+    assert.equal(complete.destination.totalCost, 14, 'a complete transfer carries the exact residual');
+    assert.deepEqual(addFreeCommodity({ commodityId: 'supplies', quantity: 1, totalCost: 8 }, 'supplies', 2), { commodityId: 'supplies', quantity: 3, totalCost: 8 });
+    assert.deepEqual(removeCommodityQuantity({ commodityId: 'alloys', quantity: 2, totalCost: 9 }, 2), { remaining: null, removed: { commodityId: 'alloys', quantity: 2, totalCost: 9 } });
 });

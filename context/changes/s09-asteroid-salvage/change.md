@@ -1,7 +1,7 @@
 ---
 change_id: s09-asteroid-salvage
 title: S09 asteroid salvage
-status: planned
+status: impl_reviewed
 created: 2026-10-04
 updated: 2026-10-05
 archived_at: null

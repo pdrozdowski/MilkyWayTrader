@@ -3,6 +3,7 @@ import { cargoCapacityByLevel } from '../domain/runBalance.ts';
 import { marginalTradeTotal } from '../domain/marketPricing.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot.ts';
 import type { SerotonCommodityId } from '../state/serotonMarketState.ts';
+import { addPaidCommodity, removeCommodityQuantity } from './commodityContainers.ts';
 
 export type SerotonTradeFailure = 'not-landed-on-seroton' | 'invalid-quantity' | 'insufficient-stock' | 'insufficient-cargo' | 'insufficient-credits' | 'insufficient-cargo-commodity';
 
@@ -57,13 +58,14 @@ export function applySerotonTrade (state: GameStateSnapshot, commodityId: Seroto
     const market = state.markets.find(candidate => candidate.planetId === 'seroton');
     if (!market) throw new Error('Missing Seroton market.');
     const existingCargo = cargoStack(state, commodityId);
-    const cargoBefore = existingCargo?.quantity ?? 0;
-    const cargoAfter = cargoBefore + quantity;
     const cargo = state.cargo.filter(stack => stack.commodityId !== commodityId);
-    const averageBuyPrice = quantity > 0
-        ? ((cargoBefore * (existingCargo?.averageBuyPrice ?? 0)) + quote.total) / cargoAfter
-        : existingCargo?.averageBuyPrice ?? 0;
-    const nextCargo = cargoAfter === 0 ? cargo : [...cargo, { commodityId, quantity: cargoAfter, averageBuyPrice }];
+    const nextCargo = quantity > 0
+        ? [...cargo, addPaidCommodity(existingCargo, commodityId, quantity, quote.total)]
+        : (() => {
+            if (!existingCargo) throw new Error('Missing cargo to sell.');
+            const remaining = removeCommodityQuantity(existingCargo, -quantity).remaining;
+            return remaining === null ? cargo : [...cargo, remaining];
+        })();
     return {
         ...state,
         credits: quantity > 0 ? state.credits - quote.total : state.credits + quote.total,

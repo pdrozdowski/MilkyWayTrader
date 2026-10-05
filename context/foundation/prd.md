@@ -104,12 +104,10 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - A discrete sun impact removes 80% of maximum HP and pushes the ship clear.
 - Asteroid collision applies size-based damage, destroys the asteroid, and cannot produce salvage.
-- Projectile destruction can fragment an asteroid and receives one low-probability salvage-crate roll.
-- A live crate can be opened manually in range or automatically by direct ship contact.
-- Opening reveals the commodity and quantity but does not transfer it automatically.
-- The player selects a transfer quantity that fits available cargo capacity.
-- A live crate freezes after sixty seconds of active game time.
-- Shooting a frozen crate restores it with 20% probability or destroys it with 80% probability.
+- A final projectile hit on a small asteroid has one exclusive salvage outcome.
+- Nearby orbital cargo can exchange commodities with the ship within available capacity.
+- A loose commodity is collected only when ship capacity permits.
+- Each commodity holder retains its own quantity and cost basis during transfer and loss.
 
 ### US-05: Signed-in player preserves a run
 
@@ -201,27 +199,30 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - FR-032: The game can apply ship damage from environmental collisions. Priority: must-have
 - FR-033: A player can fragment and destroy asteroids by shooting them. Priority: must-have
 - FR-034: The game can maintain scattered asteroids and an outer asteroid belt. Priority: must-have
-- FR-035: The game can release salvage crates from asteroids destroyed by weapons. Priority: must-have
-- FR-036: A player can recover commodities from salvage crates. Priority: must-have
+- FR-035: The game can provide one exclusive salvage outcome when a player destroys a small asteroid with a weapon. Priority: must-have
+- FR-036: A player can keep an independent commodity cost basis in each commodity holder. Priority: must-have
+- FR-037: A player can transfer commodities between their ship and nearby orbital cargo. Priority: must-have
+- FR-038: A player can collect loose commodities into their ship. Priority: must-have
+- FR-039: The game can remove commodities and their associated cost basis when they are permanently lost. Priority: must-have
 
 ### Authentication and persistence
 
-- FR-037: A player can sign in to access persistent features. Priority: must-have
-- FR-038: A player can inspect their authentication status. Priority: must-have
-- FR-039: A signed-in player can sign out. Priority: must-have
-- FR-040: The game can automatically preserve progress for a signed-in player. Priority: must-have
-- FR-041: A signed-in player can inspect the current save status. Priority: must-have
-- FR-042: The game can remove an active save after its run reaches a terminal outcome. Priority: must-have
+- FR-040: A player can sign in to access persistent features. Priority: must-have
+- FR-041: A player can inspect their authentication status. Priority: must-have
+- FR-042: A signed-in player can sign out. Priority: must-have
+- FR-043: The game can automatically preserve progress for a signed-in player. Priority: must-have
+- FR-044: A signed-in player can inspect the current save status. Priority: must-have
+- FR-045: The game can remove an active save after its run reaches a terminal outcome. Priority: must-have
 
 ### High scores
 
-- FR-043: A signed-in player can view their personal best result. Priority: must-have
-- FR-044: A player can view the global high-score table. Priority: must-have
-- FR-045: A signed-in player can clear their personal best result. Priority: must-have
+- FR-046: A signed-in player can view their personal best result. Priority: must-have
+- FR-047: A player can view the global high-score table. Priority: must-have
+- FR-048: A signed-in player can clear their personal best result. Priority: must-have
 
 ### Gameplay audio
 
-- FR-046: A player can hear gameplay audio feedback. Priority: must-have
+- FR-049: A player can hear gameplay audio feedback. Priority: must-have
 
 ## Non-Functional Requirements
 
@@ -289,29 +290,18 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-046: Asteroids in the outer belt orbit beyond Maslo-Prime's orbital path while the clock is running.
 - BR-047: Scattered and belt populations replenish toward their configured targets while the clock is running.
 
-### Salvage crates
+### Asteroid salvage
 
-- BR-048: Every asteroid entity destroyed by a projectile receives exactly one configured low-probability salvage-crate roll, including a large or medium asteroid replaced by fragments.
-- BR-049: Asteroids destroyed by ship collision cannot produce salvage crates.
-- BR-050: A successful salvage roll creates one live crate containing one commodity.
-- BR-051: Commodity selection uses configured weights that decrease as the commodity's configured base value increases.
-- BR-052: A live crate contains a configured small quantity of its selected commodity.
-- BR-053: A live crate remains collectible for sixty seconds of active game time.
-- BR-054: Paused game time also pauses the crate's remaining collectible lifetime.
-- BR-055: Entering configured salvage range makes a manual open action available.
-- BR-056: Direct ship contact with a live crate opens it automatically but does not transfer cargo.
-- BR-057: Opening reveals the commodity, remaining quantity, and currently available cargo capacity.
-- BR-058: Opening a crate or transferring cargo does not pause active game time.
-- BR-059: The player chooses a transfer quantity limited by the crate's remaining quantity and the ship's available cargo capacity.
-- BR-060: Any uncollected quantity remains in the live crate.
-- BR-061: Shooting a live crate destroys the crate and its contents in a visual fireball.
-- BR-062: After sixty seconds of active game time, a live crate becomes a frozen crate with the same remaining contents.
-- BR-063: A frozen crate cannot be opened or looted and behaves as a small space obstacle.
-- BR-064: Ship collision destroys a frozen crate without damaging the ship.
-- BR-065: Shooting a frozen crate restores it to a live crate with its remaining contents and a fresh sixty-second lifetime with 20% probability.
-- BR-066: The other 80% of frozen-crate shots destroy the crate and its contents in a visual fireball.
-- BR-067: Crate fireballs cause no ship, asteroid, crate, cargo, or market damage.
-- BR-068: Destroyed crates cannot generate crates, fragments, commodities, credits, or other loot.
+- BR-048: A final projectile hit on a small asteroid selects exactly one outcome: orbital cargo with 10% probability, one loose commodity with 10% probability, or no salvage with 80% probability.
+- BR-049: Asteroids destroyed by any non-projectile interaction do not produce salvage.
+- BR-050: Asteroid-spawned orbital cargo contains one uniformly selected commodity with a quantity from one through twenty and zero cost basis.
+- BR-051: Each ship commodity container, orbital cargo container, and loose-item container keeps a separate quantity and total cost.
+- BR-052: A commodity container's displayed average cost equals total cost divided by quantity when quantity is positive.
+- BR-053: A paid purchase adds its paid total to the receiving ship container.
+- BR-054: A free pickup adds quantity but no cost to the receiving ship container.
+- BR-055: A partial transfer or loss removes quantity and proportional cost from its source container.
+- BR-056: A complete transfer or loss removes the source container's exact remaining total cost.
+- BR-057: Destroying orbital cargo spills its remaining commodities as loose items with their total cost allocated proportionally and the final item receiving any residual.
 
 ### Planetary services, upgrades, and economy
 

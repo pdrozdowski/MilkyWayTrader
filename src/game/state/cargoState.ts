@@ -1,6 +1,4 @@
-export interface CargoState
-{
-    readonly commodityId: string;
-    readonly quantity: number;
-    readonly averageBuyPrice: number;
-}
+import type { CommodityContainerState } from './commodityContainerState';
+
+/** @deprecated Ship cargo uses CommodityContainerState directly. */
+export type CargoState = CommodityContainerState;

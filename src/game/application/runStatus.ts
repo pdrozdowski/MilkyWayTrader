@@ -3,7 +3,7 @@ import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 
 export type RunState = 'RUNNING' | 'PAUSED';
 export type HealthBand = 'healthy' | 'warning' | 'critical';
-export interface RunStatusCargoStack { readonly commodityId: string; readonly quantity: number; }
+export interface RunStatusCargoStack { readonly commodityId: string; readonly quantity: number; readonly totalCost: number; }
 export interface RunStatusSystem { readonly level: number; readonly available: boolean; }
 export interface RunStatusSnapshot
 {
