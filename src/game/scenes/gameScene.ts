@@ -462,8 +462,8 @@ export class Game extends Scene
             planet.updateLandingIndicator(this.ship, state.planetLifecycle);
         }
         this.weapon.synchronize(state.projectiles);
-        this.asteroids.synchronize(state.asteroids);
         this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets, state.clock.activeElapsedMs - before.clock.activeElapsedMs);
+        this.asteroids.synchronize(state.asteroids);
     }
 
     private readonly teleportToPlanet = (planetId: string): void => {
@@ -516,7 +516,10 @@ export class Game extends Scene
             if (this.camera.worldView.contains(position.x, position.y)) this.asteroidExplosion.explodeProjectileImpact(position);
         }
         for (const asteroid of projectileDamagedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('asteroid-projectile-impact-clean');
-        for (const asteroid of sunConsumedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('sun-asteroid-low-slurp-loud-no-noise');
+        for (const asteroid of sunConsumedAsteroids(previous, current)) {
+            // This is global feedback: camera and ship distance must not suppress it.
+            this.asteroids.fadeOutSunConsumed(asteroid.id, () => this.audio.play('sun-asteroid-low-slurp-loud-no-noise'));
+        }
         for (const parent of fragmentedParents(previous, current)) {
             const impactPosition = fragmentImpactPosition(parent, current);
             if (!this.camera.worldView.contains(impactPosition.x, impactPosition.y)) continue;
