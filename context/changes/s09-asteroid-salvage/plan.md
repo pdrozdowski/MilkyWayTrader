@@ -193,6 +193,6 @@ S09 intentionally breaks the snapshot schema. The codec rejects older snapshots 
 
 ### Phase 4: Paused Transfer Modal, Warning, and Completion Validation
 
-- [x] P4-A: UI/controller tests prove entry pauses time, Close resumes, re-open suppression lasts to exit, capacity disables the correct control, and warning expiry is two seconds.
-- [x] P4-B: `npm.cmd run typecheck` and `npm.cmd run test:fast` pass after integration.
+- [x] P4-A: UI/controller tests prove entry pauses time, Close resumes, re-open suppression lasts to exit, capacity disables the correct control, and warning expiry is two seconds. — 857d37e
+- [x] P4-B: `npm.cmd run typecheck` and `npm.cmd run test:fast` pass after integration. — 857d37e
 - [ ] P4-C: A player collects loot, stores it orbitally, destroys cargo, sees individual spill items, and observes independent ship/cargo averages throughout.
