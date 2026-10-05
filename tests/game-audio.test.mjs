@@ -12,6 +12,8 @@ import { validateSoundDefinitions } from '../src/game/audio/validate.ts';
 import { definition as laser } from '../src/game/audio/definitions/shipLaser.ts';
 import { definition as engine } from '../src/game/audio/definitions/shipEngine.ts';
 import { definition as booster } from '../src/game/audio/definitions/shipBooster.ts';
+import { definition as cargoDestruction } from '../src/game/audio/definitions/asteroidCrashMetalClean.ts';
+import { definition as sunConsumption } from '../src/game/audio/definitions/sunAsteroidLowSlurpLoudNoNoise.ts';
 import { validateWav } from '../.agents/skills/utils-add-sound/scripts/scaffold.mjs';
 import { generateEffects } from '../scripts/generate-demo-audio.mjs';
 
@@ -183,6 +185,29 @@ test('invalid definitions fail early and unavailable assets cannot crash gamepla
         assert.equal(voices.length, 0);
         assert.equal(warnings.length, 2, 'warn once per missing sound');
     } finally { console.warn = original; }
+});
+
+test('salvage one-shots use the approved assets and remain scoped to the game scene', () => {
+    assert.deepEqual(cargoDestruction.paths, ['audio/asteroid_crash_metal_clean.wav']);
+    assert.deepEqual(sunConsumption.paths, ['audio/sun_asteroid_low_slurp_loud_no_noise.wav']);
+    const owner = { events: new EventEmitter() };
+    const voices = [];
+    const removed = [];
+    const service = new AudioService({
+        canPlay: () => true,
+        add: key => {
+            const voice = { key, isPlaying: false, play () { this.isPlaying = true; return true; }, stop () { this.isPlaying = false; }, setVolume () {}, setRate () {} };
+            voices.push(voice);
+            return voice;
+        },
+        remove: voice => removed.push(voice),
+        applySettings () {}
+    }, [cargoDestruction, sunConsumption]);
+    const scope = service.createScope(owner);
+    assert.equal(scope.play(cargoDestruction.id), true);
+    assert.equal(scope.play(sunConsumption.id), true);
+    owner.events.emit('shutdown');
+    assert.equal(removed.length, 2, 'scene shutdown releases each owned salvage voice');
 });
 
 test('actual weapon spawns produce one laser event each; booster-blocked actions stay silent', async () => {

@@ -16,6 +16,8 @@ import { teleportShipToPlanet } from '../mechanics/debug/teleportShipToPlanet';
 import { teleportShipToAsteroid } from '../mechanics/debug/teleportShipToAsteroid';
 import { Planet } from '../objects/planet/planet';
 import { AsteroidProjection } from '../objects/asteroid/asteroidProjection';
+import { CargoProjection } from '../objects/cargo/cargo';
+import { CommodityProjection } from '../objects/commodity/commodity';
 import { ShipWeapon } from '../objects/spaceship/shipWeapon';
 import { Spaceship } from '../objects/spaceship/spaceship';
 import { Sun } from '../objects/sun/sun';
@@ -32,6 +34,8 @@ export class Game extends Scene
     nebulaBackground: GameObjects.TileSprite;
     starfieldBackground: GameObjects.TileSprite;
     asteroids: AsteroidProjection;
+    cargo: CargoProjection;
+    commodities: CommodityProjection;
     asteroidExplosion: AsteroidExplosion;
     orbitalPaths: OrbitalPaths;
     sun: Sun;
@@ -99,6 +103,8 @@ export class Game extends Scene
             .setScrollFactor(0)
             .setDepth(ObjectDepth.Background);
         this.asteroids = new AsteroidProjection(this);
+        this.cargo = new CargoProjection(this);
+        this.commodities = new CommodityProjection(this);
         this.asteroidExplosion = new AsteroidExplosion(this);
         this.destruction = new ShipDestruction(this);
         this.orbitalPaths = new OrbitalPaths(this);
@@ -172,6 +178,8 @@ export class Game extends Scene
             planet.updateLandingIndicator(this.ship, state.planetLifecycle);
         }
         this.asteroids.synchronize(state.asteroids);
+        this.cargo.synchronize(state.orbitalCargo);
+        this.commodities.synchronize(state.looseItems, new Set());
         this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);
     }
 
@@ -464,6 +472,12 @@ export class Game extends Scene
         this.weapon.synchronize(state.projectiles);
         this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets, state.clock.activeElapsedMs - before.clock.activeElapsedMs);
         this.asteroids.synchronize(state.asteroids);
+        const destroyedCargoIds = cargoDestroyedIds(before, state);
+        for (const _id of destroyedCargoIds) this.audio.play('asteroid-crash-metal-clean');
+        const sunConsumedItems = sunConsumedLooseItemIds(before, state, state.clock.activeElapsedMs - before.clock.activeElapsedMs);
+        for (const _id of sunConsumedItems) this.audio.play('sun-asteroid-low-slurp-loud-no-noise');
+        this.cargo.synchronize(state.orbitalCargo);
+        this.commodities.synchronize(state.looseItems, sunConsumedItems);
     }
 
     private readonly teleportToPlanet = (planetId: string): void => {
@@ -552,4 +566,23 @@ export class Game extends Scene
         return Math.hypot(state.ship.position.x - planet.position.x, state.ship.position.y - planet.position.y) <= LANDING_CENTRE_RADIUS;
     }
 
+}
+
+function cargoDestroyedIds (previous: ReturnType<GameStateProvider['snapshot']>, current: ReturnType<GameStateProvider['snapshot']>): readonly string[]
+{
+    const currentIds = new Set(current.orbitalCargo.map(cargo => cargo.id));
+    const newLooseItemIds = new Set(current.looseItems.map(item => item.id));
+    return previous.orbitalCargo.filter(cargo => !currentIds.has(cargo.id)
+        && Array.from(newLooseItemIds).some(id => id.startsWith(`${cargo.id}-spill-`))).map(cargo => cargo.id);
+}
+
+function sunConsumedLooseItemIds (
+    previous: ReturnType<GameStateProvider['snapshot']>, current: ReturnType<GameStateProvider['snapshot']>, activeDeltaMs: number
+): ReadonlySet<string>
+{
+    const currentIds = new Set(current.looseItems.map(item => item.id));
+    const maximumTravel = 240 * Math.max(0, activeDeltaMs) / 1000;
+    return new Set(previous.looseItems.filter(item => !currentIds.has(item.id)
+        && Math.hypot(item.position.x - moolarisDefinition.position.x, item.position.y - moolarisDefinition.position.y)
+            <= moolarisDefinition.radius + maximumTravel).map(item => item.id));
 }

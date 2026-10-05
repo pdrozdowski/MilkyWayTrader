@@ -181,14 +181,14 @@ S09 intentionally breaks the snapshot schema. The codec rejects older snapshots 
 
 ### Phase 2: Deterministic Asteroid Loot and World Lifecycle
 
-- [x] P2-A: Seeded mechanics tests cover all three exclusive branches, cargo bounds, zero-cost cargo, two-hit projectile destruction, and no contact damage.
-- [x] P2-B: Motion tests prove cargo orbit and the ten-second vector blend only progress in active game time.
-- [x] P2-C: Pickup/capacity tests prove loose items cannot be shot, only interact with ship/sun, and remain unchanged on full-ship pickup.
+- [x] P2-A: Seeded mechanics tests cover all three exclusive branches, cargo bounds, zero-cost cargo, two-hit projectile destruction, and no contact damage. — cc43ea1
+- [x] P2-B: Motion tests prove cargo orbit and the ten-second vector blend only progress in active game time. — cc43ea1
+- [x] P2-C: Pickup/capacity tests prove loose items cannot be shot, only interact with ship/sun, and remain unchanged on full-ship pickup. — cc43ea1
 - [ ] P2-D: Replaying a fixed seed gives the same loot type, commodity, quantity, vectors, and transitions.
 
 ### Phase 3: Phaser Projections, Visual Feedback, and Audio
 
-- [ ] P3-A: Object/audio tests prove projections follow salvage IDs, frames/assets load, and effects are scoped and cleaned up.
+- [x] P3-A: Object/audio tests prove projections follow salvage IDs, frames/assets load, and effects are scoped and cleaned up.
 - [ ] P3-B: Cargo orbits, shows activation and one-HP feedback, flips at the approved cadence, spills on destruction, and loose icons fade at sun consumption.
 
 ### Phase 4: Paused Transfer Modal, Warning, and Completion Validation
