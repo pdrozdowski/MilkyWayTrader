@@ -11,6 +11,7 @@ interface AsteroidDisplay
 
 const healthBarHeight = 4;
 const healthBarOffset = 8;
+export const asteroidSunFadeDurationMs = 1000;
 
 /** Asteroids always remain readable above planets and other world bodies. */
 export function asteroidProjectionDepth (_state: AsteroidState): number
@@ -22,6 +23,7 @@ export function asteroidProjectionDepth (_state: AsteroidState): number
 export class AsteroidProjection
 {
     private readonly displays = new Map<string, AsteroidDisplay>();
+    private readonly fadingIds = new Set<string>();
     private destroyed = false;
 
     constructor (private readonly scene: Scene)
@@ -34,6 +36,7 @@ export class AsteroidProjection
         if (this.destroyed) return;
         const activeIds = new Set(states.map(state => state.id));
         for (const [id, display] of this.displays) if (!activeIds.has(id)) {
+            if (this.fadingIds.has(id)) continue;
             display.sprite.destroy();
             display.healthBar.destroy();
             this.displays.delete(id);
@@ -59,6 +62,32 @@ export class AsteroidProjection
         }
     }
 
+    /** Keeps a sun-consumed asteroid visible until its one-second visual fade completes. */
+    fadeOutSunConsumed (id: string, onComplete: () => void): void
+    {
+        if (this.destroyed || this.fadingIds.has(id)) return;
+        const display = this.displays.get(id);
+        if (!display) {
+            onComplete();
+            return;
+        }
+        this.fadingIds.add(id);
+        this.scene.tweens.add({
+            targets: [display.sprite, display.healthBar],
+            alpha: 0,
+            duration: asteroidSunFadeDurationMs,
+            ease: 'Linear',
+            onComplete: () => {
+                if (this.destroyed) return;
+                display.sprite.destroy();
+                display.healthBar.destroy();
+                this.displays.delete(id);
+                this.fadingIds.delete(id);
+                onComplete();
+            }
+        });
+    }
+
     readonly destroy = (): void =>
     {
         if (this.destroyed) return;
@@ -69,6 +98,7 @@ export class AsteroidProjection
             display.healthBar.destroy();
         }
         this.displays.clear();
+        this.fadingIds.clear();
     };
 
     private drawHealthBar (healthBar: GameObjects.Graphics, state: AsteroidState, radius: number, depth: number): void
