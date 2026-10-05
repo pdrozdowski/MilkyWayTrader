@@ -23,6 +23,9 @@ import { teleportShipToPlanet } from '../src/game/mechanics/debug/teleportShipTo
 import { teleportShipToAsteroid } from '../src/game/mechanics/debug/teleportShipToAsteroid.ts';
 import { asteroidDamageRanges, nextRandomInteger } from '../src/game/mechanics/hazards/damage.ts';
 import { resolveTerminalResult } from '../src/game/mechanics/hazards/terminal.ts';
+import { spawnAsteroidLoot } from '../src/game/mechanics/salvage/asteroidLoot.ts';
+import { advanceLooseItems, advanceOrbitalCargo } from '../src/game/mechanics/salvage/salvageSimulation.ts';
+import { destroyOrbitalCargo, pickupLooseItem, transferOrbitalCargo } from '../src/game/application/salvageInteractions.ts';
 
 const marketStocks = state => state.markets[0].commodityStocks.map(commodity => ({ ...commodity }));
 
@@ -721,5 +724,49 @@ test('asteroid durability persists through shots, resets for fragments, and coll
     assert.equal(Math.hypot(boosted.ship.velocity.x, boosted.ship.velocity.y), 240);
     assert.equal(boosted.ship.asteroidImpactAtActiveMs, 1, 'boosted impacts share the same exact crash-feedback event');
     assert.equal(boosted.ship.asteroidControlLockedUntilActiveMs, 501);
+});
+
+test('small asteroid loot uses one seeded exclusive roll with bounded zero-cost cargo', () => {
+    const target = asteroid('salvage-roll', { x: 2_000, y: 0 }, 'small');
+    const outcomes = new Map();
+    for (let seed = 0; seed < 100; seed++) {
+        const result = spawnAsteroidLoot(target, 123, seed);
+        const kind = result.orbitalCargo ? 'cargo' : result.looseItem ? 'loose' : 'none';
+        if (!outcomes.has(kind)) outcomes.set(kind, { seed, result });
+    }
+    assert.deepEqual([...outcomes.keys()].sort(), ['cargo', 'loose', 'none']);
+    const cargo = outcomes.get('cargo').result.orbitalCargo;
+    assert(cargo);
+    assert(cargo.container.quantity >= 1 && cargo.container.quantity <= 20);
+    assert.equal(cargo.container.totalCost, 0);
+    assert.deepEqual(spawnAsteroidLoot(target, 123, outcomes.get('cargo').seed), outcomes.get('cargo').result, 'a fixed seed replays exactly');
+});
+
+test('salvage lifecycle advances only active time, cargo takes two projectile-only hits, and loose items blend toward the sun', () => {
+    const cargo = { id: 'cargo-1', position: { x: 2_000, y: 0 }, orbit: { angleRadians: 0, radius: 2_000, rotationRadians: 0 }, hitPoints: 2, container: { commodityId: 'supplies', quantity: 2, totalCost: 0 } };
+    const item = { id: 'item-1', position: { x: 2_000, y: 0 }, motion: { ejectionVelocity: { x: 180, y: 0 }, sunVelocity: { x: -240, y: 0 }, createdAtActiveMs: 0 }, container: { commodityId: 'supplies', quantity: 1, totalCost: 0 } };
+    const paused = advanceGameSimulation({ ...initialGameState, orbitalCargo: [cargo], looseItems: [item], clock: { ...initialGameState.clock, pauseReasons: ['manual'] } }, quietInput, 10_000);
+    assert.deepEqual(paused.orbitalCargo, [cargo]);
+    assert.deepEqual(paused.looseItems, [item]);
+    assert.notDeepEqual(advanceOrbitalCargo([cargo], 10_000)[0].position, cargo.position);
+    assert(advanceLooseItems([item], 10_000, 1_000)[0].position.x < item.position.x, 'the ten-second blend ends sun-directed');
+    const first = destroyOrbitalCargo({ ...initialGameState, orbitalCargo: [cargo] }, cargo.id);
+    assert.equal(first.state.orbitalCargo[0].hitPoints, 1);
+    const second = destroyOrbitalCargo(first.state, cargo.id);
+    assert.equal(second.state.orbitalCargo.length, 0);
+    assert.equal(second.state.looseItems.length, 2);
+});
+
+test('salvage intents preserve full ships and only transfer explicit holders', () => {
+    const item = { id: 'item-full', position: { x: 9_000, y: 0 }, motion: { ejectionVelocity: { x: 0, y: 0 }, sunVelocity: { x: -1, y: 0 }, createdAtActiveMs: 0 }, container: { commodityId: 'alloys', quantity: 1, totalCost: 0 } };
+    const full = { ...initialGameState, cargo: [{ commodityId: 'supplies', quantity: 20, totalCost: 1_000 }], looseItems: [item] };
+    const pickup = pickupLooseItem(full, item.id);
+    assert.equal(pickup.failure, 'ship-cargo-full');
+    assert.equal(pickup.state, full);
+    const cargo = { id: 'cargo-transfer', position: { x: 2_000, y: 0 }, orbit: { angleRadians: 0, radius: 2_000, rotationRadians: 0 }, hitPoints: 2, container: { commodityId: 'alloys', quantity: 2, totalCost: 8 } };
+    const transferred = transferOrbitalCargo({ ...initialGameState, orbitalCargo: [cargo] }, cargo.id, 1, 'to-ship');
+    assert.equal(transferred.failure, null);
+    assert.deepEqual(transferred.state.cargo, [{ commodityId: 'alloys', quantity: 1, totalCost: 4 }]);
+    assert.equal(transferred.state.orbitalCargo[0].container.quantity, 1);
 });
 
