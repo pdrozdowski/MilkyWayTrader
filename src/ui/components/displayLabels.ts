@@ -25,5 +25,6 @@ export const displayLabels = {
     averageBuyPrice: 'Average buy price', inBudget: 'IN BUDGET', outOfBudget: 'OUT OF BUDGET',
     tradeResult: 'Trade result:', profit: 'PROFIT', loss: 'LOSS', clockRunning: 'RUNNING', clockPaused: 'PAUSED',
     supplies: 'Supplies', alloys: 'Alloys', medicines: 'Medicines',
-    teleportToAsteroid: 'Teleport to live asteroid'
+    teleportToAsteroid: 'Teleport to live asteroid',
+    orbitalCargo: 'Orbital cargo', shipCargo: 'Ship cargo', transferToShip: 'TRANSFER TO SHIP', transferToCargo: 'TRANSFER TO CARGO', close: 'CLOSE'
 } as const;

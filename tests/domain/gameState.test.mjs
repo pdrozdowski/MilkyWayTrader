@@ -8,6 +8,7 @@ import { advanceGameSimulation } from '../../src/game/mechanics/gameSimulation.t
 import { projectRunStatus } from '../../src/game/application/runStatus.ts';
 import { applySerotonTrade } from '../../src/game/application/serotonMarket.ts';
 import { createLandingStatusPort } from '../../src/ui/adapters/landingStatusAdapter.ts';
+import { createCargoTransferPort, cargoFullWarning, cargoFullWarningDurationMs } from '../../src/ui/adapters/cargoTransferAdapter.ts';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -348,6 +349,63 @@ test('landed market port rejects unlanded trade commands and rebuilds its visit-
     landedPort.setTradeQuantity(1);
     assert.equal(landedPort.getSnapshot().quote.total, 1_020, 'the rebuilt ladder uses post-trade stock below the lower threshold');
     landedPort.destroy();
+});
+
+test('cargo transfer entry pauses, Close resumes, and exit/re-entry clears its visit-local suppression', () => {
+    const handlers = new Map();
+    const events = {
+        on: (name, listener) => handlers.set(name, listener),
+        off: (name, listener) => { if (handlers.get(name) === listener) handlers.delete(name); },
+        emit: name => handlers.get(name)?.()
+    };
+    const cargo = {
+        id: 'salvage-1', position: { x: 10, y: 0 }, hitPoints: 2,
+        orbit: { radius: 10, angleRadians: 0, rotationRadians: 0 },
+        container: { commodityId: 'supplies', quantity: 2, totalCost: 0 }
+    };
+    const provider = new GameStateProvider({ ...initialGameState, ship: { ...initialGameState.ship, position: { x: 0, y: 0 } }, orbitalCargo: [cargo] });
+    const port = createCargoTransferPort({ registry: { get: () => provider }, events });
+    assert.equal(port.getSnapshot().visible, true);
+    assert(provider.snapshot().clock.pauseReasons.includes('manual'));
+
+    port.close();
+    assert.equal(port.getSnapshot().visible, false);
+    assert(!provider.snapshot().clock.pauseReasons.includes('manual'));
+
+    provider.update(state => ({ ...state, ship: { ...state.ship, position: { x: 100, y: 0 } } }));
+    provider.update(state => ({ ...state, ship: { ...state.ship, position: { x: 0, y: 0 } } }));
+    assert.equal(port.getSnapshot().visible, true);
+    assert(provider.snapshot().clock.pauseReasons.includes('manual'));
+    port.destroy();
+});
+
+test('cargo full warning is shown only for the failure event and expires after exactly two seconds', () => {
+    const handlers = new Map();
+    const events = {
+        on: (name, listener) => handlers.set(name, listener),
+        off: (name, listener) => { if (handlers.get(name) === listener) handlers.delete(name); },
+        emit: name => handlers.get(name)?.()
+    };
+    const provider = new GameStateProvider(initialGameState);
+    const port = createCargoTransferPort({ registry: { get: () => provider }, events });
+    const originalNow = Date.now;
+    let now = 1_000;
+    Date.now = () => now;
+    try {
+        events.emit('unrelated-outcome');
+        assert.equal(port.getSnapshot().warning, null);
+        events.emit('salvage-pickup-cargo-full');
+        assert.equal(port.getSnapshot().warning, cargoFullWarning);
+        now += cargoFullWarningDurationMs - 1;
+        events.emit('step');
+        assert.equal(port.getSnapshot().warning, cargoFullWarning);
+        now += 1;
+        events.emit('step');
+        assert.equal(port.getSnapshot().warning, null);
+    } finally {
+        Date.now = originalNow;
+        port.destroy();
+    }
 });
 
 test('v7 codec preserves lifecycle JSON and rejects v4 and inconsistent lifecycle shapes', () => {

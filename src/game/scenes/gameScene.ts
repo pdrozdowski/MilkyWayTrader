@@ -27,6 +27,7 @@ import { ObjectDepth } from '../visual/layers';
 import { gameObjectLayout, gameWorldBounds } from './gameObjects';
 import type { TelemetryPort } from '../application/telemetry/telemetry';
 import type { TerminalResultState } from '../state/terminalResultState';
+import { cargoCapacityByLevel } from '../domain/runBalance';
 
 export class Game extends Scene
 {
@@ -434,6 +435,10 @@ export class Game extends Scene
             muzzleOffset: weaponTuning.noseOffset * this.ship.sprite.scaleX
         }));
         if (before.moolarisDamageArmed && !state.moolarisDamageArmed && state.terminalResult === null) this.playShipCrashFeedback(state.ship.position);
+        const failedPickup = before.looseItems.some(item => Math.hypot(item.position.x - before.ship.position.x, item.position.y - before.ship.position.y) <= shipTuning.collisionRadius)
+            && state.looseItems.length === before.looseItems.length
+            && before.cargo.reduce((total, container) => total + container.quantity, 0) >= (cargoCapacityByLevel[before.shipStatus.cargoLevel] ?? 0);
+        if (failedPickup) this.game.events.emit('salvage-pickup-cargo-full');
         if (before.terminalResult === null && state.terminalResult !== null) {
             this.beginDeathTransition(state.terminalResult, state.ship.position);
             return;
