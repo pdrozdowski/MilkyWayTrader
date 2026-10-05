@@ -16,7 +16,7 @@ export interface InitialGameStateInput
 export function createInitialGameState ({ runId, randomSeed }: InitialGameStateInput): GameStateSnapshot
 {
     return {
-    schemaVersion: 11,
+    schemaVersion: 12,
     runId,
     randomState: randomSeed,
     moolarisDamageArmed: true,
@@ -28,6 +28,8 @@ export function createInitialGameState ({ runId, randomSeed }: InitialGameStateI
     },
     credits: initialCredits,
     cargo: [],
+    orbitalCargo: [],
+    looseItems: [],
     markets: [{
         planetId: 'seroton',
         commodityStocks: serotonCommodityDefinitions.map(definition => ({ commodityId: definition.id, stock: definition.initialStock }))

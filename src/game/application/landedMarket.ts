@@ -2,6 +2,7 @@ import { cargoCapacityByLevel } from '../domain/runBalance.ts';
 import { commodityUnitPrice } from '../domain/marketPricing.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot.ts';
 import type { SerotonCommodityId } from '../state/serotonMarketState.ts';
+import { containerAverageCost } from './commodityContainers.ts';
 
 export interface LandedMarketCommodityDefinition
 {
@@ -82,7 +83,7 @@ export function projectLandedMarket (
             stock: stock.stock,
             carriedQuantity: state.cargo.find(stack => stack.commodityId === definition.id)?.quantity ?? 0,
             unitPrice: commodityUnitPrice(stock.stock, definition),
-            averageBuyPrice: state.cargo.find(stack => stack.commodityId === definition.id)?.averageBuyPrice ?? 0,
+            averageBuyPrice: containerAverageCost(state.cargo.find(stack => stack.commodityId === definition.id) ?? { commodityId: definition.id, quantity: 0, totalCost: 0 }),
             productionPerSecond: definition.productionPerSecond,
             consumptionPerSecond: definition.consumptionPerSecond
         });

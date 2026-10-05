@@ -35,7 +35,7 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 11);
+    assert.equal(state.schemaVersion, 12);
     assert.equal(state.runId, '00000000-0000-4000-8000-000000000001');
     assert.equal(state.randomState, 1);
     assert.equal(state.moolarisDamageArmed, true);
@@ -73,10 +73,10 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
         { ...clone(advanced), schemaVersion: 6 },
         { ...clone(advanced), credits: -1 },
         { ...clone(advanced), credits: 0.5 },
-        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1, averageBuyPrice: 0 }, { commodityId: 'ore', quantity: 2, averageBuyPrice: 0 }] },
-        { ...clone(advanced), cargo: [{ commodityId: '', quantity: 1, averageBuyPrice: 0 }] },
-        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: -1, averageBuyPrice: 0 }] },
-        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1, averageBuyPrice: -1 }] },
+        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1, totalCost: 0 }, { commodityId: 'ore', quantity: 2, totalCost: 0 }] },
+        { ...clone(advanced), cargo: [{ commodityId: '', quantity: 1, totalCost: 0 }] },
+        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: -1, totalCost: 0 }] },
+        { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1, totalCost: -1 }] },
         { ...clone(advanced), markets: [] },
         { ...clone(advanced), markets: [{ planetId: 'lactozis-7c', commodityStocks: clone(advanced.markets[0].commodityStocks) }] },
         { ...clone(advanced), markets: [{ planetId: 'seroton', commodityStocks: [{ commodityId: 'supplies', stock: 1 }, { commodityId: 'supplies', stock: 2 }, { commodityId: 'medicines', stock: 3 }] }] },
@@ -203,6 +203,21 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
     assert.deepEqual(unchanged.planets, paused.planets);
 });
 
+test('v12 codec round trips independent ship, orbital, and loose commodity holders and rejects v11', () => {
+    const salvage = {
+        ...clone(initialGameState),
+        cargo: [{ commodityId: 'supplies', quantity: 2, totalCost: 10 }],
+        orbitalCargo: [{ id: 'cargo-1', position: { x: 20, y: 30 }, orbit: { angleRadians: 0.5, radius: 100, rotationRadians: 0 }, hitPoints: 2, container: { commodityId: 'alloys', quantity: 3, totalCost: 21 } }],
+        looseItems: [{ id: 'item-1', position: { x: 40, y: 50 }, motion: { ejectionVelocity: { x: 4, y: 5 }, sunVelocity: { x: -1, y: -2 }, createdAtActiveMs: 12 }, container: { commodityId: 'medicines', quantity: 1, totalCost: 7 } }]
+    };
+    const decoded = decodeGameState(salvage);
+    assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
+    assert(Object.isFrozen(decoded.orbitalCargo[0].container));
+    assert(Object.isFrozen(decoded.looseItems[0].motion));
+    assert.throws(() => decodeGameState({ ...salvage, schemaVersion: 11 }));
+    assert.throws(() => decodeGameState({ ...salvage, looseItems: [{ ...salvage.looseItems[0], container: { ...salvage.looseItems[0].container, quantity: 2 } }] }));
+});
+
 test('codec validates run randomness and terminal death facts as one immutable snapshot', () => {
     const terminal = {
         ...clone(initialGameState),
@@ -284,7 +299,7 @@ test('provider commits a valid Seroton trade as one immutable replacement', () =
     }));
     const traded = provider.update(state => applySerotonTrade(state, 'alloys', 2));
     assert.equal(traded.credits, landed.credits - 10_000);
-    assert.deepEqual(traded.cargo, [{ commodityId: 'alloys', quantity: 2, averageBuyPrice: 5_000 }]);
+    assert.deepEqual(traded.cargo, [{ commodityId: 'alloys', quantity: 2, totalCost: 10_000 }]);
     assert.equal(traded.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 58);
     assert.equal(landed.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 60);
 });
@@ -397,10 +412,10 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 11);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 12);
 });
 
-test('v11 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
+test('v12 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
     const decoded = decodeGameState(initialGameState);
     const asteroid = clone(decoded.asteroids[0]);
     assert(Object.isFrozen(decoded.asteroids));
@@ -426,14 +441,14 @@ test('run status projection derives clock, capacity and readable run values', ()
     const state = clone(initialGameState);
     state.clock.activeElapsedMs = 0;
     state.credits = 123_456;
-    state.cargo = [{ commodityId: 'ore', quantity: 2, averageBuyPrice: 0 }];
+    state.cargo = [{ commodityId: 'ore', quantity: 2, totalCost: 0 }];
     const initial = projectRunStatus(state, true);
     assert.equal(initial.remainingSeconds, 1800);
     assert.equal(initial.runState, 'RUNNING');
     assert.equal(initial.cargoUsed, 2);
     assert.equal(initial.cargoCapacity, 20);
     assert.equal(initial.maximumHitPoints, 100);
-    assert.deepEqual(initial.cargo, [{ commodityId: 'ore', quantity: 2, averageBuyPrice: 0 }]);
+    assert.deepEqual(initial.cargo, [{ commodityId: 'ore', quantity: 2, totalCost: 0 }]);
 
     state.clock.activeElapsedMs = 1;
     assert.equal(projectRunStatus(state, true).remainingSeconds, 1800, 'ceil retains the current displayed second');

@@ -102,8 +102,8 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         try { source = JSON.parse(source) as unknown; }
         catch { throw new Error('Game state is not valid JSON.'); }
     }
-    const root = requireRecord(source, 'state', ['schemaVersion', 'runId', 'randomState', 'moolarisDamageArmed', 'terminalResult', 'clock', 'credits', 'cargo', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
-    if (root.schemaVersion !== 11) throw new Error('Unsupported game-state schema version.');
+    const root = requireRecord(source, 'state', ['schemaVersion', 'runId', 'randomState', 'moolarisDamageArmed', 'terminalResult', 'clock', 'credits', 'cargo', 'orbitalCargo', 'looseItems', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
+    if (root.schemaVersion !== 12) throw new Error('Unsupported game-state schema version.');
     const decodedRunId = runId(root.runId, 'state.runId');
     const randomState = uint32(root.randomState, 'state.randomState');
     if (typeof root.moolarisDamageArmed !== 'boolean') throw new Error('state.moolarisDamageArmed must be boolean.');
@@ -111,16 +111,63 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     const credits = nonNegativeSafeInteger(root.credits, 'state.credits');
     if (!Array.isArray(root.cargo)) throw new Error('state.cargo must be an array.');
     const commodityIds = new Set<string>();
+    const decodeContainer = (candidateContainer: unknown, path: string) => {
+        const container = requireRecord(candidateContainer, path, ['commodityId', 'quantity', 'totalCost']);
+        const commodityId = nonEmptyString(container.commodityId, `${path}.commodityId`);
+        const quantity = nonNegativeSafeInteger(container.quantity, `${path}.quantity`);
+        const totalCost = nonNegativeNumber(container.totalCost, `${path}.totalCost`);
+        if (quantity === 0 && totalCost !== 0) throw new Error(`${path}.totalCost must be zero for an empty container.`);
+        return { commodityId, quantity, totalCost };
+    };
     const cargo = root.cargo.map((candidateCargo, index) => {
         const path = `state.cargo[${index}]`;
-        const stack = requireRecord(candidateCargo, path, ['commodityId', 'quantity', 'averageBuyPrice']);
-        const commodityId = nonEmptyString(stack.commodityId, `${path}.commodityId`);
+        const container = decodeContainer(candidateCargo, path);
+        const commodityId = container.commodityId;
         if (commodityIds.has(commodityId)) throw new Error(`Duplicate commodity id: ${commodityId}.`);
         commodityIds.add(commodityId);
+        return container;
+    });
+    if (!Array.isArray(root.orbitalCargo)) throw new Error('state.orbitalCargo must be an array.');
+    const orbitalCargoIds = new Set<string>();
+    const orbitalCargo = root.orbitalCargo.map((candidateCargo, index) => {
+        const path = `state.orbitalCargo[${index}]`;
+        const cargo = requireRecord(candidateCargo, path, ['id', 'position', 'orbit', 'hitPoints', 'container']);
+        const id = nonEmptyString(cargo.id, `${path}.id`);
+        if (orbitalCargoIds.has(id)) throw new Error(`Duplicate orbital cargo id: ${id}.`);
+        orbitalCargoIds.add(id);
+        const orbit = requireRecord(cargo.orbit, `${path}.orbit`, ['angleRadians', 'radius', 'rotationRadians']);
+        const radius = nonNegativeNumber(orbit.radius, `${path}.orbit.radius`);
+        if (radius === 0) throw new Error(`${path}.orbit.radius must be positive.`);
+        const hitPoints = positiveSafeInteger(cargo.hitPoints, `${path}.hitPoints`);
+        if (hitPoints > 2) throw new Error(`${path}.hitPoints exceeds configured durability.`);
         return {
-            commodityId,
-            quantity: nonNegativeSafeInteger(stack.quantity, `${path}.quantity`),
-            averageBuyPrice: nonNegativeNumber(stack.averageBuyPrice, `${path}.averageBuyPrice`)
+            id,
+            position: vector2(cargo.position, `${path}.position`),
+            orbit: { angleRadians: finiteNumber(orbit.angleRadians, `${path}.orbit.angleRadians`), radius, rotationRadians: finiteNumber(orbit.rotationRadians, `${path}.orbit.rotationRadians`) },
+            hitPoints,
+            container: decodeContainer(cargo.container, `${path}.container`)
+        };
+    });
+    if (!Array.isArray(root.looseItems)) throw new Error('state.looseItems must be an array.');
+    const looseItemIds = new Set<string>();
+    const looseItems = root.looseItems.map((candidateItem, index) => {
+        const path = `state.looseItems[${index}]`;
+        const item = requireRecord(candidateItem, path, ['id', 'position', 'motion', 'container']);
+        const id = nonEmptyString(item.id, `${path}.id`);
+        if (looseItemIds.has(id) || orbitalCargoIds.has(id)) throw new Error(`Duplicate salvage id: ${id}.`);
+        looseItemIds.add(id);
+        const motion = requireRecord(item.motion, `${path}.motion`, ['ejectionVelocity', 'sunVelocity', 'createdAtActiveMs']);
+        const container = decodeContainer(item.container, `${path}.container`);
+        if (container.quantity !== 1) throw new Error(`${path}.container.quantity must be one.`);
+        return {
+            id,
+            position: vector2(item.position, `${path}.position`),
+            motion: {
+                ejectionVelocity: vector2(motion.ejectionVelocity, `${path}.motion.ejectionVelocity`),
+                sunVelocity: vector2(motion.sunVelocity, `${path}.motion.sunVelocity`),
+                createdAtActiveMs: nonNegativeNumber(motion.createdAtActiveMs, `${path}.motion.createdAtActiveMs`)
+            },
+            container
         };
     });
 
@@ -270,7 +317,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 11,
+        schemaVersion: 12,
         runId: decodedRunId,
         randomState,
         moolarisDamageArmed: root.moolarisDamageArmed,
@@ -283,6 +330,8 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         clock: { budgetMs, activeElapsedMs, pauseReasons },
         credits,
         cargo,
+        orbitalCargo,
+        looseItems,
         markets: [{ planetId: 'seroton', commodityStocks }],
         ship: {
             position: vector2(ship.position, 'state.ship.position'),

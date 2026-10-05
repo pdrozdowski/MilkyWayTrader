@@ -174,9 +174,9 @@ S09 intentionally breaks the snapshot schema. The codec rejects older snapshots 
 
 ### Phase 1: Product Contract, State Schema, and Container Economics
 
-- [ ] P1-A: Focused state/domain tests round-trip the complete S09 model, reject the prior schema, and preserve totals through partial/full transfers and spill residuals.
-- [ ] P1-B: Market tests prove free pickup changes only the ship container it enters and selling uses that container's weighted average.
-- [ ] P1-C: PRD capability validation has no deterministic or semantic findings.
+- [x] P1-A: Focused state/domain tests round-trip the complete S09 model, reject the prior schema, and preserve totals through partial/full transfers and spill residuals.
+- [x] P1-B: Market tests prove free pickup changes only the ship container it enters and selling uses that container's weighted average.
+- [x] P1-C: PRD capability validation has no deterministic or semantic findings.
 - [ ] P1-D: A reviewer can trace quantity and total cost separately in ship, one orbital cargo, and one loose item without hidden per-unit history.
 
 ### Phase 2: Deterministic Asteroid Loot and World Lifecycle
