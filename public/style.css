@@ -170,6 +170,12 @@ body {
 .market-stock-delta--negative { color: #fca5a5; }
 #landing-status-budget { font-weight: 700; }
 #landing-status-budget.market-budget--warning { color: #ffca8b; }
+#cargo-transfer { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: var(--ui-overlay); }
+#cargo-transfer[hidden] { display: none; }
+.cargo-transfer-panel { display: grid; gap: 10px; width: min(340px, calc(100vw - 32px)); padding: 20px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-surface-raised); color: #fff; }
+.cargo-transfer-panel h2, .cargo-transfer-panel p { margin: 0; }
+.cargo-transfer-panel button { min-height: 38px; border: 1px solid var(--ui-border); background: var(--ui-action); color: #fff; }
+#cargo-transfer-warning { color: #ffca8b; font-weight: 700; }
 .market-inventory-panel, .market-trade-control { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 10px; border: 1px solid #406587; border-radius: 6px; }
 .market-trade-header { display: grid; grid-template-columns: minmax(0, 1fr) 80px; align-items: center; gap: 8px; }
 .market-trade-header .market-commodity-icon { justify-self: end; }

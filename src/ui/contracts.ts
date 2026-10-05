@@ -9,6 +9,7 @@ export type { AuthPort, AuthSnapshot } from '../game/application/auth/auth';
 import type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
 import type { SerotonCommodityId } from '../game/state/serotonMarketState';
 import type { RunStatusSnapshot } from '../game/application/runStatus';
+import type { CommodityContainerState } from '../game/state/commodityContainerState';
 
 export type LandingCommodityId = LandingStatusSnapshot['selectedCommodityId'];
 
@@ -67,4 +68,24 @@ export interface LandingStatusPort extends UiHandle
     setTradeQuantity(quantity: number): void;
     confirmTrade(): void;
     launch(): void;
+}
+
+export interface CargoTransferSnapshot
+{
+    readonly visible: boolean;
+    readonly cargoId: string | null;
+    readonly cargo: CommodityContainerState | null;
+    readonly ship: CommodityContainerState | null;
+    readonly cargoUsed: number;
+    readonly cargoCapacity: number;
+    readonly warning: string | null;
+}
+
+export interface CargoTransferPort extends UiHandle
+{
+    getSnapshot(): Readonly<CargoTransferSnapshot>;
+    subscribe(listener: (snapshot: Readonly<CargoTransferSnapshot>) => void): () => void;
+    transferToShip(): void;
+    transferToCargo(): void;
+    close(): void;
 }

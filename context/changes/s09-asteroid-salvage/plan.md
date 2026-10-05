@@ -188,11 +188,11 @@ S09 intentionally breaks the snapshot schema. The codec rejects older snapshots 
 
 ### Phase 3: Phaser Projections, Visual Feedback, and Audio
 
-- [x] P3-A: Object/audio tests prove projections follow salvage IDs, frames/assets load, and effects are scoped and cleaned up.
+- [x] P3-A: Object/audio tests prove projections follow salvage IDs, frames/assets load, and effects are scoped and cleaned up. — 8ea2133
 - [ ] P3-B: Cargo orbits, shows activation and one-HP feedback, flips at the approved cadence, spills on destruction, and loose icons fade at sun consumption.
 
 ### Phase 4: Paused Transfer Modal, Warning, and Completion Validation
 
-- [ ] P4-A: UI/controller tests prove entry pauses time, Close resumes, re-open suppression lasts to exit, capacity disables the correct control, and warning expiry is two seconds.
-- [ ] P4-B: `npm.cmd run typecheck` and `npm.cmd run test:fast` pass after integration.
+- [x] P4-A: UI/controller tests prove entry pauses time, Close resumes, re-open suppression lasts to exit, capacity disables the correct control, and warning expiry is two seconds.
+- [x] P4-B: `npm.cmd run typecheck` and `npm.cmd run test:fast` pass after integration.
 - [ ] P4-C: A player collects loot, stores it orbitally, destroys cargo, sees individual spill items, and observes independent ship/cargo averages throughout.

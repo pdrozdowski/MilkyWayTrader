@@ -21,7 +21,7 @@ import { asteroidDamageRanges, moolarisDamageRange, nextRandomInteger } from './
 import { resolveTerminalResult } from './hazards/terminal.ts';
 import { spawnAsteroidLoot } from './salvage/asteroidLoot.ts';
 import { advanceLooseItems, advanceOrbitalCargo } from './salvage/salvageSimulation.ts';
-import { destroyOrbitalCargo, pickupLooseItem } from '../application/salvageInteractions.ts';
+import { collectLooseItem, damageOrbitalCargo } from './salvage/cargoDamage.ts';
 
 const asteroidRecoverySeconds = MOOLARIS_RECOVERY_SECONDS / 2;
 
@@ -235,7 +235,7 @@ export function advanceGameSimulation (
     salvageState = cargoProjectileResult.state;
     projectiles = cargoProjectileResult.projectiles;
     const pickup = salvageState.looseItems.find(item => Math.hypot(item.position.x - impactedShip.position.x, item.position.y - impactedShip.position.y) <= shipTuning.collisionRadius);
-    if (pickup) salvageState = pickupLooseItem(salvageState, pickup.id).state;
+    if (pickup) salvageState = collectLooseItem(salvageState, pickup.id);
     const next = tryLandAtCapturedPlanet({ ...salvageState, projectiles }, input.landingRequested === true);
     return resolveTerminalResult(next);
 }
@@ -348,7 +348,7 @@ function resolveCargoProjectileHits (state: GameStateSnapshot, projectiles: read
         const cargo = nextState.orbitalCargo.find(candidate => sweptCircleIntersection({ id: projectile.id, start, end: projectile.position, radius: options.projectileRadius }, { id: candidate.id, start: candidate.position, end: candidate.position, radius: 15 }) !== null);
         if (!cargo) continue;
         removed.add(projectile.id);
-        nextState = destroyOrbitalCargo(nextState, cargo.id).state;
+        nextState = damageOrbitalCargo(nextState, cargo.id);
     }
     return { state: nextState, projectiles: projectiles.filter(projectile => !removed.has(projectile.id)) };
 }

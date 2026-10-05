@@ -17,6 +17,10 @@ const { mountAuthControls } = transpileModule('src/ui/components/authControls.ts
     '../contracts': {},
     './displayLabels': { displayLabels }
 });
+const { mountCargoTransfer } = transpileModule('src/ui/components/cargoTransfer.ts', {
+    '../contracts': {},
+    './displayLabels': { displayLabels }
+});
 
 class FakeVector2 {
     constructor (x, y) { this.x = x; this.y = y; }
@@ -187,4 +191,32 @@ test('a signed-in player can locally sign out without changing the game-facing c
     handle.destroy();
     assert(unsubscribed);
     assert.equal(signIn.listeners.size, 0);
+});
+
+test('cargo transfer disables the direction whose destination cannot accept a transfer', () => {
+    const modal = new FakeElement();
+    const cargo = new FakeElement();
+    const ship = new FakeElement();
+    const warning = new FakeElement();
+    const toShip = new FakeElement();
+    const toCargo = new FakeElement();
+    const close = new FakeElement();
+    const root = new FakeElement({
+        '#cargo-transfer': modal, '#cargo-transfer-cargo': cargo, '#cargo-transfer-ship': ship,
+        '#cargo-transfer-warning': warning, '#cargo-transfer-to-ship': toShip,
+        '#cargo-transfer-to-cargo': toCargo, '#cargo-transfer-close': close
+    });
+    let listener = null;
+    const port = {
+        subscribe: next => { listener = next; return () => {}; },
+        transferToShip: () => {}, transferToCargo: () => {}, close: () => {}, destroy: () => {}
+    };
+    const handle = mountCargoTransfer(root, port);
+    listener({ visible: true, cargoId: 'cargo-1', cargo: { commodityId: 'supplies', quantity: 2, totalCost: 0 }, ship: { commodityId: 'supplies', quantity: 1, totalCost: 10 }, cargoUsed: 20, cargoCapacity: 20, warning: null });
+    assert.equal(toShip.disabled, true, 'a full ship cannot receive cargo');
+    assert.equal(toCargo.disabled, false, 'cargo can receive ship cargo');
+    listener({ visible: true, cargoId: 'cargo-1', cargo: { commodityId: 'supplies', quantity: 2, totalCost: 0 }, ship: null, cargoUsed: 0, cargoCapacity: 20, warning: null });
+    assert.equal(toShip.disabled, false);
+    assert.equal(toCargo.disabled, true, 'an empty ship cannot transfer to cargo');
+    handle.destroy();
 });
