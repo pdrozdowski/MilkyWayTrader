@@ -19,6 +19,9 @@ import { asteroidRadius, advanceAsteroidMotions, fragmentAsteroid, type Asteroid
 import { moolarisDefinition } from '../definitions/moolarisDefinition.ts';
 import { asteroidDamageRanges, moolarisDamageRange, nextRandomInteger } from './hazards/damage.ts';
 import { resolveTerminalResult } from './hazards/terminal.ts';
+import { spawnAsteroidLoot } from './salvage/asteroidLoot.ts';
+import { advanceLooseItems, advanceOrbitalCargo } from './salvage/salvageSimulation.ts';
+import { destroyOrbitalCargo, pickupLooseItem } from '../application/salvageInteractions.ts';
 
 const asteroidRecoverySeconds = MOOLARIS_RECOVERY_SECONDS / 2;
 
@@ -189,6 +192,14 @@ export function advanceGameSimulation (
     const collisionShip = resolved.shipImpact === null ? orbitShip : shipAfterAsteroidImpact(orbitShip, resolved.shipImpact.position, clock.activeElapsedMs);
     const impactedShip = resolved.shipImpact === null ? collisionShip : { ...collisionShip, asteroidImpactAtActiveMs: clock.activeElapsedMs };
     let randomState = state.randomState;
+    const spawnedCargo = [];
+    const spawnedLooseItems = [];
+    for (const asteroid of resolved.destroyedSmallAsteroids) {
+        const loot = spawnAsteroidLoot(asteroid, clock.activeElapsedMs, randomState);
+        randomState = loot.nextRandomState;
+        if (loot.orbitalCargo) spawnedCargo.push(loot.orbitalCargo);
+        if (loot.looseItem) spawnedLooseItems.push(loot.looseItem);
+    }
     let currentHitPoints = state.shipStatus.currentHitPoints;
     if (resolved.shipImpact !== null) {
         const damage = nextRandomInteger(randomState, asteroidDamageRanges[resolved.shipImpact.size].minimum, asteroidDamageRanges[resolved.shipImpact.size].maximum);
@@ -204,7 +215,7 @@ export function advanceGameSimulation (
         currentHitPoints = currentHitPoints >= 30 ? damage.value : 0;
         moolarisDamageArmed = false;
     }
-    const next = tryLandAtCapturedPlanet({
+    let salvageState: GameStateSnapshot = {
         ...state,
         clock,
         randomState,
@@ -216,8 +227,16 @@ export function advanceGameSimulation (
         planetLifecycle: lifecycle,
         weapon,
         projectiles,
-        asteroids: resolved.asteroids
-    }, input.landingRequested === true);
+        asteroids: resolved.asteroids,
+        orbitalCargo: advanceOrbitalCargo([...state.orbitalCargo, ...spawnedCargo], clock.activeElapsedMs),
+        looseItems: advanceLooseItems([...state.looseItems, ...spawnedLooseItems], clock.activeElapsedMs, activeDeltaMs)
+    };
+    const cargoProjectileResult = resolveCargoProjectileHits(salvageState, projectiles, state.projectiles, options);
+    salvageState = cargoProjectileResult.state;
+    projectiles = cargoProjectileResult.projectiles;
+    const pickup = salvageState.looseItems.find(item => Math.hypot(item.position.x - impactedShip.position.x, item.position.y - impactedShip.position.y) <= shipTuning.collisionRadius);
+    if (pickup) salvageState = pickupLooseItem(salvageState, pickup.id).state;
+    const next = tryLandAtCapturedPlanet({ ...salvageState, projectiles }, input.landingRequested === true);
     return resolveTerminalResult(next);
 }
 
@@ -240,7 +259,7 @@ function shipAfterAsteroidImpact (ship: GameStateSnapshot['ship'], asteroidPosit
 function resolveAsteroidImpacts (
     motions: ReturnType<typeof advanceAsteroidMotions>, state: GameStateSnapshot, ship: GameStateSnapshot['ship'],
     planets: GameStateSnapshot['planets'], projectiles: readonly ProjectileState[], options: GameSimulationOptions
-): { asteroids: GameStateSnapshot['asteroids']; projectiles: readonly ProjectileState[]; shipImpact: AsteroidState | null }
+): { asteroids: GameStateSnapshot['asteroids']; projectiles: readonly ProjectileState[]; shipImpact: AsteroidState | null; destroyedSmallAsteroids: readonly AsteroidState[] }
 {
     const sources: readonly (AsteroidImpactSource & { readonly start: Readonly<{ x: number; y: number }>; readonly radius: number })[] = [
         { id: moolarisDefinition.id, kind: 'moolaris', position: moolarisDefinition.position, start: moolarisDefinition.position, radius: moolarisDefinition.radius },
@@ -280,6 +299,7 @@ function resolveAsteroidImpacts (
     const changedAsteroids = new Map<string, AsteroidState>();
     const removedProjectiles = new Set<string>();
     const children: AsteroidState[] = [];
+    const destroyedSmallAsteroids: AsteroidState[] = [];
     let shipImpact: AsteroidState | null = null;
     for (const event of asteroidEvents) {
         if (removedAsteroids.has(event.asteroid.id)) continue;
@@ -311,11 +331,26 @@ function resolveAsteroidImpacts (
             if (asteroid.hitPoints > 1) changedAsteroids.set(asteroid.id, { ...asteroid, hitPoints: asteroid.hitPoints - 1 });
             else {
                 removedAsteroids.add(asteroid.id);
+                if (asteroid.size === 'small') destroyedSmallAsteroids.push(asteroid);
                 children.push(...fragmentAsteroid(asteroid, { id: event.projectile.id, kind: 'projectile', position: event.projectile.position }));
             }
         }
     }
-    return { asteroids: [...motions.filter(motion => !removedAsteroids.has(motion.asteroid.id)).map(motion => changedAsteroids.get(motion.asteroid.id) ?? motion.asteroid), ...children], projectiles: projectiles.filter(projectile => !removedProjectiles.has(projectile.id)), shipImpact };
+    return { asteroids: [...motions.filter(motion => !removedAsteroids.has(motion.asteroid.id)).map(motion => changedAsteroids.get(motion.asteroid.id) ?? motion.asteroid), ...children], projectiles: projectiles.filter(projectile => !removedProjectiles.has(projectile.id)), shipImpact, destroyedSmallAsteroids };
+}
+
+function resolveCargoProjectileHits (state: GameStateSnapshot, projectiles: readonly ProjectileState[], previousProjectiles: readonly ProjectileState[], options: GameSimulationOptions): { state: GameStateSnapshot; projectiles: readonly ProjectileState[] }
+{
+    let nextState = state;
+    const removed = new Set<string>();
+    for (const projectile of projectiles) {
+        const start = previousProjectiles.find(previous => previous.id === projectile.id)?.position ?? projectile.position;
+        const cargo = nextState.orbitalCargo.find(candidate => sweptCircleIntersection({ id: projectile.id, start, end: projectile.position, radius: options.projectileRadius }, { id: candidate.id, start: candidate.position, end: candidate.position, radius: 15 }) !== null);
+        if (!cargo) continue;
+        removed.add(projectile.id);
+        nextState = destroyOrbitalCargo(nextState, cargo.id).state;
+    }
+    return { state: nextState, projectiles: projectiles.filter(projectile => !removed.has(projectile.id)) };
 }
 
 function interpolatedPosition (

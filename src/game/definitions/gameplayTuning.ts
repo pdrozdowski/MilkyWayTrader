@@ -38,6 +38,16 @@ export const asteroidTuning = {
     },
     fragmentDrift: {
         speed: 180
+    },
+    salvage: {
+        cargoChancePercent: 10,
+        looseItemChancePercent: 10,
+        cargoMinimumQuantity: 1,
+        cargoMaximumQuantity: 20,
+        cargoHitPoints: 2,
+        looseItemBlendDurationMs: 10_000,
+        looseItemEjectionSpeed: 180,
+        looseItemSunSpeed: 240
     }
 } as const;
 

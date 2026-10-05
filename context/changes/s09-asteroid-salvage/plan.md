@@ -174,16 +174,16 @@ S09 intentionally breaks the snapshot schema. The codec rejects older snapshots 
 
 ### Phase 1: Product Contract, State Schema, and Container Economics
 
-- [x] P1-A: Focused state/domain tests round-trip the complete S09 model, reject the prior schema, and preserve totals through partial/full transfers and spill residuals.
-- [x] P1-B: Market tests prove free pickup changes only the ship container it enters and selling uses that container's weighted average.
-- [x] P1-C: PRD capability validation has no deterministic or semantic findings.
+- [x] P1-A: Focused state/domain tests round-trip the complete S09 model, reject the prior schema, and preserve totals through partial/full transfers and spill residuals. — e261da9
+- [x] P1-B: Market tests prove free pickup changes only the ship container it enters and selling uses that container's weighted average. — e261da9
+- [x] P1-C: PRD capability validation has no deterministic or semantic findings. — e261da9
 - [ ] P1-D: A reviewer can trace quantity and total cost separately in ship, one orbital cargo, and one loose item without hidden per-unit history.
 
 ### Phase 2: Deterministic Asteroid Loot and World Lifecycle
 
-- [ ] P2-A: Seeded mechanics tests cover all three exclusive branches, cargo bounds, zero-cost cargo, two-hit projectile destruction, and no contact damage.
-- [ ] P2-B: Motion tests prove cargo orbit and the ten-second vector blend only progress in active game time.
-- [ ] P2-C: Pickup/capacity tests prove loose items cannot be shot, only interact with ship/sun, and remain unchanged on full-ship pickup.
+- [x] P2-A: Seeded mechanics tests cover all three exclusive branches, cargo bounds, zero-cost cargo, two-hit projectile destruction, and no contact damage.
+- [x] P2-B: Motion tests prove cargo orbit and the ten-second vector blend only progress in active game time.
+- [x] P2-C: Pickup/capacity tests prove loose items cannot be shot, only interact with ship/sun, and remain unchanged on full-ship pickup.
 - [ ] P2-D: Replaying a fixed seed gives the same loot type, commodity, quantity, vectors, and transitions.
 
 ### Phase 3: Phaser Projections, Visual Feedback, and Audio
