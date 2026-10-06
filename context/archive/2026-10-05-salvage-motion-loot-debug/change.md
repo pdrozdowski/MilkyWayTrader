@@ -1,10 +1,10 @@
 ---
 change_id: salvage-motion-loot-debug
 title: Smooth salvage motion and deterministic cargo testing
-status: implementing
+status: archived
 created: 2026-10-05
 updated: 2026-10-06
-archived_at: null
+archived_at: 2026-10-06T00:00:00Z
 ---
 
 ## Notes
