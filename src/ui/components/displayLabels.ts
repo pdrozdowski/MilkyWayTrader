@@ -1,3 +1,5 @@
+const commodityLabels = { supplies: 'Supplies', alloys: 'Alloys', medicines: 'Medicines' } as const;
+
 export const displayLabels = {
     signInWithGoogle: 'Sign in with Google',
     signOut: 'Sign out',
@@ -24,7 +26,13 @@ export const displayLabels = {
     planetStock: 'Planet stock', playerStock: 'Ship inventory', produces: 'Produces', consumes: 'Consumes', supply: 'Supply',
     averageBuyPrice: 'Average buy price', inBudget: 'IN BUDGET', outOfBudget: 'OUT OF BUDGET',
     tradeResult: 'Trade result:', profit: 'PROFIT', loss: 'LOSS', clockRunning: 'RUNNING', clockPaused: 'PAUSED',
-    supplies: 'Supplies', alloys: 'Alloys', medicines: 'Medicines',
+    supplies: commodityLabels.supplies, alloys: commodityLabels.alloys, medicines: commodityLabels.medicines,
+    commodityLabels,
     teleportToAsteroid: 'Teleport to live asteroid',
-    orbitalCargo: 'Orbital cargo', shipCargo: 'Ship cargo', transferToShip: 'TRANSFER TO SHIP', transferToCargo: 'TRANSFER TO CARGO', close: 'CLOSE'
+    spawnDebugCargo: 'Spawn cargo ahead of ship',
+    orbitalCargo: 'Orbital cargo', shipCargo: 'Ship cargo', transferOne: 'TRANSFER ONE', transferMax: 'TRANSFER MAX', close: 'CLOSE',
+    cargoTransferTitle: 'CARGO TRANSFER', cargoFullWarning: 'WARNING - CARGO IS FULL',
+    cargoTransferCargoHeader: 'Cargo', cargoTransferCommodityHeader: 'Commodity', cargoTransferShipHeader: 'Ship',
+    toCargoMax: '<<max', toCargoOne: '<1', toShipOne: '1>', toShipMax: 'max>>',
+    cargoTransferConfirm: 'Transfer'
 } as const;

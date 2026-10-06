@@ -14,9 +14,11 @@ import type { TerminalResultState } from './terminalResultState';
 
 export interface GameStateSnapshot
 {
-    readonly schemaVersion: 12;
+    readonly schemaVersion: 15;
     readonly runId: string;
     readonly randomState: number;
+    /** Unconsumed entries in a lazily seeded five-kill cargo schedule. */
+    readonly cargoSchedule: readonly (0 | 1)[];
     /** True until Moolaris has dealt its one damage hit for the current entry. */
     readonly moolarisDamageArmed: boolean;
     readonly terminalResult: TerminalResultState | null;

@@ -19,7 +19,7 @@ import { asteroidRadius, advanceAsteroidMotions, fragmentAsteroid, type Asteroid
 import { moolarisDefinition } from '../definitions/moolarisDefinition.ts';
 import { asteroidDamageRanges, moolarisDamageRange, nextRandomInteger } from './hazards/damage.ts';
 import { resolveTerminalResult } from './hazards/terminal.ts';
-import { spawnAsteroidLoot } from './salvage/asteroidLoot.ts';
+import { createCargoSchedule, spawnAsteroidLoot } from './salvage/asteroidLoot.ts';
 import { advanceLooseItems, advanceOrbitalCargo } from './salvage/salvageSimulation.ts';
 import { collectLooseItem, damageOrbitalCargo } from './salvage/cargoDamage.ts';
 
@@ -192,10 +192,18 @@ export function advanceGameSimulation (
     const collisionShip = resolved.shipImpact === null ? orbitShip : shipAfterAsteroidImpact(orbitShip, resolved.shipImpact.position, clock.activeElapsedMs);
     const impactedShip = resolved.shipImpact === null ? collisionShip : { ...collisionShip, asteroidImpactAtActiveMs: clock.activeElapsedMs };
     let randomState = state.randomState;
+    let cargoSchedule = state.cargoSchedule;
     const spawnedCargo = [];
     const spawnedLooseItems = [];
     for (const asteroid of resolved.destroyedSmallAsteroids) {
-        const loot = spawnAsteroidLoot(asteroid, clock.activeElapsedMs, randomState);
+        if (cargoSchedule.length === 0) {
+            const nextSchedule = createCargoSchedule(randomState);
+            cargoSchedule = nextSchedule.schedule;
+            randomState = nextSchedule.nextRandomState;
+        }
+        const [cargoGuaranteed, ...remainingSchedule] = cargoSchedule;
+        cargoSchedule = remainingSchedule;
+        const loot = spawnAsteroidLoot(asteroid, clock.activeElapsedMs, randomState, cargoGuaranteed === 1);
         randomState = loot.nextRandomState;
         if (loot.orbitalCargo) spawnedCargo.push(loot.orbitalCargo);
         if (loot.looseItem) spawnedLooseItems.push(loot.looseItem);
@@ -219,6 +227,7 @@ export function advanceGameSimulation (
         ...state,
         clock,
         randomState,
+        cargoSchedule,
         moolarisDamageArmed,
         markets,
         ship: impactedShip,
@@ -234,7 +243,7 @@ export function advanceGameSimulation (
     const cargoProjectileResult = resolveCargoProjectileHits(salvageState, projectiles, state.projectiles, options);
     salvageState = cargoProjectileResult.state;
     projectiles = cargoProjectileResult.projectiles;
-    const pickup = salvageState.looseItems.find(item => Math.hypot(item.position.x - impactedShip.position.x, item.position.y - impactedShip.position.y) <= shipTuning.collisionRadius);
+    const pickup = salvageState.looseItems.find(item => Math.hypot(item.position.x - impactedShip.position.x, item.position.y - impactedShip.position.y) <= asteroidTuning.salvage.looseItemInteractionRadius);
     if (pickup) salvageState = collectLooseItem(salvageState, pickup.id);
     const next = tryLandAtCapturedPlanet({ ...salvageState, projectiles }, input.landingRequested === true);
     return resolveTerminalResult(next);
@@ -341,11 +350,14 @@ function resolveAsteroidImpacts (
 
 function resolveCargoProjectileHits (state: GameStateSnapshot, projectiles: readonly ProjectileState[], previousProjectiles: readonly ProjectileState[], options: GameSimulationOptions): { state: GameStateSnapshot; projectiles: readonly ProjectileState[] }
 {
+    // Cargo is treated as a static circle at its post-tick position while the projectile segment is swept.
+    // Orbital cargo moves slowly enough per tick relative to its collision radius that this bounded-motion
+    // simplification cannot tunnel a hit in practice; asteroid collisions remain fully swept.
     let nextState = state;
     const removed = new Set<string>();
     for (const projectile of projectiles) {
         const start = previousProjectiles.find(previous => previous.id === projectile.id)?.position ?? projectile.position;
-        const cargo = nextState.orbitalCargo.find(candidate => sweptCircleIntersection({ id: projectile.id, start, end: projectile.position, radius: options.projectileRadius }, { id: candidate.id, start: candidate.position, end: candidate.position, radius: 15 }) !== null);
+        const cargo = nextState.orbitalCargo.find(candidate => sweptCircleIntersection({ id: projectile.id, start, end: projectile.position, radius: options.projectileRadius }, { id: candidate.id, start: candidate.position, end: candidate.position, radius: asteroidTuning.salvage.cargoCollisionRadius }) !== null);
         if (!cargo) continue;
         removed.add(projectile.id);
         nextState = damageOrbitalCargo(nextState, cargo.id);

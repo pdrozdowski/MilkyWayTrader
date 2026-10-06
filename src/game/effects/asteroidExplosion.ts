@@ -144,6 +144,37 @@ export class AsteroidExplosion
         });
     }
 
+    /** Red breakup ring for a destroyed orbital cargo container. */
+    explodeCargoDestroyed (position: Readonly<{ x: number; y: number }>): void
+    {
+        if (this.destroyed) return;
+        const burst = this.scene.add.circle(position.x, position.y, 8, 0xff1616, 0.9).setDepth(ObjectDepth.AsteroidEffect);
+        this.scene.tweens.add({
+            targets: burst,
+            scale: explosionRadius / 8,
+            alpha: 0,
+            duration: explosionLifetimeMs,
+            ease: 'Cubic.Out',
+            onComplete: () => burst.destroy()
+        });
+    }
+
+    /** Yellow breakup ring for a loose item consumed by the sun. */
+    explodeSunConsumedLooseItem (position: Readonly<{ x: number; y: number }>): void
+    {
+        if (this.destroyed) return;
+        const burst = this.scene.add.circle(position.x, position.y, 8, 0xfff1b0, 0.9).setDepth(ObjectDepth.AsteroidEffect);
+        this.scene.tweens.add({
+            targets: burst,
+            scale: explosionRadius / 8,
+            alpha: 0,
+            duration: explosionLifetimeMs,
+            repeat: 2,
+            ease: 'Cubic.Out',
+            onComplete: () => burst.destroy()
+        });
+    }
+
     /** Compact surface flash used only for the committed asteroid-planet impact transition. */
     explodePlanetImpact (position: Readonly<{ x: number; y: number }>): void
     {

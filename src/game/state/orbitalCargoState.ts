@@ -1,6 +1,8 @@
 import type { CommodityContainerState } from './commodityContainerState';
 import type { Vector2State } from './vector2State';
 
+export type OrbitalCargoManifest = readonly CommodityContainerState[];
+
 export interface OrbitalCargoOrbitState
 {
     readonly angleRadians: number;
@@ -14,5 +16,5 @@ export interface OrbitalCargoState
     readonly position: Vector2State;
     readonly orbit: OrbitalCargoOrbitState;
     readonly hitPoints: number;
-    readonly container: CommodityContainerState;
+    readonly manifest: OrbitalCargoManifest;
 }

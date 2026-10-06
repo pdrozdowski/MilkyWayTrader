@@ -9,7 +9,6 @@ export type { AuthPort, AuthSnapshot } from '../game/application/auth/auth';
 import type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
 import type { SerotonCommodityId } from '../game/state/serotonMarketState';
 import type { RunStatusSnapshot } from '../game/application/runStatus';
-import type { CommodityContainerState } from '../game/state/commodityContainerState';
 
 export type LandingCommodityId = LandingStatusSnapshot['selectedCommodityId'];
 
@@ -70,14 +69,25 @@ export interface LandingStatusPort extends UiHandle
     launch(): void;
 }
 
+export interface CargoTransferRow
+{
+    readonly commodityId: string;
+    readonly cargoQuantity: number;
+    readonly shipQuantity: number;
+}
+
+export type CargoTransferDirection = 'to-ship' | 'to-orbit';
+export type CargoTransferAmount = 'one' | 'max';
+
 export interface CargoTransferSnapshot
 {
     readonly visible: boolean;
     readonly cargoId: string | null;
-    readonly cargo: CommodityContainerState | null;
-    readonly ship: CommodityContainerState | null;
+    readonly rows: readonly CargoTransferRow[];
     readonly cargoUsed: number;
     readonly cargoCapacity: number;
+    readonly shipUsed: number;
+    readonly shipCapacity: number;
     readonly warning: string | null;
 }
 
@@ -85,7 +95,6 @@ export interface CargoTransferPort extends UiHandle
 {
     getSnapshot(): Readonly<CargoTransferSnapshot>;
     subscribe(listener: (snapshot: Readonly<CargoTransferSnapshot>) => void): () => void;
-    transferToShip(): void;
-    transferToCargo(): void;
+    transfer(commodityId: string, direction: CargoTransferDirection, amount: CargoTransferAmount): void;
     close(): void;
 }

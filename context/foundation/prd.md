@@ -104,8 +104,8 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - A discrete sun impact removes 80% of maximum HP and pushes the ship clear.
 - Asteroid collision applies size-based damage, destroys the asteroid, and cannot produce salvage.
-- A final projectile hit on a small asteroid has one exclusive salvage outcome.
-- Nearby orbital cargo can exchange commodities with the ship within available capacity.
+- A final projectile hit on a small asteroid follows a five-destruction cycle that guarantees one orbital cargo outcome; each other destruction can yield one loose commodity.
+- Nearby orbital cargo can exchange each contained commodity with the ship within ship and orbital capacity limits.
 - A loose commodity is collected only when ship capacity permits.
 - Each commodity holder retains its own quantity and cost basis during transfer and loss.
 
@@ -199,7 +199,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - FR-032: The game can apply ship damage from environmental collisions. Priority: must-have
 - FR-033: A player can fragment and destroy asteroids by shooting them. Priority: must-have
 - FR-034: The game can maintain scattered asteroids and an outer asteroid belt. Priority: must-have
-- FR-035: The game can provide one exclusive salvage outcome when a player destroys a small asteroid with a weapon. Priority: must-have
+- FR-035: The game can provide one orbital cargo outcome in each five small asteroids a player destroys with a weapon. Priority: must-have
 - FR-036: A player can keep an independent commodity cost basis in each commodity holder. Priority: must-have
 - FR-037: A player can transfer commodities between their ship and nearby orbital cargo. Priority: must-have
 - FR-038: A player can collect loose commodities into their ship. Priority: must-have
@@ -292,16 +292,16 @@ Each run combines a shared active-time clock, independently evolving planetary m
 
 ### Asteroid salvage
 
-- BR-048: A final projectile hit on a small asteroid selects exactly one outcome: orbital cargo with 10% probability, one loose commodity with 10% probability, or no salvage with 80% probability.
+- BR-048: On the first final projectile hit on a small asteroid in each five-hit cycle, the game uses the seeded run randomness to place one cargo marker in a five-entry zero table; the cycle produces exactly one orbital cargo outcome, and each non-cargo outcome independently has a 10% probability of producing one loose commodity.
 - BR-049: Asteroids destroyed by any non-projectile interaction do not produce salvage.
-- BR-050: Asteroid-spawned orbital cargo contains one uniformly selected commodity with a quantity from one through twenty and zero cost basis.
-- BR-051: Each ship commodity container, orbital cargo container, and loose-item container keeps a separate quantity and total cost.
+- BR-050: Asteroid-spawned orbital cargo contains one distinct commodity 50% of the time, two distinct commodities 25% of the time, or three distinct commodities 25% of the time; each commodity quantity is from one through five with a zero cost basis.
+- BR-051: An orbital cargo holds a non-empty manifest of unique commodity stacks whose combined quantity never exceeds twenty units. Each ship commodity container, orbital cargo stack, and loose-item container keeps a separate quantity and total cost.
 - BR-052: A commodity container's displayed average cost equals total cost divided by quantity when quantity is positive.
 - BR-053: A paid purchase adds its paid total to the receiving ship container.
 - BR-054: A free pickup adds quantity but no cost to the receiving ship container.
 - BR-055: A partial transfer or loss removes quantity and proportional cost from its source container.
 - BR-056: A complete transfer or loss removes the source container's exact remaining total cost.
-- BR-057: Destroying orbital cargo spills its remaining commodities as loose items with their total cost allocated proportionally and the final item receiving any residual.
+- BR-057: Destroying orbital cargo spills each remaining unit as an independent loose item, with each stack's cost allocated proportionally and the final unit of each stack receiving any residual.
 
 ### Planetary services, upgrades, and economy
 

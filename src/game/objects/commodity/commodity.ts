@@ -4,6 +4,18 @@ import type { LooseItemState } from '../../state/looseItemState';
 import { definition } from './definition';
 
 export const looseItemSunFadeDurationMs = 1_000;
+const looseItemRotationDurationMinimumMs = 4_000;
+const looseItemRotationDurationMaximumMs = 12_000;
+
+function rotationRandom (value: string): number
+{
+    let hash = 0x811c9dc5;
+    for (let index = 0; index < value.length; index++) {
+        hash ^= value.charCodeAt(index);
+        hash = Math.imul(hash, 0x01000193);
+    }
+    return (hash >>> 0) / 0xffffffff;
+}
 
 /** Presentation-only wrapper for a single loose commodity item. */
 export class Commodity extends SceneObject
@@ -15,6 +27,15 @@ export class Commodity extends SceneObject
         super(scene, definition, { ...state.position, size: 32, variant: state.container.commodityId });
         this.id = state.id;
         this.synchronize(state);
+        const duration = looseItemRotationDurationMinimumMs + rotationRandom(state.id) * (looseItemRotationDurationMaximumMs - looseItemRotationDurationMinimumMs);
+        const clockwise = rotationRandom(`${state.id}:direction`) >= 0.5;
+        this.scene.tweens.add({
+            targets: this.sprite,
+            angle: clockwise ? 360 : -360,
+            duration,
+            repeat: -1,
+            ease: 'Linear'
+        });
     }
 
     synchronize (state: LooseItemState): void

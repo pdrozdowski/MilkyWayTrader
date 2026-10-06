@@ -16,9 +16,10 @@ export interface InitialGameStateInput
 export function createInitialGameState ({ runId, randomSeed }: InitialGameStateInput): GameStateSnapshot
 {
     return {
-    schemaVersion: 12,
+    schemaVersion: 15,
     runId,
     randomState: randomSeed,
+    cargoSchedule: [],
     moolarisDamageArmed: true,
     terminalResult: null,
     clock: {

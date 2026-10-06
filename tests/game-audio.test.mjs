@@ -81,6 +81,19 @@ test('one-shots have a bounded pool and completed voices are reused', () => {
     assert.equal(voices[0].plays.length, 2);
 });
 
+test('stop returns one-shot voices to idle so a retrigger can reuse them', () => {
+    const { scope, voices } = fixture();
+    assert(scope.play(laser.id));
+    assert(scope.play(laser.id));
+    assert.equal(scope.play(laser.id), false);
+    scope.stop(laser.id);
+    assert(voices.every(voice => !voice.isPlaying));
+    assert(scope.play(laser.id));
+    assert.equal(voices.length, 2);
+    assert.equal(voices[0].stops, 1);
+    assert.equal(voices[1].stops, 1);
+});
+
 test('lock, mute and zero volume drop shots, while loops use the latest state on recovery', () => {
     const { scope, service, backend, voices } = fixture();
     backend.unlocked = false;

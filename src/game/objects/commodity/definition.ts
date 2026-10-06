@@ -14,6 +14,5 @@ export const definition: GameObjectDefinition = {
         supplies: {},
         alloys: { texture: 'object:commodity:alloys' },
         medicines: { texture: 'object:commodity:medicines' }
-    },
-    physics: { kind: 'dynamic', shape: { kind: 'circle', radius: 15 } }
+    }
 };

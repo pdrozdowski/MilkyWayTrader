@@ -36,9 +36,9 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 12);
+    assert.equal(state.schemaVersion, 15);
     assert.equal(state.runId, '00000000-0000-4000-8000-000000000001');
-    assert.equal(state.randomState, 1);
+    assert.deepEqual(state.cargoSchedule, []);
     assert.equal(state.moolarisDamageArmed, true);
     assert.equal(state.terminalResult, null);
     assert.equal(state.credits, 100_000);
@@ -204,18 +204,18 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
     assert.deepEqual(unchanged.planets, paused.planets);
 });
 
-test('v12 codec round trips independent ship, orbital, and loose commodity holders and rejects v11', () => {
+test('v15 codec round trips independent ship, orbital, and loose commodity holders and rejects v14', () => {
     const salvage = {
         ...clone(initialGameState),
         cargo: [{ commodityId: 'supplies', quantity: 2, totalCost: 10 }],
-        orbitalCargo: [{ id: 'cargo-1', position: { x: 20, y: 30 }, orbit: { angleRadians: 0.5, radius: 100, rotationRadians: 0 }, hitPoints: 2, container: { commodityId: 'alloys', quantity: 3, totalCost: 21 } }],
+        orbitalCargo: [{ id: 'cargo-1', position: { x: 20, y: 30 }, orbit: { angleRadians: 0.5, radius: 100, rotationRadians: 0 }, hitPoints: 2, manifest: [{ commodityId: 'alloys', quantity: 3, totalCost: 21 }] }],
         looseItems: [{ id: 'item-1', position: { x: 40, y: 50 }, motion: { ejectionVelocity: { x: 4, y: 5 }, sunVelocity: { x: -1, y: -2 }, createdAtActiveMs: 12 }, container: { commodityId: 'medicines', quantity: 1, totalCost: 7 } }]
     };
     const decoded = decodeGameState(salvage);
     assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
-    assert(Object.isFrozen(decoded.orbitalCargo[0].container));
+    assert(Object.isFrozen(decoded.orbitalCargo[0].manifest));
     assert(Object.isFrozen(decoded.looseItems[0].motion));
-    assert.throws(() => decodeGameState({ ...salvage, schemaVersion: 11 }));
+    assert.throws(() => decodeGameState({ ...salvage, schemaVersion: 14 }));
     assert.throws(() => decodeGameState({ ...salvage, looseItems: [{ ...salvage.looseItems[0], container: { ...salvage.looseItems[0].container, quantity: 2 } }] }));
 });
 
@@ -361,7 +361,7 @@ test('cargo transfer entry pauses, Close resumes, and exit/re-entry clears its v
     const cargo = {
         id: 'salvage-1', position: { x: 10, y: 0 }, hitPoints: 2,
         orbit: { radius: 10, angleRadians: 0, rotationRadians: 0 },
-        container: { commodityId: 'supplies', quantity: 2, totalCost: 0 }
+        manifest: [{ commodityId: 'supplies', quantity: 2, totalCost: 0 }]
     };
     const provider = new GameStateProvider({ ...initialGameState, ship: { ...initialGameState.ship, position: { x: 0, y: 0 } }, orbitalCargo: [cargo] });
     const port = createCargoTransferPort({ registry: { get: () => provider }, events });
@@ -376,6 +376,35 @@ test('cargo transfer entry pauses, Close resumes, and exit/re-entry clears its v
     provider.update(state => ({ ...state, ship: { ...state.ship, position: { x: 0, y: 0 } } }));
     assert.equal(port.getSnapshot().visible, true);
     assert(provider.snapshot().clock.pauseReasons.includes('manual'));
+    port.destroy();
+});
+
+test('emptying the last orbital cargo stack keeps the transfer modal open instead of auto-closing', () => {
+    const handlers = new Map();
+    const events = {
+        on: (name, listener) => handlers.set(name, listener),
+        off: (name, listener) => { if (handlers.get(name) === listener) handlers.delete(name); },
+        emit: name => handlers.get(name)?.()
+    };
+    const cargo = {
+        id: 'salvage-1', position: { x: 10, y: 0 }, hitPoints: 2,
+        orbit: { radius: 10, angleRadians: 0, rotationRadians: 0 },
+        manifest: [{ commodityId: 'supplies', quantity: 1, totalCost: 0 }]
+    };
+    const provider = new GameStateProvider({ ...initialGameState, ship: { ...initialGameState.ship, position: { x: 0, y: 0 } }, orbitalCargo: [cargo] });
+    const port = createCargoTransferPort({ registry: { get: () => provider }, events });
+    assert.equal(port.getSnapshot().visible, true);
+    port.transfer('supplies', 'to-ship', 'max');
+    const snapshot = port.getSnapshot();
+    assert.equal(snapshot.visible, true, 'a transfer must not close the modal');
+    assert.equal(snapshot.cargoId, 'salvage-1');
+    assert.equal(snapshot.rows.find(row => row.commodityId === 'supplies').shipQuantity, 1);
+    assert(provider.snapshot().clock.pauseReasons.includes('manual'));
+    port.transfer('supplies', 'to-orbit', 'one');
+    const restored = port.getSnapshot();
+    assert.equal(restored.rows.find(row => row.commodityId === 'supplies').cargoQuantity, 1);
+    assert.equal(restored.rows.find(row => row.commodityId === 'supplies').shipQuantity, 0);
+    assert.equal(provider.snapshot().orbitalCargo.length, 1);
     port.destroy();
 });
 
@@ -470,10 +499,10 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 12);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 15);
 });
 
-test('v12 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
+test('v14 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
     const decoded = decodeGameState(initialGameState);
     const asteroid = clone(decoded.asteroids[0]);
     assert(Object.isFrozen(decoded.asteroids));
@@ -491,6 +520,42 @@ test('v12 codec validates asteroid identity, durability, finite vectors, lifecyc
         { ...clone(decoded), asteroids: [{ ...asteroid, outsideSafeAreaSinceActiveMs: -1 }] },
         { ...clone(decoded), asteroids: [{ ...asteroid, orbit: { ...asteroid.orbit, radius: 0 } }] },
         { ...clone(decoded), asteroids: [{ ...asteroid, orbit: { ...asteroid.orbit, unexpected: true } }] }
+    ];
+    for (const invalid of invalidCases) assert.throws(() => decodeGameState(invalid));
+});
+
+test('codec preserves only a valid unconsumed cargo schedule and rejects retired schemas', () => {
+    const decoded = decodeGameState(initialGameState);
+    assert.deepEqual(decodeGameState(encodeGameState(decoded)).cargoSchedule, decoded.cargoSchedule);
+    assert.throws(() => decodeGameState({ ...clone(decoded), schemaVersion: 13 }));
+    assert.throws(() => decodeGameState({ ...clone(decoded), cargoSchedule: [0, 1, 0, 0, 0, 0] }));
+    assert.throws(() => decodeGameState({ ...clone(decoded), cargoSchedule: [0, 1, 1] }));
+    assert.throws(() => decodeGameState({ ...clone(decoded), cargoSchedule: [0, 0, 0, 0, 0] }));
+    assert.throws(() => decodeGameState({ ...clone(decoded), cargoSchedule: [0, 2] }));
+});
+
+test('codec validates the capacity-limited multi-commodity orbital manifest and rejects v14', () => {
+    const cargo = manifest => ({ id: 'cargo-1', position: { x: 20, y: 30 }, orbit: { angleRadians: 0.5, radius: 100, rotationRadians: 0 }, hitPoints: 2, manifest });
+    const valid = {
+        ...clone(initialGameState),
+        orbitalCargo: [cargo([
+            { commodityId: 'supplies', quantity: 3, totalCost: 15 },
+            { commodityId: 'alloys', quantity: 5, totalCost: 10 }
+        ])]
+    };
+    const decoded = decodeGameState(valid);
+    assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
+    assert(Object.isFrozen(decoded.orbitalCargo[0].manifest[0]));
+
+    const invalidCases = [
+        { ...clone(valid), schemaVersion: 14 },
+        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'supplies', quantity: 1, totalCost: 0 }, { commodityId: 'supplies', quantity: 2, totalCost: 0 }])] },
+        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'unknown', quantity: 1, totalCost: 0 }])] },
+        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'supplies', quantity: 0, totalCost: 0 }])] },
+        { ...clone(valid), orbitalCargo: [cargo([])] },
+        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'supplies', quantity: 11, totalCost: 0 }, { commodityId: 'alloys', quantity: 10, totalCost: 0 }])] },
+        { ...clone(valid), orbitalCargo: [cargo({ commodityId: 'supplies', quantity: 1, totalCost: 0 })] },
+        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'supplies', quantity: -1, totalCost: 0 }])] }
     ];
     for (const invalid of invalidCases) assert.throws(() => decodeGameState(invalid));
 });
