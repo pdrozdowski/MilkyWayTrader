@@ -60,15 +60,16 @@ test('salvage projections reconcile state IDs, use approved frames/icons and cle
         ownCleanup (cleanup) { this.cleanups.push(cleanup); }
         destroy () { if (this.sprite.destroyed) return; this.sprite.destroyed = true; for (const cleanup of this.cleanups) cleanup(); destroyed.push(this); }
     }
-    const arc = () => ({ setStrokeStyle () { return this; }, setDepth () { return this; }, setPosition () { return this; }, destroy () {} });
     const graphics = () => ({ clear () { return this; }, setDepth () { return this; }, fillStyle () { return this; }, fillRect () { return this; }, destroy () {} });
-    const scene = { time: { now: 0 }, events: { once () {}, off () {} }, add: { circle: arc, graphics }, tweens: { add (config) { config.onComplete(); } } };
+    const scene = { time: { now: 0 }, events: { once () {}, off () {} }, add: { graphics }, tweens: { add (config) { config.onComplete?.(); } } };
     const cargoDefinition = transpileModule('src/game/objects/cargo/definition.ts', { '../../visual/layers': { ObjectDepth: { Asteroid: 15 } } }).definition;
     const commodityDefinition = transpileModule('src/game/objects/commodity/definition.ts', { '../../visual/layers': { ObjectDepth: { Asteroid: 15 } } }).definition;
-    assert.deepEqual(cargoDefinition.assets.map(asset => asset.path), ['icons/cargo_32x32.png', 'icons/cargo2_32x32.png']);
+    assert.deepEqual(cargoDefinition.assets.map(asset => asset.path), ['icons/cargo_32x32.png', 'icons/cargo_2_32x32.png']);
     assert.deepEqual(commodityDefinition.assets.map(asset => asset.path), [
         'icons/commodity-supplies-placeholder_32x32.png', 'icons/commodity-alloys-placeholder_32x32.png', 'icons/commodity-medicines-placeholder_32x32.png'
     ]);
+    assert.equal(commodityDefinition.physics, undefined, 'loose commodity projection creates no Arcade body');
+    assert.equal(cargoDefinition.physics, undefined, 'cargo projection creates no Arcade body');
     const { CargoProjection } = transpileModule('src/game/objects/cargo/cargo.ts', {
         phaser: {}, '../_shared/sceneObject': { SceneObject }, '../../visual/layers': { ObjectDepth: { Asteroid: 15, Indicator: 11 } }, './definition': { definition: {} }
     });
@@ -76,15 +77,17 @@ test('salvage projections reconcile state IDs, use approved frames/icons and cle
         phaser: {}, '../_shared/sceneObject': { SceneObject }, './definition': { definition: {} }
     });
     const cargo = new CargoProjection(scene);
-    cargo.synchronize([{ id: 'cargo-1', position: { x: 4, y: 5 }, orbit: {}, hitPoints: 2, container: { commodityId: 'alloys', quantity: 2, totalCost: 0 } }]);
+    cargo.synchronize([{ id: 'cargo-1', position: { x: 4, y: 5 }, orbit: {}, hitPoints: 2, manifest: [{ commodityId: 'alloys', quantity: 2, totalCost: 0 }] }]);
     scene.time.now = 300;
-    cargo.synchronize([{ id: 'cargo-1', position: { x: 7, y: 9 }, orbit: {}, hitPoints: 1, container: { commodityId: 'alloys', quantity: 2, totalCost: 0 } }]);
+    cargo.synchronize([{ id: 'cargo-1', position: { x: 7, y: 9 }, orbit: {}, hitPoints: 1, manifest: [{ commodityId: 'alloys', quantity: 2, totalCost: 0 }] }]);
     assert.equal(cargo.cargoById.get('cargo-1').sprite.texture, 'object:cargo:open');
     cargo.synchronize([]);
     assert.equal(cargo.cargoById.size, 0);
     const commodities = new CommodityProjection(scene);
     commodities.synchronize([{ id: 'loose-1', position: { x: 1, y: 2 }, motion: {}, container: { commodityId: 'medicines', quantity: 1, totalCost: 0 } }], new Set());
     assert.equal(commodities.commodityById.get('loose-1').sprite.texture, 'object:commodity:medicines');
+    commodities.synchronize([{ id: 'loose-1', position: { x: 3, y: 4 }, motion: {}, container: { commodityId: 'medicines', quantity: 1, totalCost: 0 } }], new Set());
+    assert.deepEqual({ x: commodities.commodityById.get('loose-1').sprite.x, y: commodities.commodityById.get('loose-1').sprite.y }, { x: 3, y: 4 });
     commodities.synchronize([], new Set(['loose-1']));
     assert.equal(commodities.commodityById.size, 0, 'sun fade completion destroys its scoped projection');
     assert(destroyed.length >= 2, 'projection wrappers release their owned presentation objects');

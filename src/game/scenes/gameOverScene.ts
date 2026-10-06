@@ -8,8 +8,6 @@ export class GameOver extends Scene
 {
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.Image;
-    private resultPanel: Phaser.GameObjects.Graphics;
-    private resultText: Phaser.GameObjects.Text;
 
     constructor ()
     {
@@ -24,11 +22,6 @@ export class GameOver extends Scene
         this.camera.setBackgroundColor(0x000000);
 
         this.background = this.add.image(0, 0, 'game-over:destroyed-ship');
-        const activeSeconds = (terminalResult.activeElapsedMs / 1000).toFixed(1);
-        this.resultPanel = this.add.graphics();
-        this.resultText = this.add.text(0, 0, `Survived: ${activeSeconds} seconds\nFinal cash: ${terminalResult.finalCredits.toLocaleString('en-US')} cr`, {
-            fontFamily: 'Arial', fontSize: 28, color: '#ffffff', align: 'center', lineSpacing: 10
-        }).setOrigin(0.5);
         this.layoutBackground();
         this.scale.on('resize', this.layoutBackground, this);
         this.game.events.emit('game-over-open', terminalResult);
@@ -54,10 +47,5 @@ export class GameOver extends Scene
     {
         const transform = mainMenuBackgroundTransform(this.scale, this.background.height);
         this.background.setPosition(transform.x, transform.y).setScale(transform.scale);
-        const panelWidth = Math.min(600, this.scale.width - 48);
-        const panelHeight = 128;
-        const panelY = this.scale.height * 0.7;
-        this.resultPanel.clear().fillStyle(0x07111b, 0.5).fillRoundedRect((this.scale.width - panelWidth) / 2, panelY - panelHeight / 2, panelWidth, panelHeight, 12);
-        this.resultText.setPosition(this.scale.width / 2, panelY);
     };
 }

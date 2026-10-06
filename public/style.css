@@ -100,7 +100,14 @@ body {
 #run-status-hp[data-health-band="warning"]::-moz-progress-bar { background: var(--ui-health-warning); }
 #run-status-hp[data-health-band="critical"]::-webkit-progress-value { background: var(--ui-health-critical); }
 #run-status-hp[data-health-band="critical"]::-moz-progress-bar { background: var(--ui-health-critical); }
-#game-over-status { position: absolute; z-index: 4; right: 12px; bottom: 12px; left: 12px; display: grid; justify-items: center; gap: 10px; padding: 12px; color: #fff; background: var(--ui-surface); text-align: center; }
+#game-over-results, #game-over-status { box-sizing: border-box; width: min(600px, calc(100% - 48px)); color: #fff; background: var(--ui-surface); text-align: center; }
+#game-over-results { position: absolute; top: 70%; left: 50%; z-index: 3; padding: 20px 24px; border-radius: 12px; background: rgb(7 17 27 / 50%); transform: translate(-50%, -50%); }
+#game-over-results h1 { margin: 0 0 14px; font-size: clamp(24px, 4vw, 32px); }
+#game-over-results dl { display: grid; gap: 10px; margin: 0; }
+#game-over-results dl > div { display: flex; justify-content: center; gap: 8px; }
+#game-over-results dt, #game-over-results dd { margin: 0; }
+#game-over-results dd { font-weight: 700; }
+#game-over-status { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; z-index: 4; display: grid; justify-items: center; gap: 10px; padding: 12px; transform: translateX(-50%); }
 #game-over-status p { margin: 0; }
 #game-over-status button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-action); font: inherit; cursor: pointer; }
 #game-over-status button:focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
@@ -172,10 +179,28 @@ body {
 #landing-status-budget.market-budget--warning { color: #ffca8b; }
 #cargo-transfer { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: var(--ui-overlay); }
 #cargo-transfer[hidden] { display: none; }
-.cargo-transfer-panel { display: grid; gap: 10px; width: min(340px, calc(100vw - 32px)); padding: 20px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-surface-raised); color: #fff; }
+.cargo-transfer-panel { display: grid; gap: 12px; width: min(440px, calc(100vw - 32px)); padding: 20px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-surface-raised); color: #fff; }
 .cargo-transfer-panel h2, .cargo-transfer-panel p { margin: 0; }
+#cargo-transfer-warning { position: fixed; top: 33.333vh; left: 50%; z-index: 30; margin: 0; padding: 10px 12px; background-color: #7a4a12; color: #ffe0b3; font-family: Arial, sans-serif; font-size: 18px; text-align: center; transform: translateX(-50%); pointer-events: none; }
+.cargo-transfer-grid { display: grid; gap: 8px; }
+.cargo-transfer-header, .cargo-transfer-usage, .cargo-transfer-row { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr) auto minmax(0, 1fr) 2.75rem; align-items: center; gap: 6px; }
+.cargo-transfer-header { color: #9fd1ff; font-size: 0.8em; font-weight: 700; text-transform: uppercase; }
+#cargo-transfer-commodity-header { text-align: center; }
+.cargo-transfer-usage { font-weight: 700; }
+.cargo-transfer-usage > span { white-space: nowrap; }
+#cargo-transfer-cargo-usage, #cargo-transfer-ship-usage { text-align: center; }
+#cargo-transfer-rows { display: grid; gap: 8px; }
+.cargo-transfer-row { padding: 8px; border: 1px solid #406587; border-radius: 6px; background: var(--ui-surface-raised); }
+.cargo-transfer-row[hidden] { display: none; }
+.cargo-transfer-row-cargo-quantity, .cargo-transfer-row-ship-quantity { text-align: center; font-weight: 700; }
+.cargo-transfer-row-commodity { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+.cargo-transfer-row-icon { flex: 0 0 auto; }
+.cargo-transfer-row-name { font-size: 0.8em; font-weight: 700; white-space: nowrap; }
+.cargo-transfer-row-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.cargo-transfer-row-controls button { min-height: 32px; padding: 0 4px; font-size: 0.75em; }
 .cargo-transfer-panel button { min-height: 38px; border: 1px solid var(--ui-border); background: var(--ui-action); color: #fff; }
-#cargo-transfer-warning { color: #ffca8b; font-weight: 700; }
+.cargo-transfer-panel button:disabled { opacity: .55; }
+.cargo-transfer-confirm { width: 100%; min-height: 44px; font-weight: 700; }
 .market-inventory-panel, .market-trade-control { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 10px; border: 1px solid #406587; border-radius: 6px; }
 .market-trade-header { display: grid; grid-template-columns: minmax(0, 1fr) 80px; align-items: center; gap: 8px; }
 .market-trade-header .market-commodity-icon { justify-self: end; }

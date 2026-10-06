@@ -43,10 +43,12 @@ export const asteroidTuning = {
         cargoChancePercent: 10,
         looseItemChancePercent: 10,
         cargoMinimumQuantity: 1,
-        cargoMaximumQuantity: 20,
+        cargoMaximumQuantity: 5,
         cargoHitPoints: 2,
+        cargoCollisionRadius: 15,
+        looseItemInteractionRadius: 20,
         looseItemBlendDurationMs: 10_000,
-        looseItemEjectionSpeed: 180,
+        looseItemEjectionSpeed: 126,
         looseItemSunSpeed: 240
     }
 } as const;

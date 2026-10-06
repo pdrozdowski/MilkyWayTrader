@@ -19,6 +19,7 @@ import type { TerminalResultState } from '../game/state/terminalResultState';
 import type { UiHandle } from './contracts';
 import { resultLabels } from '../game/application/results/resultLabels';
 import { displayLabels } from './components/displayLabels';
+import { bindDebugCargoControl } from './components/debugCargoControl';
 
 export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort, telemetry: TelemetryPort, gameOverReturn: GameOverReturnPort): UiHandle
 {
@@ -33,10 +34,16 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const toggleFullscreen = (): void => { void displayPort.toggleFullscreen(); };
     game.events.on('toggle-fullscreen', toggleFullscreen);
     const runStatus = mountRunStatus(root, createRunStatusPort(game));
+    const gameOverResults = root.querySelector<HTMLElement>('#game-over-results');
+    const gameOverResultsTitle = root.querySelector<HTMLElement>('#game-over-results-title');
+    const gameOverSurvivalTimeLabel = root.querySelector<HTMLElement>('#game-over-survival-time-label');
+    const gameOverSurvivalTime = root.querySelector<HTMLElement>('#game-over-survival-time');
+    const gameOverFinalCashLabel = root.querySelector<HTMLElement>('#game-over-final-cash-label');
+    const gameOverFinalCash = root.querySelector<HTMLElement>('#game-over-final-cash');
     const gameOverStatus = root.querySelector<HTMLElement>('#game-over-status');
     const gameOverMessage = root.querySelector<HTMLElement>('#game-over-status-message');
     const gameOverRetry = root.querySelector<HTMLButtonElement>('#game-over-status-retry');
-    if (!gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
+    if (!gameOverResults || !gameOverResultsTitle || !gameOverSurvivalTimeLabel || !gameOverSurvivalTime || !gameOverFinalCashLabel || !gameOverFinalCash || !gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
     const renderGameOverPersistence = (result: { status: 'pending' | 'saved' | 'failed' | 'unsigned'; message: string | null } | null): void => {
         gameOverStatus.hidden = result === null;
         if (!result) return;
@@ -46,6 +53,15 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         gameOverRetry.textContent = resultLabels.retry;
     };
     const retryGameOverPersistence = (): void => { game.events.emit('game-over-retry'); };
+    const showGameOverResults = (terminalResult: TerminalResultState): void => {
+        gameOverResultsTitle.textContent = resultLabels.title;
+        gameOverSurvivalTimeLabel.textContent = resultLabels.survived;
+        gameOverSurvivalTime.textContent = `${(terminalResult.activeElapsedMs / 1000).toFixed(1)} seconds`;
+        gameOverFinalCashLabel.textContent = resultLabels.finalCash;
+        gameOverFinalCash.textContent = `${terminalResult.finalCredits.toLocaleString('en-US')} cr`;
+        gameOverResults.hidden = false;
+    };
+    const hideGameOverResults = (): void => { gameOverResults.hidden = true; };
     gameOverRetry.addEventListener('click', retryGameOverPersistence);
     game.events.on('game-over-persistence', renderGameOverPersistence);
     game.registry.set('telemetry', telemetry);
@@ -65,11 +81,12 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const teleportLactozis = root.querySelector<HTMLButtonElement>('#debug-teleport-lactozis-7c');
     const teleportMasloPrime = root.querySelector<HTMLButtonElement>('#debug-teleport-maslo-prime');
     const teleportAsteroid = root.querySelector<HTMLButtonElement>('#debug-teleport-asteroid');
-    if (!mainMenu || !mainMenuNewGame || !mainMenuSignIn || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime || !teleportAsteroid) throw new Error('Missing game menu controls.');
+    const spawnCargo = root.querySelector<HTMLButtonElement>('#debug-spawn-cargo');
+    if (!mainMenu || !mainMenuNewGame || !mainMenuSignIn || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime || !teleportAsteroid || !spawnCargo) throw new Error('Missing game menu controls.');
     const showMainMenu = (): void => { mainMenu.hidden = false; };
     const hideMainMenu = (): void => { mainMenu.hidden = true; };
-    const showGameOverSignIn = (terminalResult: TerminalResultState): void => { currentGameOverResult = terminalResult; root.append(mainMenuSignIn); };
-    const hideGameOverSignIn = (): void => { currentGameOverResult = null; mainMenu.prepend(mainMenuSignIn); };
+    const showGameOverSignIn = (terminalResult: TerminalResultState): void => { currentGameOverResult = terminalResult; showGameOverResults(terminalResult); root.append(mainMenuSignIn); };
+    const hideGameOverSignIn = (): void => { currentGameOverResult = null; hideGameOverResults(); mainMenu.prepend(mainMenuSignIn); };
     const startNewGame = (): void => { game.events.emit('start-new-game'); };
     mainMenuNewGame.addEventListener('click', startNewGame);
     game.events.on('main-menu-open', showMainMenu);
@@ -101,6 +118,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const teleportToMasloPrime = (): void => { teleportTo('maslo-prime'); };
     const teleportToAsteroid = (): void => { if (!terminalDeathTransitionActive) { game.events.emit('debug-teleport-to-asteroid'); closeDebugMenu(); } };
     teleportAsteroid.textContent = displayLabels.teleportToAsteroid;
+    const destroyDebugCargoControl = bindDebugCargoControl(spawnCargo, game.events, displayLabels.spawnDebugCargo, () => !terminalDeathTransitionActive, closeDebugMenu);
     const resetDebugControls = (): void => {
         touchControlsEnabled = false;
         mouseMovementEnabled = true;
@@ -161,6 +179,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             teleportLactozis.removeEventListener('click', teleportToLactozis);
             teleportMasloPrime.removeEventListener('click', teleportToMasloPrime);
             teleportAsteroid.removeEventListener('click', teleportToAsteroid);
+            destroyDebugCargoControl();
             game.events.off('debug-controls-reset', resetDebugControls);
             game.events.off('terminal-death-transition', setTerminalDeathTransition);
             game.events.off('toggle-fullscreen', toggleFullscreen);

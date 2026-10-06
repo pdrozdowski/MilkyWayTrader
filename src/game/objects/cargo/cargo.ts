@@ -6,23 +6,18 @@ import { definition } from './definition';
 
 const closedFrameDurationMs = 200;
 const cargoAnimationDurationMs = 1_200;
-const activationRadius = 20;
 
 /** Presentation-only wrapper for one authoritative orbital cargo ID. */
 export class Cargo extends SceneObject
 {
     readonly id: string;
-    private readonly activation: GameObjects.Arc;
     private readonly healthBar: GameObjects.Graphics;
 
     constructor (scene: Scene, state: OrbitalCargoState)
     {
         super(scene, definition, { ...state.position, size: 32 });
         this.id = state.id;
-        this.activation = scene.add.circle(state.position.x, state.position.y, activationRadius)
-            .setStrokeStyle(2, 0x9be0ff, 0.7).setDepth(ObjectDepth.Indicator);
         this.healthBar = scene.add.graphics();
-        this.ownCleanup(() => this.activation.destroy());
         this.ownCleanup(() => this.healthBar.destroy());
         this.synchronize(state);
     }
@@ -30,7 +25,6 @@ export class Cargo extends SceneObject
     synchronize (state: OrbitalCargoState): void
     {
         super.setPosition(state.position.x, state.position.y);
-        this.activation.setPosition(state.position.x, state.position.y);
         const texture = this.scene.time.now % cargoAnimationDurationMs >= closedFrameDurationMs
             ? 'object:cargo:open'
             : 'object:cargo:closed';

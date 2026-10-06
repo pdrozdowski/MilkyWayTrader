@@ -3,7 +3,7 @@ import type { GameStateProvider } from '../application/gameStateProvider';
 import type { AudioScope } from '../audio/audioScope';
 import { getAudioService } from '../audio/gameAudio';
 import { updateShipAudio } from '../audio/shipAudio';
-import { projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
+import { asteroidTuning, projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning';
 import { moolarisDefinition } from '../definitions/moolarisDefinition';
 import { ShipDestruction } from '../effects/shipDestruction';
 import { AsteroidExplosion, fragmentedParents, fragmentImpactPosition, planetImpactParents, planetImpactSmallAsteroids, projectileDamagedAsteroids, projectileDestroyedSmallAsteroids, projectileImpactPositions, sunConsumedAsteroids } from '../effects/asteroidExplosion';
@@ -14,6 +14,7 @@ import { resolveMoolarisContact } from '../mechanics/moolaris/contact';
 import { LANDING_CENTRE_RADIUS } from '../mechanics/planet/landing';
 import { teleportShipToPlanet } from '../mechanics/debug/teleportShipToPlanet';
 import { teleportShipToAsteroid } from '../mechanics/debug/teleportShipToAsteroid';
+import { spawnDebugCargo } from '../mechanics/debug/spawnDebugCargo';
 import { Planet } from '../objects/planet/planet';
 import { AsteroidProjection } from '../objects/asteroid/asteroidProjection';
 import { CargoProjection } from '../objects/cargo/cargo';
@@ -70,6 +71,8 @@ export class Game extends Scene
     private mouseMovementEnabled = true;
     private destruction: ShipDestruction | null = null;
     private deathTransitionStarted = false;
+    private lastItemCollectedAtMs = Number.NEGATIVE_INFINITY;
+    private lastItemBlockedAtMs = Number.NEGATIVE_INFINITY;
 
     constructor ()
     {
@@ -84,6 +87,8 @@ export class Game extends Scene
         this.touchControlsVisible = false;
         this.mouseMovementEnabled = true;
         this.deathTransitionStarted = false;
+        this.lastItemCollectedAtMs = Number.NEGATIVE_INFINITY;
+        this.lastItemBlockedAtMs = Number.NEGATIVE_INFINITY;
         this.game.events.emit('debug-controls-reset');
         this.audio = getAudioService(this.game).createScope(this);
         this.stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
@@ -145,6 +150,7 @@ export class Game extends Scene
         this.game.events.on('debug-booster', this.setBoosterEnabled, this);
         this.game.events.on('debug-teleport-to-planet', this.teleportToPlanet, this);
         this.game.events.on('debug-teleport-to-asteroid', this.teleportToAsteroid, this);
+        this.game.events.on('debug-spawn-cargo', this.spawnDebugCargo, this);
         window.addEventListener('blur', this.loseFocus);
         window.addEventListener('focus', this.gainFocus);
         window.addEventListener('touchcancel', this.cancelTouch);
@@ -166,6 +172,7 @@ export class Game extends Scene
             this.game.events.off('debug-booster', this.setBoosterEnabled, this);
             this.game.events.off('debug-teleport-to-planet', this.teleportToPlanet, this);
             this.game.events.off('debug-teleport-to-asteroid', this.teleportToAsteroid, this);
+            this.game.events.off('debug-spawn-cargo', this.spawnDebugCargo, this);
             window.removeEventListener('blur', this.loseFocus);
             window.removeEventListener('focus', this.gainFocus);
             window.removeEventListener('touchcancel', this.cancelTouch);
@@ -435,10 +442,16 @@ export class Game extends Scene
             muzzleOffset: weaponTuning.noseOffset * this.ship.sprite.scaleX
         }));
         if (before.moolarisDamageArmed && !state.moolarisDamageArmed && state.terminalResult === null) this.playShipCrashFeedback(state.ship.position);
-        const failedPickup = before.looseItems.some(item => Math.hypot(item.position.x - before.ship.position.x, item.position.y - before.ship.position.y) <= shipTuning.collisionRadius)
+        const failedPickup = before.looseItems.some(item => Math.hypot(item.position.x - before.ship.position.x, item.position.y - before.ship.position.y) <= asteroidTuning.salvage.looseItemInteractionRadius)
             && state.looseItems.length === before.looseItems.length
             && before.cargo.reduce((total, container) => total + container.quantity, 0) >= (cargoCapacityByLevel[before.shipStatus.cargoLevel] ?? 0);
-        if (failedPickup) this.game.events.emit('salvage-pickup-cargo-full');
+        if (failedPickup) {
+            this.game.events.emit('salvage-pickup-cargo-full');
+            if (time - this.lastItemBlockedAtMs >= 500) {
+                this.lastItemBlockedAtMs = time;
+                this.audio.play('item-collection-blocked');
+            }
+        }
         if (before.terminalResult === null && state.terminalResult !== null) {
             this.beginDeathTransition(state.terminalResult, state.ship.position);
             return;
@@ -459,7 +472,7 @@ export class Game extends Scene
         this.lossOfControl.setVisible(time < this.lossOfControlUntilMs);
         this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);
         this.shipVelocity.copy(state.ship.velocity);
-        updateShipAudio(this.audio, state.ship, this.shipVelocity.length(),
+        updateShipAudio(this.audio, { enginesOn: state.ship.enginesOn && !state.clock.pauseReasons.includes('manual'), boosting: state.ship.boosting }, this.shipVelocity.length(),
             shipTuning.maxSpeed, shipBoostTuning.speedMultiplier, delta);
         const zoomTarget = state.ship.boosting ? shipBoostTuning.cameraZoom : 1;
         const zoomBlend = 1 - Math.exp(-delta / (shipBoostTuning.cameraTransitionSeconds * 1000));
@@ -478,9 +491,29 @@ export class Game extends Scene
         this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets, state.clock.activeElapsedMs - before.clock.activeElapsedMs);
         this.asteroids.synchronize(state.asteroids);
         const destroyedCargoIds = cargoDestroyedIds(before, state);
-        for (const _id of destroyedCargoIds) this.audio.play('asteroid-crash-metal-clean');
+        for (const id of destroyedCargoIds) {
+            this.audio.play('asteroid-crash-metal-clean');
+            const destroyedCargo = before.orbitalCargo.find(cargo => cargo.id === id);
+            if (destroyedCargo && this.camera.worldView.contains(destroyedCargo.position.x, destroyedCargo.position.y)) {
+                this.asteroidExplosion.explodeCargoDestroyed(destroyedCargo.position);
+            }
+        }
         const sunConsumedItems = sunConsumedLooseItemIds(before, state, state.clock.activeElapsedMs - before.clock.activeElapsedMs);
-        for (const _id of sunConsumedItems) this.audio.play('sun-asteroid-low-slurp-loud-no-noise');
+        for (const id of sunConsumedItems) {
+            this.playSunConsumedSound();
+            const item = before.looseItems.find(candidate => candidate.id === id);
+            if (item && this.camera.worldView.contains(item.position.x, item.position.y)) {
+                this.asteroidExplosion.explodeSunConsumedLooseItem(item.position);
+            }
+        }
+        const beforeLooseIds = new Set(before.looseItems.map(item => item.id));
+        const currentLooseIds = new Set(state.looseItems.map(item => item.id));
+        const collectedItemCount = [...beforeLooseIds].filter(id => !currentLooseIds.has(id) && !sunConsumedItems.has(id)).length;
+        if (collectedItemCount > 0 && time - this.lastItemCollectedAtMs >= 200) {
+            this.lastItemCollectedAtMs = time;
+            this.audio.stop('item-collected');
+            this.audio.play('item-collected');
+        }
         this.cargo.synchronize(state.orbitalCargo);
         this.commodities.synchronize(state.looseItems, sunConsumedItems);
     }
@@ -495,11 +528,21 @@ export class Game extends Scene
         this.stateProvider.update(teleportShipToAsteroid);
     };
 
+    private readonly spawnDebugCargo = (): void => {
+        this.stateProvider.update(spawnDebugCargo);
+    };
+
     private playShipCrashFeedback (position: Readonly<{ x: number; y: number }>): void
     {
         this.asteroidExplosion.explodeShipCrash(position);
         this.audio.play('asteroid-crash-metal-clean');
         this.camera.shake(180, 0.008);
+    }
+
+    private playSunConsumedSound (): void
+    {
+        this.audio.stop('sun-asteroid-low-slurp-loud-no-noise');
+        this.audio.play('sun-asteroid-low-slurp-loud-no-noise');
     }
 
     private beginDeathTransition (terminalResult: TerminalResultState, position: Readonly<{ x: number; y: number }>): void
@@ -537,7 +580,7 @@ export class Game extends Scene
         for (const asteroid of projectileDamagedAsteroids(previous, current)) if (this.camera.worldView.contains(asteroid.position.x, asteroid.position.y)) this.audio.play('asteroid-projectile-impact-clean');
         for (const asteroid of sunConsumedAsteroids(previous, current)) {
             // This is global feedback: camera and ship distance must not suppress it.
-            this.asteroids.fadeOutSunConsumed(asteroid.id, () => this.audio.play('sun-asteroid-low-slurp-loud-no-noise'));
+            this.asteroids.fadeOutSunConsumed(asteroid.id, () => this.playSunConsumedSound());
         }
         for (const parent of fragmentedParents(previous, current)) {
             const impactPosition = fragmentImpactPosition(parent, current);

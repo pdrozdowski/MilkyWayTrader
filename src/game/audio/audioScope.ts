@@ -39,6 +39,19 @@ export class AudioScope
         return true;
     }
 
+    /** Stops every pooled voice for one definition and returns them to idle. */
+    stop(id: string): void
+    {
+        if (this.destroyed) return;
+        const pool = this.pools.get(id);
+        if (!pool) return;
+        for (const slot of pool) {
+            if (slot.kind === 'idle') continue;
+            slot.voice.stop();
+            slot.kind = 'idle';
+        }
+    }
+
     setLoop(channelName: string, id: string | null, options: LoopOptions = {}): void
     {
         if (this.destroyed || this.paused || this.service.suspended) return;
