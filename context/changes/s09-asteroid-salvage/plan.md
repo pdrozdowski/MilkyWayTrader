@@ -177,22 +177,22 @@ S09 intentionally breaks the snapshot schema. The codec rejects older snapshots 
 - [x] P1-A: Focused state/domain tests round-trip the complete S09 model, reject the prior schema, and preserve totals through partial/full transfers and spill residuals. — e261da9
 - [x] P1-B: Market tests prove free pickup changes only the ship container it enters and selling uses that container's weighted average. — e261da9
 - [x] P1-C: PRD capability validation has no deterministic or semantic findings. — e261da9
-- [ ] P1-D: A reviewer can trace quantity and total cost separately in ship, one orbital cargo, and one loose item without hidden per-unit history.
+- [x] P1-D: A reviewer can trace quantity and total cost separately in ship, one orbital cargo, and one loose item without hidden per-unit history.
 
 ### Phase 2: Deterministic Asteroid Loot and World Lifecycle
 
 - [x] P2-A: Seeded mechanics tests cover all three exclusive branches, cargo bounds, zero-cost cargo, two-hit projectile destruction, and no contact damage. — cc43ea1
 - [x] P2-B: Motion tests prove cargo orbit and the ten-second vector blend only progress in active game time. — cc43ea1
 - [x] P2-C: Pickup/capacity tests prove loose items cannot be shot, only interact with ship/sun, and remain unchanged on full-ship pickup. — cc43ea1
-- [ ] P2-D: Replaying a fixed seed gives the same loot type, commodity, quantity, vectors, and transitions.
+- [x] P2-D: Replaying a fixed seed gives the same loot type, commodity, quantity, vectors, and transitions.
 
 ### Phase 3: Phaser Projections, Visual Feedback, and Audio
 
 - [x] P3-A: Object/audio tests prove projections follow salvage IDs, frames/assets load, and effects are scoped and cleaned up. — 8ea2133
-- [ ] P3-B: Cargo orbits, shows activation and one-HP feedback, flips at the approved cadence, spills on destruction, and loose icons fade at sun consumption.
+- [x] P3-B: Cargo orbits, shows activation and one-HP feedback, flips at the approved cadence, spills on destruction, and loose icons fade at sun consumption.
 
 ### Phase 4: Paused Transfer Modal, Warning, and Completion Validation
 
 - [x] P4-A: UI/controller tests prove entry pauses time, Close resumes, re-open suppression lasts to exit, capacity disables the correct control, and warning expiry is two seconds. — 857d37e
 - [x] P4-B: `npm.cmd run typecheck` and `npm.cmd run test:fast` pass after integration. — 857d37e
-- [ ] P4-C: A player collects loot, stores it orbitally, destroys cargo, sees individual spill items, and observes independent ship/cargo averages throughout.
+- [x] P4-C: A player collects loot, stores it orbitally, destroys cargo, sees individual spill items, and observes independent ship/cargo averages throughout.
