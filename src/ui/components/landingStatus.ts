@@ -40,6 +40,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const confirm = required<HTMLButtonElement>(root, '#landing-status-confirm');
     const launch = required<HTMLButtonElement>(root, '#landing-status-launch');
     const market = required<HTMLButtonElement>(root, '#landing-status-market');
+    const facilities = required<HTMLButtonElement>(root, '#landing-status-facilities');
     const shipyard = required<HTMLButtonElement>(root, '#landing-status-shipyard');
     const back = required<HTMLButtonElement>(root, '#landing-status-back');
     const commodityIcon = required<HTMLElement>(root, '.market-commodity-icon');
@@ -79,6 +80,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         marketHeading.textContent = displayLabels.market;
         market.setAttribute('aria-label', displayLabels.market);
         launch.setAttribute('aria-label', displayLabels.launch);
+        facilities.setAttribute('aria-label', displayLabels.facilitiesUnavailable);
         shipyard.setAttribute('aria-label', displayLabels.shipyardUnavailable);
         balances.textContent = `${displayLabels.marketCredits}: ${formatCredits(snapshot.credits)} · ${displayLabels.marketCargo}: ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
         balances.replaceChildren(credits, cargo);
