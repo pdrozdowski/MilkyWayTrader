@@ -2,15 +2,15 @@
 
 ## Overview
 
-Deliver the first complete landed-market loop on Seroton: inspect stock and prices, preview a bounded trade, and atomically buy or sell cargo. The work builds on S-03's landed lifecycle and pauses market simulation whenever the shared active clock is paused.
+Deliver a complete landed-market loop with an independent market for every currently landable planet: inspect stock and prices, preview a bounded trade, and atomically buy or sell cargo. The work builds on S-03's landed lifecycle and pauses market simulation whenever the shared active clock is paused.
 
 ## Current State Analysis
 
-Landing already records `landedPlanetId` and pauses the active clock, while the DOM landing dialog currently presents deferred services. Credits and cargo exist in the versioned snapshot, but no commodity catalogue, mutable market stock, prices, transaction logic, or market projection exists.
+Landing already records `landedPlanetId` and pauses the active clock, while the DOM landing dialog presents the landed hub and market view. Credits, cargo, the commodity catalogue, market stock, prices, transaction logic, and market projections now exist. The completed Phase 5 intentionally retained one Seroton-identified market even when landed elsewhere; Phase 6 replaces that temporary shared-market model with one authoritative market per configured landable planet.
 
 ## Desired End State
 
-After landing on Seroton, a player can select supplies, alloys, or medicines; use a centered slider to preview a sale or purchase; see the total, stock impact, and resulting price; and confirm a valid trade. Credits, cargo, and stock update together, while the market evolves once per second only during active game time.
+After landing on any currently landable planet, a player can select supplies, alloys, or medicines; use a centered slider to preview a sale or purchase; see that planet's total, stock impact, and resulting price; and confirm a valid trade. Credits, cargo, and only the landed planet's stock update together, while every planet's market evolves once per second during active game time.
 
 ### Key Discoveries:
 
@@ -20,13 +20,13 @@ After landing on Seroton, a player can select supplies, alloys, or medicines; us
 
 ## What We're NOT Doing
 
-- Markets, stock simulation, or trading UI for Lactozis-7C and Maslo-Prime.
 - Shipyard services, ship upgrades, persistence backends, authentication, or sales tax.
 - Snapshot migration from the pre-market schema.
+- Per-planet UI navigation state, distinct commodity catalogues, or per-planet clocks.
 
 ## Implementation Approach
 
-Add a JSON-safe Seroton market slice to the aggregate, with static commodity tuning and pure domain reducers. Feed active-time ticks through the existing simulation reducer. Expand the landed typed port and dialog with a derived market view model; cache price ladders only in the adapter and invalidate after confirmed trades.
+Use a JSON-safe market collection keyed by every configured landable planet, with static per-planet tuning and pure domain reducers. Feed all market updates through the existing common active-time simulation reducer. Route landed quotes, trades, projections, and adapter-local price ladders through `landedPlanetId`; keep hub/market navigation presentation-local and invalidate a ladder after its landed market changes.
 
 ## Critical Implementation Details
 
@@ -252,17 +252,65 @@ Replace the direct landed-market entry with a full-window planet hub that makes 
 
 **Implementation Note**: Preserve the single DOM dialog and the existing launch event boundary. Hub and market switches are presentation changes, whereas only Launch may alter the authoritative landed lifecycle.
 
+---
+
+## Phase 6: Independent Planetary Markets
+
+### Overview
+
+Replace the deliberately temporary shared Seroton market with a complete, independently tuned market for every configured landable planet. Preserve the existing hub and market UI contract while making the landed planet the single market-routing identity.
+
+### Changes Required:
+
+#### 1. Per-planet state, definitions, and codec
+
+**Files**: `src/game/state/serotonMarketState.ts`, `src/game/state/gameStateSnapshot.ts`, `src/game/definitions/planetDefinitions.ts`, `src/game/definitions/initialGameState.ts`, `src/game/definitions/serotonMarketDefinitions.ts`, `src/game/application/gameStateCodec.ts`
+
+**Intent**: Make the authoritative aggregate hold exactly one mutable market for every configured landable planet and keep each market's initial stock, production, and consumption in static definitions.
+
+**Contract**: Replace the Seroton-only `planetId` restriction with the configured landable planet identity type. Retain the shared `supplies`, `alloys`, and `medicines` catalogue and its existing price profiles; add a planet-keyed static market-tuning layer for only initial stock, production, and consumption. A fresh snapshot seeds one market per configured planet in deterministic definition order. Increment schema v15 to v16 and reject obsolete shared-market v15 snapshots rather than migrating them. The codec rejects missing, duplicate, unknown, or non-integer market identities/stocks and requires each market to contain every configured commodity.
+
+#### 2. Common-clock market simulation and landed routing
+
+**Files**: `src/game/mechanics/serotonMarketSimulation.ts`, `src/game/mechanics/gameSimulation.ts`, `src/game/application/serotonMarket.ts`, `src/game/application/landedMarket.ts`, `src/ui/adapters/landingStatusAdapter.ts`
+
+**Intent**: Advance every planet independently on the existing active clock and ensure each landed-market operation uses the actual landed planet's authoritative market.
+
+**Contract**: Generalize the market simulation to use each market's `planetId`, while retaining the shared commodity price curve; each crossed whole active-time second advances every market exactly once by that planet's configured production minus consumption. Generalize/rename the Seroton-named quote and transaction boundary so it resolves the market from the non-null `landedPlanetId`; a missing landed market is invalid, and a trade atomically changes only that market's stock plus shared ship cargo and credits. Projection rows, adapter bounds, and price ladders resolve that same landed market. The adapter's ladder stays transient, resets when a new landing begins, and rebuilds after a successful trade without adding UI state to the snapshot or typed port.
+
+#### 3. Independent-market regression coverage
+
+**Files**: `tests/domain/gameState.test.mjs`, `tests/domain/serotonMarket.test.mjs`, `tests/game-mechanics.test.mjs`, `tests/ui/componentsUiTest.ts`, `tests/ui/applicationUiTest.ts`, `tests/ui/fixtures/`
+
+**Intent**: Replace the completed shared-market assertion with executable proof that market identity, deterministic time progression, and the existing landed workflow remain correct for every landable planet.
+
+**Contract**: State/codec/provider tests cover initial complete market identity, JSON round trips, frozen immutable snapshots, and rejection of v15, missing, duplicate, or unknown market records. Replace the existing shared-market assertion with domain/application cases demonstrating quotes and trades route to the landed planet and leave every other market unchanged. Mechanics tests prove all markets advance by their own tuning on exact one-second boundaries, remain frozen for every pause reason, and produce identical market state through uninterrupted and restore-then-continue runs. Update fast UI/component and application coverage to verify the existing hub → Market → trade → Back → Launch flow on more than one planet, including immediate projection refresh from that planet's market. Do not add a Playwright test unless this routing cannot be proven by the existing lower-level and application coverage.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Codec, provider, and state tests prove every configured landable planet has one valid independent market, while obsolete shared snapshots and invalid market collections are rejected.
+- Domain/application and mechanics tests prove a landed trade affects only that planet and all markets evolve deterministically on the common active clock, including restore continuity and pauses.
+- Existing fast UI/application coverage proves the unchanged hub and market controls show and refresh the landed planet's market; `npm.cmd run test:fast` and `npm.cmd run typecheck` pass.
+
+#### Manual Verification:
+
+- Land on each currently landable planet, enter Market, make a trade, launch and return after active flight; each planet retains its own stock and price evolution, with no UI-flow regression.
+
+**Implementation Note**: This is an authoritative state change. Follow `utils-add-state`: keep mutable stock in the snapshot, static profiles in definitions, updates through `GameStateProvider`, and no migration from the shared-market schema.
+
 ## Testing Strategy
 
 Run focused domain, state, mechanics, and UI tests during each phase; then run `npm.cmd run test:project`, `npm.cmd run typecheck`, and `npm.cmd run build-nolog`. Verify the real browser interaction after code changes.
 
 ## Performance Considerations
 
-The slider uses a visit-local derived price ladder. It is rebuilt only when landing or a confirmed trade changes the Seroton market, and never becomes authoritative state.
+The slider uses a visit-local derived price ladder. It is rebuilt only when landing or a confirmed trade changes the currently landed market, and never becomes authoritative state.
 
 ## Migration Notes
 
-The market changes the persisted shape from schema v4 to v5. Per project policy, reject previous snapshots rather than implementing migration semantics.
+The market first changed the persisted shape from schema v4 to v5; Phase 6 changes the completed shared-market shape again. Each breaking schema revision rejects obsolete snapshots rather than implementing migration semantics.
 
 ## References
 
@@ -271,6 +319,12 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 - `src/game/mechanics/planet/landing.ts:5`
 - `src/ui/adapters/landingStatusAdapter.ts:11`
 - Phase 5 UI research: `context/changes/s04-first-planetary-trade/research.md`
+- Frame: `context/changes/s04-first-planetary-trade/frame.md`
+- `src/game/state/serotonMarketState.ts:9`
+- `src/game/application/gameStateCodec.ts:255`
+- `src/game/mechanics/gameSimulation.ts:84`
+- `src/game/application/serotonMarket.ts:18`
+- `src/game/application/landedMarket.ts:71`
 
 ## Progress
 
@@ -333,3 +387,15 @@ The market changes the persisted shape from schema v4 to v5. Per project policy,
 
 - [x] 5.4 Landing on each currently landable planet shows its own name over the shared Seroton landing artwork; Market trades successfully and BACK returns to the hub without resuming time.
 - [x] 5.5 LAUNCH resumes flight, hides the dialog, and restores canvas control; Shipyard remains visibly unavailable.
+
+### Phase 6: Independent Planetary Markets
+
+#### Automated
+
+- [ ] 6.1 State, definitions, codec, and provider tests prove complete independent per-planet markets and reject obsolete or invalid collections.
+- [ ] 6.2 Domain, application, and mechanics tests prove landed routing, isolated trades, exact per-market active-time updates, pauses, and restored continuity.
+- [ ] 6.3 UI and application coverage proves existing hub-market behavior refreshes the market for the actual landed planet without a presentation-state regression.
+
+#### Manual
+
+- [ ] 6.4 Every currently landable planet retains its own evolving market through a land-trade-launch-return loop.
