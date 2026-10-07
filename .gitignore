@@ -24,6 +24,10 @@ supabase/.temp/
 # Locally installed 10xDevs skills
 .agents/skills/10x-*/
 
+# semantic memory
+.agents/skills/semantic-memory/
+.semantic-memory/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
