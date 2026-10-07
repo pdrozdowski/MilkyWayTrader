@@ -14,7 +14,7 @@ import { isWithinPlanetOrbitBoundary } from './planet/proximity.ts';
 import { tryLandAtCapturedPlanet } from './planet/landing.ts';
 import { isRecoveringFromMoolaris, resolveMoolarisContact } from './moolaris/contact.ts';
 import { MOOLARIS_RECOVERY_SECONDS } from '../definitions/moolarisDefinition.ts';
-import { advanceSerotonMarket } from './serotonMarketSimulation.ts';
+import { advanceMarket } from './serotonMarketSimulation.ts';
 import { asteroidRadius, advanceAsteroidMotions, fragmentAsteroid, type AsteroidImpactSource } from './asteroid/asteroidSimulation.ts';
 import { moolarisDefinition } from '../definitions/moolarisDefinition.ts';
 import { asteroidDamageRanges, moolarisDamageRange, nextRandomInteger } from './hazards/damage.ts';
@@ -82,7 +82,7 @@ export function advanceGameSimulation (
     const activeDeltaMs = clock.activeElapsedMs - state.clock.activeElapsedMs;
     if (activeDeltaMs <= 0) return { ...state, clock };
     const marketElapsedSeconds = Math.floor(clock.activeElapsedMs / 1000) - Math.floor(state.clock.activeElapsedMs / 1000);
-    const markets = marketElapsedSeconds === 0 ? state.markets : state.markets.map(market => advanceSerotonMarket(market, marketElapsedSeconds));
+    const markets = marketElapsedSeconds === 0 ? state.markets : state.markets.map(market => advanceMarket(market, marketElapsedSeconds));
 
     const landed = state.planetLifecycle.landedPlanetId !== null;
     const contact = resolveMoolarisContact(state.ship);

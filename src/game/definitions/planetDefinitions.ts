@@ -1,6 +1,10 @@
+import type { PlanetId } from '../state/planetState';
+
+export type { PlanetId };
+
 export interface PlanetDefinition
 {
-    readonly id: 'seroton' | 'lactozis-7c' | 'maslo-prime';
+    readonly id: PlanetId;
     readonly name: string;
     readonly radius: number;
     readonly orbitRadius: number;
@@ -9,8 +13,6 @@ export interface PlanetDefinition
     readonly variant: 'blue' | 'green' | 'amber';
     readonly spinSpeed: number;
 }
-
-export type PlanetId = PlanetDefinition['id'];
 
 // Each radius clears Moolaris or the preceding planet's outer orbital band by 50 pixels.
 export const planetDefinitions: readonly PlanetDefinition[] = [

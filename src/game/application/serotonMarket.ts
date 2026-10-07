@@ -2,24 +2,32 @@ import { serotonCommodityPriceProfiles } from '../domain/serotonMarketCatalog.ts
 import { cargoCapacityByLevel } from '../domain/runBalance.ts';
 import { marginalTradeTotal } from '../domain/marketPricing.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot.ts';
-import type { SerotonCommodityId } from '../state/serotonMarketState.ts';
+import type { SerotonCommodityId, SerotonMarketState } from '../state/serotonMarketState.ts';
 import { addPaidCommodity, removeCommodityQuantity } from './commodityContainers.ts';
 
-export type SerotonTradeFailure = 'not-landed-on-seroton' | 'invalid-quantity' | 'insufficient-stock' | 'insufficient-cargo' | 'insufficient-credits' | 'insufficient-cargo-commodity';
+export type LandedTradeFailure = 'not-landed' | 'invalid-quantity' | 'insufficient-stock' | 'insufficient-cargo' | 'insufficient-credits' | 'insufficient-cargo-commodity';
 
-export interface SerotonTradeQuote
+export interface LandedTradeQuote
 {
     readonly commodityId: SerotonCommodityId;
     readonly quantity: number;
     readonly total: number;
-    readonly failure: SerotonTradeFailure | null;
+    readonly failure: LandedTradeFailure | null;
 }
 
-function currentStock (state: GameStateSnapshot, commodityId: SerotonCommodityId): number
+export function landedMarketOf (state: GameStateSnapshot): SerotonMarketState | null
 {
-    const market = state.markets.find(candidate => candidate.planetId === 'seroton');
-    const commodity = market?.commodityStocks.find(candidate => candidate.commodityId === commodityId);
-    if (!commodity) throw new Error(`Missing Seroton stock for ${commodityId}.`);
+    const planetId = state.planetLifecycle.landedPlanetId;
+    if (planetId === null) return null;
+    const market = state.markets.find(candidate => candidate.planetId === planetId);
+    if (!market) throw new Error(`Missing market for landed planet ${planetId}.`);
+    return market;
+}
+
+function currentStock (market: SerotonMarketState, commodityId: SerotonCommodityId): number
+{
+    const commodity = market.commodityStocks.find(candidate => candidate.commodityId === commodityId);
+    if (!commodity) throw new Error(`Missing landed market stock for ${commodityId}.`);
     return commodity.stock;
 }
 
@@ -33,11 +41,12 @@ function cargoStack (state: GameStateSnapshot, commodityId: SerotonCommodityId)
     return state.cargo.find(stack => stack.commodityId === commodityId);
 }
 
-export function quoteSerotonTrade (state: GameStateSnapshot, commodityId: SerotonCommodityId, quantity: number): SerotonTradeQuote
+export function quoteLandedTrade (state: GameStateSnapshot, commodityId: SerotonCommodityId, quantity: number): LandedTradeQuote
 {
-    if (state.planetLifecycle.landedPlanetId === null) return { commodityId, quantity, total: 0, failure: 'not-landed-on-seroton' };
+    const market = landedMarketOf(state);
+    if (market === null) return { commodityId, quantity, total: 0, failure: 'not-landed' };
     if (!Number.isSafeInteger(quantity) || quantity === 0) return { commodityId, quantity, total: 0, failure: 'invalid-quantity' };
-    const stock = currentStock(state, commodityId);
+    const stock = currentStock(market, commodityId);
     const carried = cargoQuantity(state, commodityId);
     if (quantity > stock) return { commodityId, quantity, total: 0, failure: 'insufficient-stock' };
     if (quantity < 0 && -quantity > carried) return { commodityId, quantity, total: 0, failure: 'insufficient-cargo-commodity' };
@@ -51,12 +60,12 @@ export function quoteSerotonTrade (state: GameStateSnapshot, commodityId: Seroto
     return { commodityId, quantity, total, failure: null };
 }
 
-export function applySerotonTrade (state: GameStateSnapshot, commodityId: SerotonCommodityId, quantity: number): GameStateSnapshot
+export function applyLandedTrade (state: GameStateSnapshot, commodityId: SerotonCommodityId, quantity: number): GameStateSnapshot
 {
-    const quote = quoteSerotonTrade(state, commodityId, quantity);
+    const quote = quoteLandedTrade(state, commodityId, quantity);
     if (quote.failure !== null) return state;
-    const market = state.markets.find(candidate => candidate.planetId === 'seroton');
-    if (!market) throw new Error('Missing Seroton market.');
+    const market = landedMarketOf(state);
+    if (market === null) throw new Error('Missing landed market.');
     const existingCargo = cargoStack(state, commodityId);
     const cargo = state.cargo.filter(stack => stack.commodityId !== commodityId);
     const nextCargo = quantity > 0
@@ -70,7 +79,7 @@ export function applySerotonTrade (state: GameStateSnapshot, commodityId: Seroto
         ...state,
         credits: quantity > 0 ? state.credits - quote.total : state.credits + quote.total,
         cargo: nextCargo,
-        markets: state.markets.map(candidate => candidate.planetId === 'seroton' ? {
+        markets: state.markets.map(candidate => candidate.planetId === market.planetId ? {
             ...candidate,
             commodityStocks: candidate.commodityStocks.map(stock => stock.commodityId === commodityId
                 ? { ...stock, stock: stock.stock - quantity }

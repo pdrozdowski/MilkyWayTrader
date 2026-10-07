@@ -31,7 +31,11 @@ import { maximumOrbitalCargoTransfer, transferOrbitalCargo } from '../src/game/a
 import { collectLooseItem, damageOrbitalCargo, spillOrbitalCargo } from '../src/game/mechanics/salvage/cargoDamage.ts';
 import { bindDebugCargoControl } from '../src/ui/components/debugCargoControl.ts';
 
-const marketStocks = state => state.markets[0].commodityStocks.map(commodity => ({ ...commodity }));
+const marketStocks = (state, planetId) => state.markets.find(market => market.planetId === planetId).commodityStocks.map(commodity => ({ ...commodity }));
+const allMarketStocks = state => state.markets.map(market => ({
+    planetId: market.planetId,
+    commodityStocks: market.commodityStocks.map(commodity => ({ ...commodity }))
+}));
 
 function assertCargoManifest (manifest)
 {
@@ -449,43 +453,63 @@ test('sun and starfield presentation phases freeze and resume from active elapse
     assert.equal(activeTimeWave(1.24, 0.0011, resumedElapsed), activeTimeWave(1.24, 0.0011, 12_845));
 });
 
-test('Seroton market advances only at crossed active-second boundaries', () => {
+test('every planetary market advances by its own tuning only at crossed active-second boundaries', () => {
     const input = { target: null, boostRequested: false, firing: false };
     const beforeBoundary = {
         ...initialGameState,
         clock: { ...initialGameState.clock, activeElapsedMs: 999 }
     };
     const crossedBoundary = advanceGameSimulation(beforeBoundary, input, 1);
-    assert.deepEqual(marketStocks(crossedBoundary), [
+    assert.deepEqual(marketStocks(crossedBoundary, 'seroton'), [
         { commodityId: 'supplies', stock: 102 },
         { commodityId: 'alloys', stock: 59 },
         { commodityId: 'medicines', stock: 19 }
+    ]);
+    assert.deepEqual(marketStocks(crossedBoundary, 'lactozis-7c'), [
+        { commodityId: 'supplies', stock: 145 },
+        { commodityId: 'alloys', stock: 39 },
+        { commodityId: 'medicines', stock: 31 }
+    ]);
+    assert.deepEqual(marketStocks(crossedBoundary, 'maslo-prime'), [
+        { commodityId: 'supplies', stock: 79 },
+        { commodityId: 'alloys', stock: 89 },
+        { commodityId: 'medicines', stock: 14 }
     ]);
 
     const multiSecond = advanceGameSimulation({
         ...initialGameState,
         clock: { ...initialGameState.clock, activeElapsedMs: 500 }
     }, input, 3_500);
-    assert.deepEqual(marketStocks(multiSecond), [
+    assert.deepEqual(marketStocks(multiSecond, 'seroton'), [
         { commodityId: 'supplies', stock: 108 },
         { commodityId: 'alloys', stock: 56 },
         { commodityId: 'medicines', stock: 16 }
     ]);
+    assert.deepEqual(marketStocks(multiSecond, 'lactozis-7c'), [
+        { commodityId: 'supplies', stock: 160 },
+        { commodityId: 'alloys', stock: 36 },
+        { commodityId: 'medicines', stock: 34 }
+    ]);
+    assert.deepEqual(marketStocks(multiSecond, 'maslo-prime'), [
+        { commodityId: 'supplies', stock: 76 },
+        { commodityId: 'alloys', stock: 86 },
+        { commodityId: 'medicines', stock: 11 }
+    ]);
 });
 
-test('Seroton market is continuous through restore and frozen by every pause reason', () => {
+test('every planetary market is continuous through restore and frozen by every pause reason', () => {
     const input = { target: null, boostRequested: false, firing: false };
     const uninterrupted = advanceGameSimulation(initialGameState, input, 4_000);
     const restored = decodeGameState(encodeGameState(advanceGameSimulation(initialGameState, input, 1_500)));
     const resumed = advanceGameSimulation(restored, input, 2_500);
-    assert.deepEqual(marketStocks(resumed), marketStocks(uninterrupted));
+    assert.deepEqual(allMarketStocks(resumed), allMarketStocks(uninterrupted));
 
     for (const reason of ['background', 'landed', 'manual', 'menu', 'orientation']) {
         const paused = advanceGameSimulation({
             ...initialGameState,
             clock: { ...initialGameState.clock, pauseReasons: [reason] }
         }, input, 5_000);
-        assert.deepEqual(marketStocks(paused), marketStocks(initialGameState), `${reason} pause freezes market stock`);
+        assert.deepEqual(allMarketStocks(paused), allMarketStocks(initialGameState), `${reason} pause freezes every market`);
     }
 });
 

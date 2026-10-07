@@ -30,7 +30,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const supply = required<HTMLElement>(root, '#landing-status-supply');
     const playerStock = required<HTMLElement>(root, '#landing-status-player-stock');
     const averageBuyPrice = required<HTMLElement>(root, '#landing-status-average-buy-price');
-    const tradeResultLabel = required<HTMLElement>(root, '#landing-status-trade-result-label');
+    const tradeIncome = required<HTMLElement>(root, '#landing-status-trade-income');
     const tradeResult = required<HTMLElement>(root, '#landing-status-trade-result');
     const quantityLabel = required<HTMLElement>(root, '#landing-status-quantity-label');
     const quantity = required<HTMLInputElement>(root, '#landing-status-quantity');
@@ -107,7 +107,11 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             : postTradeQuantity === 0 ? 0 : selected.averageBuyPrice;
         averageBuyPrice.textContent = `${displayLabels.averageBuyPrice}: ${formatCredits(postTradeAverageBuyPrice)}`;
         const tradeResultValue = snapshot.tradeQuantity < 0 ? snapshot.quote.total - (Math.abs(snapshot.tradeQuantity) * selected.averageBuyPrice) : 0;
-        tradeResultLabel.textContent = snapshot.tradeQuantity < 0 ? displayLabels.tradeResult : '';
+        tradeIncome.textContent = snapshot.tradeQuantity === 0
+            ? ''
+            : snapshot.tradeQuantity < 0
+                ? `${displayLabels.tradeIncome}: +${snapshot.quote.total} cr`
+                : `${displayLabels.expense}: -${snapshot.quote.total} cr`;
         tradeResult.textContent = snapshot.tradeQuantity < 0 ? `${tradeResultValue >= 0 ? displayLabels.profit : displayLabels.loss} ${tradeResultValue >= 0 ? `+${tradeResultValue}` : String(tradeResultValue)} cr` : '';
         tradeResult.className = snapshot.tradeQuantity < 0 ? `market-trade-result ${tradeResultValue >= 0 ? 'market-trade-result--profit' : 'market-trade-result--loss'}` : 'market-trade-result';
         quantity.min = String(commodity ? -commodity.carriedQuantity : 0);

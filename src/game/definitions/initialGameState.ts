@@ -2,7 +2,7 @@ import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 import { initialCredits, maximumShipHitPoints } from '../domain/runBalance.ts';
 import { planetDefinitions } from './planetDefinitions.ts';
 import { projectPlanetPosition } from '../mechanics/planet/orbit.ts';
-import { serotonCommodityDefinitions } from './serotonMarketDefinitions.ts';
+import { planetMarketTunings, serotonCommodityDefinitions } from './serotonMarketDefinitions.ts';
 import { asteroidBeltDefinition, asteroidBeltLayout, asteroidTuning } from './gameplayTuning.ts';
 
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
@@ -16,7 +16,7 @@ export interface InitialGameStateInput
 export function createInitialGameState ({ runId, randomSeed }: InitialGameStateInput): GameStateSnapshot
 {
     return {
-    schemaVersion: 15,
+    schemaVersion: 16,
     runId,
     randomState: randomSeed,
     cargoSchedule: [],
@@ -31,10 +31,10 @@ export function createInitialGameState ({ runId, randomSeed }: InitialGameStateI
     cargo: [],
     orbitalCargo: [],
     looseItems: [],
-    markets: [{
-        planetId: 'seroton',
-        commodityStocks: serotonCommodityDefinitions.map(definition => ({ commodityId: definition.id, stock: definition.initialStock }))
-    }],
+    markets: planetDefinitions.map(definition => ({
+        planetId: definition.id,
+        commodityStocks: serotonCommodityDefinitions.map(commodity => ({ commodityId: commodity.id, stock: planetMarketTunings[definition.id][commodity.id].initialStock }))
+    })),
     ship: {
         position: { x: 0, y: -planetDefinitions[0].orbitRadius },
         velocity: { x: 0, y: 0 },
