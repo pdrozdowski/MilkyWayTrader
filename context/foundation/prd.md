@@ -21,11 +21,11 @@ timeline_budget:
 
 A casual browser player wants a focused space-trading challenge without installing a game or learning a large ruleset. The player has a thirty-minute active-time run to repay a debt of 20,000,000 credits by navigating a moving solar system, trading commodities, upgrading and repairing a ship, surviving hazards, and salvaging occasional asteroid loot.
 
-MilkyWayTrader combines a readable economic simulation with direct ship control and the humor of a cow astronaut trying to avoid life imprisonment. Trading decisions, piloting skill, route choice, ship condition, combat, and time pressure contribute to the outcome while landing provides a safe, paused planning state.
+MilkyWayTrader combines a readable economic simulation with direct ship control and the humor of a cow astronaut trying to avoid life imprisonment. Trading decisions, planetary facility investment, piloting skill, route choice, ship condition, combat, and time pressure contribute to the outcome while landing provides a safe, paused planning state.
 
 ## User & Persona
 
-The primary persona is a casual browser player who wants a self-contained session with a clear objective, immediate controls, and meaningful decisions. The player accepts a thirty-minute active-time challenge, wants to understand the remaining time and current risks at a glance, and expects trading, navigation, upgrades, combat, and salvage to contribute to progress without requiring external analysis.
+The primary persona is a casual browser player who wants a self-contained session with a clear objective, immediate controls, and meaningful decisions. The player accepts a thirty-minute active-time challenge, wants to understand the remaining time and current risks at a glance, and expects trading, planetary facility investment, navigation, upgrades, combat, and salvage to contribute to progress without requiring external analysis.
 
 ## Success Criteria
 
@@ -152,6 +152,20 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - A player can mute gameplay audio or set its volume without pausing or blocking the run.
 - Unavailable or locked audio leaves the game fully playable.
 
+### US-08: Player develops a planet's facilities
+
+- **Given** the player has landed on a planet with available facilities and resources to invest
+- **When** the player reviews, constructs, or improves a local facility
+- **Then** the player can understand the facility's effect on local commodity opportunities and make the chosen investment
+
+#### Acceptance Criteria
+
+- The player can inspect the planet's available facilities and the state of its existing facilities only while landed.
+- A construction or improvement identifies the required resource investment before the player commits it.
+- A completed construction or improvement immediately changes the relevant facility structure and its local economic effect.
+- Facility operation changes the planet's shared commodity stock, and the resulting supply and demand change affects local market prices.
+- The planet's characteristics adjust facility effectiveness, and a facility without required resources does not operate.
+
 ## Functional Requirements
 
 ### Game lifecycle and objective
@@ -188,41 +202,47 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - FR-024: A landed player can access the planet's shipyard. Priority: must-have
 - FR-025: A player can repair their ship at a shipyard. Priority: must-have
 - FR-026: A player can purchase ship upgrades available at the current shipyard. Priority: must-have
+- FR-027: A landed player can inspect the current planet's facilities. Priority: must-have
+- FR-028: A landed player can construct an available facility by investing required resources. Priority: must-have
+- FR-029: A landed player can improve an existing facility by investing required resources. Priority: must-have
+- FR-030: The game can apply operating facility activity to the current planet's commodity stock. Priority: must-have
+- FR-031: The game can adjust facility effectiveness for the current planet's characteristics. Priority: must-have
+- FR-032: The game can determine whether a facility operates from its required resource availability. Priority: must-have
 
 ### Ship state, hazards, combat, and salvage
 
-- FR-027: A player can inspect their current credit balance. Priority: must-have
-- FR-028: A player can inspect their cargo contents and remaining capacity. Priority: must-have
-- FR-029: A player can inspect their ship's current HP. Priority: must-have
-- FR-030: A player can inspect the levels and availability of their ship systems. Priority: must-have
-- FR-031: A player can fire the ship's weapon. Priority: must-have
-- FR-032: The game can apply ship damage from environmental collisions. Priority: must-have
-- FR-033: A player can fragment and destroy asteroids by shooting them. Priority: must-have
-- FR-034: The game can maintain scattered asteroids and an outer asteroid belt. Priority: must-have
-- FR-035: The game can provide one orbital cargo outcome in each five small asteroids a player destroys with a weapon. Priority: must-have
-- FR-036: A player can keep an independent commodity cost basis in each commodity holder. Priority: must-have
-- FR-037: A player can transfer commodities between their ship and nearby orbital cargo. Priority: must-have
-- FR-038: A player can collect loose commodities into their ship. Priority: must-have
-- FR-039: The game can remove commodities and their associated cost basis when they are permanently lost. Priority: must-have
+- FR-033: A player can inspect their current credit balance. Priority: must-have
+- FR-034: A player can inspect their cargo contents and remaining capacity. Priority: must-have
+- FR-035: A player can inspect their ship's current HP. Priority: must-have
+- FR-036: A player can inspect the levels and availability of their ship systems. Priority: must-have
+- FR-037: A player can fire the ship's weapon. Priority: must-have
+- FR-038: The game can apply ship damage from environmental collisions. Priority: must-have
+- FR-039: A player can fragment and destroy asteroids by shooting them. Priority: must-have
+- FR-040: The game can maintain scattered asteroids and an outer asteroid belt. Priority: must-have
+- FR-041: The game can provide one orbital cargo outcome in each five small asteroids a player destroys with a weapon. Priority: must-have
+- FR-042: A player can keep an independent commodity cost basis in each commodity holder. Priority: must-have
+- FR-043: A player can transfer commodities between their ship and nearby orbital cargo. Priority: must-have
+- FR-044: A player can collect loose commodities into their ship. Priority: must-have
+- FR-045: The game can remove commodities and their associated cost basis when they are permanently lost. Priority: must-have
 
 ### Authentication and persistence
 
-- FR-040: A player can sign in to access persistent features. Priority: must-have
-- FR-041: A player can inspect their authentication status. Priority: must-have
-- FR-042: A signed-in player can sign out. Priority: must-have
-- FR-043: The game can automatically preserve progress for a signed-in player. Priority: must-have
-- FR-044: A signed-in player can inspect the current save status. Priority: must-have
-- FR-045: The game can remove an active save after its run reaches a terminal outcome. Priority: must-have
+- FR-046: A player can sign in to access persistent features. Priority: must-have
+- FR-047: A player can inspect their authentication status. Priority: must-have
+- FR-048: A signed-in player can sign out. Priority: must-have
+- FR-049: The game can automatically preserve progress for a signed-in player. Priority: must-have
+- FR-050: A signed-in player can inspect the current save status. Priority: must-have
+- FR-051: The game can remove an active save after its run reaches a terminal outcome. Priority: must-have
 
 ### High scores
 
-- FR-046: A signed-in player can view their personal best result. Priority: must-have
-- FR-047: A player can view the global high-score table. Priority: must-have
-- FR-048: A signed-in player can clear their personal best result. Priority: must-have
+- FR-052: A signed-in player can view their personal best result. Priority: must-have
+- FR-053: A player can view the global high-score table. Priority: must-have
+- FR-054: A signed-in player can clear their personal best result. Priority: must-have
 
 ### Gameplay audio
 
-- FR-049: A player can hear gameplay audio feedback. Priority: must-have
+- FR-055: A player can hear gameplay audio feedback. Priority: must-have
 
 ## Non-Functional Requirements
 
@@ -306,7 +326,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 ### Planetary services, upgrades, and economy
 
 - BR-069: Seroton provides the current market after landing; other planetary markets are outside the current slice.
-- BR-070: Live market stock, prices, and shipyard services are unavailable remotely.
+- BR-070: Live market stock, prices, shipyard services, and facilities are unavailable remotely.
 - BR-071: Repairs are purchased in player-selected increments of 10% maximum HP at a configured fixed cost per increment.
 - BR-072: A repair cannot exceed missing HP or available credits.
 - BR-073: Seroton sells cargo-capacity upgrades.
@@ -316,7 +336,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-077: Upgrade levels, effects, and costs are configured balance parameters.
 - BR-078: Seroton maintains independent stock for supplies, alloys, and medicines; other planetary markets are outside the current slice.
 - BR-079: Scheduled Seroton market updates occur every second of active game time.
-- BR-080: Each scheduled update changes stock by configured production minus configured consumption without allowing stock below zero.
+- BR-080: Each scheduled update applies operating facility production, consumption, and transformation to the planet's shared commodity stock without allowing stock below zero.
 - BR-081: A commodity's local price is derived from local stock, configured stock thresholds, and configured base price.
 - BR-082: Below the lower threshold, the price multiplier scales linearly from 200% at zero stock to 100% at the threshold.
 - BR-083: Between the lower and upper thresholds, the price multiplier remains at 100%.
@@ -330,25 +350,31 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-091: A transaction recalculates subsequent prices after applying its complete stock change.
 - BR-092: Buying cannot exceed credits, market stock, or cargo capacity, and selling cannot exceed carried cargo.
 - BR-093: Starting credits, commodity values, stock thresholds, initial stock, production, consumption, taxes, repair costs, upgrade values, asteroid values, and salvage values are balance parameters rather than fixed PRD tables.
+- BR-094: A planet hosts and maintains multiple facilities that can produce, consume, or transform commodities.
+- BR-095: A player may inspect, construct, or improve a planet's facilities only while landed at that planet.
+- BR-096: Constructing or improving a facility consumes its required resource investment and changes the planet's facility structure.
+- BR-097: An operating facility changes local commodity supply or demand through its production, consumption, or transformation activity.
+- BR-098: A planet's characteristics adjust the effectiveness of each local facility.
+- BR-099: A facility operates only when its required resources are available.
 
 ### Authentication, persistence, and scores
 
-- BR-094: Anonymous play does not create persistent saves, personal results, or global submissions.
-- BR-095: Successful sign-in during an anonymous active run immediately attaches that run to the player and saves it.
-- BR-096: A signed-in run saves when the player lands.
-- BR-097: Departure saves only when trading, repairs, or upgrades changed persisted state while landed since the landing save.
-- BR-098: Unsaved flight progress after the last successful save boundary may be lost when the application closes.
-- BR-099: Freedom, imprisonment, death, and abandonment outcomes are always persisted for a signed-in player.
-- BR-100: Starting a new signed-in run while another run remains active first abandons and retains the previous run.
-- BR-101: A resumed run restores the saved remaining active time and all state required to continue consistently.
-- BR-102: A completed run cannot be resumed as active gameplay.
-- BR-103: After a signed-in run reaches a terminal outcome and its result is retained, its active save is removed.
-- BR-104: Personal history retains every signed-in result across all outcomes except results the player explicitly clears.
-- BR-105: Personal best is the retained result with the highest final liquid-cash score regardless of outcome.
-- BR-106: Clearing a personal best removes that result from the signed-in player's personal history; the highest remaining retained result becomes the personal best, or no personal best is shown when none remains.
-- BR-107: A global result is eligible only when an authenticated player survives the complete active-time limit and receives freedom.
-- BR-108: Global results are ranked by final liquid cash before debt repayment.
-- BR-109: Anonymous and signed-in players can view the global high-score table, but only signed-in players can submit eligible results or view or clear a personal best.
+- BR-100: Anonymous play does not create persistent saves, personal results, or global submissions.
+- BR-101: Successful sign-in during an anonymous active run immediately attaches that run to the player and saves it.
+- BR-102: A signed-in run saves when the player lands.
+- BR-103: Departure saves only when trading, repairs, upgrades, facility construction, or facility improvements changed persisted state while landed since the landing save.
+- BR-104: Unsaved flight progress after the last successful save boundary may be lost when the application closes.
+- BR-105: Freedom, imprisonment, death, and abandonment outcomes are always persisted for a signed-in player.
+- BR-106: Starting a new signed-in run while another run remains active first abandons and retains the previous run.
+- BR-107: A resumed run restores the saved remaining active time and all state required to continue consistently.
+- BR-108: A completed run cannot be resumed as active gameplay.
+- BR-109: After a signed-in run reaches a terminal outcome and its result is retained, its active save is removed.
+- BR-110: Personal history retains every signed-in result across all outcomes except results the player explicitly clears.
+- BR-111: Personal best is the retained result with the highest final liquid-cash score regardless of outcome.
+- BR-112: Clearing a personal best removes that result from the signed-in player's personal history; the highest remaining retained result becomes the personal best, or no personal best is shown when none remains.
+- BR-113: A global result is eligible only when an authenticated player survives the complete active-time limit and receives freedom.
+- BR-114: Global results are ranked by final liquid cash before debt repayment.
+- BR-115: Anonymous and signed-in players can view the global high-score table, but only signed-in players can submit eligible results or view or clear a personal best.
 
 ## Access Control
 
@@ -365,7 +391,7 @@ Global high scores are publicly readable. Only authenticated, eligible freedom o
 - The MVP does not include turn-based travel, turn counters, selected destinations, or automated travel animations because navigation uses direct ship control and active time.
 - The MVP does not include multiplayer or a shared market because every run has an independent economy and world state.
 - The MVP does not include an endless mode because the debt outcome depends on the thirty-minute active-time limit.
-- The MVP does not include planetary locations beyond markets and shipyards.
+- The MVP does not include planetary locations beyond markets, shipyards, and facilities.
 - The MVP does not expose live prices, stock, or shipyard services before landing.
 - The MVP does not include hull-capacity upgrades, ammunition resources, booster fuel, or automated ship steering.
 - The MVP does not award credits directly from salvage crates; salvaged commodities must be sold through a market.
