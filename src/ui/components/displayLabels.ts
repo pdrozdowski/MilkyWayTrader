@@ -25,7 +25,7 @@ export const displayLabels = {
     marketBuy: 'BUY', marketSell: 'SELL', marketNoTrade: 'SELECT A QUANTITY', marketCashShortfall: 'Insufficient credits:',
     planetStock: 'Planet stock', playerStock: 'Ship inventory', produces: 'Produces', consumes: 'Consumes', supply: 'Supply',
     averageBuyPrice: 'Average buy price', inBudget: 'IN BUDGET', outOfBudget: 'OUT OF BUDGET',
-    tradeResult: 'Trade result:', profit: 'PROFIT', loss: 'LOSS', clockRunning: 'RUNNING', clockPaused: 'PAUSED',
+    tradeIncome: 'INCOME', expense: 'EXPENSE', profit: 'PROFIT', loss: 'LOSS', clockRunning: 'RUNNING', clockPaused: 'PAUSED',
     supplies: commodityLabels.supplies, alloys: commodityLabels.alloys, medicines: commodityLabels.medicines,
     commodityLabels,
     teleportToAsteroid: 'Teleport to live asteroid',

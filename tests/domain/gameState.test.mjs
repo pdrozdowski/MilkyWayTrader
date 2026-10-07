@@ -6,7 +6,8 @@ import { initialGameState } from '../../src/game/definitions/initialGameState.ts
 import { advanceGameClock, pauseGameClock, resumeGameClock } from '../../src/game/mechanics/clock/gameClock.ts';
 import { advanceGameSimulation } from '../../src/game/mechanics/gameSimulation.ts';
 import { projectRunStatus } from '../../src/game/application/runStatus.ts';
-import { applySerotonTrade } from '../../src/game/application/serotonMarket.ts';
+import { applyLandedTrade, quoteLandedTrade } from '../../src/game/application/serotonMarket.ts';
+import { planetMarketTunings } from '../../src/game/definitions/serotonMarketDefinitions.ts';
 import { createLandingStatusPort } from '../../src/ui/adapters/landingStatusAdapter.ts';
 import { createCargoTransferPort, cargoFullWarning, cargoFullWarningDurationMs } from '../../src/ui/adapters/cargoTransferAdapter.ts';
 
@@ -19,6 +20,7 @@ test('provider returns detached immutable snapshots and publishes valid replacem
     assert(Object.isFrozen(first.ship));
     assert(Object.isFrozen(first.planets));
     assert(Object.isFrozen(first.cargo));
+    assert(Object.isFrozen(first.markets));
     assert(Object.isFrozen(first.shipStatus));
     assert.throws(() => { first.ship.position.x = 99; }, TypeError);
 
@@ -36,21 +38,41 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 15);
+    assert.equal(state.schemaVersion, 16);
     assert.equal(state.runId, '00000000-0000-4000-8000-000000000001');
     assert.deepEqual(state.cargoSchedule, []);
     assert.equal(state.moolarisDamageArmed, true);
     assert.equal(state.terminalResult, null);
     assert.equal(state.credits, 100_000);
     assert.deepEqual(state.cargo, []);
-    assert.deepEqual(state.markets, [{
-        planetId: 'seroton',
-        commodityStocks: [
-            { commodityId: 'supplies', stock: 100 },
-            { commodityId: 'alloys', stock: 60 },
-            { commodityId: 'medicines', stock: 20 }
-        ]
-    }]);
+    assert.deepEqual(state.markets, [
+        {
+            planetId: 'seroton',
+            commodityStocks: [
+                { commodityId: 'supplies', stock: 100 },
+                { commodityId: 'alloys', stock: 60 },
+                { commodityId: 'medicines', stock: 20 }
+            ]
+        },
+        {
+            planetId: 'lactozis-7c',
+            commodityStocks: [
+                { commodityId: 'supplies', stock: 140 },
+                { commodityId: 'alloys', stock: 40 },
+                { commodityId: 'medicines', stock: 30 }
+            ]
+        },
+        {
+            planetId: 'maslo-prime',
+            commodityStocks: [
+                { commodityId: 'supplies', stock: 80 },
+                { commodityId: 'alloys', stock: 90 },
+                { commodityId: 'medicines', stock: 15 }
+            ]
+        }
+    ]);
+    assert(Object.isFrozen(state.markets), 'every market collection is immutable');
+    assert(Object.isFrozen(state.markets[0].commodityStocks), 'every market stock list is immutable');
     assert.deepEqual(state.shipStatus, {
         currentHitPoints: 100,
         cargoLevel: 1,
@@ -78,12 +100,15 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
         { ...clone(advanced), cargo: [{ commodityId: '', quantity: 1, totalCost: 0 }] },
         { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: -1, totalCost: 0 }] },
         { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1, totalCost: -1 }] },
+        { ...clone(advanced), schemaVersion: 15 },
         { ...clone(advanced), markets: [] },
-        { ...clone(advanced), markets: [{ planetId: 'lactozis-7c', commodityStocks: clone(advanced.markets[0].commodityStocks) }] },
-        { ...clone(advanced), markets: [{ planetId: 'seroton', commodityStocks: [{ commodityId: 'supplies', stock: 1 }, { commodityId: 'supplies', stock: 2 }, { commodityId: 'medicines', stock: 3 }] }] },
-        { ...clone(advanced), markets: [{ planetId: 'seroton', commodityStocks: [{ commodityId: 'supplies', stock: 1 }, { commodityId: 'alloys', stock: 2 }] }] },
-        { ...clone(advanced), markets: [{ planetId: 'seroton', commodityStocks: [{ commodityId: 'supplies', stock: -1 }, ...clone(advanced.markets[0].commodityStocks.slice(1))] }] },
-        { ...clone(advanced), markets: [{ planetId: 'seroton', commodityStocks: [{ commodityId: 'supplies', stock: 1.5 }, ...clone(advanced.markets[0].commodityStocks.slice(1))] }] },
+        { ...clone(advanced), markets: clone(advanced.markets).slice(0, 2) },
+        { ...clone(advanced), markets: [...clone(advanced.markets), clone(advanced.markets[0])] },
+        { ...clone(advanced), markets: [{ ...clone(advanced.markets[0]), planetId: 'unknown' }, ...clone(advanced.markets.slice(1))] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'supplies', stock: 1 }, { commodityId: 'supplies', stock: 2 }, { commodityId: 'medicines', stock: 3 }] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'supplies', stock: 1 }, { commodityId: 'alloys', stock: 2 }] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'supplies', stock: -1 }, ...clone(advanced.markets[0].commodityStocks.slice(1))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'supplies', stock: 1.5 }, ...clone(advanced.markets[0].commodityStocks.slice(1))] }] },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), currentHitPoints: 101 } },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), cargoLevel: 0 } },
         {
@@ -96,6 +121,8 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
         { ...clone(advanced), ship: { ...clone(advanced.ship), position: { ...clone(advanced.ship.position), x: Number.NaN } } },
         { ...clone(advanced), ship: { ...clone(advanced.ship), asteroidImpactAtActiveMs: -1 } },
         { ...clone(advanced), planets: [...clone(advanced.planets), clone(advanced.planets[0])] },
+        { ...clone(advanced), planets: [{ ...clone(advanced.planets[0]), id: 'unknown' }, ...clone(advanced.planets.slice(1))] },
+        { ...clone(advanced), planets: clone(advanced.planets).slice(0, 2) },
         { ...clone(advanced), projectiles: [...clone(advanced.projectiles), ...clone(advanced.projectiles)] },
         { ...clone(advanced), projectiles: {} }
     ];
@@ -204,7 +231,7 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
     assert.deepEqual(unchanged.planets, paused.planets);
 });
 
-test('v15 codec round trips independent ship, orbital, and loose commodity holders and rejects v14', () => {
+test('v16 codec round trips independent ship, orbital, and loose commodity holders and rejects v15', () => {
     const salvage = {
         ...clone(initialGameState),
         cargo: [{ commodityId: 'supplies', quantity: 2, totalCost: 10 }],
@@ -215,7 +242,7 @@ test('v15 codec round trips independent ship, orbital, and loose commodity holde
     assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
     assert(Object.isFrozen(decoded.orbitalCargo[0].manifest));
     assert(Object.isFrozen(decoded.looseItems[0].motion));
-    assert.throws(() => decodeGameState({ ...salvage, schemaVersion: 14 }));
+    assert.throws(() => decodeGameState({ ...salvage, schemaVersion: 15 }));
     assert.throws(() => decodeGameState({ ...salvage, looseItems: [{ ...salvage.looseItems[0], container: { ...salvage.looseItems[0].container, quantity: 2 } }] }));
 });
 
@@ -291,31 +318,39 @@ test('codec accepts and round trips drifting asteroids without an orbit', () => 
     assert.deepEqual(decodeGameState(encodeGameState(restored)), restored);
 });
 
-test('provider commits a valid Seroton trade as one immutable replacement', () => {
+test('provider commits a valid landed trade as one immutable replacement', () => {
     const provider = new GameStateProvider(initialGameState);
     const landed = provider.update(state => ({
         ...state,
         clock: { ...state.clock, pauseReasons: ['landed'] },
         planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
     }));
-    const traded = provider.update(state => applySerotonTrade(state, 'alloys', 2));
+    const traded = provider.update(state => applyLandedTrade(state, 'alloys', 2));
     assert.equal(traded.credits, landed.credits - 10_000);
     assert.deepEqual(traded.cargo, [{ commodityId: 'alloys', quantity: 2, totalCost: 10_000 }]);
-    assert.equal(traded.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 58);
-    assert.equal(landed.markets[0].commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 60);
+    assert.equal(traded.markets.find(market => market.planetId === 'seroton').commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 58);
+    assert.equal(landed.markets.find(market => market.planetId === 'seroton').commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 60);
 });
 
-test('every currently landable planet uses the one shared Seroton market while landed', () => {
+test('a landed trade routes to the landed planet and leaves every other market unchanged', () => {
+    const stockOf = (state, planetId, commodityId) => state.markets
+        .find(market => market.planetId === planetId).commodityStocks
+        .find(stock => stock.commodityId === commodityId).stock;
     for (const planet of initialGameState.planets) {
         const landed = {
             ...initialGameState,
             clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
             planetLifecycle: { capturedPlanetId: planet.id, landedPlanetId: planet.id, relandingLockedPlanetId: null }
         };
-        const quote = applySerotonTrade(landed, 'supplies', 1);
-        assert.equal(quote.credits, landed.credits - 1_000, planet.name);
-        assert.equal(quote.markets[0].commodityStocks.find(stock => stock.commodityId === 'supplies').stock, 99, planet.name);
-        assert.equal(quote.planetLifecycle.landedPlanetId, planet.id, planet.name);
+        const quote = quoteLandedTrade(landed, 'supplies', 1);
+        assert.equal(quote.failure, null, planet.name);
+        const traded = applyLandedTrade(landed, 'supplies', 1);
+        assert.equal(traded.credits, landed.credits - quote.total, planet.name);
+        assert.equal(stockOf(traded, planet.id, 'supplies'), stockOf(landed, planet.id, 'supplies') - 1, planet.name);
+        for (const other of initialGameState.planets) {
+            if (other.id === planet.id) continue;
+            assert.equal(stockOf(traded, other.id, 'supplies'), stockOf(landed, other.id, 'supplies'), `${other.id} must not change when landing on ${planet.name}`);
+        }
     }
 });
 
@@ -334,12 +369,12 @@ test('landed market port rejects unlanded trade commands and rebuilds its visit-
     const landedProvider = new GameStateProvider({
         ...initialGameState,
         clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
-        markets: [{
-            planetId: 'seroton',
-            commodityStocks: initialGameState.markets[0].commodityStocks.map(stock => stock.commodityId === 'supplies'
-                ? { ...stock, stock: 51 }
-                : { ...stock })
-        }],
+        markets: initialGameState.markets.map(market => market.planetId === 'seroton'
+            ? {
+                ...market,
+                commodityStocks: market.commodityStocks.map(stock => stock.commodityId === 'supplies' ? { ...stock, stock: 51 } : { ...stock })
+            }
+            : market),
         planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
     });
     const landedPort = createLandingStatusPort(gameFor(landedProvider));
@@ -349,6 +384,48 @@ test('landed market port rejects unlanded trade commands and rebuilds its visit-
     landedPort.setTradeQuantity(1);
     assert.equal(landedPort.getSnapshot().quote.total, 1_020, 'the rebuilt ladder uses post-trade stock below the lower threshold');
     landedPort.destroy();
+});
+
+test('the landed market port shows, refreshes, trades, and launches from each planet own market', () => {
+    const gameFor = provider => ({ registry: { get: key => key === 'telemetry' ? { emit: () => {} } : provider }, events: { emit: () => {} } });
+    const stockOf = (state, planetId, commodityId) => state.markets
+        .find(market => market.planetId === planetId).commodityStocks
+        .find(stock => stock.commodityId === commodityId).stock;
+    const provider = new GameStateProvider(initialGameState);
+    const port = createLandingStatusPort(gameFor(provider));
+    assert.equal(port.getSnapshot().eligible, false);
+
+    for (const planet of initialGameState.planets) {
+        const landed = provider.update(state => ({
+            ...state,
+            clock: pauseGameClock(state.clock, 'landed'),
+            planetLifecycle: { capturedPlanetId: planet.id, landedPlanetId: planet.id, relandingLockedPlanetId: null }
+        }));
+        const initialStock = stockOf(landed, planet.id, 'supplies');
+        const tuning = planetMarketTunings[planet.id].supplies;
+        port.selectCommodity('supplies');
+        port.setTradeQuantity(1);
+        const shown = port.getSnapshot();
+        assert.equal(shown.planetId, planet.id, planet.name);
+        assert.equal(shown.planetName, landed.planets.find(candidate => candidate.id === planet.id).name, planet.name);
+        assert.equal(shown.commodities.find(commodity => commodity.commodityId === 'supplies').stock, initialStock, planet.name);
+        assert.equal(shown.selectedCommodity.productionPerSecond, tuning.productionPerSecond, planet.name);
+        assert.equal(shown.selectedCommodity.consumptionPerSecond, tuning.consumptionPerSecond, planet.name);
+        port.confirmTrade();
+        assert.equal(port.getSnapshot().commodities.find(commodity => commodity.commodityId === 'supplies').stock, initialStock - 1, `${planet.name} projection refreshes after the trade`);
+        const afterTrade = provider.snapshot();
+        assert.equal(stockOf(afterTrade, planet.id, 'supplies'), initialStock - 1, planet.name);
+        for (const other of initialGameState.planets) {
+            if (other.id === planet.id) continue;
+            assert.equal(stockOf(afterTrade, other.id, 'supplies'), stockOf(initialGameState, other.id, 'supplies'), `${other.id} stays independent after trading at ${planet.name}`);
+        }
+        port.setTradeQuantity(-1);
+        port.confirmTrade();
+        assert.equal(stockOf(provider.snapshot(), planet.id, 'supplies'), initialStock, `${planet.name} restores its own stock after selling back`);
+        port.launch();
+        assert.equal(port.getSnapshot().eligible, false, planet.name);
+    }
+    port.destroy();
 });
 
 test('cargo transfer entry pauses, Close resumes, and exit/re-entry clears its visit-local suppression', () => {
@@ -499,7 +576,7 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 15);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 16);
 });
 
 test('v14 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {

@@ -210,6 +210,7 @@ body {
 .market-trade-result { min-height: 1.2em; font-size: 2em; font-weight: 700; }
 .market-trade-result--profit { color: #86efac; }
 .market-trade-result--loss { color: #fca5a5; }
+.market-trade-income { min-height: 1.2em; font-size: 2em; font-weight: 700; color: #fff; }
 #landing-status-quantity { width: 100%; min-height: 38px; margin: 0; accent-color: var(--ui-border); }
 #landing-status-quantity-value { text-align: center; font-size: 2em; font-weight: 700; }
 .landing-view { box-sizing: border-box; width: 100%; height: 100%; min-height: 0; }

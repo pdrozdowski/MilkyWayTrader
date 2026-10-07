@@ -1,11 +1,13 @@
 import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
+import type { PlanetId } from '../state/planetState';
 import type { SerotonCommodityId } from '../state/serotonMarketState';
 import type { AsteroidSize, AsteroidVariant } from '../state/asteroidState';
 import { maximumShipHitPoints, orbitalCargoCapacity } from '../domain/runBalance.ts';
+import { planetIds } from '../domain/planetCatalog.ts';
+import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
 
 const asteroidMaximumHitPoints: Readonly<Record<AsteroidSize, number>> = { big: 3, medium: 2, small: 1 };
-import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
 
 const PAUSE_REASONS: readonly GamePauseReason[] = ['background', 'landed', 'manual', 'menu', 'orientation'];
 const keys = (value: object): string[] => Object.keys(value).sort();
@@ -103,7 +105,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         catch { throw new Error('Game state is not valid JSON.'); }
     }
     const root = requireRecord(source, 'state', ['schemaVersion', 'runId', 'randomState', 'cargoSchedule', 'moolarisDamageArmed', 'terminalResult', 'clock', 'credits', 'cargo', 'orbitalCargo', 'looseItems', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
-    if (root.schemaVersion !== 15) throw new Error('Unsupported game-state schema version.');
+    if (root.schemaVersion !== 16) throw new Error('Unsupported game-state schema version.');
     const decodedRunId = runId(root.runId, 'state.runId');
     const randomState = uint32(root.randomState, 'state.randomState');
     if (!Array.isArray(root.cargoSchedule) || root.cargoSchedule.length > 5) {
@@ -240,44 +242,55 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     }
 
     if (!Array.isArray(root.planets)) throw new Error('state.planets must be an array.');
-    const planetIds = new Set<string>();
+    const configuredPlanetIds = new Set<string>(planetIds);
+    const seenPlanetIds = new Set<string>();
     const planets = root.planets.map((candidatePlanet, index) => {
         const path = `state.planets[${index}]`;
         const planet = requireRecord(candidatePlanet, path, ['id', 'name', 'position', 'radius']);
         const id = nonEmptyString(planet.id, `${path}.id`);
-        if (planetIds.has(id)) throw new Error(`Duplicate planet id: ${id}.`);
-        planetIds.add(id);
+        if (!configuredPlanetIds.has(id)) throw new Error(`${path}.id is not a configured planet.`);
+        if (seenPlanetIds.has(id)) throw new Error(`Duplicate planet id: ${id}.`);
+        seenPlanetIds.add(id);
         const radius = nonNegativeNumber(planet.radius, `${path}.radius`);
         if (radius === 0) throw new Error(`${path}.radius must be positive.`);
         return { id, name: nonEmptyString(planet.name, `${path}.name`), position: vector2(planet.position, `${path}.position`), radius };
     });
 
-    if (!Array.isArray(root.markets) || root.markets.length !== 1) throw new Error('state.markets must contain exactly one market.');
-    const [candidateMarket] = root.markets;
-    const market = requireRecord(candidateMarket, 'state.markets[0]', ['planetId', 'commodityStocks']);
-    if (market.planetId !== 'seroton') throw new Error('state.markets[0].planetId must be Seroton.');
-    if (!Array.isArray(market.commodityStocks) || market.commodityStocks.length !== serotonCommodityIds.length) {
-        throw new Error('state.markets[0].commodityStocks must contain every Seroton commodity.');
-    }
-    const expectedCommodityIds = new Set<string>(serotonCommodityIds);
-    const seenCommodityIds = new Set<string>();
-    const commodityStocks = market.commodityStocks.map((candidateStock, index) => {
-        const path = `state.markets[0].commodityStocks[${index}]`;
-        const stock = requireRecord(candidateStock, path, ['commodityId', 'stock']);
-        if (typeof stock.commodityId !== 'string' || !expectedCommodityIds.has(stock.commodityId)) {
-            throw new Error(`${path}.commodityId is not a configured Seroton commodity.`);
+    if (!Array.isArray(root.markets)) throw new Error('state.markets must be an array.');
+    const marketPlanetIds = new Set<string>();
+    const markets = root.markets.map((candidateMarket, index) => {
+        const marketPath = `state.markets[${index}]`;
+        const market = requireRecord(candidateMarket, marketPath, ['planetId', 'commodityStocks']);
+        const planetId = nonEmptyString(market.planetId, `${marketPath}.planetId`);
+        if (!configuredPlanetIds.has(planetId)) throw new Error(`${marketPath}.planetId is not a configured planet.`);
+        if (marketPlanetIds.has(planetId)) throw new Error(`Duplicate market planet id: ${planetId}.`);
+        marketPlanetIds.add(planetId);
+        if (!Array.isArray(market.commodityStocks) || market.commodityStocks.length !== serotonCommodityIds.length) {
+            throw new Error(`${marketPath}.commodityStocks must contain every configured commodity.`);
         }
-        if (seenCommodityIds.has(stock.commodityId)) throw new Error(`Duplicate Seroton commodity id: ${stock.commodityId}.`);
-        seenCommodityIds.add(stock.commodityId);
-        return { commodityId: stock.commodityId as SerotonCommodityId, stock: nonNegativeSafeInteger(stock.stock, `${path}.stock`) };
+        const expectedCommodityIds = new Set<string>(serotonCommodityIds);
+        const seenCommodityIds = new Set<string>();
+        const commodityStocks = market.commodityStocks.map((candidateStock, stockIndex) => {
+            const stockPath = `${marketPath}.commodityStocks[${stockIndex}]`;
+            const stock = requireRecord(candidateStock, stockPath, ['commodityId', 'stock']);
+            if (typeof stock.commodityId !== 'string' || !expectedCommodityIds.has(stock.commodityId)) {
+                throw new Error(`${stockPath}.commodityId is not a configured commodity.`);
+            }
+            if (seenCommodityIds.has(stock.commodityId)) throw new Error(`Duplicate commodity id: ${stock.commodityId}.`);
+            seenCommodityIds.add(stock.commodityId);
+            return { commodityId: stock.commodityId as SerotonCommodityId, stock: nonNegativeSafeInteger(stock.stock, `${stockPath}.stock`) };
+        });
+        if (seenCommodityIds.size !== expectedCommodityIds.size) throw new Error(`${marketPath}.commodityStocks is missing a configured commodity.`);
+        return { planetId: planetId as PlanetId, commodityStocks };
     });
-    if (seenCommodityIds.size !== expectedCommodityIds.size) throw new Error('state.markets[0].commodityStocks is missing a Seroton commodity.');
+    if (marketPlanetIds.size !== configuredPlanetIds.size) throw new Error('state.markets must contain exactly one market for every configured planet.');
+    if (planets.length !== configuredPlanetIds.size) throw new Error('state.planets must contain exactly the configured planets.');
 
     const lifecycle = requireRecord(root.planetLifecycle, 'state.planetLifecycle', ['capturedPlanetId', 'landedPlanetId', 'relandingLockedPlanetId']);
     const planetIdentity = (value: unknown, path: string): string | null => {
         if (value === null) return null;
         const id = nonEmptyString(value, path);
-        if (!planetIds.has(id)) throw new Error(`${path} must identify a configured planet.`);
+        if (!configuredPlanetIds.has(id)) throw new Error(`${path} must identify a configured planet.`);
         return id;
     };
     const capturedPlanetId = planetIdentity(lifecycle.capturedPlanetId, 'state.planetLifecycle.capturedPlanetId');
@@ -349,7 +362,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 15,
+        schemaVersion: 16,
         runId: decodedRunId,
         randomState,
         cargoSchedule,
@@ -365,7 +378,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         cargo,
         orbitalCargo,
         looseItems,
-        markets: [{ planetId: 'seroton', commodityStocks }],
+        markets,
         ship: {
             position: vector2(ship.position, 'state.ship.position'),
             velocity: vector2(ship.velocity, 'state.ship.velocity'),

@@ -280,11 +280,11 @@ Replace the deliberately temporary shared Seroton market with a complete, indepe
 
 #### 3. Independent-market regression coverage
 
-**Files**: `tests/domain/gameState.test.mjs`, `tests/domain/serotonMarket.test.mjs`, `tests/game-mechanics.test.mjs`, `tests/ui/componentsUiTest.ts`, `tests/ui/applicationUiTest.ts`, `tests/ui/fixtures/`
+**Files**: `tests/domain/gameState.test.mjs`, `tests/domain/serotonMarket.test.mjs`, `tests/game-mechanics.test.mjs`, `tests/domain/planetCatalog.test.mjs`
 
 **Intent**: Replace the completed shared-market assertion with executable proof that market identity, deterministic time progression, and the existing landed workflow remain correct for every landable planet.
 
-**Contract**: State/codec/provider tests cover initial complete market identity, JSON round trips, frozen immutable snapshots, and rejection of v15, missing, duplicate, or unknown market records. Replace the existing shared-market assertion with domain/application cases demonstrating quotes and trades route to the landed planet and leave every other market unchanged. Mechanics tests prove all markets advance by their own tuning on exact one-second boundaries, remain frozen for every pause reason, and produce identical market state through uninterrupted and restore-then-continue runs. Update fast UI/component and application coverage to verify the existing hub → Market → trade → Back → Launch flow on more than one planet, including immediate projection refresh from that planet's market. Do not add a Playwright test unless this routing cannot be proven by the existing lower-level and application coverage.
+**Contract**: State/codec/provider tests cover initial complete market identity, JSON round trips, frozen immutable snapshots, and rejection of v15, missing, duplicate, or unknown market records. Replace the existing shared-market assertion with domain/application cases demonstrating quotes and trades route to the landed planet and leave every other market unchanged. Mechanics tests prove all markets advance by their own tuning on exact one-second boundaries, remain frozen for every pause reason, and produce identical market state through uninterrupted and restore-then-continue runs. The fast UI/component lane no longer exists in this repo (per AGENTS.md's Playwright admission gate, Playwright component tests are not added), so the hub → Market → trade → Back → Launch routing and immediate post-trade projection refresh are proven at the application/port level plus the existing Playwright journey `tests/ui/tradingJourney.ts`.
 
 ### Success Criteria:
 
@@ -392,9 +392,9 @@ The market first changed the persisted shape from schema v4 to v5; Phase 6 chang
 
 #### Automated
 
-- [ ] 6.1 State, definitions, codec, and provider tests prove complete independent per-planet markets and reject obsolete or invalid collections.
-- [ ] 6.2 Domain, application, and mechanics tests prove landed routing, isolated trades, exact per-market active-time updates, pauses, and restored continuity.
-- [ ] 6.3 UI and application coverage proves existing hub-market behavior refreshes the market for the actual landed planet without a presentation-state regression.
+- [x] 6.1 State, definitions, codec, and provider tests prove complete independent per-planet markets and reject obsolete or invalid collections.
+- [x] 6.2 Domain, application, and mechanics tests prove landed routing, isolated trades, exact per-market active-time updates, pauses, and restored continuity.
+- [x] 6.3 UI and application coverage proves existing hub-market behavior refreshes the market for the actual landed planet without a presentation-state regression.
 
 #### Manual
 

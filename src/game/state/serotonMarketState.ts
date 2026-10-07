@@ -1,3 +1,5 @@
+import type { PlanetId } from './planetState';
+
 export type SerotonCommodityId = 'supplies' | 'alloys' | 'medicines';
 
 export interface SerotonCommodityStockState
@@ -8,6 +10,6 @@ export interface SerotonCommodityStockState
 
 export interface SerotonMarketState
 {
-    readonly planetId: 'seroton';
+    readonly planetId: PlanetId;
     readonly commodityStocks: readonly SerotonCommodityStockState[];
 }
