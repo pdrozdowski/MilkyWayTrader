@@ -20,7 +20,7 @@ export const displayLabels = {
     landedSuffix: '— LANDED',
     launch: 'LAUNCH',
     landedOn: 'Landed on', market: 'Market', back: 'BACK', shipyard: 'Shipyard', shipyardUnavailable: 'Shipyard unavailable',
-    marketCredits: 'Credits', marketCargo: 'Cargo', marketQuantity: 'Trading', marketQuote: 'Total trade value',
+    marketCredits: 'Credits', marketCargo: 'Cargo', marketQuantity: 'Trading',
     marketConfirm: 'CONFIRM TRADE',
     marketBuy: 'BUY', marketSell: 'SELL', marketNoTrade: 'SELECT A QUANTITY', marketCashShortfall: 'Insufficient credits:',
     planetStock: 'Planet stock', playerStock: 'Ship inventory', produces: 'Produces', consumes: 'Consumes', supply: 'Supply',
