@@ -36,7 +36,6 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const quantity = required<HTMLInputElement>(root, '#landing-status-quantity');
     const quantityValue = required<HTMLOutputElement>(root, '#landing-status-quantity-value');
     const unitPrice = required<HTMLElement>(root, '#landing-status-unit-price');
-    const quote = required<HTMLElement>(root, '#landing-status-quote');
     const budget = required<HTMLElement>(root, '#landing-status-budget');
     const confirm = required<HTMLButtonElement>(root, '#landing-status-confirm');
     const launch = required<HTMLButtonElement>(root, '#landing-status-launch');
@@ -121,7 +120,6 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         quantityLabel.textContent = `${displayLabels.marketQuantity}: ${commodity ? commodityLabels[commodity.commodityId] : ''}`;
         unitPrice.textContent = `Price: ${formatCredits(snapshot.quote.nextUnitPrice)}`;
         quantityValue.textContent = snapshot.tradeQuantity > 0 ? `+${snapshot.tradeQuantity} ${displayLabels.marketBuy}` : snapshot.tradeQuantity < 0 ? `${Math.abs(snapshot.tradeQuantity)} ${displayLabels.marketSell}` : displayLabels.marketNoTrade;
-        quote.textContent = `${displayLabels.marketQuote}: ${snapshot.quote.total === 0 ? '—' : formatCredits(snapshot.quote.total)}`;
         budget.textContent = snapshot.quote.failure === 'insufficient-credits'
             ? `${displayLabels.outOfBudget} — ${displayLabels.marketCashShortfall} ${formatCredits(Math.max(0, snapshot.quote.total - snapshot.credits))}`
             : displayLabels.inBudget;
