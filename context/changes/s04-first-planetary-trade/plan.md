@@ -392,10 +392,10 @@ The market first changed the persisted shape from schema v4 to v5; Phase 6 chang
 
 #### Automated
 
-- [x] 6.1 State, definitions, codec, and provider tests prove complete independent per-planet markets and reject obsolete or invalid collections.
-- [x] 6.2 Domain, application, and mechanics tests prove landed routing, isolated trades, exact per-market active-time updates, pauses, and restored continuity.
-- [x] 6.3 UI and application coverage proves existing hub-market behavior refreshes the market for the actual landed planet without a presentation-state regression.
+- [x] 6.1 State, definitions, codec, and provider tests prove complete independent per-planet markets and reject obsolete or invalid collections. — 1ccdb7f
+- [x] 6.2 Domain, application, and mechanics tests prove landed routing, isolated trades, exact per-market active-time updates, pauses, and restored continuity. — 1ccdb7f
+- [x] 6.3 UI and application coverage proves existing hub-market behavior refreshes the market for the actual landed planet without a presentation-state regression. — 1ccdb7f
 
 #### Manual
 
-- [ ] 6.4 Every currently landable planet retains its own evolving market through a land-trade-launch-return loop.
+- [x] 6.4 Every currently landable planet retains its own evolving market through a land-trade-launch-return loop. — 1ccdb7f

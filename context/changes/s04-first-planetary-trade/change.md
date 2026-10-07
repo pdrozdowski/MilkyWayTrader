@@ -1,7 +1,7 @@
 ---
 change_id: s04-first-planetary-trade
 title: S04 First Planetary Trade
-status: impl_reviewed
+status: implemented
 created: 2026-09-26
 updated: 2026-10-07
 archived_at: null
