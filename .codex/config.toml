@@ -12,3 +12,8 @@ sandbox_mode = "workspace-write"
 # Network-dependent commands request escalation instead of enabling all network access.
 network_access = false
 
+# Serena is configured globally as an MCP server. Disable it in this repository
+# without disabling the repository's separate end-of-turn quality hook.
+[mcp_servers.serena]
+enabled = true
+
