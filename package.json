@@ -24,7 +24,7 @@
     "test:mechanics": "node --test tests/game-mechanics.test.mjs",
     "test:objects": "node --test tests/object-scaffold.test.mjs",
     "test:audio": "node --test tests/game-audio.test.mjs",
-    "test:ui-presentation": "node --test tests/run-status-clock.test.mjs",
+    "test:ui-presentation": "node --test tests/run-status-clock.test.mjs tests/landing-status.test.mjs",
     "test:architecture": "node --test tests/architecture.test.mjs",
     "test:unit": "npm run test:domain && npm run test:mechanics && npm run test:objects && npm run test:audio && npm run test:ui-presentation",
     "test:fast": "npm run test:unit && npm run test:architecture",
@@ -47,11 +47,16 @@
     "supabase": "^2.119.0",
     "typescript": "~5.7.2",
     "vite": "^6.3.1",
-    "wrangler": "^4.133.0"
+    "wrangler": "^4.148.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
     "phaser": "4.0.0",
     "terser": "^5.39.0"
+  },
+  "overrides": {
+    "miniflare": {
+      "sharp": "0.35.5"
+    }
   }
 }
