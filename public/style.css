@@ -1,4 +1,4 @@
-:root { --ui-surface: #102039; --ui-surface-raised: #122541; --ui-border: #8bdfff; --ui-overlay: #07111bd9; --ui-orientation-overlay: #0b1529; --ui-focus: #fff; --ui-action: #1c4266; --ui-danger: #8b2635; --ui-health: #53d769; --ui-health-warning: #f59e0b; --ui-health-critical: #ef4444; --ui-health-track: #526273; --ui-disabled: #526273; --ui-title-outline: #253041; --page-surround: #000; }
+:root { --ui-surface: #102039; --ui-surface-raised: #122541; --ui-border: #8bdfff; --ui-overlay: #07111bd9; --ui-orientation-overlay: #0b1529; --ui-focus: #fff; --ui-action: #1c4266; --ui-action-enabled: var(--ui-health); --ui-danger: #8b2635; --ui-health: #53d769; --ui-health-warning: #f59e0b; --ui-health-critical: #ef4444; --ui-health-track: #526273; --ui-disabled: #526273; --ui-title-outline: #253041; --page-surround: #000; }
 
 html,
 body {
@@ -391,9 +391,13 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .shipyard-booster-card .shipyard-card-icon { background-image: url('/assets/icons/shipService-booster_48x48.png'); }
 .shipyard-card-level { font-weight: 700; }
 .shipyard-card-effect { color: #9fd1ff; }
-.shipyard-card-price { font-weight: 700; }
 .shipyard-card-availability { color: var(--ui-disabled); }
-.shipyard-card-action { margin-top: auto; }
+.shipyard-card-action { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; margin-top: auto; }
+.shipyard-card-action-label { font-weight: 700; }
+.shipyard-card-action-price { display: flex; align-items: center; gap: 0.12em; white-space: nowrap; }
+.shipyard-card-action-price[hidden] { display: none; }
+.shipyard-card-action-price::before { content: ''; display: block; width: 0.8em; min-width: 0.8em; height: 0.8em; flex: 0 0 0.8em; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
+#landing-status-shipyard-view .shipyard-card-action:not(:disabled) { color: var(--ui-surface); background: var(--ui-action-enabled); }
 .shipyard-repair-bar { width: 100%; }
 .shipyard-repair-increment { font-weight: 700; }
 
