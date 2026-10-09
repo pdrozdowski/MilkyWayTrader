@@ -280,18 +280,18 @@ Not applicable: no persisted format, schema version or saved data is touched, an
 
 #### Automated
 
-- [ ] 1.1 `test:domain` passes with the updated provider read contract and the malformed-reducer validation case
-- [ ] 1.2 `typecheck` passes
-- [ ] 1.3 `test:architecture` still passes with one provider construction point
+- [x] 1.1 `test:domain` passes with the updated provider read contract and the malformed-reducer validation case
+- [x] 1.2 `typecheck` passes
+- [x] 1.3 `test:architecture` still passes with one provider construction point
 
 ### Phase 2: Stop the wasted fan-out
 
 #### Automated
 
-- [ ] 2.1 `test:domain` passes with the landing-skip identity case
-- [ ] 2.2 `test:ui-presentation` passes unchanged
-- [ ] 2.3 `test:fast` passes
-- [ ] 2.4 `typecheck` passes
+- [x] 2.1 `test:domain` passes with the landing-skip identity case
+- [x] 2.2 `test:ui-presentation` passes unchanged
+- [x] 2.3 `test:fast` passes
+- [x] 2.4 `typecheck` passes
 
 #### Manual
 
@@ -301,12 +301,12 @@ Not applicable: no persisted format, schema version or saved data is touched, an
 
 #### Automated
 
-- [ ] 3.1 `test:fast` passes on the final tree
-- [ ] 3.2 `typecheck` passes on the final tree
-- [ ] 3.3 `build-nolog` succeeds
+- [x] 3.1 `test:fast` passes on the final tree
+- [x] 3.2 `typecheck` passes on the final tree
+- [x] 3.3 `build-nolog` succeeds
 
 #### Manual
 
-- [ ] 3.4 Same-spot monitor reading shows the collapsed read and commit rows and a material loop-rate gain
-- [ ] 3.5 No visible regression across menu, HUD, landing, trade, cargo transfer, death and return-to-menu
-- [ ] 3.6 Baseline and post-change numbers recorded in this change's verification.md
+- [x] 3.4 Same-spot monitor reading shows the collapsed read and commit rows and a material loop-rate gain
+- [x] 3.5 No visible regression across menu, HUD, landing, trade, cargo transfer, death and return-to-menu
+- [x] 3.6 Baseline and post-change numbers recorded in this change's verification.md

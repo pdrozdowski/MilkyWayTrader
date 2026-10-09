@@ -16,7 +16,7 @@ Treat the PRD and accepted architecture as the contract. Fix implementation defe
 
 ## Authoritative state
 
-State changes use `$utils-add-state`. Provider and codec tests cover detached immutable snapshots, schema and shape rejection, migrations, atomic failure, duplicate IDs, reset, subscriptions, and JSON round trips. Reducer tests cover transition boundaries and input immutability. Clock tests cover overlapping pause reasons, idempotent pause/resume, long active frames, and no progress while paused or closed. Serialization tests compare uninterrupted and restored simulation results while excluding held input and presentation effects.
+State changes use `$utils-add-state`. Provider and codec tests cover the shared frozen read contract, schema and shape rejection, migrations, atomic failure, duplicate IDs, reset, subscriptions, and JSON round trips. Reducer tests cover transition boundaries and input immutability. Clock tests cover overlapping pause reasons, idempotent pause/resume, long active frames, and no progress while paused or closed. Serialization tests compare uninterrupted and restored simulation results while excluding held input and presentation effects.
 
 When a task explicitly requests architecture artifacts, refresh `code-graph.json`, generate `data-logical-diagram.md`, and run the diagram checker. A `REFACTOR_REQUIRED` finding fails that artifact-validation task even when runtime tests pass.
 

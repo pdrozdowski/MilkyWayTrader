@@ -1,4 +1,4 @@
-import { decodeGameState, encodeGameState } from './gameStateCodec.ts';
+import { decodeGameState } from './gameStateCodec.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 
 export type GameStateReducer = (state: GameStateSnapshot) => GameStateSnapshot;
@@ -16,9 +16,15 @@ export class GameStateProvider
         this.state = this.initialState;
     }
 
+    /**
+     * Hands out the authoritative state itself: the same frozen object until the next commit and a
+     * new one after it. Immutability is guaranteed by the write boundary, which stores only
+     * `decodeGameState` results, so reads stay free of serialization and copying - JSON belongs to
+     * persistence (save and restore), never to the in-memory read path.
+     */
     snapshot (): GameStateSnapshot
     {
-        return decodeGameState(encodeGameState(this.state));
+        return this.state;
     }
 
     update (reducer: GameStateReducer): GameStateSnapshot

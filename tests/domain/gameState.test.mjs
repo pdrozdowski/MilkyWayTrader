@@ -12,9 +12,10 @@ import { createCargoTransferPort, cargoFullWarning, cargoFullWarningDurationMs }
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
-test('provider returns detached immutable snapshots and publishes valid replacements', () => {
+test('provider reads hand out the frozen authoritative state and publishes valid replacements', () => {
     const provider = new GameStateProvider(initialGameState);
     const first = provider.snapshot();
+    assert.equal(provider.snapshot(), first, 'a read must not copy or serialize the aggregate');
     assert(Object.isFrozen(first));
     assert(Object.isFrozen(first.ship));
     assert(Object.isFrozen(first.planets));
@@ -28,13 +29,28 @@ test('provider returns detached immutable snapshots and publishes valid replacem
     const notifications = [];
     const unsubscribe = provider.subscribe(state => notifications.push(state.clock.activeElapsedMs));
     const updated = provider.update(state => ({ ...state, clock: advanceGameClock(state.clock, 125) }));
+    assert.notEqual(updated, first, 'a commit must replace the aggregate with a new frozen object');
     assert.equal(updated.clock.activeElapsedMs, 125);
-    assert.equal(first.clock.activeElapsedMs, 0);
+    assert.equal(first.clock.activeElapsedMs, 0, 'an older read keeps the values it was handed');
     assert.deepEqual(notifications, [125]);
     unsubscribe();
     provider.reset();
     assert.deepEqual(notifications, [125]);
     assert.equal(provider.snapshot().clock.activeElapsedMs, 0);
+});
+
+test('the write boundary rejects a malformed reducer result and keeps the previous state', () => {
+    const provider = new GameStateProvider(initialGameState);
+    const before = provider.snapshot();
+    const notifications = [];
+    const unsubscribe = provider.subscribe(state => notifications.push(state));
+    assert.throws(() => provider.update(state => ({ ...state, credits: -1 })), /state\.credits must not be negative/);
+    assert.throws(() => provider.update(() => ({ ...clone(initialGameState), schemaVersion: 16 })), /Unsupported game-state schema version/);
+    assert.throws(() => provider.update(state => ({ ...state, ship: { ...state.ship, position: { x: Number.NaN, y: 0 } } })), /state\.ship\.position\.x must be a finite number/);
+    unsubscribe();
+    // Identity is the strongest form of "untouched": a rejected commit must not swap the aggregate either.
+    assert.equal(provider.snapshot(), before, 'a rejected commit leaves the authoritative state in place');
+    assert.deepEqual(notifications, [], 'a rejected commit notifies no subscriber');
 });
 
 test('a new run starts with the complete S-01 authoritative state', () => {
