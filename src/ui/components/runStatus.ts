@@ -1,5 +1,6 @@
 import type { RunStatusPort, RunStatusSnapshot, UiHandle } from '../contracts';
 import { displayLabels } from './displayLabels';
+import { formatCredits } from './formatCredits';
 import { RunStatusClock } from './runStatusClock';
 
 function required<T extends Element> (root: HTMLElement, selector: string): T
@@ -51,7 +52,7 @@ export function mountRunStatus (root: HTMLElement, port: RunStatusPort): UiHandl
     const render = (snapshot: Readonly<RunStatusSnapshot>): void => {
         toolbar.hidden = !snapshot.visible;
         presentation.update(snapshot.remainingSeconds, snapshot.runState, snapshot.visible);
-        renderValue(credits, `${snapshot.credits.toLocaleString('en-US')} cr`);
+        renderValue(credits, formatCredits(snapshot.credits));
         renderValue(cargo, `Cargo ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`);
         renderValue(hp, `HP ${snapshot.currentHitPoints} / ${snapshot.maximumHitPoints}`);
         bar.value = snapshot.currentHitPoints; bar.max = snapshot.maximumHitPoints;
@@ -60,12 +61,11 @@ export function mountRunStatus (root: HTMLElement, port: RunStatusPort): UiHandl
         cargoRows.replaceChildren(...snapshot.cargo.map(stack => {
             const row = document.createElement('tr');
             const icon = document.createElement('span');
-            icon.className = 'cargo-commodity-icon';
+            icon.className = 'cargo-commodity-icon commodity-icon';
             icon.dataset.commodityId = stack.commodityId;
             icon.style.width = '32px';
             icon.style.height = '32px';
             icon.setAttribute('aria-hidden', 'true');
-            icon.textContent = commodityLabel(stack.commodityId).slice(0, 1);
             const iconCell = document.createElement('td');
             iconCell.append(icon);
             const name = document.createElement('td');

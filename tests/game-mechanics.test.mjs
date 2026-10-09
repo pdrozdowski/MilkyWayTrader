@@ -6,6 +6,7 @@ import { segmentHitsCircle, shotTrajectory } from '../src/game/mechanics/project
 import { advanceFireCadence } from '../src/game/mechanics/spaceship/fireCadence.ts';
 import { initialGameState } from '../src/game/definitions/initialGameState.ts';
 import { advanceGameSimulation } from '../src/game/mechanics/gameSimulation.ts';
+import { advancePlanetFacilities } from '../src/game/mechanics/planetFacilitySimulation.ts';
 import { gameObjectLayout, PLANET_SIZE_MULTIPLIER, SUN_RADIUS } from '../src/game/scenes/gameObjects.ts';
 import { planetDefinitions } from '../src/game/definitions/planetDefinitions.ts';
 import { projectPlanetPosition } from '../src/game/mechanics/planet/orbit.ts';
@@ -30,12 +31,6 @@ import { advanceLooseItems, advanceOrbitalCargo } from '../src/game/mechanics/sa
 import { maximumOrbitalCargoTransfer, transferOrbitalCargo } from '../src/game/application/salvageInteractions.ts';
 import { collectLooseItem, damageOrbitalCargo, spillOrbitalCargo } from '../src/game/mechanics/salvage/cargoDamage.ts';
 import { bindDebugCargoControl } from '../src/ui/components/debugCargoControl.ts';
-
-const marketStocks = (state, planetId) => state.markets.find(market => market.planetId === planetId).commodityStocks.map(commodity => ({ ...commodity }));
-const allMarketStocks = state => state.markets.map(market => ({
-    planetId: market.planetId,
-    commodityStocks: market.commodityStocks.map(commodity => ({ ...commodity }))
-}));
 
 function assertCargoManifest (manifest)
 {
@@ -453,66 +448,6 @@ test('sun and starfield presentation phases freeze and resume from active elapse
     assert.equal(activeTimeWave(1.24, 0.0011, resumedElapsed), activeTimeWave(1.24, 0.0011, 12_845));
 });
 
-test('every planetary market advances by its own tuning only at crossed active-second boundaries', () => {
-    const input = { target: null, boostRequested: false, firing: false };
-    const beforeBoundary = {
-        ...initialGameState,
-        clock: { ...initialGameState.clock, activeElapsedMs: 999 }
-    };
-    const crossedBoundary = advanceGameSimulation(beforeBoundary, input, 1);
-    assert.deepEqual(marketStocks(crossedBoundary, 'seroton'), [
-        { commodityId: 'supplies', stock: 102 },
-        { commodityId: 'alloys', stock: 59 },
-        { commodityId: 'medicines', stock: 19 }
-    ]);
-    assert.deepEqual(marketStocks(crossedBoundary, 'lactozis-7c'), [
-        { commodityId: 'supplies', stock: 145 },
-        { commodityId: 'alloys', stock: 39 },
-        { commodityId: 'medicines', stock: 31 }
-    ]);
-    assert.deepEqual(marketStocks(crossedBoundary, 'maslo-prime'), [
-        { commodityId: 'supplies', stock: 79 },
-        { commodityId: 'alloys', stock: 89 },
-        { commodityId: 'medicines', stock: 14 }
-    ]);
-
-    const multiSecond = advanceGameSimulation({
-        ...initialGameState,
-        clock: { ...initialGameState.clock, activeElapsedMs: 500 }
-    }, input, 3_500);
-    assert.deepEqual(marketStocks(multiSecond, 'seroton'), [
-        { commodityId: 'supplies', stock: 108 },
-        { commodityId: 'alloys', stock: 56 },
-        { commodityId: 'medicines', stock: 16 }
-    ]);
-    assert.deepEqual(marketStocks(multiSecond, 'lactozis-7c'), [
-        { commodityId: 'supplies', stock: 160 },
-        { commodityId: 'alloys', stock: 36 },
-        { commodityId: 'medicines', stock: 34 }
-    ]);
-    assert.deepEqual(marketStocks(multiSecond, 'maslo-prime'), [
-        { commodityId: 'supplies', stock: 76 },
-        { commodityId: 'alloys', stock: 86 },
-        { commodityId: 'medicines', stock: 11 }
-    ]);
-});
-
-test('every planetary market is continuous through restore and frozen by every pause reason', () => {
-    const input = { target: null, boostRequested: false, firing: false };
-    const uninterrupted = advanceGameSimulation(initialGameState, input, 4_000);
-    const restored = decodeGameState(encodeGameState(advanceGameSimulation(initialGameState, input, 1_500)));
-    const resumed = advanceGameSimulation(restored, input, 2_500);
-    assert.deepEqual(allMarketStocks(resumed), allMarketStocks(uninterrupted));
-
-    for (const reason of ['background', 'landed', 'manual', 'menu', 'orientation']) {
-        const paused = advanceGameSimulation({
-            ...initialGameState,
-            clock: { ...initialGameState.clock, pauseReasons: [reason] }
-        }, input, 5_000);
-        assert.deepEqual(allMarketStocks(paused), allMarketStocks(initialGameState), `${reason} pause freezes every market`);
-    }
-});
-
 test('fast projectile paths detect crossed Moolaris, tangent hits and endpoints without false hits', () => {
     const planet = { x: 100, y: 0, radius: 48 };
     assert(segmentHitsCircle({ x: 0, y: 0 }, { x: 200, y: 0 }, planet, 3), 'both endpoints can miss while the path crosses a planet');
@@ -840,8 +775,8 @@ test('small-asteroid projectile kills consume deterministic cargo schedules with
 });
 
 test('salvage lifecycle advances only active time, cargo takes two projectile-only hits, and loose items blend toward the sun', () => {
-    const cargo = { id: 'cargo-1', position: { x: 2_000, y: 0 }, orbit: { angleRadians: 0, radius: 2_000, rotationRadians: 0 }, hitPoints: 2, manifest: [{ commodityId: 'supplies', quantity: 2, totalCost: 0 }] };
-    const item = { id: 'item-1', position: { x: 2_000, y: 0 }, motion: { ejectionVelocity: { x: 180, y: 0 }, sunVelocity: { x: -240, y: 0 }, createdAtActiveMs: 0 }, container: { commodityId: 'supplies', quantity: 1, totalCost: 0 } };
+    const cargo = { id: 'cargo-1', position: { x: 2_000, y: 0 }, orbit: { angleRadians: 0, radius: 2_000, rotationRadians: 0 }, hitPoints: 2, manifest: [{ commodityId: 'milk', quantity: 2, totalCost: 0 }] };
+    const item = { id: 'item-1', position: { x: 2_000, y: 0 }, motion: { ejectionVelocity: { x: 180, y: 0 }, sunVelocity: { x: -240, y: 0 }, createdAtActiveMs: 0 }, container: { commodityId: 'milk', quantity: 1, totalCost: 0 } };
     const paused = advanceGameSimulation({ ...initialGameState, orbitalCargo: [cargo], looseItems: [item], clock: { ...initialGameState.clock, pauseReasons: ['manual'] } }, quietInput, 10_000);
     assert.deepEqual(paused.orbitalCargo, [cargo]);
     assert.deepEqual(paused.looseItems, [item]);
@@ -898,62 +833,62 @@ test('debug cargo control emits its scene intent only while the run can accept i
 });
 
 test('salvage intents preserve full ships and only transfer explicit holders', () => {
-    const item = { id: 'item-full', position: { x: 9_000, y: 0 }, motion: { ejectionVelocity: { x: 0, y: 0 }, sunVelocity: { x: -1, y: 0 }, createdAtActiveMs: 0 }, container: { commodityId: 'alloys', quantity: 1, totalCost: 0 } };
-    const full = { ...initialGameState, cargo: [{ commodityId: 'supplies', quantity: 20, totalCost: 1_000 }], looseItems: [item] };
+    const item = { id: 'item-full', position: { x: 9_000, y: 0 }, motion: { ejectionVelocity: { x: 0, y: 0 }, sunVelocity: { x: -1, y: 0 }, createdAtActiveMs: 0 }, container: { commodityId: 'grain', quantity: 1, totalCost: 0 } };
+    const full = { ...initialGameState, cargo: [{ commodityId: 'milk', quantity: 20, totalCost: 1_000 }], looseItems: [item] };
     const pickup = collectLooseItem(full, item.id);
     assert.equal(pickup, full);
-    const cargo = { id: 'cargo-transfer', position: { x: 2_000, y: 0 }, orbit: { angleRadians: 0, radius: 2_000, rotationRadians: 0 }, hitPoints: 2, manifest: [{ commodityId: 'alloys', quantity: 2, totalCost: 8 }] };
-    const transferred = transferOrbitalCargo({ ...initialGameState, orbitalCargo: [cargo] }, cargo.id, 'alloys', 1, 'to-ship');
+    const cargo = { id: 'cargo-transfer', position: { x: 2_000, y: 0 }, orbit: { angleRadians: 0, radius: 2_000, rotationRadians: 0 }, hitPoints: 2, manifest: [{ commodityId: 'grain', quantity: 2, totalCost: 8 }] };
+    const transferred = transferOrbitalCargo({ ...initialGameState, orbitalCargo: [cargo] }, cargo.id, 'grain', 1, 'to-ship');
     assert.equal(transferred.failure, null);
-    assert.deepEqual(transferred.state.cargo, [{ commodityId: 'alloys', quantity: 1, totalCost: 4 }]);
+    assert.deepEqual(transferred.state.cargo, [{ commodityId: 'grain', quantity: 1, totalCost: 4 }]);
     assert.equal(transferred.state.orbitalCargo[0].manifest[0].quantity, 1);
 });
 
 test('orbital cargo transfers exact one and max quantities atomically within both capacity limits', () => {
     const cargo = (id, stacks) => ({ id, position: { x: 2_000, y: 0 }, orbit: { angleRadians: 0, radius: 2_000, rotationRadians: 0 }, hitPoints: 2, manifest: stacks });
-    const source = { ...initialGameState, orbitalCargo: [cargo('cargo-1', [{ commodityId: 'alloys', quantity: 2, totalCost: 8 }])] };
+    const source = { ...initialGameState, orbitalCargo: [cargo('cargo-1', [{ commodityId: 'grain', quantity: 2, totalCost: 8 }])] };
 
-    const one = transferOrbitalCargo(source, 'cargo-1', 'alloys', 1, 'to-ship');
+    const one = transferOrbitalCargo(source, 'cargo-1', 'grain', 1, 'to-ship');
     assert.equal(one.failure, null);
-    assert.deepEqual(one.state.cargo, [{ commodityId: 'alloys', quantity: 1, totalCost: 4 }]);
-    assert.deepEqual(one.state.orbitalCargo[0].manifest, [{ commodityId: 'alloys', quantity: 1, totalCost: 4 }]);
-    assert.deepEqual(source.orbitalCargo[0].manifest, [{ commodityId: 'alloys', quantity: 2, totalCost: 8 }], 'the reducer never mutates its input');
+    assert.deepEqual(one.state.cargo, [{ commodityId: 'grain', quantity: 1, totalCost: 4 }]);
+    assert.deepEqual(one.state.orbitalCargo[0].manifest, [{ commodityId: 'grain', quantity: 1, totalCost: 4 }]);
+    assert.deepEqual(source.orbitalCargo[0].manifest, [{ commodityId: 'grain', quantity: 2, totalCost: 8 }], 'the reducer never mutates its input');
 
-    assert.equal(maximumOrbitalCargoTransfer(source, 'cargo-1', 'alloys', 'to-ship'), 2);
-    const max = transferOrbitalCargo(source, 'cargo-1', 'alloys', 2, 'to-ship');
+    assert.equal(maximumOrbitalCargoTransfer(source, 'cargo-1', 'grain', 'to-ship'), 2);
+    const max = transferOrbitalCargo(source, 'cargo-1', 'grain', 2, 'to-ship');
     assert.equal(max.failure, null);
-    assert.deepEqual(max.state.cargo, [{ commodityId: 'alloys', quantity: 2, totalCost: 8 }]);
+    assert.deepEqual(max.state.cargo, [{ commodityId: 'grain', quantity: 2, totalCost: 8 }]);
     assert.equal(max.state.orbitalCargo.length, 0, 'an emptied manifest removes the orbital cargo');
 
-    const shipBoundary = { ...initialGameState, cargo: [{ commodityId: 'supplies', quantity: 18, totalCost: 0 }], orbitalCargo: [cargo('cargo-b', [{ commodityId: 'supplies', quantity: 5, totalCost: 0 }])] };
-    assert.equal(maximumOrbitalCargoTransfer(shipBoundary, 'cargo-b', 'supplies', 'to-ship'), 2);
-    assert.equal(transferOrbitalCargo(shipBoundary, 'cargo-b', 'supplies', 3, 'to-ship').failure, 'ship-cargo-full');
-    assert.equal(transferOrbitalCargo(shipBoundary, 'cargo-b', 'supplies', 2, 'to-ship').failure, null);
+    const shipBoundary = { ...initialGameState, cargo: [{ commodityId: 'milk', quantity: 18, totalCost: 0 }], orbitalCargo: [cargo('cargo-b', [{ commodityId: 'milk', quantity: 5, totalCost: 0 }])] };
+    assert.equal(maximumOrbitalCargoTransfer(shipBoundary, 'cargo-b', 'milk', 'to-ship'), 2);
+    assert.equal(transferOrbitalCargo(shipBoundary, 'cargo-b', 'milk', 3, 'to-ship').failure, 'ship-cargo-full');
+    assert.equal(transferOrbitalCargo(shipBoundary, 'cargo-b', 'milk', 2, 'to-ship').failure, null);
 
-    const orbitBoundary = { ...initialGameState, cargo: [{ commodityId: 'medicines', quantity: 10, totalCost: 0 }], orbitalCargo: [cargo('cargo-c', [{ commodityId: 'medicines', quantity: 15, totalCost: 0 }])] };
-    assert.equal(maximumOrbitalCargoTransfer(orbitBoundary, 'cargo-c', 'medicines', 'to-orbit'), 5);
-    assert.equal(transferOrbitalCargo(orbitBoundary, 'cargo-c', 'medicines', 6, 'to-orbit').failure, 'orbit-cargo-full');
-    assert.equal(transferOrbitalCargo(orbitBoundary, 'cargo-c', 'medicines', 5, 'to-orbit').failure, null);
+    const orbitBoundary = { ...initialGameState, cargo: [{ commodityId: 'cheese', quantity: 10, totalCost: 0 }], orbitalCargo: [cargo('cargo-c', [{ commodityId: 'cheese', quantity: 15, totalCost: 0 }])] };
+    assert.equal(maximumOrbitalCargoTransfer(orbitBoundary, 'cargo-c', 'cheese', 'to-orbit'), 5);
+    assert.equal(transferOrbitalCargo(orbitBoundary, 'cargo-c', 'cheese', 6, 'to-orbit').failure, 'orbit-cargo-full');
+    assert.equal(transferOrbitalCargo(orbitBoundary, 'cargo-c', 'cheese', 5, 'to-orbit').failure, null);
 
-    assert.equal(transferOrbitalCargo(source, 'missing', 'alloys', 1, 'to-ship').failure, 'missing-cargo');
-    assert.equal(transferOrbitalCargo(source, 'cargo-1', 'supplies', 1, 'to-ship').failure, 'missing-commodity');
-    assert.equal(transferOrbitalCargo(source, 'cargo-1', 'alloys', 0, 'to-ship').failure, 'invalid-quantity');
-    assert.equal(transferOrbitalCargo(source, 'cargo-1', 'alloys', 3, 'to-ship').failure, 'insufficient-cargo');
-    assert.equal(transferOrbitalCargo(source, 'cargo-1', 'medicines', 1, 'to-orbit').failure, 'missing-commodity');
-    assert.equal(transferOrbitalCargo(source, 'cargo-1', 'alloys', 3, 'to-ship').state, source, 'a failed transfer leaves state untouched');
+    assert.equal(transferOrbitalCargo(source, 'missing', 'grain', 1, 'to-ship').failure, 'missing-cargo');
+    assert.equal(transferOrbitalCargo(source, 'cargo-1', 'milk', 1, 'to-ship').failure, 'missing-commodity');
+    assert.equal(transferOrbitalCargo(source, 'cargo-1', 'grain', 0, 'to-ship').failure, 'invalid-quantity');
+    assert.equal(transferOrbitalCargo(source, 'cargo-1', 'grain', 3, 'to-ship').failure, 'insufficient-cargo');
+    assert.equal(transferOrbitalCargo(source, 'cargo-1', 'cheese', 1, 'to-orbit').failure, 'missing-commodity');
+    assert.equal(transferOrbitalCargo(source, 'cargo-1', 'grain', 3, 'to-ship').state, source, 'a failed transfer leaves state untouched');
 });
 
 test('spilling orbital cargo preserves per-stack cost and spreads items around the full circle at randomized 126-base speeds', () => {
     const cargo = { id: 'cargo-spill', position: { x: 2_000, y: 0 }, orbit: { angleRadians: 0, radius: 2_000, rotationRadians: 0 }, hitPoints: 1, manifest: [
-        { commodityId: 'supplies', quantity: 2, totalCost: 8 },
-        { commodityId: 'alloys', quantity: 1, totalCost: 7 }
+        { commodityId: 'milk', quantity: 2, totalCost: 8 },
+        { commodityId: 'grain', quantity: 1, totalCost: 7 }
     ] };
     const items = spillOrbitalCargo(cargo, 400);
     assert.equal(items.length, 3);
     assert.deepEqual(items.map(item => item.container), [
-        { commodityId: 'supplies', quantity: 1, totalCost: 4 },
-        { commodityId: 'supplies', quantity: 1, totalCost: 4 },
-        { commodityId: 'alloys', quantity: 1, totalCost: 7 }
+        { commodityId: 'milk', quantity: 1, totalCost: 4 },
+        { commodityId: 'milk', quantity: 1, totalCost: 4 },
+        { commodityId: 'grain', quantity: 1, totalCost: 7 }
     ]);
     assert.equal(items.reduce((sum, item) => sum + item.container.totalCost, 0), 15, 'spill preserves the manifest cost');
     const positions = new Set(items.map(item => `${item.position.x},${item.position.y}`));
@@ -968,4 +903,140 @@ test('spilling orbital cargo preserves per-stack cost and spreads items around t
         assert(speed >= 126 * 0.7 - 1e-8 && speed <= 126 * 1.3 + 1e-8, `spill speed stays within the 30% randomization band, got ${speed}`);
     }
     assert.deepEqual(spillOrbitalCargo(cargo, 400), items, 'spill is deterministic for identical input');
+});
+
+const marketOf = (state, planetId) => state.markets.find(market => market.planetId === planetId);
+const stockIn = (market, commodityId) => market.commodityStocks.find(entry => entry.commodityId === commodityId).stock;
+const facilityIn = (market, facilityId) => market.facilities.find(facility => facility.facilityId === facilityId);
+const stockOf = (state, planetId, commodityId) => stockIn(marketOf(state, planetId), commodityId);
+const statusOf = (state, planetId, facilityId) => facilityIn(marketOf(state, planetId), facilityId).status;
+const planetMarket = (planetId, { stocks = {}, levels = {} } = {}) => {
+    const base = marketOf(initialGameState, planetId);
+    return {
+        planetId,
+        commodityStocks: base.commodityStocks.map(entry => ({ commodityId: entry.commodityId, stock: stocks[entry.commodityId] ?? entry.stock })),
+        facilities: base.facilities.map(facility => levels[facility.facilityId] === undefined ? { ...facility } : {
+            facilityId: facility.facilityId,
+            level: levels[facility.facilityId],
+            status: levels[facility.facilityId] === 0 ? 'notBuilt' : 'working'
+        })
+    };
+};
+
+test('facility cycles cross whole active seconds and apply one recipe pass per crossed second', () => {
+    const subSecond = advanceGameSimulation(initialGameState, quietInput, 999);
+    assert.equal(subSecond.clock.activeElapsedMs, 999);
+    assert.deepEqual(subSecond.markets, initialGameState.markets, 'no cycle runs before the first crossed second');
+
+    const crossed = advanceGameSimulation(subSecond, quietInput, 1);
+    assert.equal(crossed.clock.activeElapsedMs, 1_000);
+    assert.deepEqual(crossed.markets, advanceGameSimulation(initialGameState, quietInput, 1_000).markets, 'crossing the boundary runs exactly one pass');
+
+    const midSecond = advanceGameSimulation(initialGameState, quietInput, 1_500);
+    assert.deepEqual(advanceGameSimulation(midSecond, quietInput, 400).markets, midSecond.markets, 'a frame inside one second attempts no cycle');
+
+    const oneSecond = advanceGameSimulation(initialGameState, quietInput, 1_000);
+    assert.equal(stockOf(oneSecond, 'seroton', 'milk'), 2, 'the cheese factory consumes 12 milk per second (the same-cycle farm-to-consumer ordering is proven by the lactozis case below)');
+    assert.equal(stockOf(oneSecond, 'seroton', 'grain'), 110);
+    assert.equal(stockOf(oneSecond, 'seroton', 'cheese'), 66, 'the seroton cheese factory applies its +20% output');
+    assert.equal(statusOf(oneSecond, 'seroton', 'dairyFarm'), 'working');
+    assert.equal(statusOf(oneSecond, 'seroton', 'bakery'), 'notBuilt', 'a level-zero facility never runs');
+    assert.equal(stockOf(oneSecond, 'seroton', 'bun'), 50);
+});
+
+test('a multi-second frame equals the same span applied one second at a time', () => {
+    const singleFrame = advanceGameSimulation(initialGameState, quietInput, 3_500);
+    let stepped = initialGameState;
+    for (const stepMs of [1_000, 1_000, 1_000, 500]) stepped = advanceGameSimulation(stepped, quietInput, stepMs);
+    assert.equal(singleFrame.clock.activeElapsedMs, 3_500);
+    assert.deepEqual(singleFrame.markets, stepped.markets, 'a 3 500 ms frame applies three sequential cycles');
+
+    const economy = marketOf(initialGameState, 'seroton');
+    const snapshot = JSON.parse(JSON.stringify(economy));
+    const threeCycles = advancePlanetFacilities(economy, 3);
+    assert.deepEqual(economy, snapshot, 'the reducer never mutates its input');
+    let chained = economy;
+    for (let cycle = 0; cycle < 3; cycle++) chained = advancePlanetFacilities(chained, 1);
+    assert.deepEqual(threeCycles, chained, 'three cycles equal three single-cycle passes');
+    assert.deepEqual(advancePlanetFacilities(economy, 3), threeCycles, 'the reducer is deterministic');
+});
+
+test('facility cycles run in their fixed order so a farm output supplies a later consumer in the same cycle', () => {
+    const start = planetMarket('lactozis-7c', { stocks: { milk: 2 } });
+    const once = advancePlanetFacilities(start, 1);
+    assert.equal(facilityIn(once, 'dairyFarm').status, 'working');
+    assert.equal(facilityIn(once, 'cheeseFactory').status, 'working');
+    assert.equal(stockIn(once, 'milk'), 2, 'the dairy farm adds 10 milk before the cheese factory consumes 10');
+    assert.equal(stockIn(once, 'cheese'), 55, 'a cheese-first order would have starved the factory');
+});
+
+test('an all-or-nothing shortfall leaves the stock untouched and flips the status until the input returns', () => {
+    const starved = planetMarket('seroton', { stocks: { grain: 4, bun: 50 }, levels: { bakery: 1, grainFarm: 0 } });
+    const afterShortfall = advancePlanetFacilities(starved, 1);
+    assert.equal(facilityIn(afterShortfall, 'bakery').status, 'insufficientResources');
+    assert.equal(stockIn(afterShortfall, 'grain'), 4, 'the uncovered input is not partially consumed');
+    assert.equal(stockIn(afterShortfall, 'bun'), 50, 'no output is produced without the full recipe');
+    assert.equal(facilityIn(afterShortfall, 'grainFarm').status, 'notBuilt', 'level zero stays not built');
+    assert.equal(facilityIn(afterShortfall, 'dairyFarm').status, 'working', 'other facilities keep cycling');
+
+    const supplied = planetMarket('seroton', { stocks: { grain: 40, bun: 50 }, levels: { bakery: 1, grainFarm: 0 } });
+    const recovered = advancePlanetFacilities(supplied, 1);
+    assert.equal(facilityIn(recovered, 'bakery').status, 'working');
+    assert.equal(stockIn(recovered, 'grain'), 30);
+    assert.equal(stockIn(recovered, 'bun'), 55);
+
+    const repeated = advancePlanetFacilities(afterShortfall, 1);
+    assert.equal(facilityIn(repeated, 'bakery').status, 'insufficientResources', 'the stored status persists until the next cycle evaluates it');
+});
+
+test('every pause reason freezes facility cycles and resuming continues from the stored stock', () => {
+    const expected = advanceGameSimulation(initialGameState, quietInput, 1_000).markets;
+    for (const reason of ['background', 'landed', 'manual', 'menu', 'orientation']) {
+        const paused = {
+            ...initialGameState,
+            clock: { ...initialGameState.clock, pauseReasons: [reason] },
+            planetLifecycle: reason === 'landed'
+                ? { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
+                : initialGameState.planetLifecycle
+        };
+        const frozen = advanceGameSimulation(paused, quietInput, 5_000);
+        assert.equal(frozen.clock.activeElapsedMs, 0, `${reason} keeps active time frozen`);
+        assert.deepEqual(frozen.markets, paused.markets, `${reason} keeps every stock frozen`);
+
+        const resumed = advanceGameSimulation({
+            ...frozen,
+            clock: { ...frozen.clock, pauseReasons: [] },
+            planetLifecycle: { capturedPlanetId: null, landedPlanetId: null, relandingLockedPlanetId: null }
+        }, quietInput, 1_000);
+        assert.deepEqual(resumed.markets, expected, `${reason} resumes the normal one-second cycle`);
+    }
+});
+
+test('facility stock and status survive an encode and restore and keep cycling', () => {
+    const advanced = advanceGameSimulation(initialGameState, quietInput, 2_000);
+    assert.notDeepEqual(advanced.markets, initialGameState.markets, 'two seconds of cycles move the stock');
+    const restored = decodeGameState(encodeGameState(advanced));
+    assert.deepEqual(restored.markets, advanced.markets, 'the codec round-trips facility stock and status');
+    assert.deepEqual(advanceGameSimulation(restored, quietInput, 2_000).markets, advanceGameSimulation(advanced, quietInput, 2_000).markets,
+        'restored stock continues from the stored values');
+
+    const starved = advancePlanetFacilities(planetMarket('seroton', { stocks: { grain: 4, bun: 50 }, levels: { bakery: 1, grainFarm: 0 } }), 1);
+    const shorted = { ...advanced, markets: advanced.markets.map(market => market.planetId === 'seroton' ? starved : market) };
+    assert.equal(statusOf(shorted, 'seroton', 'bakery'), 'insufficientResources', 'a starved consumer stores an insufficient-resources status');
+    const restoredShortfall = decodeGameState(encodeGameState(shorted));
+    assert.equal(statusOf(restoredShortfall, 'seroton', 'bakery'), 'insufficientResources', 'the codec preserves a stored insufficient-resources status');
+});
+
+test('each planet cycles its own facilities and planet modifiers in isolation', () => {
+    const next = advanceGameSimulation(initialGameState, quietInput, 1_000);
+    assert.equal(stockOf(next, 'seroton', 'milk'), 2);
+    assert.equal(stockOf(next, 'seroton', 'cheese'), 66, 'the seroton cheese factory keeps its +20% output');
+    assert.equal(stockOf(next, 'lactozis-7c', 'milk'), 100);
+    assert.equal(stockOf(next, 'lactozis-7c', 'grain'), 132, 'the lactozis-7c grain farm keeps its +20% output');
+    assert.equal(stockOf(next, 'maslo-prime', 'milk'), 122, 'the maslo-prime dairy farm keeps its +20% output');
+    assert.equal(stockOf(next, 'maslo-prime', 'cheese'), 7);
+    assert.equal(statusOf(next, 'maslo-prime', 'bakery'), 'notBuilt');
+
+    const isolated = advancePlanetFacilities(marketOf(initialGameState, 'lactozis-7c'), 1);
+    assert.deepEqual(isolated, marketOf(next, 'lactozis-7c'), 'advancing one planet never leaks into another');
 });

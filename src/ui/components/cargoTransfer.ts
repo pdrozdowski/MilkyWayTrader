@@ -85,8 +85,9 @@ export function mountCargoTransfer (root: HTMLElement, port: CargoTransferPort):
             row.cargoQuantity.textContent = String(snapshotRow.cargoQuantity);
             row.shipQuantity.textContent = String(snapshotRow.shipQuantity);
             const label = commodityLabel(row.commodityId);
-            row.icon.textContent = label.slice(0, 1);
-            row.icon.setAttribute('aria-label', `${label} commodity icon`);
+            row.icon.className = 'cargo-transfer-row-icon cargo-commodity-icon commodity-icon';
+            row.icon.dataset.commodityId = row.commodityId;
+            row.icon.setAttribute('aria-hidden', 'true');
             row.name.textContent = label;
             row.toCargoMax.textContent = displayLabels.toCargoMax;
             row.toCargoOne.textContent = displayLabels.toCargoOne;

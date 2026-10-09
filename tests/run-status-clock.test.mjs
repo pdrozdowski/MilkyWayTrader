@@ -137,6 +137,8 @@ class FakeElement {
         this.listeners = new Map();
         this.classList = { values: new Set(), toggle: (name, enabled) => enabled ? this.classList.values.add(name) : this.classList.values.delete(name) };
         this.attributes = {};
+        this.dataset = {};
+        this.className = '';
     }
 
     querySelector (selector) {
@@ -198,7 +200,7 @@ test('a signed-in player can locally sign out without changing the game-facing c
     assert.equal(signIn.listeners.size, 0);
 });
 
-test('cargo transfer renders cargo/commodity/ship columns, usage, and directional one/max controls without average price', () => {
+test('cargo transfer renders cargo/commodity/ship columns, usage, and directional one/max controls for all five commodities without average price', () => {
     const row = () => new FakeElement({
         '.cargo-transfer-row-cargo-quantity': new FakeElement(),
         '.cargo-transfer-row-ship-quantity': new FakeElement(),
@@ -218,14 +220,11 @@ test('cargo transfer renders cargo/commodity/ship columns, usage, and directiona
     const shipUsage = new FakeElement();
     const warning = new FakeElement();
     const close = new FakeElement();
-    const supplies = row();
-    const alloys = row();
-    const medicines = row();
-    const rowsContainer = new FakeElement({
-        '[data-commodity-id=supplies]': supplies,
-        '[data-commodity-id=alloys]': alloys,
-        '[data-commodity-id=medicines]': medicines
-    });
+    const commodityIds = transpileModule('src/game/domain/serotonMarketCatalog.ts', {}).serotonCommodityIds;
+    const quantities = { milk: [2, 1], grain: [0, 3], cheese: [5, 0], bun: [1, 2], spaceRation: [3, 4] };
+    assert.deepEqual(Object.keys(quantities), [...commodityIds], 'derived commodity ids stay aligned with the transfer fixtures');
+    const rows = Object.fromEntries(commodityIds.map(commodityId => [commodityId, row()]));
+    const rowsContainer = new FakeElement(Object.fromEntries(commodityIds.map(commodityId => [`[data-commodity-id=${commodityId}]`, rows[commodityId]])));
     const root = new FakeElement({
         '#cargo-transfer': modal,
         '#cargo-transfer-title': title,
@@ -248,62 +247,57 @@ test('cargo transfer renders cargo/commodity/ship columns, usage, and directiona
     const handle = mountCargoTransfer(root, port);
     listener({
         visible: true, cargoId: 'cargo-1',
-        rows: [
-            { commodityId: 'supplies', cargoQuantity: 2, shipQuantity: 1 },
-            { commodityId: 'alloys', cargoQuantity: 0, shipQuantity: 3 }
-        ],
-        cargoUsed: 2, cargoCapacity: 20, shipUsed: 4, shipCapacity: 20, warning: null
+        rows: commodityIds.map(commodityId => ({ commodityId, cargoQuantity: quantities[commodityId][0], shipQuantity: quantities[commodityId][1] })),
+        cargoUsed: 11, cargoCapacity: 20, shipUsed: 10, shipCapacity: 20, warning: null
     });
     assert.equal(modal.hidden, false);
     assert.equal(title.textContent, displayLabels.cargoTransferTitle);
     assert.equal(cargoHeader.textContent, displayLabels.cargoTransferCargoHeader);
     assert.equal(commodityHeader.textContent, displayLabels.cargoTransferCommodityHeader);
     assert.equal(shipHeader.textContent, displayLabels.cargoTransferShipHeader);
-    assert.equal(cargoUsage.textContent, '2/20');
-    assert.equal(shipUsage.textContent, '4/20');
-    const suppliesCargoQuantity = supplies.querySelector('.cargo-transfer-row-cargo-quantity');
-    const suppliesShipQuantity = supplies.querySelector('.cargo-transfer-row-ship-quantity');
-    const suppliesIcon = supplies.querySelector('.cargo-transfer-row-icon');
-    const suppliesName = supplies.querySelector('.cargo-transfer-row-name');
-    const suppliesToShipOne = supplies.querySelector('.cargo-transfer-to-ship-one');
-    const suppliesToShipMax = supplies.querySelector('.cargo-transfer-to-ship-max');
-    const suppliesToCargoOne = supplies.querySelector('.cargo-transfer-to-cargo-one');
-    const suppliesToCargoMax = supplies.querySelector('.cargo-transfer-to-cargo-max');
-    assert.equal(suppliesCargoQuantity.textContent, '2');
-    assert.equal(suppliesShipQuantity.textContent, '1');
-    assert.equal(suppliesIcon.textContent, 'S');
-    assert.equal(suppliesIcon.attributes['aria-label'], `${displayLabels.supplies} commodity icon`);
-    assert.equal(suppliesName.textContent, displayLabels.supplies);
-    assert.equal(suppliesToShipOne.textContent, displayLabels.toShipOne);
-    assert.equal(suppliesToShipMax.textContent, displayLabels.toShipMax);
-    assert.equal(suppliesToCargoOne.textContent, displayLabels.toCargoOne);
-    assert.equal(suppliesToCargoMax.textContent, displayLabels.toCargoMax);
-    assert.equal(suppliesToShipOne.disabled, false);
-    assert.equal(suppliesToCargoOne.disabled, false);
-    const alloysToShipOne = alloys.querySelector('.cargo-transfer-to-ship-one');
-    const alloysToCargoOne = alloys.querySelector('.cargo-transfer-to-cargo-one');
-    assert.equal(alloysToShipOne.disabled, true, 'zero orbital quantity disables the to-ship control');
-    assert.equal(alloysToCargoOne.disabled, false);
-    assert.equal(medicines.hidden, true, 'commodities absent from both inventories stay hidden');
+    assert.equal(cargoUsage.textContent, '11/20');
+    assert.equal(shipUsage.textContent, '10/20');
+    const control = (commodityId, selector) => rows[commodityId].querySelector(selector);
+    for (const commodityId of commodityIds) {
+        const label = displayLabels.commodityLabels[commodityId];
+        assert.equal(rows[commodityId].hidden, false, `${commodityId} row is visible while it appears in the transfer manifest`);
+        assert.equal(control(commodityId, '.cargo-transfer-row-cargo-quantity').textContent, String(quantities[commodityId][0]));
+        assert.equal(control(commodityId, '.cargo-transfer-row-ship-quantity').textContent, String(quantities[commodityId][1]));
+        assert.equal(control(commodityId, '.cargo-transfer-row-icon').textContent, '', 'the row icon is an image tile, not a letter');
+        assert.equal(control(commodityId, '.cargo-transfer-row-icon').dataset.commodityId, commodityId);
+        assert(control(commodityId, '.cargo-transfer-row-icon').className.includes('commodity-icon'));
+        assert.equal(control(commodityId, '.cargo-transfer-row-icon').attributes['aria-hidden'], 'true');
+        assert.equal(control(commodityId, '.cargo-transfer-row-name').textContent, label);
+        assert.equal(control(commodityId, '.cargo-transfer-to-ship-one').textContent, displayLabels.toShipOne);
+        assert.equal(control(commodityId, '.cargo-transfer-to-ship-max').textContent, displayLabels.toShipMax);
+        assert.equal(control(commodityId, '.cargo-transfer-to-cargo-one').textContent, displayLabels.toCargoOne);
+        assert.equal(control(commodityId, '.cargo-transfer-to-cargo-max').textContent, displayLabels.toCargoMax);
+    }
+    assert.equal(control('milk', '.cargo-transfer-to-ship-one').disabled, false);
+    assert.equal(control('milk', '.cargo-transfer-to-cargo-one').disabled, false);
+    assert.equal(control('grain', '.cargo-transfer-to-ship-one').disabled, true, 'zero orbital quantity disables the to-ship control');
+    assert.equal(control('grain', '.cargo-transfer-to-cargo-one').disabled, false);
+    assert.equal(control('cheese', '.cargo-transfer-to-cargo-one').disabled, true, 'zero ship quantity disables the to-orbit control');
     assert.equal(close.textContent, displayLabels.cargoTransferConfirm);
-    const rendered = [cargoUsage, shipUsage, suppliesCargoQuantity, suppliesShipQuantity, suppliesToShipOne, suppliesToShipMax, suppliesToCargoOne, suppliesToCargoMax]
+    const rendered = [cargoUsage, shipUsage, control('milk', '.cargo-transfer-row-cargo-quantity'), control('milk', '.cargo-transfer-row-ship-quantity'), control('milk', '.cargo-transfer-to-ship-one'), control('milk', '.cargo-transfer-to-ship-max'), control('milk', '.cargo-transfer-to-cargo-one'), control('milk', '.cargo-transfer-to-cargo-max')]
         .map(element => element.textContent).join(' ');
     assert(!rendered.includes(displayLabels.averageBuyPrice), 'transfer view never shows the market average price');
-    suppliesToShipMax.click();
-    assert.deepEqual(transfers, [{ commodityId: 'supplies', direction: 'to-ship', amount: 'max' }]);
-    suppliesToCargoOne.click();
+    control('milk', '.cargo-transfer-to-ship-max').click();
+    assert.deepEqual(transfers, [{ commodityId: 'milk', direction: 'to-ship', amount: 'max' }]);
+    control('milk', '.cargo-transfer-to-cargo-one').click();
     assert.deepEqual(transfers, [
-        { commodityId: 'supplies', direction: 'to-ship', amount: 'max' },
-        { commodityId: 'supplies', direction: 'to-orbit', amount: 'one' }
+        { commodityId: 'milk', direction: 'to-ship', amount: 'max' },
+        { commodityId: 'milk', direction: 'to-orbit', amount: 'one' }
     ]);
-    listener({ visible: true, cargoId: 'cargo-1', rows: [{ commodityId: 'supplies', cargoQuantity: 5, shipQuantity: 3 }], cargoUsed: 20, cargoCapacity: 20, shipUsed: 20, shipCapacity: 20, warning: 'WARNING - CARGO IS FULL' });
-    assert.equal(suppliesToShipOne.disabled, true, 'a full ship cannot receive cargo');
-    assert.equal(suppliesToCargoOne.disabled, true, 'a full orbital manifest cannot receive cargo');
+    listener({ visible: true, cargoId: 'cargo-1', rows: [{ commodityId: 'milk', cargoQuantity: 5, shipQuantity: 3 }], cargoUsed: 20, cargoCapacity: 20, shipUsed: 20, shipCapacity: 20, warning: 'WARNING - CARGO IS FULL' });
+    assert.equal(control('milk', '.cargo-transfer-to-ship-one').disabled, true, 'a full ship cannot receive cargo');
+    assert.equal(control('milk', '.cargo-transfer-to-cargo-one').disabled, true, 'a full orbital manifest cannot receive cargo');
+    assert.equal(rows.grain.hidden, true, 'commodities absent from both inventories stay hidden');
     assert.equal(warning.hidden, false);
     assert.equal(warning.textContent, 'WARNING - CARGO IS FULL');
-    listener({ visible: true, cargoId: 'cargo-1', rows: [{ commodityId: 'supplies', cargoQuantity: 0, shipQuantity: 3 }], cargoUsed: 0, cargoCapacity: 20, shipUsed: 3, shipCapacity: 20, warning: null });
-    assert.equal(suppliesToShipOne.disabled, true, 'an emptied orbital manifest has nothing left to send');
-    assert.equal(suppliesToCargoOne.disabled, false, 'an emptied orbital manifest can still receive ship cargo');
+    listener({ visible: true, cargoId: 'cargo-1', rows: [{ commodityId: 'milk', cargoQuantity: 0, shipQuantity: 3 }], cargoUsed: 0, cargoCapacity: 20, shipUsed: 3, shipCapacity: 20, warning: null });
+    assert.equal(control('milk', '.cargo-transfer-to-ship-one').disabled, true, 'an emptied orbital manifest has nothing left to send');
+    assert.equal(control('milk', '.cargo-transfer-to-cargo-one').disabled, false, 'an emptied orbital manifest can still receive ship cargo');
     handle.destroy();
     handle.destroy();
 });

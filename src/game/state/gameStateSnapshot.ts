@@ -14,7 +14,7 @@ import type { TerminalResultState } from './terminalResultState';
 
 export interface GameStateSnapshot
 {
-    readonly schemaVersion: 16;
+    readonly schemaVersion: 17;
     readonly runId: string;
     readonly randomState: number;
     /** Unconsumed entries in a lazily seeded five-kill cargo schedule. */

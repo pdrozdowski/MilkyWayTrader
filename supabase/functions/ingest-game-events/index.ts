@@ -12,8 +12,8 @@ const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}
 const maxBatchSize = 20;
 const maxEventDataBytes = 4096;
 const maxGameVersionLength = 64;
-const allowedPlanets = new Set(['seroton']);
-const allowedCommodities = new Set(['supplies', 'alloys', 'medicines']);
+const allowedPlanets = new Set(['seroton', 'lactozis-7c', 'maslo-prime']);
+const allowedCommodities = new Set(['milk', 'grain', 'cheese', 'bun', 'spaceRation']);
 
 interface IncomingEvent
 {

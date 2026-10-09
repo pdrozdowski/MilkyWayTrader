@@ -65,6 +65,10 @@ body {
 #main-menu-sign-in-preview:disabled { opacity: .55; cursor: default; }
 #main-menu-fullscreen-preview:focus-visible, #main-menu-sign-in-preview:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 
+.landing-resource { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 999px; color: #fff; background: rgb(5 17 52 / 78%); font: 700 clamp(12px, 1.2vw, 16px) / 1.1 Arial, sans-serif; text-align: left; text-shadow: 1px 2px 3px rgb(0 0 0 / 75%); cursor: default; pointer-events: none; }
+#landing-status-market-credits::before { content: ''; display: block; width: 22px; min-width: 22px; height: 22px; flex: 0 0 22px; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
+#landing-status-market-cargo::before { content: ''; display: block; width: 22px; min-width: 22px; height: 22px; flex: 0 0 22px; background: url('/assets/icons/cargo2_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
+
 @media (max-width: 599px) {
     #main-menu { padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
     #main-menu-controls { gap: clamp(8px, 1.8vh, 12px); }
@@ -113,15 +117,12 @@ body {
 #game-over-status button:focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
 #run-status button { min-height: 38px; padding: 8px 10px; color: #fff; font: inherit; cursor: pointer; pointer-events: auto; }
 #run-status :focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-#run-status-ship-details, #run-status-cargo-details { position: absolute; top: calc(100% + 6px); left: 50%; min-width: 220px; padding: 8px 12px; text-align: left; line-height: 1.4; transform: translateX(-50%); }
+#run-status-ship-details, #run-status-cargo-details { position: absolute; top: calc(100% + 6px); left: 50%; min-width: 220px; padding: 8px 12px; text-align: left; line-height: 1.4; transform: translateX(-50%); z-index: 2; }
 #run-status p { margin: 0; }
 #run-status-cargo-table { width: 100%; border-collapse: collapse; }
 #run-status-cargo-table th, #run-status-cargo-table td { padding: 4px; text-align: left; }
 #run-status-cargo-table th:last-child, #run-status-cargo-table td:last-child { text-align: right; }
-.cargo-commodity-icon { box-sizing: border-box; display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--ui-border); border-radius: 4px; color: #fff; font-size: 16px; font-weight: 700; }
-.cargo-commodity-icon[data-commodity-id="supplies"] { background: #2f855a; }
-.cargo-commodity-icon[data-commodity-id="alloys"] { background: #718096; }
-.cargo-commodity-icon[data-commodity-id="medicines"] { background: #c53030; }
+.cargo-commodity-icon { box-sizing: border-box; display: block; width: 32px; height: 32px; border: 1px solid var(--ui-border); border-radius: 4px; background-repeat: no-repeat; background-position: center; background-size: contain; }
 
 [hidden] {
     display: none !important;
@@ -163,54 +164,77 @@ body {
 .action-button, .landing-status-panel button:not(.landing-image-button) { min-height: 44px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-action); font: inherit; cursor: pointer; }
 .landing-status-panel button:disabled, .landing-status-panel input:disabled { opacity: 0.55; cursor: default; }
 .landing-status-panel :focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
-#landing-status-catalogue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-#landing-status-catalogue button { min-width: 0; padding: 8px; font-size: clamp(12px, 2vw, 15px); }
+#landing-status-catalogue { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+#landing-status-catalogue button { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; padding: 10px; font-size: clamp(13px, 2vw, 16px); }
+.catalogue-commodity-icon { width: 48px; height: 48px; min-width: 48px; flex: 0 0 48px; }
+.catalogue-commodity-name { font-size: clamp(13px, 1.9vw, 18px); line-height: 1.15; text-align: center; overflow-wrap: anywhere; }
 #landing-status-catalogue button[aria-pressed="true"] { border-color: var(--ui-focus); background: #1c4266; }
 #landing-status-quantity-label { font-size: 1.4em; }
 #landing-status-trade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr); gap: 8px; padding: 12px; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }
-.landing-market-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.landing-market-header h2 { white-space: nowrap; }
-#landing-status-balances { display: flex; justify-content: flex-end; gap: 8px; text-align: right; }
+.landing-market-controls { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: flex; flex-direction: column; gap: clamp(8px, 1.5vw, 16px); min-height: 0; overflow-y: auto; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
 .market-inventory-panel > p:nth-child(2), #landing-status-unit-price { font-size: 2em; font-weight: 700; }
+#landing-status-supply, #landing-status-stock-change { font-size: 2em; font-weight: 700; }
+#landing-status-supply[data-supply-level="Low"] { color: #fca5a5; }
+#landing-status-supply[data-supply-level="Medium"] { color: #ffd479; }
+#landing-status-supply[data-supply-level="High"] { color: #86efac; }
 .market-stock-delta { font-weight: 700; }
 .market-stock-delta--positive { color: #86efac; }
 .market-stock-delta--negative { color: #fca5a5; }
 #landing-status-budget { font-weight: 700; }
 #landing-status-budget.market-budget--warning { color: #ffca8b; }
-#cargo-transfer { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: var(--ui-overlay); }
+#cargo-transfer { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; overflow-y: auto; padding: 12px; background: var(--ui-overlay); }
 #cargo-transfer[hidden] { display: none; }
-.cargo-transfer-panel { display: grid; gap: 12px; width: min(440px, calc(100vw - 32px)); padding: 20px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-surface-raised); color: #fff; }
+.cargo-transfer-panel { --cargo-transfer-icon-size: 48px; --cargo-transfer-controls-width: calc(2 * (var(--cargo-transfer-icon-size) - 4px) + 4px); box-sizing: border-box; display: grid; gap: 12px; width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow: auto; padding: 20px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-surface-raised); color: #fff; }
 .cargo-transfer-panel h2, .cargo-transfer-panel p { margin: 0; }
 #cargo-transfer-warning { position: fixed; top: 33.333vh; left: 50%; z-index: 30; margin: 0; padding: 10px 12px; background-color: #7a4a12; color: #ffe0b3; font-family: Arial, sans-serif; font-size: 18px; text-align: center; transform: translateX(-50%); pointer-events: none; }
 .cargo-transfer-grid { display: grid; gap: 8px; }
-.cargo-transfer-header, .cargo-transfer-usage, .cargo-transfer-row { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr) auto minmax(0, 1fr) 2.75rem; align-items: center; gap: 6px; }
-.cargo-transfer-header { color: #9fd1ff; font-size: 0.8em; font-weight: 700; text-transform: uppercase; }
-#cargo-transfer-commodity-header { text-align: center; }
-.cargo-transfer-usage { font-weight: 700; }
+.cargo-transfer-header, .cargo-transfer-usage, .cargo-transfer-row { display: grid; grid-template-columns: var(--cargo-transfer-icon-size) var(--cargo-transfer-controls-width) var(--cargo-transfer-icon-size) minmax(0, 1fr) var(--cargo-transfer-controls-width) var(--cargo-transfer-icon-size); align-items: center; gap: 6px; }
+.cargo-transfer-header { color: #9fd1ff; font-size: 1.15em; font-weight: 700; text-transform: uppercase; }
+#cargo-transfer-commodity-header { grid-column: 3 / 5; text-align: center; }
+.cargo-transfer-usage { font-weight: 700; font-size: 1.6em; }
 .cargo-transfer-usage > span { white-space: nowrap; }
-#cargo-transfer-cargo-usage, #cargo-transfer-ship-usage { text-align: center; }
+#cargo-transfer-cargo-usage, #cargo-transfer-ship-usage, #cargo-transfer-cargo-header, #cargo-transfer-ship-header { text-align: center; } #cargo-transfer-cargo-header, #cargo-transfer-cargo-usage { grid-column: 1 / 3; } #cargo-transfer-ship-header, #cargo-transfer-ship-usage { grid-column: 5 / 7; }
 #cargo-transfer-rows { display: grid; gap: 8px; }
 .cargo-transfer-row { padding: 8px; border: 1px solid #406587; border-radius: 6px; background: var(--ui-surface-raised); }
 .cargo-transfer-row[hidden] { display: none; }
-.cargo-transfer-row-cargo-quantity, .cargo-transfer-row-ship-quantity { text-align: center; font-weight: 700; }
-.cargo-transfer-row-commodity { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
-.cargo-transfer-row-icon { flex: 0 0 auto; }
-.cargo-transfer-row-name { font-size: 0.8em; font-weight: 700; white-space: nowrap; }
+.cargo-transfer-row-cargo-quantity, .cargo-transfer-row-ship-quantity { text-align: center; font-weight: 700; font-size: 1.15em; }
+.cargo-transfer-row-commodity { display: contents; }
+.cargo-transfer-row-icon { align-self: center; justify-self: center; width: var(--cargo-transfer-icon-size); height: var(--cargo-transfer-icon-size); }
+.cargo-transfer-row-name { min-width: 0; overflow: hidden; font-size: 0.8em; font-weight: 700; white-space: nowrap; text-align: left; text-overflow: ellipsis; }
 .cargo-transfer-row-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-.cargo-transfer-row-controls button { min-height: 32px; padding: 0 4px; font-size: 0.75em; }
+.cargo-transfer-panel .cargo-transfer-row-controls button { box-sizing: border-box; width: calc(var(--cargo-transfer-icon-size) - 4px); min-width: 0; height: calc(var(--cargo-transfer-icon-size) - 4px); min-height: 0; padding: 0; font-size: 0.7em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cargo-transfer-panel button { min-height: 38px; border: 1px solid var(--ui-border); background: var(--ui-action); color: #fff; }
 .cargo-transfer-panel button:disabled { opacity: .55; }
 .cargo-transfer-confirm { width: 100%; min-height: 44px; font-weight: 700; }
 .market-inventory-panel, .market-trade-control { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 10px; border: 1px solid #406587; border-radius: 6px; }
 .market-trade-header { display: grid; grid-template-columns: minmax(0, 1fr) 80px; align-items: center; gap: 8px; }
-.market-trade-header .market-commodity-icon { justify-self: end; }
+.market-trade-header .market-commodity-icon { justify-self: end; background-size: 100% 100%; }
 .market-inventory-panel > span { font-weight: 700; text-align: center; }
 .market-inventory-panel p, .market-trade-control p { overflow-wrap: anywhere; }
-.market-commodity-icon { box-sizing: border-box; display: block; width: 80px; height: 80px; border: 1px dashed var(--ui-border); border-radius: 4px; background: #1c4266; }
+.market-commodity-icon { box-sizing: border-box; display: block; width: 80px; height: 80px; border: 1px dashed var(--ui-border); border-radius: 4px; background-color: #1c4266; }
+.market-commodity-icon[data-commodity-id="milk"] { background-color: #3b82f6; }
+.market-commodity-icon[data-commodity-id="grain"] { background-color: #a16207; }
+.market-commodity-icon[data-commodity-id="cheese"] { background-color: #eab308; }
+.market-commodity-icon[data-commodity-id="bun"] { background-color: #dc2626; }
+.market-commodity-icon[data-commodity-id="spaceRation"] { background-color: #7c3aed; }
+.commodity-icon { box-sizing: border-box; background-repeat: no-repeat; background-position: center; background-size: contain; }
+.commodity-icon[data-commodity-id="milk"] { background-image: url('/assets/icons/commodity-milk-48x48.png'); }
+.commodity-icon[data-commodity-id="grain"] { background-image: url('/assets/icons/commodity-grain_48x48.png'); }
+.commodity-icon[data-commodity-id="cheese"] { background-image: url('/assets/icons/commodity-cheese-48x48.png'); }
+.commodity-icon[data-commodity-id="bun"] { background-image: url('/assets/icons/commodity-bun_48x48.png'); }
+.commodity-icon[data-commodity-id="spaceRation"] { background-image: url('/assets/icons/commodity-spaceRation-48x48.png'); }
 .market-trade-result { min-height: 1.2em; font-size: 2em; font-weight: 700; }
+.market-trade-result-label { display: block; }
+.market-trade-result-value { display: flex; align-items: center; gap: 0.12em; white-space: nowrap; }
+.market-trade-result-value::before { content: ''; display: block; width: 0.8em; min-width: 0.8em; height: 0.8em; flex: 0 0 0.8em; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
 .market-trade-result--profit { color: #86efac; }
 .market-trade-result--loss { color: #fca5a5; }
+.market-trade-result--loss .market-trade-result-value::before { background-image: url('/assets/icons/coins_red_32x32.png'); }
 .market-trade-income { min-height: 1.2em; font-size: 2em; font-weight: 700; color: #fff; }
+.market-trade-income-label { display: block; }
+.market-trade-income-value { display: flex; align-items: center; gap: 0.12em; white-space: nowrap; }
+.market-trade-income-value::before { content: ''; display: block; width: 0.8em; min-width: 0.8em; height: 0.8em; flex: 0 0 0.8em; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
+.market-trade-income-value--expense::before { background-image: url('/assets/icons/coins_red_32x32.png'); }
 #landing-status-quantity { width: 100%; min-height: 38px; margin: 0; accent-color: var(--ui-border); }
 #landing-status-quantity-value { text-align: center; font-size: 2em; font-weight: 700; }
 .landing-view { box-sizing: border-box; width: 100%; height: 100%; min-height: 0; }
@@ -226,7 +250,7 @@ body {
 .landing-image-button:disabled { opacity: .55; }
 .landing-actions .landing-launch { margin-top: auto; }
 .landing-actions button:disabled { color: var(--ui-disabled); }
-#landing-status-market-view { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; padding: 32px 24px; }
+#landing-status-market-view { position: relative; display: block; background: var(--ui-surface) center / cover; }
 #game-menu-close { position: absolute; top: 8px; right: 8px; }
 #debug-menu-close { position: absolute; top: 8px; right: 8px; }
 .game-menu-panel button { min-width: 180px; min-height: 44px; padding: 10px 14px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-surface-raised); font: inherit; cursor: pointer; }
@@ -292,7 +316,8 @@ body {
     #audio-controls { gap: 6px; padding: 4px 6px; }
     #run-status { gap: 4px; font-size: 11px; } #run-status-primary { gap: 5px; padding: 8px; } #run-status button { min-height: 36px; padding: 7px; }
     #game-menu, #debug-menu { padding: 10px; }
-    #landing-status-market-view { padding: 20px 14px; gap: 10px; }
+    #landing-status-market-view { display: flex; flex-direction: column; overflow-y: auto; padding: 20px 14px; gap: 10px; }
+    .landing-market-controls { position: static; inset: auto; }
     #landing-status-catalogue { grid-template-columns: 1fr; }
     #landing-status-trade { grid-template-columns: 1fr; }
 }
@@ -302,10 +327,51 @@ body {
     #landing-status-title { width: min(42vw, 370px); }
     #landing-status-landed { width: min(25vw, 150px); }
     .landing-image-button { width: min(25vw, 170px); }
-    #landing-status-market-view { padding: 16px; }
+    .landing-market-controls { gap: 8px; padding: 8px 12px; }
 }
 
 @media (min-width: 600px) {
     .game-menu-actions { flex-wrap: nowrap; }
     .game-menu-actions #return-to-menu { flex: 0 1 auto; }
+}
+
+
+#landing-status-facilities-view { position: relative; display: block; background: var(--ui-surface) center / cover; }
+.landing-facilities-header { position: absolute; top: 0; right: 0; left: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: clamp(12px, 2vw, 20px) clamp(16px, 3vw, 32px); background: linear-gradient(to bottom, rgba(7, 17, 27, 0.85), transparent); }
+.landing-facilities-nav-left, .landing-facilities-nav-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.landing-facilities-nav-right { text-align: right; }
+.landing-facilities-clock { font-weight: 700; white-space: nowrap; }
+.landing-facilities-heading { position: absolute; z-index: 1; top: 19%; left: clamp(16px, 3vw, 32px); margin: 0; }
+.landing-facility-cards { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1.5vw, 16px); min-height: 0; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
+.facility-card { box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: auto; padding: 12px; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }
+.facility-card h3, .facility-card p { margin: 0; overflow-wrap: anywhere; }
+.facility-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.facility-card-name { font-size: 1.1em; }
+.facility-card-icon { box-sizing: border-box; display: block; flex: 0 0 auto; width: 48px; height: 48px; border: 1px dashed var(--ui-border); border-radius: 4px; background-color: #1c4266; background-repeat: no-repeat; background-position: center; background-size: contain; }
+.facility-card[data-facility-id="dairyFarm"] .facility-card-icon { background-image: url('/assets/icons/facility-dairyFarm_48x48.png'); }
+.facility-card[data-facility-id="grainFarm"] .facility-card-icon { background-image: url('/assets/icons/facility-grainFarm_48x48.png'); }
+.facility-card[data-facility-id="cheeseFactory"] .facility-card-icon { background-image: url('/assets/icons/facility-cheeseFactory_48x48.png'); }
+.facility-card[data-facility-id="bakery"] .facility-card-icon { background-image: url('/assets/icons/facility-bakery_48x48.png'); }
+.facility-card[data-facility-id="foodProcessor"] .facility-card-icon { background-image: url('/assets/icons/facility-foodProcessor_48x48.png'); }
+.facility-card-level { font-weight: 700; }
+.facility-card-status { font-weight: 700; }
+.facility-card-status[data-status="working"] { color: #86efac; }
+.facility-card-status[data-status="insufficientResources"] { color: #fca5a5; }
+.facility-card-status[data-status="notBuilt"] { color: var(--ui-disabled); }
+.facility-card-output, .facility-card-inputs { color: #9fd1ff; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.facility-card-commodity-icon { width: 20px; height: 20px; flex: 0 0 auto; }
+.facility-card-recipe-lead, .facility-card-recipe-separator, .facility-card-recipe-suffix, .facility-card-commodity-amount { flex: 0 0 auto; }
+.facility-card-modifier { color: #ffca8b; }
+.facility-card-price { font-weight: 700; }
+.facility-card-action { margin-top: auto; }
+@media (max-width: 420px) {
+    #landing-status-facilities-view { display: flex; flex-direction: column; overflow-y: auto; }
+    .landing-facilities-header { position: static; }
+    .landing-facilities-heading { position: static; padding: 0 14px 10px; }
+    .landing-facility-cards { position: static; inset: auto; grid-template-columns: 1fr; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .landing-facility-cards { gap: 6px; padding: 8px 12px; }
+    .facility-card { padding: 8px; gap: 4px; }
 }

@@ -1,5 +1,6 @@
-import type { LandingCommodityId, LandingStatusSnapshot, LandingStatusPort, UiHandle } from '../contracts';
+import type { LandingCommodityId, LandingFacilityId, LandedFacilitiesSnapshot, LandingStatusSnapshot, LandingStatusPort, UiHandle } from '../contracts';
 import { displayLabels } from './displayLabels';
+import { formatCredits } from './formatCredits';
 
 function required<T extends Element> (root: HTMLElement, selector: string): T
 {
@@ -8,8 +9,23 @@ function required<T extends Element> (root: HTMLElement, selector: string): T
     return element;
 }
 
-const commodityLabels: Readonly<Record<LandingCommodityId, string>> = { supplies: displayLabels.supplies, alloys: displayLabels.alloys, medicines: displayLabels.medicines };
-const formatCredits = (value: number): string => `${value.toLocaleString()} cr`;
+const commodityLabels: Readonly<Record<LandingCommodityId, string>> = { milk: displayLabels.milk, grain: displayLabels.grain, cheese: displayLabels.cheese, bun: displayLabels.bun, spaceRation: displayLabels.spaceRation };
+const planetTitleAssetById: Readonly<Record<string, string>> = {
+    'lactozis-7c': '/assets/banner_lactozis7c.png',
+    seroton: '/assets/banner_seroton.png',
+    'maslo-prime': '/assets/banner_mlekoprime.png'
+};
+const planetBackgroundAssetById: Readonly<Record<string, string>> = {
+    'lactozis-7c': '/assets/landing_bg_lactozis7c.png',
+    seroton: '/assets/landing_bg_seroton.png',
+    'maslo-prime': '/assets/landing_bg_masloprime.png'
+};
+const modifierText = (modifier: Readonly<{ upgradePriceMultiplier: number; outputMultiplier: number }>): string => {
+    const parts: string[] = [];
+    if (modifier.outputMultiplier !== 1) parts.push(`${displayLabels.facilityOutputBonus} +${Math.round((modifier.outputMultiplier - 1) * 100)}%`);
+    if (modifier.upgradePriceMultiplier !== 1) parts.push(`${displayLabels.facilityUpgradeDiscount} ${Math.round((1 - modifier.upgradePriceMultiplier) * 100)}%`);
+    return parts.join(' · ');
+};
 
 export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort): UiHandle
 {
@@ -17,17 +33,25 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const hub = required<HTMLElement>(root, '#landing-status-hub');
     const landingVisual = required<HTMLElement>(root, '.landing-visual');
     const marketView = required<HTMLElement>(root, '#landing-status-market-view');
+    const facilitiesView = required<HTMLElement>(root, '#landing-status-facilities-view');
+    const facilitiesHeading = required<HTMLElement>(root, '#landing-status-facilities-heading');
+    const facilitiesBack = required<HTMLButtonElement>(root, '#landing-status-facilities-back');
+    const facilitiesClock = required<HTMLElement>(root, '#landing-status-facilities-clock');
+    const facilitiesCredits = required<HTMLElement>(root, '#landing-status-facilities-credits');
+    const facilitiesCargo = required<HTMLElement>(root, '#landing-status-facilities-cargo');
     const title = required<HTMLElement>(root, '#landing-status-title');
     const landedBadge = root.querySelector<HTMLImageElement>('#landing-status-landed');
     const marketHeading = required<HTMLElement>(root, '#landing-status-market-heading');
-    const credits = required<HTMLElement>(root, '#landing-status-credits');
-    const cargo = required<HTMLElement>(root, '#landing-status-cargo');
-    const balances = required<HTMLElement>(root, '#landing-status-balances');
+    const marketBack = required<HTMLButtonElement>(root, '#landing-status-market-back');
+    const marketClock = required<HTMLElement>(root, '#landing-status-market-clock');
+    const marketCredits = required<HTMLElement>(root, '#landing-status-market-credits');
+    const marketCargo = required<HTMLElement>(root, '#landing-status-market-cargo');
     const commodityName = required<HTMLElement>(root, '#landing-status-commodity-name');
     const planetStock = required<HTMLElement>(root, '#landing-status-planet-stock');
+    const supply = required<HTMLElement>(root, '#landing-status-supply');
     const production = required<HTMLElement>(root, '#landing-status-production');
     const consumption = required<HTMLElement>(root, '#landing-status-consumption');
-    const supply = required<HTMLElement>(root, '#landing-status-supply');
+    const stockChange = required<HTMLElement>(root, '#landing-status-stock-change');
     const playerStock = required<HTMLElement>(root, '#landing-status-player-stock');
     const averageBuyPrice = required<HTMLElement>(root, '#landing-status-average-buy-price');
     const tradeIncome = required<HTMLElement>(root, '#landing-status-trade-income');
@@ -42,11 +66,10 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const market = required<HTMLButtonElement>(root, '#landing-status-market');
     const facilities = required<HTMLButtonElement>(root, '#landing-status-facilities');
     const shipyard = required<HTMLButtonElement>(root, '#landing-status-shipyard');
-    const back = required<HTMLButtonElement>(root, '#landing-status-back');
     const commodityIcon = required<HTMLElement>(root, '.market-commodity-icon');
-    const catalogue = Array.from(root.querySelectorAll<HTMLButtonElement>('#landing-status-catalogue [data-commodity-id]'));
+    const catalogue = Array.from(root.querySelectorAll<HTMLButtonElement>('#landing-status-catalogue > button[data-commodity-id]'));
     let wasVisible = false;
-    let view: 'hub' | 'market' = 'hub';
+    let view: 'hub' | 'market' | 'facilities' = 'hub';
     let landedBadgeFrame = 0;
     const updateLandedBadge = (): void => {
         landedBadgeFrame = landedBadgeFrame === 0 ? 1 : 0;
@@ -55,22 +78,98 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const landedBadgeTimer = window.setInterval(updateLandedBadge, 500);
     const focusable = (): HTMLElement[] => Array.from(modal.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])'))
         .filter(element => !element.closest('[hidden]'));
+    const facilityActionButtons = new Map<LandingFacilityId, HTMLButtonElement>();
+    const chooseFacilityInvestment = (event: Event): void => {
+        const button = event.currentTarget as HTMLButtonElement;
+        const facilityId = button.dataset.facilityId as LandingFacilityId | undefined;
+        if (!facilityId) return;
+        if (button.dataset.action === 'build') port.buildFacility(facilityId);
+        else if (button.dataset.action === 'upgrade') port.upgradeFacility(facilityId);
+    };
+    const formatClock = (remainingSeconds: number): string => `${String(Math.floor(remainingSeconds / 60)).padStart(2, '0')}:${String(Math.floor(remainingSeconds % 60)).padStart(2, '0')}`;
+    const clockText = (clock: Readonly<{ remainingSeconds: number; runState: string }>): string => `${formatClock(clock.remainingSeconds)} · ${clock.runState === 'PAUSED' ? displayLabels.clockPaused : displayLabels.clockRunning}`;
+    const recipePart = (commodityId: LandingCommodityId, quantity: number): readonly HTMLElement[] => {
+        const icon = document.createElement('span');
+        icon.className = 'commodity-icon facility-card-commodity-icon';
+        icon.dataset.commodityId = commodityId;
+        icon.setAttribute('aria-hidden', 'true');
+        const amount = document.createElement('span');
+        amount.className = 'facility-card-commodity-amount';
+        amount.textContent = `${quantity} ${commodityLabels[commodityId]}`;
+        return [icon, amount];
+    };
+    const renderRecipe = (element: HTMLElement, lead: string, parts: readonly Readonly<{ commodityId: LandingCommodityId; quantity: number }>[]): void => {
+        if (parts.length === 0) { element.replaceChildren(); element.textContent = displayLabels.facilityNoInputs; return; }
+        const nodes: HTMLElement[] = [];
+        const leadNode = document.createElement('span');
+        leadNode.className = 'facility-card-recipe-lead';
+        leadNode.textContent = `${lead}: `;
+        nodes.push(leadNode);
+        parts.forEach((part, index) => {
+            if (index > 0) {
+                const separator = document.createElement('span');
+                separator.className = 'facility-card-recipe-separator';
+                separator.textContent = ' + ';
+                nodes.push(separator);
+            }
+            nodes.push(...recipePart(part.commodityId, part.quantity));
+        });
+        const suffix = document.createElement('span');
+        suffix.className = 'facility-card-recipe-suffix';
+        suffix.textContent = ` ${displayLabels.facilityPerCycle}`;
+        nodes.push(suffix);
+        element.replaceChildren(...nodes);
+    };
+    const renderFacilities = (snapshot: Readonly<LandedFacilitiesSnapshot>): void => {
+        facilitiesHeading.textContent = displayLabels.facilities;
+        facilitiesBack.textContent = displayLabels.facilitiesBackToPlanet;
+        facilitiesBack.setAttribute('aria-label', displayLabels.facilitiesBackToPlanet);
+        facilitiesClock.textContent = clockText(snapshot.clock);
+        facilitiesClock.setAttribute('aria-label', facilitiesClock.textContent);
+        facilitiesCredits.textContent = `${displayLabels.marketCredits}: ${formatCredits(snapshot.credits)}`;
+        facilitiesCargo.textContent = `${displayLabels.marketCargo}: ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
+        facilitiesView.style.backgroundImage = `url('${planetBackgroundAssetById[snapshot.planetId ?? ''] ?? '/assets/landing_bg_seroton.png'}')`;
+        for (const row of snapshot.facilities) {
+            const card = facilitiesView.querySelector<HTMLElement>(`[data-facility-id="${row.facilityId}"]`);
+            if (!card) throw new Error(`Missing facility card: ${row.facilityId}`);
+            required<HTMLElement>(card, '.facility-card-name').textContent = row.label;
+            required<HTMLElement>(card, '.facility-card-level').textContent = `${displayLabels.facilityLevel} ${row.level} / ${row.maxLevel}`;
+            const status = required<HTMLElement>(card, '.facility-card-status');
+            status.textContent = displayLabels.facilityStatusLabels[row.status];
+            status.dataset.status = row.status;
+            const icon = required<HTMLElement>(card, '.facility-card-icon');
+            icon.setAttribute('aria-label', `${commodityLabels[row.outputCommodityId]}${displayLabels.commodityIconSuffix}`);
+            const outputElement = required<HTMLElement>(card, '.facility-card-output');
+            if (row.level > 0) renderRecipe(outputElement, displayLabels.facilityProduces, [{ commodityId: row.outputCommodityId, quantity: row.outputPerCycle }]);
+            else { outputElement.replaceChildren(); outputElement.textContent = ''; }
+            const inputsElement = required<HTMLElement>(card, '.facility-card-inputs');
+            if (row.level > 0) renderRecipe(inputsElement, displayLabels.facilityConsumes, row.inputsPerCycle);
+            else { inputsElement.replaceChildren(); inputsElement.textContent = ''; }
+            const modifierElement = required<HTMLElement>(card, '.facility-card-modifier');
+            modifierElement.textContent = modifierText(row.modifier);
+            modifierElement.hidden = modifierElement.textContent === '';
+            required<HTMLElement>(card, '.facility-card-price').textContent = row.action.kind === 'max' ? '' : `${displayLabels.facilityPrice}: ${formatCredits(row.action.price)}`;
+            const actionButton = required<HTMLButtonElement>(card, '.facility-card-action');
+            actionButton.dataset.action = row.action.kind;
+            actionButton.disabled = row.action.kind !== 'max' && !row.action.affordable;
+            const actionText = row.action.kind === 'build' ? displayLabels.facilityBuild : row.action.kind === 'upgrade' ? displayLabels.facilityUpgrade : displayLabels.facilityMaxLevel;
+            actionButton.textContent = actionText;
+            actionButton.setAttribute('aria-label', `${row.label}: ${actionText}`);
+            if (!facilityActionButtons.has(row.facilityId)) {
+                actionButton.dataset.facilityId = row.facilityId;
+                actionButton.addEventListener('click', chooseFacilityInvestment);
+                facilityActionButtons.set(row.facilityId, actionButton);
+            }
+        }
+    };
     const render = (snapshot: Readonly<LandingStatusSnapshot>): void => {
         modal.hidden = !snapshot.visible;
         if (snapshot.visible && !wasVisible) view = 'hub';
         hub.hidden = view !== 'hub';
         marketView.hidden = view !== 'market';
-        const planetTitleAssetById: Readonly<Record<string, string>> = {
-            'lactozis-7c': '/assets/banner_lactozis7c.png',
-            seroton: '/assets/banner_seroton.png',
-            'maslo-prime': '/assets/banner_mlekoprime.png'
-        };
-        const planetBackgroundAssetById: Readonly<Record<string, string>> = {
-            'lactozis-7c': '/assets/landing_bg_lactozis7c.png',
-            seroton: '/assets/landing_bg_seroton.png',
-            'maslo-prime': '/assets/landing_bg_masloprime.png'
-        };
+        facilitiesView.hidden = view !== 'facilities';
         landingVisual.style.backgroundImage = `url('${planetBackgroundAssetById[snapshot.planetId ?? ''] ?? '/assets/landing_bg_seroton.png'}')`;
+        marketView.style.backgroundImage = `url('${planetBackgroundAssetById[snapshot.planetId ?? ''] ?? '/assets/landing_bg_seroton.png'}')`;
         if (title instanceof HTMLImageElement) {
             title.src = planetTitleAssetById[snapshot.planetId ?? ''] ?? '';
             title.alt = snapshot.planetName ?? '';
@@ -79,13 +178,15 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         }
         marketHeading.textContent = displayLabels.market;
         market.setAttribute('aria-label', displayLabels.market);
+        marketBack.textContent = displayLabels.facilitiesBackToPlanet;
+        marketBack.setAttribute('aria-label', displayLabels.facilitiesBackToPlanet);
         launch.setAttribute('aria-label', displayLabels.launch);
-        facilities.setAttribute('aria-label', displayLabels.facilitiesUnavailable);
+        facilities.setAttribute('aria-label', displayLabels.facilities);
         shipyard.setAttribute('aria-label', displayLabels.shipyardUnavailable);
-        balances.textContent = `${displayLabels.marketCredits}: ${formatCredits(snapshot.credits)} · ${displayLabels.marketCargo}: ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
-        balances.replaceChildren(credits, cargo);
-        credits.textContent = `${displayLabels.marketCredits}: ${formatCredits(snapshot.credits)}`;
-        cargo.textContent = `${displayLabels.marketCargo}: ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
+        marketCredits.textContent = formatCredits(snapshot.credits);
+        marketCargo.textContent = `${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
+        marketClock.textContent = clockText(snapshot.clock);
+        marketClock.setAttribute('aria-label', marketClock.textContent);
         const commodity = snapshot.commodities.find(candidate => candidate.commodityId === snapshot.selectedCommodityId);
         const signed = (value: number): string => value > 0 ? `+${value}` : String(value);
         const stockWithDelta = (element: HTMLElement, value: number, delta: number, decreaseIsBad: boolean): void => {
@@ -96,11 +197,16 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         };
         const selected = snapshot.selectedCommodity;
         commodityName.textContent = commodityLabels[selected.commodityId];
-        commodityIcon.setAttribute('aria-label', `${commodityLabels[selected.commodityId]} commodity icon`);
+        commodityIcon.setAttribute('aria-label', `${commodityLabels[selected.commodityId]}${displayLabels.commodityIconSuffix}`);
+        commodityIcon.dataset.commodityId = selected.commodityId;
         stockWithDelta(planetStock, snapshot.quote.postTradeStock, snapshot.plannedStockDelta, true);
-        production.textContent = `${displayLabels.produces}: ${selected.productionPerSecond} / sec`;
-        consumption.textContent = `${displayLabels.consumes}: ${selected.consumptionPerSecond} / sec`;
         supply.textContent = `${displayLabels.supply}: ${snapshot.supplyLevel}`;
+        supply.dataset.supplyLevel = snapshot.supplyLevel;
+        production.textContent = `${displayLabels.marketProduction}: ${snapshot.commodityFlow.productionPerSecond} ${commodityLabels[selected.commodityId]} ${displayLabels.facilityPerCycle}`;
+        consumption.textContent = `${displayLabels.marketConsumption}: ${snapshot.commodityFlow.consumptionPerSecond} ${commodityLabels[selected.commodityId]} ${displayLabels.facilityPerCycle}`;
+        stockChange.textContent = `${displayLabels.marketStockChange}: ${signed(snapshot.commodityFlow.netPerSecond)} ${commodityLabels[selected.commodityId]} ${displayLabels.facilityPerCycle}`;
+        stockChange.classList.toggle('market-stock-delta--positive', snapshot.commodityFlow.netPerSecond > 0);
+        stockChange.classList.toggle('market-stock-delta--negative', snapshot.commodityFlow.netPerSecond < 0);
         stockWithDelta(playerStock, selected.carriedQuantity + snapshot.plannedCargoDelta, snapshot.plannedCargoDelta, true);
         const postTradeQuantity = selected.carriedQuantity + snapshot.plannedCargoDelta;
         const postTradeAverageBuyPrice = snapshot.tradeQuantity > 0
@@ -108,12 +214,29 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             : postTradeQuantity === 0 ? 0 : selected.averageBuyPrice;
         averageBuyPrice.textContent = `${displayLabels.averageBuyPrice}: ${formatCredits(postTradeAverageBuyPrice)}`;
         const tradeResultValue = snapshot.tradeQuantity < 0 ? snapshot.quote.total - (Math.abs(snapshot.tradeQuantity) * selected.averageBuyPrice) : 0;
-        tradeIncome.textContent = snapshot.tradeQuantity === 0
-            ? ''
-            : snapshot.tradeQuantity < 0
-                ? `${displayLabels.tradeIncome}: +${snapshot.quote.total} cr`
-                : `${displayLabels.expense}: -${snapshot.quote.total} cr`;
-        tradeResult.textContent = snapshot.tradeQuantity < 0 ? `${tradeResultValue >= 0 ? displayLabels.profit : displayLabels.loss} ${tradeResultValue >= 0 ? `+${tradeResultValue}` : String(tradeResultValue)} cr` : '';
+        if (snapshot.tradeQuantity === 0) {
+            tradeIncome.replaceChildren();
+        } else {
+            const isExpense = snapshot.tradeQuantity > 0;
+            const incomeLabelNode = document.createElement('span');
+            incomeLabelNode.className = 'market-trade-income-label';
+            incomeLabelNode.textContent = `${isExpense ? displayLabels.expense : displayLabels.tradeIncome}: `;
+            const incomeValueNode = document.createElement('span');
+            incomeValueNode.className = isExpense ? 'market-trade-income-value market-trade-income-value--expense' : 'market-trade-income-value';
+            incomeValueNode.textContent = `${isExpense ? '-' : '+'}${formatCredits(snapshot.quote.total)}`;
+            tradeIncome.replaceChildren(incomeLabelNode, incomeValueNode);
+        }
+        if (snapshot.tradeQuantity < 0) {
+            const resultLabelNode = document.createElement('span');
+            resultLabelNode.className = 'market-trade-result-label';
+            resultLabelNode.textContent = tradeResultValue >= 0 ? displayLabels.profit : displayLabels.loss;
+            const resultValueNode = document.createElement('span');
+            resultValueNode.className = 'market-trade-result-value';
+            resultValueNode.textContent = `${tradeResultValue >= 0 ? '+' : '-'}${formatCredits(Math.abs(tradeResultValue))}`;
+            tradeResult.replaceChildren(resultLabelNode, resultValueNode);
+        } else {
+            tradeResult.replaceChildren();
+        }
         tradeResult.className = snapshot.tradeQuantity < 0 ? `market-trade-result ${tradeResultValue >= 0 ? 'market-trade-result--profit' : 'market-trade-result--loss'}` : 'market-trade-result';
         quantity.min = String(commodity ? -commodity.carriedQuantity : 0);
         quantity.max = String(commodity ? Math.min(commodity.stock, snapshot.cargoCapacity - snapshot.cargoUsed) : 0);
@@ -128,12 +251,10 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         budget.classList.toggle('market-budget--warning', snapshot.quote.failure === 'insufficient-credits');
         confirm.textContent = displayLabels.marketConfirm;
         confirm.disabled = !snapshot.eligible || snapshot.quote.failure !== null;
-        back.textContent = displayLabels.back;
         for (const button of catalogue) {
             const commodityId = button.dataset.commodityId as LandingCommodityId;
-            const row = snapshot.commodities.find(candidate => candidate.commodityId === commodityId);
-            button.textContent = row ? `${commodityLabels[commodityId]} · ${row.stock} · ${formatCredits(row.unitPrice)}` : commodityLabels[commodityId];
-            button.textContent = row && row.carriedQuantity > 0 ? `${commodityLabels[commodityId]} · ${row.carriedQuantity}` : commodityLabels[commodityId];
+            const nameElement = required<HTMLElement>(button, '.catalogue-commodity-name');
+            nameElement.textContent = commodityLabels[commodityId];
             button.setAttribute('aria-pressed', String(commodityId === snapshot.selectedCommodityId));
             button.disabled = !snapshot.eligible;
         }
@@ -146,11 +267,22 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         view = 'market';
         hub.hidden = true;
         marketView.hidden = false;
-        port.selectCommodity('supplies');
+        facilitiesView.hidden = true;
+        port.selectCommodity('milk');
         port.setTradeQuantity(0);
         catalogue[0]?.focus();
     };
-    const returnToHub = (): void => { view = 'hub'; hub.hidden = false; marketView.hidden = true; market.focus(); };
+    const returnToHub = (): void => { view = 'hub'; hub.hidden = false; marketView.hidden = true; facilitiesView.hidden = true; market.focus(); };
+    const openFacilities = (): void => {
+        view = 'facilities';
+        hub.hidden = true;
+        marketView.hidden = true;
+        facilitiesView.hidden = false;
+        const primaryAction = facilityActionButtons.values().next().value;
+        if (primaryAction && !primaryAction.disabled) primaryAction.focus();
+        else facilitiesBack.focus();
+    };
+    const returnFromFacilities = (): void => { view = 'hub'; hub.hidden = false; marketView.hidden = true; facilitiesView.hidden = true; facilities.focus(); };
     const launchGame = (): void => { port.launch(); root.querySelector<HTMLCanvasElement>('#game-container canvas')?.focus(); };
     const keydown = (event: KeyboardEvent): void => {
         if (event.key !== 'Tab' || modal.hidden) return;
@@ -160,11 +292,14 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     };
     const unsubscribe = port.subscribe(render);
+    const unsubscribeFacilities = port.subscribeFacilities(renderFacilities);
     for (const button of catalogue) button.addEventListener('click', select);
     quantity.addEventListener('input', setQuantity);
     confirm.addEventListener('click', port.confirmTrade);
     market.addEventListener('click', openMarket);
-    back.addEventListener('click', returnToHub);
+    marketBack.addEventListener('click', returnToHub);
+    facilities.addEventListener('click', openFacilities);
+    facilitiesBack.addEventListener('click', returnFromFacilities);
     launch.addEventListener('click', launchGame);
     window.addEventListener('keydown', keydown);
     let destroyed = false;
@@ -172,11 +307,16 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         if (destroyed) return;
         destroyed = true;
         unsubscribe();
+        unsubscribeFacilities();
         for (const button of catalogue) button.removeEventListener('click', select);
         quantity.removeEventListener('input', setQuantity);
         confirm.removeEventListener('click', port.confirmTrade);
         market.removeEventListener('click', openMarket);
-        back.removeEventListener('click', returnToHub);
+        marketBack.removeEventListener('click', returnToHub);
+        facilities.removeEventListener('click', openFacilities);
+        facilitiesBack.removeEventListener('click', returnFromFacilities);
+        for (const button of facilityActionButtons.values()) button.removeEventListener('click', chooseFacilityInvestment);
+        facilityActionButtons.clear();
         launch.removeEventListener('click', launchGame);
         window.removeEventListener('keydown', keydown);
         window.clearInterval(landedBadgeTimer);

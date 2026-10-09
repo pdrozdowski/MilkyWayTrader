@@ -35,13 +35,13 @@ export async function completeSignedInTradeJourney (page: Page): Promise<void>
     await expect(page.getByLabel('Main menu').getByRole('button', { name: /playwright-/ })).toBeVisible();
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
     await expect(page.getByLabel('Run status')).toBeVisible();
-    const cashBalance = page.getByLabel('Run status').getByText(/\d[\d,]* cr/);
+    const cashBalance = page.getByLabel('Credits', { exact: true });
     await expect(cashBalance).toBeVisible();
 
     await teleportTo(page, 'Seroton');
     const cashBeforePurchase = await cashBalance.innerText();
     await trade(page, 'buy', 2);
-    await expect(page.getByText(/^Credits: \d[\d,]* cr$/)).toBeVisible();
+    await expect(page.getByText(/^Credits: \d[\d,]*$/)).toBeVisible();
     await expect(page.getByText('Cargo: 2 / 20', { exact: true })).toBeVisible();
     await expect(cashBalance).not.toHaveText(cashBeforePurchase);
     await launch(page);
@@ -50,7 +50,7 @@ export async function completeSignedInTradeJourney (page: Page): Promise<void>
     await teleportTo(page, 'Lactozis-7C');
     const cashBeforeFirstSale = await cashBalance.innerText();
     await trade(page, 'sell', 1);
-    await expect(page.getByText(/^Credits: \d[\d,]* cr$/)).toBeVisible();
+    await expect(page.getByText(/^Credits: \d[\d,]*$/)).toBeVisible();
     await expect(page.getByText('Cargo: 1 / 20', { exact: true })).toBeVisible();
     await expect(cashBalance).not.toHaveText(cashBeforeFirstSale);
     await launch(page);
@@ -59,7 +59,7 @@ export async function completeSignedInTradeJourney (page: Page): Promise<void>
     await teleportTo(page, 'Maslo-Prime');
     const cashBeforeFinalSale = await cashBalance.innerText();
     await trade(page, 'sell', 1);
-    await expect(page.getByText(/^Credits: \d[\d,]* cr$/)).toBeVisible();
+    await expect(page.getByText(/^Credits: \d[\d,]*$/)).toBeVisible();
     await expect(page.getByText('Cargo: 0 / 20', { exact: true })).toBeVisible();
     await expect(cashBalance).not.toHaveText(cashBeforeFinalSale);
     await expect(page.getByText('Cargo 0 / 20', { exact: true })).toBeVisible();

@@ -14,7 +14,6 @@ import { isWithinPlanetOrbitBoundary } from './planet/proximity.ts';
 import { tryLandAtCapturedPlanet } from './planet/landing.ts';
 import { isRecoveringFromMoolaris, resolveMoolarisContact } from './moolaris/contact.ts';
 import { MOOLARIS_RECOVERY_SECONDS } from '../definitions/moolarisDefinition.ts';
-import { advanceMarket } from './serotonMarketSimulation.ts';
 import { asteroidRadius, advanceAsteroidMotions, fragmentAsteroid, type AsteroidImpactSource } from './asteroid/asteroidSimulation.ts';
 import { moolarisDefinition } from '../definitions/moolarisDefinition.ts';
 import { asteroidDamageRanges, moolarisDamageRange, nextRandomInteger } from './hazards/damage.ts';
@@ -22,6 +21,7 @@ import { resolveTerminalResult } from './hazards/terminal.ts';
 import { createCargoSchedule, spawnAsteroidLoot } from './salvage/asteroidLoot.ts';
 import { advanceLooseItems, advanceOrbitalCargo } from './salvage/salvageSimulation.ts';
 import { collectLooseItem, damageOrbitalCargo } from './salvage/cargoDamage.ts';
+import { advancePlanetFacilities } from './planetFacilitySimulation.ts';
 
 const asteroidRecoverySeconds = MOOLARIS_RECOVERY_SECONDS / 2;
 
@@ -81,9 +81,8 @@ export function advanceGameSimulation (
     const clock = advanceGameClock(state.clock, deltaMs);
     const activeDeltaMs = clock.activeElapsedMs - state.clock.activeElapsedMs;
     if (activeDeltaMs <= 0) return { ...state, clock };
-    const marketElapsedSeconds = Math.floor(clock.activeElapsedMs / 1000) - Math.floor(state.clock.activeElapsedMs / 1000);
-    const markets = marketElapsedSeconds === 0 ? state.markets : state.markets.map(market => advanceMarket(market, marketElapsedSeconds));
-
+    const facilityCycles = Math.floor(clock.activeElapsedMs / 1000) - Math.floor(state.clock.activeElapsedMs / 1000);
+    const markets = facilityCycles > 0 ? state.markets.map(market => advancePlanetFacilities(market, facilityCycles)) : state.markets;
     const landed = state.planetLifecycle.landedPlanetId !== null;
     const contact = resolveMoolarisContact(state.ship);
     const asteroidControlLocked = state.ship.asteroidControlLockedUntilActiveMs !== null

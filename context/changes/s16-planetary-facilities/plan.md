@@ -59,9 +59,9 @@ Swap the five-commodity catalogue in everywhere the three legacy ids are asserte
 
 **File**: `src/game/domain/serotonMarketCatalog.ts`
 
-**Intent**: Make this module the only declaration of the commodity ids and their price profiles, and rescan the thresholds for the new throughput.
+**Intent**: Make this module the only declaration of the commodity ids and their price profiles, and set one uniform 100/300 stock band for every commodity.
 
-**Contract**: `serotonCommodityIds = ['milk','grain','cheese','bun','spaceRation'] as const`; `SerotonMarketCommodityId` derived from it; base prices unchanged at 100/150/300/250/1250 with rescaled thresholds milk 1 000/10 000, grain 1 000/10 000, cheese 500/5 000, bun 500/5 000, spaceRation 200/2 000.
+**Contract**: `serotonCommodityIds = ['milk','grain','cheese','bun','spaceRation'] as const`; `SerotonMarketCommodityId` derived from it; base prices unchanged at 100/150/300/250/1250 with one uniform stock band: every commodity's lower threshold 100 and upper threshold 300.
 
 #### 2. State, definitions and initial state
 
@@ -69,7 +69,7 @@ Swap the five-commodity catalogue in everywhere the three legacy ids are asserte
 
 **Intent**: Replace the duplicated id union with the derived one, define the five commodity definitions, and seed differentiated opening stock. Drop the `productionPerSecond` and `consumptionPerSecond` tuning fields.
 
-**Contract**: per-planet initial stock - the specialized facility's output sits above its upper threshold and the commodity that consumes it sits below its lower threshold; all other commodities start at their upper threshold. Seroton: cheese 6 000, milk 400. Maslo-Prime: milk 12 000, cheese 200. Lactozis-7C: grain 12 000, bun 200. All values are balance tunables (PRD BR-093).
+**Contract**: per-planet initial stock, one hundredth of the previous seeding. Seroton: milk 4, grain 100, cheese 60, bun 50, spaceRation 20. Lactozis-7C: milk 100, grain 120, cheese 50, bun 2, spaceRation 20. Maslo-Prime: milk 120, grain 100, cheese 2, bun 50, spaceRation 20. All values are balance tunables (PRD BR-093).
 
 #### 3. Remove automatic drift
 
@@ -123,11 +123,11 @@ Give the five commodities a consistent identity across the market, the cargo sur
 
 #### 1. Icon assets
 
-**Files**: `public/assets/icons/commodity-{milk,grain,cheese,bun,spaceRation}-placeholder_32x32.png`
+**Files**: `public/assets/icons/commodity-milk-48x48.png`, `public/assets/icons/commodity-grain_48x48.png`, `public/assets/icons/commodity-cheese-48x48.png`, `public/assets/icons/commodity-bun_48x48.png`, `public/assets/icons/commodity-spaceRation-48x48.png`
 
-**Intent**: Add five 32x32 placeholder icons matching the existing placeholders' size and PNG format, and remove the three legacy ones.
+**Intent**: Add one 48x48 full-colour PNG per commodity (replacing the interim 32x32 placeholder tiles), and remove the three legacy catalogue icons.
 
-**Contract**: exact filename convention `commodity-<id>-placeholder_32x32.png`; flat-coloured tile identity is sufficient because these are placeholders.
+**Contract**: one 48x48 RGBA PNG per commodity id, registered by `src/game/objects/commodity/definition.ts` as its `object:commodity:<id>` texture; the loose item still renders at 32 px because `size: 32` rescales the texture. The `-`/`_` separator before `48x48` is not uniform across the five filenames.
 
 #### 2. Commodity object
 
@@ -141,9 +141,9 @@ Give the five commodities a consistent identity across the market, the cargo sur
 
 **Files**: `src/ui/components/displayLabels.ts`, `index.html`, `public/style.css`, `src/ui/components/landingStatus.ts`, `src/ui/components/cargoTransfer.ts`, `src/ui/components/runStatus.ts`
 
-**Intent**: Extend the label map to five commodities, add the two new market catalogue buttons and cargo-transfer rows, and give each commodity a distinct icon colour.
+**Intent**: Extend the label map to five commodities, add the market catalogue buttons and cargo-transfer rows, and reuse the shared 48x48 commodity icons (`.commodity-icon` background images keyed by `data-commodity-id`) across the catalogue, facility recipe lines, cargo transfer and cargo contents surfaces.
 
-**Contract**: `commodityLabels` covers all five ids; market catalogue and cargo-transfer rows carry the five `data-commodity-id` values; the catalogue grid and icon palette cover five entries.
+**Contract**: `commodityLabels` covers all five ids; the market catalogue, facility card recipe lines and cargo-transfer rows carry the five `data-commodity-id` values; each catalogue button shows a commodity icon above the commodity name; `.commodity-icon[data-commodity-id=...]` resolves each id to its 48x48 PNG; facility card headers use one 48x48 placeholder PNG per facility (`facility-<facilityId>_48x48.png`, no "placeholder" in the filename); the cargo-transfer row is a six-column grid (planet quantity, cargo controls, icon, name, ship controls, ship quantity) whose quantity, icon and control tracks are fixed and only the name track flexes, so every row keeps identical column positions and the controls never shift; the row tile, its four buttons and the quantity columns all derive from `--cargo-transfer-icon-size` (48px) so one value rescales the whole row; and the transfer modal caps its height to the viewport and scrolls.
 
 #### 4. Presentation tests
 
@@ -153,17 +153,25 @@ Give the five commodities a consistent identity across the market, the cargo sur
 
 **Contract**: the object test enumerates all five asset paths and textures; the component test enumerates five rows.
 
+#### 5. Landed dialog presentation polish
+
+**Files**: `index.html`, `public/style.css`, `src/ui/components/landingStatus.ts`
+
+**Intent**: Present the landed dialog clearly: the market view reuses the facilities header chrome (with a "Market" heading), the Credits/Cargo readouts become pill-styled resource chips led by `coins_32x32.png` / `cargo2_32x32.png`, the market controls occupy the bottom 70% of the view like the facility cards, the planet panel shows stock, a colour-coded supply level, per-second production and consumption, and the net per-second stock change, a neutral planet modifier leaves the facility modifier row empty and hidden, and the catalogue, facility recipe, facility card and cargo surfaces reuse the shared commodity icons.
+
+**Contract**: `#landing-status-supply` carries `data-supply-level` (Low/Medium/High) and is colour-coded; `#landing-status-market-credits` / `#landing-status-market-cargo` reuse the `main-menu-sign-in-preview` pill styling plus a leading icon and omit the "Credits:"/"Cargo:" text prefix; `#landing-status-market-controls` matches the `.landing-facility-cards` positioning (`inset: 30% 0 0`); `.facility-card-modifier` is hidden when empty; `.facility-card-icon` renders a 48x48 placeholder PNG per facility; every credit readout prints a whole-credit, comma-grouped amount with no `cr` suffix (one shared `formatCredits` helper rounds to an integer, so cash and the trade profit/loss never show decimals; the coin icon carries the unit), so facility prices, the facilities header, average buy price, unit price, the cash shortfall, the market pill, the trade income/result rows, the run-status HUD and the game-over final cash share one format; `.commodity-icon[data-commodity-id]` is the single source of every commodity graphic; each `#landing-status-catalogue` button stacks a 48x48 commodity icon above its name, sized from one place so icon and label grow together (`clamp(13px, 1.9vw, 18px)` for the name).
+
 ### Success Criteria:
 
 #### Automated Verification:
 
-- Object-scaffold tests assert five placeholder paths and five textures
+- Object-scaffold tests assert five 48x48 icon paths and five textures
 - Focused object tests pass: `npm.cmd run test:objects`
 - Unit tests pass with five cargo-transfer rows: `npm.cmd run test:unit`
 
 #### Manual Verification:
 
-- Market catalogue, cargo HUD, and cargo transfer show five commodities with distinct icons and labels
+- Market catalogue, facility recipe lines, facility card headers, cargo HUD and cargo transfer show the shared commodity icons and labels
 - Loose salvage items render with the matching commodity texture
 
 ---
@@ -380,11 +388,11 @@ No migration is implemented. The schema moves 16 to 17 when facility state enter
 
 #### Automated
 
-- [ ] 1.1 No legacy commodity identifiers remain in product code
-- [ ] 1.2 Focused domain tests pass with the five-commodity catalogue
-- [ ] 1.3 Focused mechanics tests pass with the automatic drift removed
-- [ ] 1.4 Type checking passes
-- [ ] 1.5 Round-trip tests confirm the five-commodity catalogue serializes and restores
+- [x] 1.1 No legacy commodity identifiers remain in product code
+- [x] 1.2 Focused domain tests pass with the five-commodity catalogue
+- [x] 1.3 Focused mechanics tests pass with the automatic drift removed
+- [x] 1.4 Type checking passes
+- [x] 1.5 Round-trip tests confirm the five-commodity catalogue serializes and restores
 
 #### Manual
 
@@ -396,9 +404,9 @@ No migration is implemented. The schema moves 16 to 17 when facility state enter
 
 #### Automated
 
-- [ ] 2.1 Object-scaffold tests assert five placeholder paths and five textures
-- [ ] 2.2 Focused object tests pass
-- [ ] 2.3 Unit tests pass with five cargo-transfer rows
+- [x] 2.1 Object-scaffold tests assert five placeholder paths and five textures
+- [x] 2.2 Focused object tests pass
+- [x] 2.3 Unit tests pass with five cargo-transfer rows
 
 #### Manual
 
@@ -409,9 +417,9 @@ No migration is implemented. The schema moves 16 to 17 when facility state enter
 
 #### Automated
 
-- [ ] 3.1 Codec tests cover v16 rejection, v17 acceptance, and facility validation
-- [ ] 3.2 Domain tests cover build/upgrade guards, discounts, credits-only deduction, and max level
-- [ ] 3.3 Type checking passes
+- [x] 3.1 Codec tests cover v16 rejection, v17 acceptance, and facility validation
+- [x] 3.2 Domain tests cover build/upgrade guards, discounts, credits-only deduction, and max level
+- [x] 3.3 Type checking passes
 
 #### Manual
 
@@ -421,11 +429,11 @@ No migration is implemented. The schema moves 16 to 17 when facility state enter
 
 #### Automated
 
-- [ ] 4.1 Mechanics tests cover the one-second boundary and multi-cycle frames
-- [ ] 4.2 Mechanics tests cover fixed ordering with a same-cycle input dependency
-- [ ] 4.3 Mechanics tests cover all-or-nothing shortfall and status changes
-- [ ] 4.4 Mechanics tests cover every pause reason and restore continuity
-- [ ] 4.5 Mechanics tests cover per-planet isolation
+- [x] 4.1 Mechanics tests cover the one-second boundary and multi-cycle frames
+- [x] 4.2 Mechanics tests cover fixed ordering with a same-cycle input dependency
+- [x] 4.3 Mechanics tests cover all-or-nothing shortfall and status changes
+- [x] 4.4 Mechanics tests cover every pause reason and restore continuity
+- [x] 4.5 Mechanics tests cover per-planet isolation
 
 #### Manual
 
@@ -436,7 +444,7 @@ No migration is implemented. The schema moves 16 to 17 when facility state enter
 
 #### Automated
 
-- [ ] 5.1 A DOM component test renders the facilities view, states, and actions from a fake port
+- [x] 5.1 A DOM component test renders the facilities view, states, and actions from a fake port
 - [ ] 5.2 The complete local pipeline passes
 
 #### Manual

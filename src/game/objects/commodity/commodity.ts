@@ -102,6 +102,5 @@ export class CommodityProjection
 
 function commodityTexture (commodityId: string): string
 {
-    if (commodityId === 'alloys' || commodityId === 'medicines') return `object:commodity:${commodityId}`;
-    return 'object:commodity:supplies';
+    return `object:commodity:${commodityId}`;
 }
