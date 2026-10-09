@@ -413,3 +413,10 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
     .shipyard-cards { gap: 6px; padding: 8px 12px; }
     .shipyard-card { padding: 8px; gap: 4px; }
 }
+
+#performance-readout { position: absolute; top: 72px; left: max(8px, env(safe-area-inset-left)); z-index: 4; margin: 0; padding: 8px 10px; border: 1px solid var(--ui-border); border-radius: 6px; background: rgb(7 17 27 / 78%); color: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; line-height: 1.35; pointer-events: none; }
+#performance-readout table { border-collapse: collapse; }
+#performance-readout th, #performance-readout td { padding: 1px 6px; font-weight: 400; text-align: right; white-space: nowrap; }
+#performance-readout thead th:first-child, #performance-readout th[scope="row"] { text-align: left; }
+#performance-readout p { max-width: 34ch; margin: 6px 0 0; white-space: normal; }
+#performance-readout-note { color: #9fd1ff; }

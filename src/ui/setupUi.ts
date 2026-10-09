@@ -5,12 +5,14 @@ import { createGameControlsPort } from './adapters/gameControlsAdapter';
 import { createRunStatusPort } from './adapters/runStatusAdapter';
 import { createLandingStatusPort } from './adapters/landingStatusAdapter';
 import { createCargoTransferPort } from './adapters/cargoTransferAdapter';
+import { createPerformanceReadoutPort } from './adapters/performanceReadoutAdapter';
 import { mountAudioControls } from './components/audioControls';
 import { mountDisplayControls } from './components/displayControls';
 import { mountGameMenu } from './components/gameMenu';
 import { mountRunStatus } from './components/runStatus';
 import { mountLandingStatus } from './components/landingStatus';
 import { mountCargoTransfer } from './components/cargoTransfer';
+import { mountPerformanceReadout } from './components/performanceReadout';
 import { formatCredits } from './components/formatCredits';
 import { mountAuthControls } from './components/authControls';
 import type { AuthPort } from '../game/application/auth/auth';
@@ -71,6 +73,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     game.registry.set('telemetry', telemetry);
     const landingStatus = mountLandingStatus(root, createLandingStatusPort(game));
     const cargoTransfer = mountCargoTransfer(root, createCargoTransferPort(game));
+    const performanceReadout = mountPerformanceReadout(root, createPerformanceReadoutPort(game));
     let currentGameOverResult: TerminalResultState | null = null;
     const authControls = mountAuthControls(root, auth, () => { if (currentGameOverResult) gameOverReturn.save(currentGameOverResult); });
     const mainMenu = root.querySelector<HTMLElement>('#main-menu');
@@ -81,6 +84,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const touchControlsToggle = root.querySelector<HTMLButtonElement>('#debug-touch-controls-toggle');
     const mouseMovementToggle = root.querySelector<HTMLButtonElement>('#debug-mouse-movement-toggle');
     const boosterToggle = root.querySelector<HTMLButtonElement>('#debug-booster-toggle');
+    const performanceToggle = root.querySelector<HTMLButtonElement>('#debug-performance-toggle');
     const teleportSeroton = root.querySelector<HTMLButtonElement>('#debug-teleport-seroton');
     const teleportLactozis = root.querySelector<HTMLButtonElement>('#debug-teleport-lactozis-7c');
     const teleportMasloPrime = root.querySelector<HTMLButtonElement>('#debug-teleport-maslo-prime');
@@ -89,7 +93,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const upgradeCargoLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-cargo');
     const upgradeEngineLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-engine');
     const upgradeWeaponaryLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-weaponary');
-    if (!mainMenu || !mainMenuNewGame || !mainMenuSignIn || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime || !teleportAsteroid || !spawnCargo || !upgradeCargoLevel || !upgradeEngineLevel || !upgradeWeaponaryLevel) throw new Error('Missing game menu controls.');
+    if (!mainMenu || !mainMenuNewGame || !mainMenuSignIn || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !performanceToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime || !teleportAsteroid || !spawnCargo || !upgradeCargoLevel || !upgradeEngineLevel || !upgradeWeaponaryLevel) throw new Error('Missing game menu controls.');
     const stateProvider = game.registry.get('gameStateProvider') as GameStateProvider;
     const upgradeButtons: Readonly<Record<ShipServiceId, HTMLButtonElement>> = {
         cargo: upgradeCargoLevel,
@@ -131,6 +135,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     let touchControlsEnabled = false;
     let mouseMovementEnabled = true;
     let boosterEnabled = false;
+    let performanceMonitorEnabled = false;
     let terminalDeathTransitionActive = false;
     const renderDebugToggles = (): void => {
         touchControlsToggle.textContent = `Show touch screen controls: ${touchControlsEnabled ? 'ON' : 'OFF'}`;
@@ -139,6 +144,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         mouseMovementToggle.setAttribute('aria-pressed', String(mouseMovementEnabled));
         boosterToggle.textContent = `Booster enable: ${boosterEnabled ? 'ON' : 'OFF'}`;
         boosterToggle.setAttribute('aria-pressed', String(boosterEnabled));
+        performanceToggle.textContent = `${displayLabels.debugPerformanceMonitor}: ${performanceMonitorEnabled ? 'ON' : 'OFF'}`;
+        performanceToggle.setAttribute('aria-pressed', String(performanceMonitorEnabled));
         renderDebugShipServices();
     };
     const closeDebugMenu = (): void => { debugMenu.hidden = true; game.canvas.focus(); };
@@ -146,6 +153,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const toggleTouchControls = (): void => { if (!terminalDeathTransitionActive) { touchControlsEnabled = !touchControlsEnabled; game.events.emit('debug-touch-controls', touchControlsEnabled); renderDebugToggles(); } };
     const toggleMouseMovement = (): void => { if (!terminalDeathTransitionActive) { mouseMovementEnabled = !mouseMovementEnabled; game.events.emit('debug-mouse-movement', mouseMovementEnabled); renderDebugToggles(); } };
     const toggleBooster = (): void => { if (!terminalDeathTransitionActive) { boosterEnabled = !boosterEnabled; game.events.emit('debug-booster', boosterEnabled); renderDebugToggles(); } };
+    const togglePerformanceMonitor = (): void => { if (!terminalDeathTransitionActive) { performanceMonitorEnabled = !performanceMonitorEnabled; game.events.emit('debug-performance-monitor', performanceMonitorEnabled); renderDebugToggles(); } };
     const teleportTo = (planetId: string): void => { if (!terminalDeathTransitionActive) { game.events.emit('debug-teleport-to-planet', planetId); closeDebugMenu(); } };
     const teleportToSeroton = (): void => { teleportTo('seroton'); };
     const teleportToLactozis = (): void => { teleportTo('lactozis-7c'); };
@@ -157,6 +165,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         touchControlsEnabled = false;
         mouseMovementEnabled = true;
         boosterEnabled = false;
+        performanceMonitorEnabled = false;
         debugMenu.hidden = true;
         renderDebugToggles();
     };
@@ -169,6 +178,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     touchControlsToggle.addEventListener('click', toggleTouchControls);
     mouseMovementToggle.addEventListener('click', toggleMouseMovement);
     boosterToggle.addEventListener('click', toggleBooster);
+    performanceToggle.addEventListener('click', togglePerformanceMonitor);
     teleportSeroton.addEventListener('click', teleportToSeroton);
     teleportLactozis.addEventListener('click', teleportToLactozis);
     teleportMasloPrime.addEventListener('click', teleportToMasloPrime);
@@ -198,6 +208,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             game.events.off('game-over-persistence', renderGameOverPersistence);
             landingStatus.destroy();
             cargoTransfer.destroy();
+            performanceReadout.destroy();
             authControls.destroy();
             auth.destroy();
             telemetry.destroy();
@@ -212,6 +223,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             touchControlsToggle.removeEventListener('click', toggleTouchControls);
             mouseMovementToggle.removeEventListener('click', toggleMouseMovement);
             boosterToggle.removeEventListener('click', toggleBooster);
+            performanceToggle.removeEventListener('click', togglePerformanceMonitor);
             teleportSeroton.removeEventListener('click', teleportToSeroton);
             teleportLactozis.removeEventListener('click', teleportToLactozis);
             teleportMasloPrime.removeEventListener('click', teleportToMasloPrime);

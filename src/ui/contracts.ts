@@ -8,9 +8,11 @@ export type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/appl
 export type { LandedFacilitiesSnapshot } from '../game/application/landedFacilities';
 export type { LandedShipyardSnapshot } from '../game/application/landedShipyard';
 export type { AuthPort, AuthSnapshot } from '../game/application/auth/auth';
+export type { PerformanceDurationSummary, PerformanceStepId, PerformanceStepSummary, PerformanceSnapshot } from '../game/application/performanceMonitor';
 import type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
 import type { LandedFacilitiesSnapshot } from '../game/application/landedFacilities';
 import type { LandedShipyardSnapshot } from '../game/application/landedShipyard';
+import type { PerformanceSnapshot } from '../game/application/performanceMonitor';
 import type { ShipServiceId } from '../game/application/planetShipServices';
 import type { PlanetFacilityId, SerotonCommodityId } from '../game/state/serotonMarketState';
 import type { RunStatusSnapshot } from '../game/application/runStatus';
@@ -23,6 +25,12 @@ export interface RunStatusPort extends UiHandle
 {
     getSnapshot(): Readonly<RunStatusSnapshot>;
     subscribe(listener: (snapshot: Readonly<RunStatusSnapshot>) => void): () => void;
+}
+
+export interface PerformanceReadoutPort extends UiHandle
+{
+    getSnapshot(): Readonly<PerformanceSnapshot>;
+    subscribe(listener: (snapshot: Readonly<PerformanceSnapshot>) => void): () => void;
 }
 
 export interface AudioSettingsSnapshot

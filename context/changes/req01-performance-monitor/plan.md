@@ -215,18 +215,18 @@ Not applicable: no snapshot schema, persistence or saved data is touched. `chang
 
 #### Automated
 
-- [x] 1.1 `test:domain` passes with the new monitor suite covering window, statistics, chain marks, early close, loop rate and reset
-- [x] 1.2 `typecheck` passes
-- [x] 1.3 `test:architecture` still passes with the pure module in place
+- [x] 1.1 `test:domain` passes with the new monitor suite covering window, statistics, chain marks, early close, loop rate and reset — f505469
+- [x] 1.2 `typecheck` passes — f505469
+- [x] 1.3 `test:architecture` still passes with the pure module in place — f505469
 
 ### Phase 2: Debug-controlled readout
 
 #### Automated
 
-- [ ] 2.1 `test:ui-presentation` passes with the new readout component test
-- [ ] 2.2 `test:fast` passes covering the new files, contracts re-export and filename rules
-- [ ] 2.3 `typecheck` passes
-- [ ] 2.4 `build-nolog` succeeds with the new modules bundled
+- [x] 2.1 `test:ui-presentation` passes with the new readout component test
+- [x] 2.2 `test:fast` passes covering the new files, contracts re-export and filename rules
+- [x] 2.3 `typecheck` passes
+- [x] 2.4 `build-nolog` succeeds with the new modules bundled
 
 #### Manual
 
