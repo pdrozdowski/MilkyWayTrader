@@ -26,10 +26,10 @@
 - **Severity**: OBSERVATION
 - **Impact**: LOW — quick decision; fix is obvious and narrowly scoped
 - **Dimension**: Safety & Quality
-- **Location**: index.html:170, src/ui/components/landingStatus.ts:195-197
+- **Location**: index.html:172-173, src/ui/components/landingStatus.ts:195-197
 - **Detail**: `<progress class="shipyard-repair-bar">` receives `value`/`max` but no accessible name, while the run-status HP bar in the same application pairs its progress element with `#run-status-hp-label`. The adjacent `.shipyard-repair-hp` text does carry "Hull: 75 / 100", so the information is reachable, just not associated with the bar itself.
-- **Fix**: Add `aria-label` (or `aria-labelledby` pointing at `.shipyard-repair-hp`) in `renderShipyard`, mirroring the run-status bar.
-- **Decision**: PENDING
+- **Fix**: The health bar now takes its accessible name from the readout: `#landing-status-shipyard-repair-hp` on the Hull paragraph and `aria-labelledby` on the `<progress>`, mirroring the run-status HP bar's label association. Asserted by the Shipyard DOM test, which checks the static association in `index.html`.
+- **Decision**: FIXED — applied as described.
 
 ### F2 — Volley emission order for odd counts is an interpretation, not a literal shift
 
