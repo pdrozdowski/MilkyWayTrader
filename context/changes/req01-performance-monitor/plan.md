@@ -239,8 +239,8 @@ Not applicable: no snapshot schema, persistence or saved data is touched. `chang
 
 #### Automated
 
-- [ ] 3.1 `test:fast` passes on the final tree
-- [ ] 3.2 `typecheck` passes on the final tree
+- [x] 3.1 `test:fast` passes on the final tree
+- [x] 3.2 `typecheck` passes on the final tree
 
 #### Manual
 

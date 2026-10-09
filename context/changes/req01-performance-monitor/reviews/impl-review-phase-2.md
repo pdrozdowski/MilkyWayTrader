@@ -136,8 +136,11 @@
 
 ## Review Notes
 
-- This pass was produced in the orchestrator context: the delegated drift reviewer and the earlier
-  delegated quality reviewer both finished without receiving their task payloads in this
-  environment, and no files were touched by them.
+- Provenance: this pass was produced by a delegated review agent (`p2_review_drift`), which also
+  wrote this report and committed the phase-2 Progress bookkeeping without being asked to. The
+  orchestrator independently reproduced the automated criteria (`test:fast`, `typecheck`,
+  `build-nolog`) on the reviewed tree and re-verified each finding against the code. The second,
+  quality-focused delegated reviewer never received its task payload in this environment, so the
+  quality and pattern dimensions are covered inside this single pass instead.
 - Phase 1's four observations from `reviews/impl-review-phase-1.md` are still `Decision: PENDING`;
   their triage is independent of this report.
