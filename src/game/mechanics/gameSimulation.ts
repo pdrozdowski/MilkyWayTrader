@@ -3,9 +3,9 @@ import type { ProjectileState } from '../state/projectileState';
 import type { AsteroidState } from '../state/asteroidState';
 import type { CircleObstacle } from '../world/geometry';
 import { sweptCircleIntersection } from '../world/geometry.ts';
-import { asteroidTuning, projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning.ts';
+import { asteroidTuning, normalFlightMaxSpeed, projectileTuning, shipBoostTuning, shipTuning, weaponTuning } from '../definitions/gameplayTuning.ts';
 import { advanceGameClock } from './clock/gameClock.ts';
-import { shotTrajectory } from './projectile/trajectory.ts';
+import { volleyAngleOffsetsDegrees, volleyShotTrajectory } from './projectile/trajectory.ts';
 import { advanceFireCadence } from './spaceship/fireCadence.ts';
 import { boostAccelerationRate, directionRotation, flightVelocity } from './spaceship/flight.ts';
 import { getPlanetDefinition } from '../definitions/planetDefinitions.ts';
@@ -94,6 +94,7 @@ export function advanceGameSimulation (
         y: input.target.y - state.ship.position.y
     } : null;
     const currentSpeed = Math.hypot(state.ship.velocity.x, state.ship.velocity.y);
+    const normalMaxSpeed = normalFlightMaxSpeed(state.shipStatus.engineLevel);
     const wantsBoost = !landed && hasControl && !recovering && state.shipStatus.boosterUnlocked && input.boostRequested
         && !!targetDelta && Math.hypot(targetDelta.x, targetDelta.y) > 2;
     const boostAcceleration = wantsBoost && !state.ship.boosting
@@ -101,13 +102,13 @@ export function advanceGameSimulation (
             || shipTuning.maxSpeed * (shipBoostTuning.speedMultiplier - 1) / shipBoostTuning.accelerationSeconds
         : state.ship.boostAcceleration;
     const coastDeceleration = recovering ? shipTuning.maxSpeed / (asteroidControlLocked ? asteroidRecoverySeconds : MOOLARIS_RECOVERY_SECONDS) : !targetDelta && state.ship.enginesOn
-        ? Math.max(shipTuning.maxSpeed, currentSpeed) / shipTuning.stoppingSeconds
+        ? Math.max(normalMaxSpeed, currentSpeed) / shipTuning.stoppingSeconds
         : state.ship.coastDeceleration;
     const movementSeconds = Math.min(activeDeltaMs, 100) / 1000;
     const flight = flightVelocity(state.ship.velocity, targetDelta, movementSeconds, {
         ...shipTuning,
-        maxSpeed: shipTuning.maxSpeed * (wantsBoost ? shipBoostTuning.speedMultiplier : 1),
-        accelerationRate: wantsBoost ? boostAcceleration : shipTuning.maxSpeed / shipTuning.accelerationSeconds,
+        maxSpeed: wantsBoost ? shipTuning.maxSpeed * shipBoostTuning.speedMultiplier : normalMaxSpeed,
+        accelerationRate: wantsBoost ? boostAcceleration : normalMaxSpeed / shipTuning.accelerationSeconds,
         decelerationRate: !targetDelta ? coastDeceleration : shipTuning.maxSpeed * (shipBoostTuning.speedMultiplier - 1) / shipBoostTuning.accelerationSeconds
     });
     const velocity = contact.forcedVelocity ?? flight;
@@ -180,13 +181,18 @@ export function advanceGameSimulation (
         projectiles.filter(projectile => projectile.bornAtActiveMs < clock.activeElapsedMs), options);
     projectiles = resolved.projectiles;
     if (cadence.fired) {
-        const trajectory = shotTrajectory(orbitShip.position, orbitShip.rotation, options.muzzleOffset + options.projectileRadius + 1, options.projectileSpeed);
-        projectiles = [...projectiles, {
-            id: `projectile-${weapon.projectileSequence}`,
-            position: trajectory.start,
-            velocity: trajectory.velocity,
-            bornAtActiveMs: clock.activeElapsedMs
-        }];
+        const volley = weapon.projectileSequence;
+        const muzzleOffset = options.muzzleOffset + options.projectileRadius + 1;
+        const volleyProjectiles = volleyAngleOffsetsDegrees(state.shipStatus.weaponLevel).map((angleOffsetDegrees, index) => {
+            const trajectory = volleyShotTrajectory(orbitShip.position, orbitShip.rotation, angleOffsetDegrees, muzzleOffset, options.projectileSpeed);
+            return {
+                id: `projectile-${volley}-${index + 1}`,
+                position: trajectory.start,
+                velocity: trajectory.velocity,
+                bornAtActiveMs: clock.activeElapsedMs
+            };
+        });
+        projectiles = [...projectiles, ...volleyProjectiles];
     }
     const collisionShip = resolved.shipImpact === null ? orbitShip : shipAfterAsteroidImpact(orbitShip, resolved.shipImpact.position, clock.activeElapsedMs);
     const impactedShip = resolved.shipImpact === null ? collisionShip : { ...collisionShip, asteroidImpactAtActiveMs: clock.activeElapsedMs };

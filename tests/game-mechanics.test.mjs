@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { boostAccelerationRate, flightVelocity, directionRotation } from '../src/game/mechanics/spaceship/flight.ts';
 import { canLandNearPlanet, planetLandingRadius, planetOrbitBoundaryRadius, PLANET_LANDING_SURFACE_GAP } from '../src/game/mechanics/planet/proximity.ts';
-import { segmentHitsCircle, shotTrajectory } from '../src/game/mechanics/projectile/trajectory.ts';
+import { segmentHitsCircle, shotTrajectory, volleyAngleOffsetsDegrees } from '../src/game/mechanics/projectile/trajectory.ts';
+import { engineNormalSpeedPercentByLevel, weaponProjectileCountByLevel } from '../src/game/domain/runBalance.ts';
 import { advanceFireCadence } from '../src/game/mechanics/spaceship/fireCadence.ts';
 import { initialGameState } from '../src/game/definitions/initialGameState.ts';
 import { advanceGameSimulation } from '../src/game/mechanics/gameSimulation.ts';
@@ -18,7 +19,7 @@ import { createOrbitalPathDashes, ORBITAL_PATH_DASH_LENGTH, ORBITAL_PATH_GAP_LEN
 import { activeTimeCycle, activeTimeWave } from '../src/game/visual/activeTime.ts';
 import { launchFromPlanet, LANDING_CENTRE_RADIUS, tryLandAtCapturedPlanet } from '../src/game/mechanics/planet/landing.ts';
 import { decodeGameState, encodeGameState } from '../src/game/application/gameStateCodec.ts';
-import { asteroidFragmentChildCount, asteroidTuning } from '../src/game/definitions/gameplayTuning.ts';
+import { asteroidFragmentChildCount, asteroidTuning, normalFlightMaxSpeed } from '../src/game/definitions/gameplayTuning.ts';
 import { advanceAsteroidMotions, asteroidRadius, fragmentAsteroid } from '../src/game/mechanics/asteroid/asteroidSimulation.ts';
 import { teleportShipToPlanet } from '../src/game/mechanics/debug/teleportShipToPlanet.ts';
 import { teleportShipToAsteroid } from '../src/game/mechanics/debug/teleportShipToAsteroid.ts';
@@ -699,6 +700,138 @@ test('asteroid durability persists through shots, resets for fragments, and coll
     assert.equal(boosted.ship.asteroidControlLockedUntilActiveMs, 501);
 });
 
+const emptySpace = (shipStatus, ship = {}) => ({
+    ...initialGameState,
+    asteroids: [],
+    planets: [],
+    ship: { ...initialGameState.ship, position: { x: 20_000, y: 20_000 }, velocity: { x: 0, y: 0 }, ...ship },
+    shipStatus: { ...initialGameState.shipStatus, ...shipStatus }
+});
+
+const distantTarget = { x: 20_000 + 400_000, y: 20_000 };
+
+test('normal flight takes its cruise speed and acceleration basis from the engine level', () => {
+    assert.equal(normalFlightMaxSpeed(1), 240);
+    assert.equal(normalFlightMaxSpeed(2), 264);
+    assert.equal(normalFlightMaxSpeed(5), 360);
+    assert.equal(normalFlightMaxSpeed(9), 240, 'a level outside the catalogue falls back to the level-one basis');
+
+    for (const engineLevel of [1, 2, 3, 4, 5]) {
+        const expected = 240 * engineNormalSpeedPercentByLevel[engineLevel] / 100;
+        let state = emptySpace({ engineLevel });
+        const input = { target: distantTarget, boostRequested: false, firing: false };
+        for (let tick = 0; tick < 5; tick++) state = advanceGameSimulation(state, input, 100);
+        assert(Math.abs(Math.hypot(state.ship.velocity.x, state.ship.velocity.y) - expected / 2) < 1e-9,
+            `engine level ${engineLevel} accelerates on its own basis`);
+        for (let tick = 0; tick < 5; tick++) state = advanceGameSimulation(state, input, 100);
+        assert(Math.abs(Math.hypot(state.ship.velocity.x, state.ship.velocity.y) - expected) < 1e-9,
+            `engine level ${engineLevel} reaches its configured cruise speed after one second`);
+        assert.equal(state.ship.rotation, Math.PI / 2);
+    }
+
+    let idle = emptySpace({ engineLevel: 5 });
+    for (let tick = 0; tick < 20; tick++) idle = advanceGameSimulation(idle, { target: distantTarget, boostRequested: false, firing: false }, 100);
+    let stopping = idle;
+    for (let tick = 0; tick < 6; tick++) stopping = advanceGameSimulation(stopping, quietInput, 100);
+    assert(Math.abs(stopping.ship.velocity.x) < 1e-9, 'an upgraded ship still stops in half a second');
+});
+
+test('recovery, asteroid impact, Moolaris pushback and boost keep the level-one speed basis', () => {
+    const boosted = level => emptySpace({ engineLevel: level, boosterUnlocked: true });
+    for (const engineLevel of [1, 5]) {
+        let state = boosted(engineLevel);
+        const input = { target: distantTarget, boostRequested: true, firing: false };
+        for (let tick = 0; tick < 40; tick++) state = advanceGameSimulation(state, input, 100);
+        assert.equal(state.ship.boosting, true, `engine level ${engineLevel} can still boost`);
+        assert(Math.abs(Math.hypot(state.ship.velocity.x, state.ship.velocity.y) - 1200) < 1e-9,
+            `engine level ${engineLevel} boosts at the fixed level-one 5x speed`);
+    }
+    assert.equal(boostAccelerationRate(0, 240, 5, 1), 1200, 'boost ramps toward the fixed level-one 5x speed');
+    assert.notEqual(boostAccelerationRate(0, 240, 5, 1), normalFlightMaxSpeed(5) * 5, 'boost never uses the upgraded cruise speed as its basis');
+
+    const impact = level => advanceGameSimulation({
+        ...initialGameState,
+        asteroids: [asteroid('basis-impact', { x: 5_000, y: 0 })],
+        ship: { ...initialGameState.ship, position: { x: 5_000, y: 0 } },
+        shipStatus: { ...initialGameState.shipStatus, engineLevel: level }
+    }, quietInput, 1);
+    for (const level of [1, 5]) {
+        const impacted = impact(level);
+        assert.equal(Math.hypot(impacted.ship.velocity.x, impacted.ship.velocity.y), 240, `engine level ${level} impact pushback`);
+        assert.equal(impacted.ship.asteroidControlLockedUntilActiveMs, 501, `engine level ${level} impact recovery lock`);
+    }
+
+    const inContact = level => advanceGameSimulation({
+        ...initialGameState,
+        asteroids: [],
+        ship: { ...initialGameState.ship, position: { x: moolarisControlRadius, y: 0 }, velocity: { x: 0, y: 0 } },
+        shipStatus: { ...initialGameState.shipStatus, engineLevel: level, boosterUnlocked: true }
+    }, { target: { x: -10_000, y: 0 }, boostRequested: true, firing: true }, 100);
+    for (const level of [1, 5]) {
+        assert.deepEqual(inContact(level).ship.velocity, { x: 240, y: 0 }, `engine level ${level} Moolaris escape`);
+    }
+
+    const recovering = level => advanceGameSimulation({
+        ...initialGameState,
+        asteroids: [],
+        ship: { ...initialGameState.ship, position: { x: moolarisControlRadius + 1, y: 0 }, velocity: { x: 240, y: 0 }, enginesOn: true },
+        shipStatus: { ...initialGameState.shipStatus, engineLevel: level }
+    }, { target: { x: -10_000, y: 0 }, boostRequested: false, firing: false }, 100);
+    for (const level of [1, 5]) {
+        assert.equal(recovering(level).ship.velocity.x, 216, `engine level ${level} recovery coast uses the level-one deceleration basis`);
+    }
+});
+
+test('every weapon level fires its configured symmetric volley with deterministic angles and identity', () => {
+    assert.deepEqual(volleyAngleOffsetsDegrees(0), []);
+    assert.deepEqual(volleyAngleOffsetsDegrees(1), [0]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(2), [-5, 5]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(3), [-2.5, 0, 2.5]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(4), [-10, -5, 5, 10]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(5), [-7.5, -2.5, 0, 2.5, 7.5]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(6), [-15, -10, -5, 5, 10, 15]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(10), [-25, -20, -15, -10, -5, 5, 10, 15, 20, 25]);
+
+    for (const weaponLevel of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+        const fired = advanceGameSimulation(emptySpace({ weaponLevel }, { rotation: 0 }), { target: null, boostRequested: false, firing: true }, 1);
+        assert.equal(fired.weapon.projectileSequence, 1, `weapon level ${weaponLevel} counts one beat as one volley`);
+        assert.equal(fired.projectiles.length, weaponProjectileCountByLevel[weaponLevel]);
+        assert.equal(fired.projectiles.length, weaponLevel);
+        assert.deepEqual(fired.projectiles.map(projectile => projectile.id),
+            Array.from({ length: weaponLevel }, (_, index) => `projectile-1-${index + 1}`));
+        const offsets = fired.projectiles.map(projectile => Math.atan2(projectile.velocity.x, -projectile.velocity.y) * 180 / Math.PI);
+        const expected = volleyAngleOffsetsDegrees(weaponLevel);
+        for (let index = 0; index < weaponLevel; index++) {
+            assert(Math.abs(offsets[index] - expected[index]) < 1e-9, `weapon level ${weaponLevel} shot ${index + 1} flies at ${expected[index]} degrees`);
+            assert(Math.abs(Math.hypot(fired.projectiles[index].velocity.x, fired.projectiles[index].velocity.y) - 400) < 1e-9,
+                `weapon level ${weaponLevel} shot ${index + 1} keeps the configured projectile speed`);
+            assert(Math.abs(Math.hypot(fired.projectiles[index].position.x - 20_000, fired.projectiles[index].position.y - 20_000) - 32) < 1e-9,
+                `weapon level ${weaponLevel} shot ${index + 1} keeps the nose muzzle offset`);
+        }
+        assert.deepEqual([...offsets].sort((left, right) => left - right), offsets, `weapon level ${weaponLevel} lists its shots left to right`);
+    }
+});
+
+test('consecutive volleys increment the sequence once and keep projectile identity stable through restore', () => {
+    let state = { ...emptySpace({ weaponLevel: 4 }, { rotation: 0 }), planets: initialGameState.planets };
+    const input = { target: null, boostRequested: false, firing: true };
+    state = advanceGameSimulation(state, input, 1);
+    assert.deepEqual(state.projectiles.map(projectile => projectile.id),
+        ['projectile-1-1', 'projectile-1-2', 'projectile-1-3', 'projectile-1-4']);
+
+    state = advanceGameSimulation(state, input, 400);
+    assert.equal(state.weapon.projectileSequence, 2);
+    assert.deepEqual(state.projectiles.map(projectile => projectile.id),
+        ['projectile-1-1', 'projectile-1-2', 'projectile-1-3', 'projectile-1-4', 'projectile-2-1', 'projectile-2-2', 'projectile-2-3', 'projectile-2-4']);
+    assert.equal(new Set(state.projectiles.map(projectile => projectile.id)).size, 8);
+
+    const restored = decodeGameState(encodeGameState(state));
+    assert.deepEqual(restored.projectiles, state.projectiles);
+    assert.deepEqual(advanceGameSimulation(restored, input, 400).projectiles.map(projectile => projectile.id),
+        advanceGameSimulation(state, input, 400).projectiles.map(projectile => projectile.id),
+        'a restored run keeps counting volleys and projectile indices');
+});
+
 test('small asteroid loot guarantees cargo only for a cargo schedule marker and preserves loose-item probability in zero slots', () => {
     const target = asteroid('salvage-roll', { x: 2_000, y: 0 }, 'small');
     const looseOutcomes = new Map();
@@ -834,7 +967,7 @@ test('debug cargo control emits its scene intent only while the run can accept i
 
 test('salvage intents preserve full ships and only transfer explicit holders', () => {
     const item = { id: 'item-full', position: { x: 9_000, y: 0 }, motion: { ejectionVelocity: { x: 0, y: 0 }, sunVelocity: { x: -1, y: 0 }, createdAtActiveMs: 0 }, container: { commodityId: 'grain', quantity: 1, totalCost: 0 } };
-    const full = { ...initialGameState, cargo: [{ commodityId: 'milk', quantity: 20, totalCost: 1_000 }], looseItems: [item] };
+    const full = { ...initialGameState, cargo: [{ commodityId: 'milk', quantity: 40, totalCost: 1_000 }], looseItems: [item] };
     const pickup = collectLooseItem(full, item.id);
     assert.equal(pickup, full);
     const cargo = { id: 'cargo-transfer', position: { x: 2_000, y: 0 }, orbit: { angleRadians: 0, radius: 2_000, rotationRadians: 0 }, hitPoints: 2, manifest: [{ commodityId: 'grain', quantity: 2, totalCost: 8 }] };
@@ -860,7 +993,7 @@ test('orbital cargo transfers exact one and max quantities atomically within bot
     assert.deepEqual(max.state.cargo, [{ commodityId: 'grain', quantity: 2, totalCost: 8 }]);
     assert.equal(max.state.orbitalCargo.length, 0, 'an emptied manifest removes the orbital cargo');
 
-    const shipBoundary = { ...initialGameState, cargo: [{ commodityId: 'milk', quantity: 18, totalCost: 0 }], orbitalCargo: [cargo('cargo-b', [{ commodityId: 'milk', quantity: 5, totalCost: 0 }])] };
+    const shipBoundary = { ...initialGameState, cargo: [{ commodityId: 'milk', quantity: 38, totalCost: 0 }], orbitalCargo: [cargo('cargo-b', [{ commodityId: 'milk', quantity: 5, totalCost: 0 }])] };
     assert.equal(maximumOrbitalCargoTransfer(shipBoundary, 'cargo-b', 'milk', 'to-ship'), 2);
     assert.equal(transferOrbitalCargo(shipBoundary, 'cargo-b', 'milk', 3, 'to-ship').failure, 'ship-cargo-full');
     assert.equal(transferOrbitalCargo(shipBoundary, 'cargo-b', 'milk', 2, 'to-ship').failure, null);
