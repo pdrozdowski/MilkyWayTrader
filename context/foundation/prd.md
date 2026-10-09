@@ -263,7 +263,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 
 ### Clock and outcomes
 
-- BR-001: A new run starts in orbit around Seroton with full HP, level-one cargo, engine, and weapon systems, and a locked booster.
+- BR-001: A new run starts in orbit around Seroton with full HP, cargo capacity of 40 units, a level-one engine at 100% base speed, a level-one weapon that fires one projectile per shot, and a locked booster.
 - BR-002: A new run begins with 30:00 of active game time remaining and the clock state set to running.
 - BR-003: Remaining active time is continuously visible whenever an active run is open.
 - BR-004: The clock's running or paused state is continuously visible whenever an active run is open.
@@ -293,8 +293,8 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-033: Landing is available only while the ship is in the planet's orbit zone.
 - BR-034: Launching places the ship back into the planet's orbit zone.
 - BR-035: Travel uses direct ship control and has no destination-selection or automated-travel sequence.
-- BR-036: The booster is initially locked and can be unlocked only through the Lactozis-7C shipyard.
-- BR-037: An unlocked booster requires active thrust, provides five times the current normal maximum speed, consumes no resource, and prevents firing while active.
+- BR-036: The booster is initially locked and can be purchased once for 75,000 credits at the Lactozis-7C shipyard, independently of the engine upgrade level.
+- BR-037: An unlocked booster requires active thrust, reaches five times the level-one base speed regardless of engine upgrades, consumes no resource, and prevents firing while active; boosted speed makes collision avoidance and maneuvering more difficult.
 
 ### Damage, combat, and asteroids
 
@@ -305,7 +305,8 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-042: A medium asteroid hit by a projectile, ship, or planet produces a configured deterministic number of small fragments.
 - BR-043: A small asteroid hit by a projectile, ship, or planet disappears without fragments.
 - BR-043a: An asteroid that reaches Moolaris disappears without fragments.
-- BR-044: Weapon level one fires one projectile per shot, and each additional level adds one projectile to the same configured narrow spread.
+- BR-044: Weapon level one fires one projectile per shot, and each purchased weapon level adds one simultaneous projectile, up to weapon level ten.
+- BR-044a: Odd projectile counts use one forward projectile and mirrored pairs at ±2.5°, ±7.5°, ±12.5°, and each subsequent offset 5° farther out; even projectile counts use mirrored pairs at ±5°, ±10°, ±15°, and each subsequent offset 5° farther out. These specified patterns take precedence over a requirement for angular width to increase at every level.
 - BR-045: Scattered asteroids follow configured drifting paths while the clock is running.
 - BR-046: Asteroids in the outer belt orbit beyond Maslo-Prime's orbital path while the clock is running.
 - BR-047: Scattered and belt populations replenish toward their configured targets while the clock is running.
@@ -329,11 +330,17 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-070: Live market stock, prices, shipyard services, and facilities are unavailable remotely.
 - BR-071: Repairs are purchased in player-selected increments of 10% maximum HP at a configured fixed cost per increment.
 - BR-072: A repair cannot exceed missing HP or available credits.
-- BR-073: Seroton sells cargo-capacity upgrades.
-- BR-074: Lactozis-7C sells normal-engine speed upgrades and the one-time booster unlock.
-- BR-075: Maslo-Prime sells weapon upgrades.
-- BR-076: Cargo upgrades increase capacity, engine upgrades increase normal maximum speed, and weapon upgrades add projectiles to each shot.
-- BR-077: Upgrade levels, effects, and costs are configured balance parameters.
+- BR-073: Seroton sells cargo-capacity upgrades with capacities of 40 units at level one, 50 at level two, 65 at level three, 85 at level four, and 110 at level five.
+- BR-074: Lactozis-7C sells engine upgrades with normal maximum speeds of 100% at level one, 110% at level two, 120% at level three, 135% at level four, and 150% at level five.
+- BR-075: Maslo-Prime sells weapon upgrades from level one through level ten; each level adds one projectile to each shot.
+- BR-076: Cargo, engine, and weapon upgrades are independent progression paths sold at their respective planets; buying a level in one path does not require a level in another, and each path exposes its next level only after the current level is purchased.
+- BR-077: Ship upgrade prices are fixed as follows; each price is paid to reach the listed level.
+
+| Upgrade path | Level 2 | Level 3 | Level 4 | Level 5 | Level 6 | Level 7 | Level 8 | Level 9 | Level 10 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Cargo capacity | 15,000 cr | 30,000 cr | 60,000 cr | 120,000 cr | — | — | — | — | — |
+| Engine speed | 20,000 cr | 40,000 cr | 80,000 cr | 160,000 cr | — | — | — | — | — |
+| Weapon system | 20,000 cr | 30,000 cr | 40,000 cr | 50,000 cr | 60,000 cr | 70,000 cr | 80,000 cr | 90,000 cr | 100,000 cr |
 - BR-078: Seroton maintains independent stock for supplies, alloys, and medicines; other planetary markets are outside the current slice.
 - BR-079: Scheduled Seroton market updates occur every second of active game time.
 - BR-080: Each scheduled update applies operating facility production, consumption, and transformation to the planet's shared commodity stock without allowing stock below zero.
@@ -349,7 +356,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-090: Seroton market transactions have no sales tax.
 - BR-091: A transaction recalculates subsequent prices after applying its complete stock change.
 - BR-092: Buying cannot exceed credits, market stock, or cargo capacity, and selling cannot exceed carried cargo.
-- BR-093: Starting credits, commodity values, stock thresholds, initial stock, production, consumption, taxes, repair costs, upgrade values, asteroid values, and salvage values are balance parameters rather than fixed PRD tables.
+- BR-093: Starting credits, commodity values, stock thresholds, initial stock, production, consumption, taxes, repair costs, asteroid values, and salvage values remain balance parameters; ship upgrade capacities, speeds, level limits, and prices are specified in BR-073–BR-077.
 - BR-094: A planet hosts and maintains multiple facilities that can produce, consume, or transform commodities.
 - BR-095: A player may inspect, construct, or improve a planet's facilities only while landed at that planet.
 - BR-096: Constructing or improving a facility consumes its required resource investment and changes the planet's facility structure.
