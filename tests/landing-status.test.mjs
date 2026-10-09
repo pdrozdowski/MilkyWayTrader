@@ -76,10 +76,15 @@ assert.ok(
     placeholderIconIds.every(id => existsSync(`public/assets/icons/facility-${id}_48x48.png`)),
     'every facility 48x48 icon asset exists'
 );
-const shipServiceIconIds = ['cargo', 'engine', 'weaponary'];
+const shipServiceIconIds = ['cargo', 'engine', 'weaponary', 'booster'];
 assert.ok(
     shipServiceIconIds.every(id => existsSync(`public/assets/icons/shipService-${id}_48x48.png`)),
     'every ship-service 48x48 placeholder icon asset exists'
+);
+const shipyardStylesheet = readFileSync('public/style.css', 'utf8');
+assert.ok(
+    shipServiceIconIds.every(id => shipyardStylesheet.includes(`url('/assets/icons/shipService-${id}_48x48.png')`)),
+    'every ship-service icon asset is wired to its card'
 );
 
 test('facilities view renders five cards with levels, states, recipes and actions from a fake port', () => {
@@ -109,7 +114,7 @@ test('facilities view renders five cards with levels, states, recipes and action
     const facilitiesView = new FakeElement(Object.fromEntries(facilityIdList.map(facilityId => [`[data-facility-id="${facilityId}"]`, cards[facilityId]])));
     const shipyardView = new FakeElement({
         '.shipyard-repair-card': new FakeElement(Object.fromEntries(['.shipyard-card-name', '.shipyard-repair-icon', '.shipyard-repair-hp', '.shipyard-repair-bar', '.shipyard-repair-increment'].map(selector => [selector, new FakeElement()]))),
-        '[data-booster-row]': new FakeElement(Object.fromEntries(['.shipyard-card-name', '.shipyard-card-effect', '.shipyard-card-price', '.shipyard-card-availability', '.shipyard-card-action'].map(selector => [selector, new FakeElement()])))
+        '[data-booster-row]': new FakeElement(Object.fromEntries(['.shipyard-card-icon', '.shipyard-card-name', '.shipyard-card-effect', '.shipyard-card-price', '.shipyard-card-availability', '.shipyard-card-action'].map(selector => [selector, new FakeElement()])))
     });
     const facilitiesHeading = new FakeElement();
     const facilitiesBack = new FakeElement();
@@ -357,6 +362,7 @@ test('the shipyard view renders repair, local service cards and the booster row 
         '.shipyard-repair-increment': new FakeElement()
     });
     const boosterCard = new FakeElement({
+        '.shipyard-card-icon': new FakeElement(),
         '.shipyard-card-name': new FakeElement(),
         '.shipyard-card-effect': new FakeElement(),
         '.shipyard-card-price': new FakeElement(),
@@ -465,7 +471,10 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.match(shipyardMarkup, /<progress class="shipyard-repair-bar" value="0" max="100" aria-labelledby="landing-status-shipyard-repair-hp">/,
         'the shipyard health bar takes its accessible name from the Hull readout');
     for (const serviceId of shipServiceIconIds) {
-        assert.match(shipyardMarkup, new RegExp(`<article class="shipyard-card" data-service-id="${serviceId}">\\s*<div class="shipyard-card-header"><span class="shipyard-card-icon" role="img"></span>`),
+        const cardMarker = serviceId === 'booster'
+            ? '<article class="shipyard-card shipyard-booster-card" data-booster-row>'
+            : `<article class="shipyard-card" data-service-id="${serviceId}">`;
+        assert.match(shipyardMarkup, new RegExp(`${cardMarker}\\s*<div class="shipyard-card-header"><span class="shipyard-card-icon" role="img"></span>`),
             `the ${serviceId} card pairs its name with an icon tile`);
     }
 
@@ -526,6 +535,8 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(textOf(serviceCards.weaponary, '.shipyard-card-price'), '', 'a maximum-level service shows no price');
 
     assert.equal(textOf(boosterCard, '.shipyard-card-name'), displayLabels.shipyardBooster);
+    assert.equal(boosterCard.querySelector('.shipyard-card-icon').attributes['aria-label'], `${displayLabels.shipyardBooster}${displayLabels.shipServiceIconSuffix}`,
+        'the booster row carries its own placeholder icon');
     assert.equal(textOf(boosterCard, '.shipyard-card-effect'), displayLabels.shipyardBoosterEffect);
     assert.equal(textOf(boosterCard, '.shipyard-card-price'), `${displayLabels.facilityPrice}: 75,000`);
     assert.equal(textOf(boosterCard, '.shipyard-card-availability'), `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: Lactozis-7C`);

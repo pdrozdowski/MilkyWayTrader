@@ -226,6 +226,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         }
 
         required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-name').textContent = displayLabels.shipyardBooster;
+        required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-icon').setAttribute('aria-label', `${displayLabels.shipyardBooster}${displayLabels.shipServiceIconSuffix}`);
         required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-effect').textContent = displayLabels.shipyardBoosterEffect;
         required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-price').textContent =
             `${displayLabels.facilityPrice}: ${formatCredits(snapshot.booster.price)}`;

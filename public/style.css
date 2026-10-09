@@ -388,6 +388,7 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .shipyard-card[data-service-id="cargo"] .shipyard-card-icon { background-image: url('/assets/icons/shipService-cargo_48x48.png'); }
 .shipyard-card[data-service-id="engine"] .shipyard-card-icon { background-image: url('/assets/icons/shipService-engine_48x48.png'); }
 .shipyard-card[data-service-id="weaponary"] .shipyard-card-icon { background-image: url('/assets/icons/shipService-weaponary_48x48.png'); }
+.shipyard-booster-card .shipyard-card-icon { background-image: url('/assets/icons/shipService-booster_48x48.png'); }
 .shipyard-card-level { font-weight: 700; }
 .shipyard-card-effect { color: #9fd1ff; }
 .shipyard-card-price { font-weight: 700; }
