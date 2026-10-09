@@ -29,7 +29,7 @@
 - **Location**: src/game/application/gameStateProvider.ts
 - **Detail**: Phase 1 "Changes Required" names `src/game/application/gameStateProvider.ts`. The file is unchanged because `GameStateProvider.update` already decodes/validates the reducer result and publishes exactly one detached snapshot (`update`:24-29), which is the atomic boundary the phase needs. The sibling change S-16 (`7bbd253`, planetary facilities — the pattern this phase mirrors) likewise left that file untouched and only added `planetFacilities.ts` plus the codec. The ship-service quote/apply pair is exercised through `provider.update` in `tests/domain/planetShipServices.test.mjs`, so the boundary is covered by test.
 - **Fix**: No change. Recorded as an intentional no-op.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — change signed off without action.
 
 ### F2 — Upgrade price is read positionally from the catalogue ladder
 
@@ -39,7 +39,7 @@
 - **Location**: src/game/application/planetShipServices.ts:128 (`definition.upgradePrices[level - 1]`)
 - **Detail**: A definition whose `upgradePrices` were shorter than `maximumLevel - 1` would yield `undefined` and produce `NaN` credits. The catalogue is static and the invariant `upgradePrices.length + 1 === maximumLevel` is asserted for every path in `tests/domain/planetShipServices.test.mjs` ("each ship-service path is sold on exactly one planet with its configured maximum level"), so the current three definitions cannot reach that state. The sibling `planetFacilities.ts` uses the same positional pattern.
 - **Fix**: No change. The ladder-length invariant stays test-enforced.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — change signed off without action.
 
 ## Notes
 

@@ -49,7 +49,7 @@
 - **Location**: index.html:167-196, src/ui/components/landingStatus.ts:88-90
 - **Detail**: The three service cards and the booster row are static DOM, and `renderShipyard` throws `Missing ship-service row` if the projection ever returns an id without a matching card. This mirrors the accepted facilities view (five static cards, same throw), so it is consistent with the codebase; it does mean a fourth ship-service path needs markup, styles and a card entry together.
 - **Fix**: No change. Recorded so a future catalogue extension is not silently half-applied.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — change signed off without action.
 
 ### F4 — `failure` is projected but the Shipyard view only reads the boolean flags
 
@@ -59,7 +59,7 @@
 - **Location**: src/game/application/landedShipyard.ts:36,55,66
 - **Detail**: `available`, `affordable`, `maximum`, `owned` drive the view; the raw quote rejection code travels alongside them unused by the DOM. It is useful as the diagnostic reason in projection tests, so it is not harmful, but two sources now describe the same availability.
 - **Fix**: Keep `failure` and annotate it as the diagnostic reason code, or drop it and let tests read the quotes directly.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — change signed off without action.
 
 ### F5 — One tooling fixture had to follow the new definitions-to-domain import
 
@@ -69,7 +69,7 @@
 - **Location**: tests/object-scaffold.test.mjs:157-158
 - **Detail**: `src/game/definitions/gameplayTuning.ts` now imports the engine-level table from `src/game/domain/runBalance.ts` (the domain may not import the state layer, so the level table has to reach mechanics through definitions). The object-scaffold fixture typechecks a copy of `gameplayTuning.ts` in isolation, so it gained the one extra `cp` of `runBalance.ts`. Test-only, no product behaviour.
 - **Fix**: No change.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — change signed off without action.
 
 ## Notes
 

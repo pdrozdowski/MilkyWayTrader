@@ -30,7 +30,7 @@
 - **Detail**: The plan asks the snapshot to carry "action availability", which `available`, `affordable`, `maximum` and `owned` express directly and the component consumes. The extra `failure` field is the quote's raw rejection code; the DOM never reads it, so it is currently contract-only data. It is not harmful (the projection is the typed seam to the domain quotes and the tests use it to prove the rejection reasons), but a reader may wonder which field drives the view.
 - **Fix A (recommended)**: Keep `failure` as the documented reason code and annotate the interface as diagnostic, since `tests/domain/planetShipServices.test.mjs` asserts the exact rejection reason per planet.
 - **Fix B**: Drop `failure` from the snapshot and keep the booleans only; tests read the quotes directly from `planetShipServices`.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — change signed off without action.
 
 ## Notes
 
