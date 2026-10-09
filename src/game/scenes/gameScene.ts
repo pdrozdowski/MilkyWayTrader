@@ -559,7 +559,7 @@ export class Game extends Scene
         this.deathTransitionStarted = true;
         this.game.events.emit('terminal-death-transition', true);
         this.clearFlightInput();
-        this.ship.sprite.setVisible(false);
+        this.ship.setVisible(false);
         this.lossOfControl.setVisible(false);
         this.exit.setVisible(false).disableInteractive();
         this.joystickBase.setVisible(false);

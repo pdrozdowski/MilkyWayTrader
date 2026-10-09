@@ -32,4 +32,12 @@ export class Spaceship extends SceneObject
         this.exhaust.update(visualTimeMs, this.sprite, engineExhaustLayout(engineLevel, false), state.enginesOn && !boosting);
         this.boostEffects.update(visualTimeMs, this.sprite, boosting);
     }
+
+    /** Hides the whole ship presentation: hull, exhaust and boost imagery together. */
+    setVisible (visible: boolean): void
+    {
+        this.sprite.setVisible(visible);
+        this.exhaust.setVisible(visible);
+        this.boostEffects.setVisible(visible);
+    }
 }

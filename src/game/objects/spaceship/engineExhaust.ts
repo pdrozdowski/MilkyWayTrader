@@ -23,6 +23,9 @@ export class EngineExhaust
 {
     private readonly nozzles: GameObjects.Graphics;
     private readonly flames: GameObjects.Image[] = [];
+    private visible = true;
+    private pipeCount = 0;
+    private destroyed = false;
 
     constructor (private readonly scene: Scene)
     {
@@ -31,7 +34,8 @@ export class EngineExhaust
 
     update (time: number, sprite: GameObjects.Sprite, pipes: readonly EngineExhaustPipe[], burning: boolean): void
     {
-        this.nozzles.clear().setPosition(sprite.x, sprite.y).setRotation(sprite.rotation).setScale(sprite.scaleX);
+        this.pipeCount = pipes.length;
+        this.nozzles.clear().setVisible(this.visible && pipes.length > 0).setPosition(sprite.x, sprite.y).setRotation(sprite.rotation).setScale(sprite.scaleX);
         for (const pipe of pipes) {
             this.nozzles.fillStyle(0x335777, 1).fillRoundedRect(pipe.x - nozzleWidth / 2, nozzleTop, nozzleWidth, nozzleHeight, 1);
             this.nozzles.lineStyle(1, 0x182e4b, 1).strokeRoundedRect(pipe.x - nozzleWidth / 2, nozzleTop, nozzleWidth, nozzleHeight, 1);
@@ -49,13 +53,23 @@ export class EngineExhaust
                     sprite.y + (pipe.x * Math.sin(sprite.rotation) + flameMouthY * Math.cos(sprite.rotation)) * sprite.scaleX
                 )
                 .setDisplaySize(flameWidth * sprite.scaleX, length * sprite.scaleX)
-                .setVisible(burning);
+                .setVisible(burning && this.visible);
         });
         for (let index = pipes.length; index < this.flames.length; index++) this.flames[index].setVisible(false);
     }
 
+    /** Hides nozzles and flames with the hull, for example once the ship has been destroyed. */
+    setVisible (visible: boolean): void
+    {
+        this.visible = visible;
+        this.nozzles.setVisible(visible && this.pipeCount > 0);
+        for (const flame of this.flames) flame.setVisible(false);
+    }
+
     destroy (): void
     {
+        if (this.destroyed) return;
+        this.destroyed = true;
         this.nozzles.destroy();
         for (const flame of this.flames) flame.destroy();
         this.flames.length = 0;

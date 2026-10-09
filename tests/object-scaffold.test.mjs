@@ -14,6 +14,17 @@ function transpileModule (path, imports) {
     return module.exports;
 }
 
+// Minimal chainable stand-in for Phaser graphics/image objects; records only what the tests read.
+function phaserDisplayStub () {
+    const stub = { visible: true, destroyed: 0 };
+    const chain = () => stub;
+    for (const method of ['setDepth', 'setPosition', 'setRotation', 'setScale', 'setTexture', 'setOrigin', 'setDisplaySize', 'clear', 'fillStyle', 'fillRoundedRect', 'lineStyle', 'strokeRoundedRect', 'lineBetween', 'fillTriangle', 'fillCircle']) stub[method] = chain;
+    stub.setVisible = visible => { stub.visible = visible; return stub; };
+    stub.setTexture = texture => { stub.texture = texture; return stub; };
+    stub.destroy = () => { stub.destroyed++; };
+    return stub;
+}
+
 test('asteroid projection reconciles IDs, shows persisted durability and keeps every asteroid above planets', () => {
     const { AsteroidProjection, asteroidProjectionDepth } = transpileModule('src/game/objects/asteroid/asteroidProjection.ts', {
         '../../definitions/gameplayTuning': { asteroidTuning: { sizes: { big: { radius: 72, hitPoints: 3 }, medium: { radius: 48, hitPoints: 2 }, small: { radius: 24, hitPoints: 1 } } } },
@@ -172,6 +183,80 @@ test('engine exhaust adds pipes and hotter flames as the engine levels up', () =
 
     assert.deepEqual([0, 56, 112, 167, 223, 278].map(engineFlamePulseLength), [7, 10, 13, 11, 8, 6], 'the flame pulses through the retired animation lengths');
     assert.equal(engineFlamePulseLength(333), engineFlamePulseLength(1_333), 'the pulse runs on a whole-frame loop');
+});
+
+test('the engine exhaust hides with the ship and stays hidden while updates continue', () => {
+    const { EngineExhaust } = transpileModule('src/game/objects/spaceship/engineExhaust.ts', {
+        phaser: { GameObjects: {}, Scene: class {} },
+        '../../visual/layers': { ObjectDepth: { Ship: 20 } },
+        './definition': { shipFrames: { flameNormal: { key: 'flame-normal' }, flameHot: { key: 'flame-hot' } } },
+        './exhaustLayout': { engineFlamePulseLength: () => 10 }
+    });
+    const created = [];
+    const scene = { add: {
+        graphics: () => { const graphics = phaserDisplayStub(); created.push(graphics); return graphics; },
+        image: () => { const image = phaserDisplayStub(); created.push(image); return image; }
+    } };
+    const exhaust = new EngineExhaust(scene);
+    const sprite = { x: 0, y: 0, rotation: 0, scaleX: 1 };
+    const pipes = [
+        { x: -7, variant: 'normal', lengthMultiplier: 1 },
+        { x: 7, variant: 'hot', lengthMultiplier: 2.5 }
+    ];
+    const nozzles = () => created[0];
+    const flames = () => created.slice(1);
+
+    exhaust.update(0, sprite, pipes, true);
+    assert.equal(nozzles().visible, true);
+    assert.deepEqual(flames().map(flame => flame.visible), [true, true]);
+    assert.deepEqual(flames().map(flame => flame.texture), ['flame-normal', 'flame-hot']);
+
+    exhaust.setVisible(false);
+    assert.equal(nozzles().visible, false, 'nozzles leave with the destroyed ship');
+    assert.deepEqual(flames().map(flame => flame.visible), [false, false], 'flames leave with the destroyed ship');
+
+    exhaust.update(100, sprite, pipes, true);
+    assert.equal(nozzles().visible, false, 'a later update must not bring the nozzles back');
+    assert.deepEqual(flames().map(flame => flame.visible), [false, false], 'a later update must not relight the flames');
+
+    exhaust.setVisible(true);
+    exhaust.update(200, sprite, pipes, true);
+    assert.equal(nozzles().visible, true, 'a reused exhaust shows again');
+    assert.deepEqual(flames().map(flame => flame.visible), [true, true]);
+    exhaust.update(300, sprite, pipes, false);
+    assert.deepEqual(flames().map(flame => flame.visible), [false, false], 'idle engines keep their flames dark');
+    assert.equal(nozzles().visible, true, 'idle engines still show their nozzles');
+
+    exhaust.destroy();
+    exhaust.destroy();
+    assert.equal(nozzles().destroyed, 1, 'cleanup stays idempotent');
+    assert.deepEqual(flames().map(flame => flame.destroyed), [1, 1]);
+});
+
+test('hiding the ship hides the hull, the exhaust and the boost imagery together', () => {
+    const hidden = [];
+    const { Spaceship } = transpileModule('src/game/objects/spaceship/spaceship.ts', {
+        phaser: { Physics: {}, Scene: class {} },
+        '../_shared/sceneObject': {
+            SceneObject: class {
+                constructor () {
+                    this.sprite = { setRotation () {}, setVisible: visible => hidden.push(['hull', visible]) };
+                    this.body = { setEnable () {}, setVelocity () {} };
+                }
+                setPosition () {}
+                ownCleanup () {}
+            }
+        },
+        './definition': { definition: { id: 'spaceship' } },
+        './boostEffects': { BoostEffects: class { setVisible (visible) { hidden.push(['boost', visible]); } update () {} destroy () {} } },
+        './engineExhaust': { EngineExhaust: class { setVisible (visible) { hidden.push(['exhaust', visible]); } update () {} destroy () {} } },
+        './exhaustLayout': { engineExhaustLayout: () => [] }
+    });
+    const ship = new Spaceship({}, { position: { x: 0, y: 0 }, rotation: 0, enginesOn: false, boosting: false });
+    ship.setVisible(false);
+    assert.deepEqual(hidden, [['hull', false], ['exhaust', false], ['boost', false]]);
+    ship.setVisible(true);
+    assert.deepEqual(hidden.slice(3), [['hull', true], ['exhaust', true], ['boost', true]]);
 });
 
 test('the split spaceship definition loads a hull and both flame variants from real assets', () => {
