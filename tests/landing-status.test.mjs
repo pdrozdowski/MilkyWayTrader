@@ -76,6 +76,11 @@ assert.ok(
     placeholderIconIds.every(id => existsSync(`public/assets/icons/facility-${id}_48x48.png`)),
     'every facility 48x48 icon asset exists'
 );
+const shipServiceIconIds = ['cargo', 'engine', 'weaponary'];
+assert.ok(
+    shipServiceIconIds.every(id => existsSync(`public/assets/icons/shipService-${id}_48x48.png`)),
+    'every ship-service 48x48 placeholder icon asset exists'
+);
 
 test('facilities view renders five cards with levels, states, recipes and actions from a fake port', () => {
     const selectors = [
@@ -336,6 +341,7 @@ test('facilities view renders five cards with levels, states, recipes and action
 test('the shipyard view renders repair, local service cards and the booster row from a fake port', () => {
     const serviceIds = ['cargo', 'engine', 'weaponary'];
     const serviceCards = Object.fromEntries(serviceIds.map(serviceId => [serviceId, new FakeElement({
+        '.shipyard-card-icon': new FakeElement(),
         '.shipyard-card-name': new FakeElement(),
         '.shipyard-card-level': new FakeElement(),
         '.shipyard-card-price': new FakeElement(),
@@ -458,6 +464,10 @@ test('the shipyard view renders repair, local service cards and the booster row 
         'the repair readout owns the id the health bar points at');
     assert.match(shipyardMarkup, /<progress class="shipyard-repair-bar" value="0" max="100" aria-labelledby="landing-status-shipyard-repair-hp">/,
         'the shipyard health bar takes its accessible name from the Hull readout');
+    for (const serviceId of shipServiceIconIds) {
+        assert.match(shipyardMarkup, new RegExp(`<article class="shipyard-card" data-service-id="${serviceId}">\\s*<div class="shipyard-card-header"><span class="shipyard-card-icon" role="img"></span>`),
+            `the ${serviceId} card pairs its name with an icon tile`);
+    }
 
     assert.equal(shipyardButton.disabled, false, 'the shipyard control is enabled from the landed hub');
     assert.equal(shipyardButton.attributes['aria-label'], displayLabels.shipyard);
@@ -493,6 +503,8 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(root.querySelector('#landing-status-shipyard-planet').textContent, 'Seroton');
 
     assert.equal(textOf(serviceCards.cargo, '.shipyard-card-name'), 'Cargo Capacity');
+    assert.equal(serviceCards.cargo.querySelector('.shipyard-card-icon').attributes['aria-label'], `Cargo Capacity${displayLabels.shipServiceIconSuffix}`,
+        'each service name is paired with its own placeholder icon');
     assert.equal(textOf(serviceCards.cargo, '.shipyard-card-level'), `${displayLabels.facilityLevel} 1 / 5`);
     assert.equal(textOf(serviceCards.cargo, '.shipyard-card-price'), `${displayLabels.facilityPrice}: 15,000`);
     assert(!textOf(serviceCards.cargo, '.shipyard-card-price').includes('cr'), 'a shipyard price carries no currency suffix');
@@ -500,14 +512,17 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(serviceCards.cargo.querySelector('.shipyard-card-availability').hidden, true);
     assert.equal(actionOf(serviceCards.cargo).textContent, displayLabels.facilityUpgrade);
     assert.equal(actionOf(serviceCards.cargo).disabled, false);
+    assert.equal(actionOf(serviceCards.cargo).hidden, false, 'an actionable upgrade keeps its button');
     assert.equal(actionOf(serviceCards.cargo).attributes['aria-label'], `Cargo Capacity: ${displayLabels.facilityUpgrade}`);
 
     assert.equal(textOf(serviceCards.engine, '.shipyard-card-availability'), `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: Lactozis-7C`);
     assert.equal(serviceCards.engine.querySelector('.shipyard-card-availability').hidden, false);
     assert.equal(actionOf(serviceCards.engine).textContent, displayLabels.shipyardNotAvailable);
     assert.equal(actionOf(serviceCards.engine).disabled, true, 'an off-planet service is disabled');
+    assert.equal(actionOf(serviceCards.engine).hidden, true, 'a Not available button is hidden instead of shown disabled');
     assert.equal(actionOf(serviceCards.weaponary).textContent, displayLabels.facilityMaxLevel);
     assert.equal(actionOf(serviceCards.weaponary).disabled, true, 'a maximum-level service is disabled');
+    assert.equal(actionOf(serviceCards.weaponary).hidden, false, 'a maximum-level service keeps its MAX LEVEL button');
     assert.equal(textOf(serviceCards.weaponary, '.shipyard-card-price'), '', 'a maximum-level service shows no price');
 
     assert.equal(textOf(boosterCard, '.shipyard-card-name'), displayLabels.shipyardBooster);
@@ -516,6 +531,7 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(textOf(boosterCard, '.shipyard-card-availability'), `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: Lactozis-7C`);
     assert.equal(actionOf(boosterCard).textContent, displayLabels.shipyardNotAvailable);
     assert.equal(actionOf(boosterCard).disabled, true);
+    assert.equal(actionOf(boosterCard).hidden, true, 'an off-planet booster button is hidden too');
 
     actionOf(serviceCards.cargo).click();
     shipyardRepairButton.click();
@@ -540,8 +556,10 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(textOf(serviceCards.engine, '.shipyard-card-availability'), '', 'the local path becomes available on its own planet');
     assert.equal(serviceCards.engine.querySelector('.shipyard-card-availability').hidden, true);
     assert.equal(actionOf(serviceCards.engine).disabled, true, 'the local path stays disabled while unaffordable');
+    assert.equal(actionOf(serviceCards.engine).hidden, false, 'an unaffordable local upgrade still shows its disabled button');
     assert.equal(actionOf(boosterCard).textContent, displayLabels.shipyardOwned);
     assert.equal(actionOf(boosterCard).disabled, true, 'an owned booster cannot be bought again');
+    assert.equal(actionOf(boosterCard).hidden, false, 'an owned booster keeps its Owned row');
     assert.equal(textOf(boosterCard, '.shipyard-card-availability'), displayLabels.shipyardOwned);
 
     shipyardButton.click();

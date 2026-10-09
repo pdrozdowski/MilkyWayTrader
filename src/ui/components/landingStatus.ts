@@ -206,6 +206,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             const serviceId = card.dataset.serviceId as LandingShipServiceId;
             const row = snapshot.services.find(candidate => candidate.serviceId === serviceId);
             if (!row) throw new Error(`Missing ship-service row: ${serviceId}`);
+            required<HTMLElement>(card, '.shipyard-card-icon').setAttribute('aria-label', `${row.label}${displayLabels.shipServiceIconSuffix}`);
             required<HTMLElement>(card, '.shipyard-card-name').textContent = row.label;
             required<HTMLElement>(card, '.shipyard-card-level').textContent = `${displayLabels.facilityLevel} ${row.level} / ${row.maximumLevel}`;
             required<HTMLElement>(card, '.shipyard-card-price').textContent = row.maximum ? '' : `${displayLabels.facilityPrice}: ${formatCredits(row.price)}`;
@@ -221,6 +222,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
                 : row.available ? displayLabels.facilityUpgrade : displayLabels.shipyardNotAvailable;
             actionButton.setAttribute('aria-label', `${row.label}: ${actionButton.textContent}`);
             actionButton.disabled = !row.available || !row.affordable;
+            actionButton.hidden = actionButton.textContent === displayLabels.shipyardNotAvailable;
         }
 
         required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-name').textContent = displayLabels.shipyardBooster;
@@ -240,6 +242,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             : snapshot.booster.available ? displayLabels.shipyardPurchase : displayLabels.shipyardNotAvailable;
         boosterButton.setAttribute('aria-label', `${displayLabels.shipyardBooster}: ${boosterButton.textContent}`);
         boosterButton.disabled = snapshot.booster.owned || !snapshot.booster.available || !snapshot.booster.affordable;
+        boosterButton.hidden = boosterButton.textContent === displayLabels.shipyardNotAvailable;
     };
     const render = (snapshot: Readonly<LandingStatusSnapshot>): void => {
         modal.hidden = !snapshot.visible;

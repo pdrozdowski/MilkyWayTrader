@@ -24,6 +24,7 @@ export const displayLabels = {
     shipyardServicePlanet: 'Service planet', shipyardNotAvailable: 'Not available',
     shipyardBooster: 'Booster', shipyardBoosterEffect: 'Manual thrust reaches a fixed 5x base speed', shipyardOwned: 'Owned', shipyardPurchase: 'PURCHASE',
     shipyardRepairIcon: 'Ship icon',
+    shipServiceIconSuffix: ' system icon',
     marketCredits: 'Credits', marketCargo: 'Cargo', marketQuantity: 'Trading', commodityIconSuffix: ' commodity icon',
     marketConfirm: 'CONFIRM TRADE',
     marketBuy: 'BUY', marketSell: 'SELL', marketNoTrade: 'SELECT A QUANTITY', marketCashShortfall: 'Insufficient credits:',
