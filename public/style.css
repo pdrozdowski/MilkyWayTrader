@@ -383,7 +383,11 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .shipyard-card h3, .shipyard-card p { margin: 0; overflow-wrap: anywhere; }
 .shipyard-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .shipyard-card-name { font-size: 1.1em; }
-.shipyard-card-icon { box-sizing: border-box; display: block; flex: 0 0 auto; width: 48px; height: 48px; border: 1px dashed var(--ui-border); border-radius: 4px; background-color: #1c4266; background-image: url('/assets/icons/ship_32x32.png'); background-repeat: no-repeat; background-position: center; background-size: contain; }
+.shipyard-card-icon { box-sizing: border-box; display: block; flex: 0 0 auto; width: 48px; height: 48px; border: 1px dashed var(--ui-border); border-radius: 4px; background-color: #1c4266; background-repeat: no-repeat; background-position: center; background-size: contain; }
+.shipyard-repair-icon { background-image: url('/assets/icons/ship_32x32.png'); }
+.shipyard-card[data-service-id="cargo"] .shipyard-card-icon { background-image: url('/assets/icons/shipService-cargo_48x48.png'); }
+.shipyard-card[data-service-id="engine"] .shipyard-card-icon { background-image: url('/assets/icons/shipService-engine_48x48.png'); }
+.shipyard-card[data-service-id="weaponary"] .shipyard-card-icon { background-image: url('/assets/icons/shipService-weaponary_48x48.png'); }
 .shipyard-card-level { font-weight: 700; }
 .shipyard-card-effect { color: #9fd1ff; }
 .shipyard-card-price { font-weight: 700; }
