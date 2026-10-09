@@ -212,7 +212,7 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Manual
 
-- [ ] 1.3 Service planet assignments are inspected
+- [x] 1.3 Service planet assignments are inspected
 
 ### Phase 2: Engine and weapon mechanics
 
@@ -223,8 +223,8 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Manual
 
-- [ ] 2.3 Upgraded controlled flight and fixed boost speed are verified
-- [ ] 2.4 Representative odd and even volleys are visually verified
+- [x] 2.3 Upgraded controlled flight and fixed boost speed are verified
+- [x] 2.4 Representative odd and even volleys are visually verified
 
 ### Phase 3: Shipyard projection and landed UI
 
@@ -236,8 +236,8 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Manual
 
-- [ ] 3.4 Shipyard availability and planet-specific actions are verified
-- [ ] 3.5 Purchases visibly refresh Shipyard state without launch
+- [x] 3.4 Shipyard availability and planet-specific actions are verified
+- [x] 3.5 Purchases visibly refresh Shipyard state without launch
 
 ### Phase 4: Focused regression verification
 
@@ -248,4 +248,4 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Manual
 
-- [ ] 4.3 Representative repair, all three local upgrades, and booster purchase are completed
+- [x] 4.3 Representative repair, all three local upgrades, and booster purchase are completed
