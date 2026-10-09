@@ -243,8 +243,8 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Automated
 
-- [x] 4.1 Focused domain, mechanics, and UI suites pass
-- [x] 4.2 Type checking passes after the complete change: `npm.cmd run typecheck`
+- [x] 4.1 Focused domain, mechanics, and UI suites pass — ad9dd54
+- [x] 4.2 Type checking passes after the complete change: `npm.cmd run typecheck` — ad9dd54
 
 #### Manual
 
