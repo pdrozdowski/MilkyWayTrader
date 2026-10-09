@@ -29,7 +29,7 @@
 - **Location**: src/game/mechanics/gameSimulation.ts:184-196, src/game/mechanics/projectile/trajectory.ts:18-29
 - **Detail**: Phase 2 writes "Odd volleys use a forward shot then mirrored ±2.5°, ±7.5°, ±12.5° pairs; even volleys use mirrored ±5°, ±10°, ±15° pairs". The implementation keys the pattern off the *projectile count*, which equals the weapon level (`volleyAngleOffsetsDegrees(state.shipStatus.weaponLevel)`). That is the only reading consistent with the same contract's "emits `weaponLevel` projectiles" and with BR-044a ("Odd projectile counts … even projectile counts …"); a volley *number* that alternated parity would contradict the purchased weapon level. The frame's own examples (Lv2 fires ±5°, Lv3 fires forward and ±2.5°) confirm the count-based reading.
 - **Fix**: No change. Wording recorded here so a later reader does not "correct" the implementation toward volley-number parity.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — change signed off without action.
 
 ### F2 — Offset ordering follows the literal "ascending angle from left to right" reading
 
