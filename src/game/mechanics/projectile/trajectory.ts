@@ -10,21 +10,20 @@ export function shotTrajectory (ship: Point, rotation: number, muzzleOffset: num
     };
 }
 
+/** Degrees between neighbouring volley projectiles (BR-044a). */
+export const volleyAngleStepDegrees = 5;
+
 /**
  * Degrees-from-forward offsets of one volley, ordered ascending from left to right (BR-044a).
- * Odd counts add one forward projectile, even counts consist only of mirrored pairs; each pair sits
- * 5 degrees farther out than the previous one.
+ * The pattern is centred on the heading and every neighbouring pair sits one uniform step apart:
+ * an odd count fires the forward shot with mirrored pairs outside it, and an even count straddles
+ * the heading at half a step so its two frontmost projectiles stay as far apart as the others.
  */
 export function volleyAngleOffsetsDegrees (projectileCount: number): readonly number[]
 {
     if (!Number.isSafeInteger(projectileCount) || projectileCount < 1) return [];
-    const pairCount = Math.floor(projectileCount / 2);
-    const outwardDegrees = (pair: number): number => projectileCount % 2 === 1 ? 2.5 + (pair - 1) * 5 : 5 * pair;
-    const offsets: number[] = [];
-    for (let pair = pairCount; pair >= 1; pair--) offsets.push(-outwardDegrees(pair));
-    if (projectileCount % 2 === 1) offsets.push(0);
-    for (let pair = 1; pair <= pairCount; pair++) offsets.push(outwardDegrees(pair));
-    return offsets;
+    const centre = (projectileCount - 1) / 2;
+    return Array.from({ length: projectileCount }, (_, index) => (index - centre) * volleyAngleStepDegrees);
 }
 
 /** Nose-offset trajectory of one volley projectile, rotated by its left-to-right angle offset. */

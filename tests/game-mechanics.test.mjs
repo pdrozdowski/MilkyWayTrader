@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { boostAccelerationRate, flightVelocity, directionRotation } from '../src/game/mechanics/spaceship/flight.ts';
 import { canLandNearPlanet, planetLandingRadius, planetOrbitBoundaryRadius, PLANET_LANDING_SURFACE_GAP } from '../src/game/mechanics/planet/proximity.ts';
-import { segmentHitsCircle, shotTrajectory, volleyAngleOffsetsDegrees } from '../src/game/mechanics/projectile/trajectory.ts';
+import { segmentHitsCircle, shotTrajectory, volleyAngleOffsetsDegrees, volleyAngleStepDegrees } from '../src/game/mechanics/projectile/trajectory.ts';
 import { engineNormalSpeedPercentByLevel, weaponProjectileCountByLevel } from '../src/game/domain/runBalance.ts';
 import { advanceFireCadence } from '../src/game/mechanics/spaceship/fireCadence.ts';
 import { initialGameState } from '../src/game/definitions/initialGameState.ts';
@@ -785,12 +785,25 @@ test('recovery, asteroid impact, Moolaris pushback and boost keep the level-one 
 test('every weapon level fires its configured symmetric volley with deterministic angles and identity', () => {
     assert.deepEqual(volleyAngleOffsetsDegrees(0), []);
     assert.deepEqual(volleyAngleOffsetsDegrees(1), [0]);
-    assert.deepEqual(volleyAngleOffsetsDegrees(2), [-5, 5]);
-    assert.deepEqual(volleyAngleOffsetsDegrees(3), [-2.5, 0, 2.5]);
-    assert.deepEqual(volleyAngleOffsetsDegrees(4), [-10, -5, 5, 10]);
-    assert.deepEqual(volleyAngleOffsetsDegrees(5), [-7.5, -2.5, 0, 2.5, 7.5]);
-    assert.deepEqual(volleyAngleOffsetsDegrees(6), [-15, -10, -5, 5, 10, 15]);
-    assert.deepEqual(volleyAngleOffsetsDegrees(10), [-25, -20, -15, -10, -5, 5, 10, 15, 20, 25]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(2), [-2.5, 2.5]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(3), [-5, 0, 5]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(4), [-7.5, -2.5, 2.5, 7.5]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(5), [-10, -5, 0, 5, 10]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(6), [-12.5, -7.5, -2.5, 2.5, 7.5, 12.5]);
+    assert.deepEqual(volleyAngleOffsetsDegrees(10), [-22.5, -17.5, -12.5, -7.5, -2.5, 2.5, 7.5, 12.5, 17.5, 22.5]);
+
+    // Every neighbouring pair, frontmost included, sits one uniform step apart in both parities.
+    for (let projectileCount = 1; projectileCount <= 10; projectileCount++) {
+        const offsets = volleyAngleOffsetsDegrees(projectileCount);
+        for (let index = 1; index < offsets.length; index++) {
+            assert.equal(offsets[index] - offsets[index - 1], volleyAngleStepDegrees,
+                `${projectileCount} projectiles keep a uniform gap at index ${index}`);
+        }
+        assert(Math.abs(offsets.reduce((total, offset) => total + offset, 0)) < 1e-9, `${projectileCount} projectiles stay centred on the heading`);
+        assert.equal(offsets.length, projectileCount);
+        if (projectileCount % 2 === 1) assert(offsets.includes(0), `${projectileCount} projectiles fire one shot straight ahead`);
+        else assert(!offsets.includes(0), `${projectileCount} projectiles straddle the heading`);
+    }
 
     for (const weaponLevel of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
         const fired = advanceGameSimulation(emptySpace({ weaponLevel }, { rotation: 0 }), { target: null, boostRequested: false, firing: true }, 1);

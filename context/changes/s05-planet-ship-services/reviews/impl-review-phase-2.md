@@ -38,8 +38,8 @@
 - **Dimension**: Plan Adherence
 - **Location**: src/game/mechanics/projectile/trajectory.ts:18-29
 - **Detail**: The contract states the ordering rule first ("Offset order is deterministic: ascending angle from left to right") and then describes the odd pattern as "a forward shot then mirrored pairs". Implemented literally, ascending angle puts the forward shot of an odd count between the two members of its innermost pair: Lv3 emits `-2.5°, 0°, +2.5°`, Lv5 emits `-7.5°, -2.5°, 0°, +2.5°, +7.5°`, and Lv2/4 emit `-5°, +5°` / `-10°, -5°, +5°, +10°`. Emission order only decides which `projectile-<volley>-<n>` index owns which mirrored path; the visible spread is identical under either reading. The alternative ("forward shot first, then each mirrored pair outside-in") would satisfy the odd-count phrase but break the stated ascending-angle rule for every even count.
-- **Fix**: No change, pending the plan's own manual check 2.4 (representative odd and even volleys verified visually). Flagged so the ordering choice is visible if the user prefers the alternative.
-- **Decision**: PENDING
+- **Fix**: Superseded. Manual check 2.4 found the parity patterns left uneven spacing (a 10° hole ahead for even counts, a squeezed 2.5° front pair for odd ones), so volley spacing is now one uniform 5° step centred on the heading. Superseded by the post-implementation decision recorded in `change.md`.
+- **Decision**: FIXED — replaced by the uniform-step rule.
 
 ## Notes
 

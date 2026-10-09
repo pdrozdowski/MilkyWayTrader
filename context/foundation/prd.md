@@ -306,7 +306,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-043: A small asteroid hit by a projectile, ship, or planet disappears without fragments.
 - BR-043a: An asteroid that reaches Moolaris disappears without fragments.
 - BR-044: Weapon level one fires one projectile per shot, and each purchased weapon level adds one simultaneous projectile, up to weapon level ten.
-- BR-044a: Odd projectile counts use one forward projectile and mirrored pairs at ±2.5°, ±7.5°, ±12.5°, and each subsequent offset 5° farther out; even projectile counts use mirrored pairs at ±5°, ±10°, ±15°, and each subsequent offset 5° farther out. These specified patterns take precedence over a requirement for angular width to increase at every level.
+- BR-044a: Every neighbouring pair of projectiles in one volley is a uniform 5° step apart and the volley stays centred on the ship's heading. An odd projectile count fires one projectile directly ahead with mirrored pairs 5° farther out on each side; an even projectile count fires mirrored pairs at ±2.5° with each subsequent pair another 5° farther out. Angular width grows by one step for every added projectile.
 - BR-045: Scattered asteroids follow configured drifting paths while the clock is running.
 - BR-046: Asteroids in the outer belt orbit beyond Maslo-Prime's orbital path while the clock is running.
 - BR-047: Scattered and belt populations replenish toward their configured targets while the clock is running.
