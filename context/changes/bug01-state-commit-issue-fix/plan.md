@@ -295,7 +295,7 @@ Not applicable: no persisted format, schema version or saved data is touched, an
 
 #### Manual
 
-- [ ] 2.5 HUD, landed panels and the cargo-transfer modal behave exactly as before while flying, landing and acting
+- [x] 2.5 HUD, landed panels and the cargo-transfer modal behave exactly as before while flying, landing and acting
 
 ### Phase 3: Validate and record the gain
 
