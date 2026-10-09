@@ -288,10 +288,10 @@ Not applicable: no persisted format, schema version or saved data is touched, an
 
 #### Automated
 
-- [x] 2.1 `test:domain` passes with the landing-skip identity case
-- [x] 2.2 `test:ui-presentation` passes unchanged
-- [x] 2.3 `test:fast` passes
-- [x] 2.4 `typecheck` passes
+- [x] 2.1 `test:domain` passes with the landing-skip identity case — d6c2abc
+- [x] 2.2 `test:ui-presentation` passes unchanged — d6c2abc
+- [x] 2.3 `test:fast` passes — d6c2abc
+- [x] 2.4 `typecheck` passes — d6c2abc
 
 #### Manual
 
