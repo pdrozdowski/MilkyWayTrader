@@ -96,14 +96,14 @@ body {
 #run-status-secondary > button { justify-content: flex-start; gap: 10px; width: 100%; }
 #run-status-secondary > button[aria-expanded="true"] { border-color: var(--ui-border); background: var(--ui-action); }
 .run-status-icon { display: inline-block; flex: 0 0 auto; width: 32px; height: 32px; object-fit: contain; image-rendering: pixelated; }
-#run-status-hp { flex: 1; min-width: 0; height: 12px; appearance: none; overflow: hidden; border: 0; border-radius: 999px; background: var(--ui-health-track); }
-#run-status-hp::-webkit-progress-bar { background: var(--ui-health-track); }
-#run-status-hp::-webkit-progress-value { background: var(--ui-health); }
-#run-status-hp::-moz-progress-bar { background: var(--ui-health); }
-#run-status-hp[data-health-band="warning"]::-webkit-progress-value { background: var(--ui-health-warning); }
-#run-status-hp[data-health-band="warning"]::-moz-progress-bar { background: var(--ui-health-warning); }
-#run-status-hp[data-health-band="critical"]::-webkit-progress-value { background: var(--ui-health-critical); }
-#run-status-hp[data-health-band="critical"]::-moz-progress-bar { background: var(--ui-health-critical); }
+/* One hull-health skin for every health bar: the HUD bar and the landed repair bar share it. */
+progress[data-health-band] { --ui-health-fill: var(--ui-health); height: 12px; appearance: none; overflow: hidden; border: 0; border-radius: 999px; background: var(--ui-health-track); }
+progress[data-health-band="warning"] { --ui-health-fill: var(--ui-health-warning); }
+progress[data-health-band="critical"] { --ui-health-fill: var(--ui-health-critical); }
+progress[data-health-band]::-webkit-progress-bar { background: var(--ui-health-track); }
+progress[data-health-band]::-webkit-progress-value { background: var(--ui-health-fill); }
+progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill); }
+#run-status-hp { flex: 1; min-width: 0; }
 #game-over-results, #game-over-status { box-sizing: border-box; width: min(600px, calc(100% - 48px)); color: #fff; background: var(--ui-surface); text-align: center; }
 #game-over-results { position: absolute; top: 70%; left: 50%; z-index: 3; padding: 20px 24px; border-radius: 12px; background: rgb(7 17 27 / 50%); transform: translate(-50%, -50%); }
 #game-over-results h1 { margin: 0 0 14px; font-size: clamp(24px, 4vw, 32px); }
@@ -389,14 +389,7 @@ body {
 .shipyard-card-price { font-weight: 700; }
 .shipyard-card-availability { color: var(--ui-disabled); }
 .shipyard-card-action { margin-top: auto; }
-.shipyard-repair-bar { width: 100%; height: 12px; appearance: none; overflow: hidden; border: 0; border-radius: 999px; background: var(--ui-health-track); }
-.shipyard-repair-bar::-webkit-progress-bar { background: var(--ui-health-track); }
-.shipyard-repair-bar::-webkit-progress-value { background: var(--ui-health); }
-.shipyard-repair-bar::-moz-progress-bar { background: var(--ui-health); }
-.shipyard-repair-bar[data-health-band="warning"]::-webkit-progress-value { background: var(--ui-health-warning); }
-.shipyard-repair-bar[data-health-band="warning"]::-moz-progress-bar { background: var(--ui-health-warning); }
-.shipyard-repair-bar[data-health-band="critical"]::-webkit-progress-value { background: var(--ui-health-critical); }
-.shipyard-repair-bar[data-health-band="critical"]::-moz-progress-bar { background: var(--ui-health-critical); }
+.shipyard-repair-bar { width: 100%; }
 .shipyard-repair-increment { font-weight: 700; }
 
 @media (max-width: 420px) {
