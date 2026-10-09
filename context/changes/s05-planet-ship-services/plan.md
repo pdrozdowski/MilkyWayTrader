@@ -207,8 +207,8 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Automated
 
-- [ ] 1.1 Catalogue, landed-operation, and rejection-path tests pass
-- [ ] 1.2 Codec level-bound tests pass
+- [x] 1.1 Catalogue, landed-operation, and rejection-path tests pass
+- [x] 1.2 Codec level-bound tests pass
 
 #### Manual
 

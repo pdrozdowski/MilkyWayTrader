@@ -44,7 +44,7 @@ test('landed trades enforce landing, stock, cargo, credits and atomically preser
     assert.equal(quoteLandedTrade(landed(), 'grain', 0).failure, 'invalid-quantity');
     assert.equal(quoteLandedTrade(landed(), 'grain', 101).failure, 'insufficient-stock');
     assert.equal(quoteLandedTrade({ ...landed(), credits: 1 }, 'grain', 1).failure, 'insufficient-credits');
-    assert.equal(quoteLandedTrade({ ...landed(), cargo: [{ commodityId: 'ore', quantity: 20, totalCost: 0 }] }, 'grain', 1).failure, 'insufficient-cargo');
+    assert.equal(quoteLandedTrade({ ...landed(), cargo: [{ commodityId: 'ore', quantity: 40, totalCost: 0 }] }, 'grain', 1).failure, 'insufficient-cargo');
     assert.equal(quoteLandedTrade(landed(), 'grain', -1).failure, 'insufficient-cargo-commodity');
 
     const before = landed();

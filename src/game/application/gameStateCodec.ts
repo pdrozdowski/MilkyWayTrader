@@ -3,7 +3,13 @@ import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 import type { PlanetId } from '../state/planetState';
 import type { PlanetFacilityId, PlanetFacilityStatus, SerotonCommodityId } from '../state/serotonMarketState';
 import type { AsteroidSize, AsteroidVariant } from '../state/asteroidState';
-import { maximumShipHitPoints, orbitalCargoCapacity } from '../domain/runBalance.ts';
+import {
+    cargoCapacityByLevel,
+    engineNormalSpeedPercentByLevel,
+    maximumShipHitPoints,
+    orbitalCargoCapacity,
+    weaponProjectileCountByLevel
+} from '../domain/runBalance.ts';
 import { planetIds } from '../domain/planetCatalog.ts';
 import { planetFacilityIds, planetFacilityMaximumLevel } from '../domain/planetFacilityCatalog.ts';
 import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
@@ -51,6 +57,15 @@ function positiveSafeInteger (value: unknown, path: string): number
     const number = nonNegativeSafeInteger(value, path);
     if (number === 0) throw new Error(`${path} must be positive.`);
     return number;
+}
+
+function catalogueLevel (value: unknown, supportedLevels: Readonly<Record<number, number>>, path: string): number
+{
+    const level = positiveSafeInteger(value, path);
+    if (!Object.prototype.hasOwnProperty.call(supportedLevels, level)) {
+        throw new Error(`${path} is not a configured ship-service level.`);
+    }
+    return level;
 }
 
 function nonEmptyString (value: unknown, path: string): string
@@ -419,9 +434,9 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         },
         shipStatus: {
             currentHitPoints,
-            cargoLevel: positiveSafeInteger(shipStatus.cargoLevel, 'state.shipStatus.cargoLevel'),
-            engineLevel: positiveSafeInteger(shipStatus.engineLevel, 'state.shipStatus.engineLevel'),
-            weaponLevel: positiveSafeInteger(shipStatus.weaponLevel, 'state.shipStatus.weaponLevel'),
+            cargoLevel: catalogueLevel(shipStatus.cargoLevel, cargoCapacityByLevel, 'state.shipStatus.cargoLevel'),
+            engineLevel: catalogueLevel(shipStatus.engineLevel, engineNormalSpeedPercentByLevel, 'state.shipStatus.engineLevel'),
+            weaponLevel: catalogueLevel(shipStatus.weaponLevel, weaponProjectileCountByLevel, 'state.shipStatus.weaponLevel'),
             boosterUnlocked: shipStatus.boosterUnlocked
         },
         planets,

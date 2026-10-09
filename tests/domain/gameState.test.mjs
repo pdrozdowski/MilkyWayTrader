@@ -140,6 +140,11 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
         { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: {} }] },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), currentHitPoints: 101 } },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), cargoLevel: 0 } },
+        { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), cargoLevel: 6 } },
+        { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), cargoLevel: 1.5 } },
+        { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), engineLevel: 6 } },
+        { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), weaponLevel: 11 } },
+        { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), weaponLevel: 2.5 } },
         {
             ...clone(advanced),
             ship: { ...clone(advanced.ship), boosting: true },
@@ -178,6 +183,39 @@ test('v17 facility state rejects the previous schema and round trips detached re
     source.markets[0].facilities[0].status = 'notBuilt';
     assert.equal(detached.markets[0].facilities[0].level, 1);
     assert.equal(detached.markets[0].facilities[0].status, 'working');
+});
+
+test('the codec binds every ship-service level to its balance catalogue', () => {
+    const maxed = {
+        ...clone(initialGameState),
+        shipStatus: { currentHitPoints: 100, cargoLevel: 5, engineLevel: 5, weaponLevel: 10, boosterUnlocked: true }
+    };
+    assert.deepEqual(decodeGameState(maxed).shipStatus, maxed.shipStatus);
+    assert.deepEqual(decodeGameState(encodeGameState(maxed)).shipStatus, maxed.shipStatus);
+
+    for (const level of [1, 2, 3, 4, 5]) {
+        const candidate = { ...clone(initialGameState), shipStatus: { ...clone(initialGameState.shipStatus), cargoLevel: level, engineLevel: level } };
+        assert.equal(decodeGameState(candidate).shipStatus.cargoLevel, level);
+        assert.equal(decodeGameState(candidate).shipStatus.engineLevel, level);
+    }
+    for (const level of [1, 2, 5, 9, 10]) {
+        const candidate = { ...clone(initialGameState), shipStatus: { ...clone(initialGameState.shipStatus), weaponLevel: level } };
+        assert.equal(decodeGameState(candidate).shipStatus.weaponLevel, level);
+    }
+
+    const unsupported = [
+        { cargoLevel: 6 },
+        { cargoLevel: 1.5 },
+        { engineLevel: 6 },
+        { engineLevel: -1 },
+        { weaponLevel: 0 },
+        { weaponLevel: 11 },
+        { weaponLevel: 2.5 }
+    ];
+    for (const override of unsupported) {
+        const candidate = { ...clone(initialGameState), shipStatus: { ...clone(initialGameState.shipStatus), ...override } };
+        assert.throws(() => decodeGameState(candidate), Error, JSON.stringify(override));
+    }
 });
 
 test('codec rejects retired schemas and permits active boost only for an unlocked v3 booster', () => {
@@ -689,7 +727,7 @@ test('run status projection derives clock, capacity and readable run values', ()
     assert.equal(initial.remainingSeconds, 1800);
     assert.equal(initial.runState, 'RUNNING');
     assert.equal(initial.cargoUsed, 2);
-    assert.equal(initial.cargoCapacity, 20);
+    assert.equal(initial.cargoCapacity, 40);
     assert.equal(initial.maximumHitPoints, 100);
     assert.deepEqual(initial.cargo, [{ commodityId: 'ore', quantity: 2, totalCost: 0 }]);
 
