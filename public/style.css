@@ -375,3 +375,30 @@ body {
     .landing-facility-cards { gap: 6px; padding: 8px 12px; }
     .facility-card { padding: 8px; gap: 4px; }
 }
+
+#landing-status-shipyard-view { position: relative; display: block; background: var(--ui-surface) center / cover; }
+.shipyard-planet { position: absolute; z-index: 1; top: 24%; left: clamp(16px, 3vw, 32px); margin: 0; font-weight: 700; }
+.shipyard-cards { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1.5vw, 16px); min-height: 0; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
+.shipyard-card { box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: auto; padding: 12px; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }
+.shipyard-card h3, .shipyard-card p { margin: 0; overflow-wrap: anywhere; }
+.shipyard-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.shipyard-card-name { font-size: 1.1em; }
+.shipyard-card-icon { box-sizing: border-box; display: block; flex: 0 0 auto; width: 48px; height: 48px; border: 1px dashed var(--ui-border); border-radius: 4px; background-color: #1c4266; background-image: url('/assets/icons/ship_32x32.png'); background-repeat: no-repeat; background-position: center; background-size: contain; }
+.shipyard-card-level { font-weight: 700; }
+.shipyard-card-effect { color: #9fd1ff; }
+.shipyard-card-price { font-weight: 700; }
+.shipyard-card-availability { color: var(--ui-disabled); }
+.shipyard-card-action { margin-top: auto; }
+.shipyard-repair-bar { width: 100%; }
+.shipyard-repair-increment { font-weight: 700; }
+
+@media (max-width: 420px) {
+    #landing-status-shipyard-view { display: flex; flex-direction: column; overflow-y: auto; }
+    .shipyard-planet { position: static; padding: 0 14px 6px; }
+    .shipyard-cards { position: static; inset: auto; grid-template-columns: 1fr; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .shipyard-cards { gap: 6px; padding: 8px 12px; }
+    .shipyard-card { padding: 8px; gap: 4px; }
+}

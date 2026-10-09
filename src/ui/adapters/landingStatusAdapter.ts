@@ -3,6 +3,8 @@ import type { GameStateProvider } from '../../game/application/gameStateProvider
 import { projectLandedMarket } from '../../game/application/landedMarket.ts';
 import { landedCommodityFlow, projectLandedFacilities, type LandedFacilitiesSnapshot, type LandedFacilityProjectionCatalogue } from '../../game/application/landedFacilities.ts';
 import { applyFacilityBuild, applyFacilityUpgrade } from '../../game/application/planetFacilities.ts';
+import { projectLandedShipyard, type LandedShipyardSnapshot } from '../../game/application/landedShipyard.ts';
+import { applyShipBooster, applyShipRepair, applyShipUpgrade } from '../../game/application/planetShipServices.ts';
 import { serotonCommodityDefinitions } from '../../game/definitions/serotonMarketDefinitions.ts';
 import { planetFacilityCatalogue, planetFacilityDefinitions, planetFacilityModifierOf, planetFacilityOutputCommodityIds } from '../../game/definitions/planetFacilityDefinitions.ts';
 import { cargoCapacityByLevel } from '../../game/domain/runBalance.ts';
@@ -22,6 +24,7 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
         : { emit: () => {} };
     const listeners = new Set<(snapshot: Readonly<LandingStatusSnapshot>) => void>();
     const facilityListeners = new Set<(snapshot: Readonly<LandedFacilitiesSnapshot>) => void>();
+    const shipyardListeners = new Set<(snapshot: Readonly<LandedShipyardSnapshot>) => void>();
     const facilityCatalogue: LandedFacilityProjectionCatalogue = {
         definitions: planetFacilityDefinitions.map(definition => ({ ...definition, outputCommodityId: planetFacilityOutputCommodityIds[definition.id] })),
         modifierOf: planetFacilityModifierOf
@@ -63,7 +66,9 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
         return projectLandedMarket(state, serotonCommodityDefinitions, selectedCommodityId, tradeQuantity, selectedQuote(), landedCommodityFlow(facilities, selectedCommodityId), facilities.clock);
     };
     const projectFacilities = (): LandedFacilitiesSnapshot => projectLandedFacilities(provider.snapshot(), facilityCatalogue);
+    const projectShipyard = (): LandedShipyardSnapshot => projectLandedShipyard(provider.snapshot());
     let facilitiesSnapshot = projectFacilities();
+    let shipyardSnapshot = projectShipyard();
     let snapshot = project(facilitiesSnapshot);
     const refresh = (): void => {
         if (destroyed || refreshSuppressed) return;
@@ -77,9 +82,11 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
         if (!eligible) tradeQuantity = 0;
         wasEligible = eligible;
         facilitiesSnapshot = projectFacilities();
+        shipyardSnapshot = projectShipyard();
         snapshot = project(facilitiesSnapshot);
         for (const listener of listeners) listener(snapshot);
         for (const listener of facilityListeners) listener(facilitiesSnapshot);
+        for (const listener of shipyardListeners) listener(shipyardSnapshot);
     };
     if (provider.snapshot().planetLifecycle.landedPlanetId !== null) {
         wasEligible = true;
@@ -100,6 +107,13 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
             facilityListeners.add(listener);
             listener(facilitiesSnapshot);
             return () => { facilityListeners.delete(listener); };
+        },
+        getShipyardSnapshot: () => shipyardSnapshot,
+        subscribeShipyard: listener => {
+            if (destroyed) return () => {};
+            shipyardListeners.add(listener);
+            listener(shipyardSnapshot);
+            return () => { shipyardListeners.delete(listener); };
         },
         selectCommodity: commodityId => {
             if (destroyed || !serotonCommodityDefinitions.some(definition => definition.id === commodityId)) return;
@@ -141,6 +155,18 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
             if (destroyed || !wasEligible) return;
             provider.update(state => applyFacilityUpgrade(state, planetFacilityCatalogue, facilityId));
         },
+        repairShip: () => {
+            if (destroyed || !wasEligible) return;
+            provider.update(applyShipRepair);
+        },
+        upgradeShipService: serviceId => {
+            if (destroyed || !wasEligible) return;
+            provider.update(state => applyShipUpgrade(state, serviceId));
+        },
+        purchaseBooster: () => {
+            if (destroyed || !wasEligible) return;
+            provider.update(applyShipBooster);
+        },
         launch: () => {
             if (destroyed) return;
             const before = provider.snapshot();
@@ -155,6 +181,7 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
             unsubscribe();
             listeners.clear();
             facilityListeners.clear();
+            shipyardListeners.clear();
         }
     };
 }

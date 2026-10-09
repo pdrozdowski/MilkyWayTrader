@@ -74,7 +74,7 @@
             <div class="landing-status-panel">
                 <section id="landing-status-hub" class="landing-view">
                     <div class="landing-visual"><div class="landing-title-stack"><img id="landing-status-title" src="" alt="" /><img id="landing-status-landed" src="/assets/banner_landed_01.png" alt="LANDED" /></div></div>
-                    <nav class="landing-actions" aria-label="Planet services"><button id="landing-status-market" class="landing-image-button" type="button" aria-label="Market"><img src="/assets/button_market.png" alt="" /></button><button id="landing-status-facilities" class="landing-image-button" type="button" aria-label="Facilities"><img src="/assets/button_facilities.png" alt="" /></button><button id="landing-status-shipyard" class="landing-image-button" type="button" aria-label="Shipyard unavailable" disabled><img src="/assets/button_shipyard.png" alt="" /></button><button id="landing-status-launch" class="landing-image-button landing-launch" type="button" aria-label="Launch"><img src="/assets/button_launch.png" alt="" /></button></nav>
+                    <nav class="landing-actions" aria-label="Planet services"><button id="landing-status-market" class="landing-image-button" type="button" aria-label="Market"><img src="/assets/button_market.png" alt="" /></button><button id="landing-status-facilities" class="landing-image-button" type="button" aria-label="Facilities"><img src="/assets/button_facilities.png" alt="" /></button><button id="landing-status-shipyard" class="landing-image-button" type="button" aria-label="Shipyard"><img src="/assets/button_shipyard.png" alt="" /></button><button id="landing-status-launch" class="landing-image-button landing-launch" type="button" aria-label="Launch"><img src="/assets/button_launch.png" alt="" /></button></nav>
                 </section>
                 <section id="landing-status-market-view" class="landing-view" hidden>
                 <header class="landing-facilities-header">
@@ -153,6 +153,51 @@
                             <p class="facility-card-modifier"></p>
                             <p class="facility-card-price"></p>
                             <button class="facility-card-action" type="button"></button>
+                        </article>
+                    </div>
+                </section>
+                <section id="landing-status-shipyard-view" class="landing-view" hidden>
+                    <header class="landing-facilities-header">
+                        <div class="landing-facilities-nav-left"><button id="landing-status-shipyard-back" class="action-button" type="button"></button><span id="landing-status-shipyard-clock" class="landing-facilities-clock" role="timer"></span></div>
+                        <div class="landing-facilities-nav-right"><span id="landing-status-shipyard-credits"></span><span id="landing-status-shipyard-cargo"></span></div>
+                    </header>
+                    <h2 id="landing-status-shipyard-heading" class="landing-facilities-heading"></h2>
+                    <p id="landing-status-shipyard-planet" class="shipyard-planet"></p>
+                    <div id="landing-status-shipyard-cards" class="shipyard-cards" role="group" aria-label="Ship services">
+                        <article class="shipyard-card shipyard-repair-card">
+                            <div class="shipyard-card-header"><span class="shipyard-card-icon shipyard-repair-icon" role="img"></span><h3 class="shipyard-card-name"></h3></div>
+                            <p class="shipyard-repair-hp"></p>
+                            <progress class="shipyard-repair-bar" value="0" max="100"></progress>
+                            <p class="shipyard-repair-increment"></p>
+                            <button id="landing-status-shipyard-repair" class="shipyard-card-action" type="button"></button>
+                        </article>
+                        <article class="shipyard-card" data-service-id="cargo">
+                            <h3 class="shipyard-card-name"></h3>
+                            <p class="shipyard-card-level"></p>
+                            <p class="shipyard-card-price"></p>
+                            <p class="shipyard-card-availability"></p>
+                            <button class="shipyard-card-action" type="button"></button>
+                        </article>
+                        <article class="shipyard-card" data-service-id="engine">
+                            <h3 class="shipyard-card-name"></h3>
+                            <p class="shipyard-card-level"></p>
+                            <p class="shipyard-card-price"></p>
+                            <p class="shipyard-card-availability"></p>
+                            <button class="shipyard-card-action" type="button"></button>
+                        </article>
+                        <article class="shipyard-card" data-service-id="weaponary">
+                            <h3 class="shipyard-card-name"></h3>
+                            <p class="shipyard-card-level"></p>
+                            <p class="shipyard-card-price"></p>
+                            <p class="shipyard-card-availability"></p>
+                            <button class="shipyard-card-action" type="button"></button>
+                        </article>
+                        <article class="shipyard-card shipyard-booster-card" data-booster-row>
+                            <h3 class="shipyard-card-name"></h3>
+                            <p class="shipyard-card-effect"></p>
+                            <p class="shipyard-card-price"></p>
+                            <p class="shipyard-card-availability"></p>
+                            <button class="shipyard-card-action" type="button"></button>
                         </article>
                     </div>
                 </section>

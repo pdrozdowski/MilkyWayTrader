@@ -11,6 +11,7 @@ import {
     shipServiceDefinitions
 } from '../../src/game/application/planetShipServices.ts';
 import { GameStateProvider } from '../../src/game/application/gameStateProvider.ts';
+import { projectLandedShipyard } from '../../src/game/application/landedShipyard.ts';
 import {
     cargoCapacityByLevel,
     engineNormalSpeedPercentByLevel,
@@ -225,4 +226,79 @@ test('rejected ship-service commands return the identical aggregate through the 
     assert.deepEqual(attempted, before, 'a foreign-planet upgrade publishes the untouched aggregate');
     assert.equal(attempted.shipStatus.engineLevel, 1);
     assert.equal(attempted.credits, before.credits);
+});
+
+test('the shipyard projection reports landed context, repair status and one local path per planet', () => {
+    const unlanded = projectLandedShipyard(clone(initialGameState));
+    assert.equal(unlanded.visible, false);
+    assert.equal(unlanded.eligible, false);
+    assert.equal(unlanded.planetId, null);
+    assert.equal(unlanded.repair.failure, 'not-landed');
+    assert.deepEqual(unlanded.services.map(row => row.available), [false, false, false]);
+    assert.equal(unlanded.booster.available, false);
+    assert.equal(unlanded.booster.failure, 'not-landed');
+
+    for (const [serviceId, planetId, prices] of ladder) {
+        const price = prices[0];
+        const snapshot = projectLandedShipyard(withHitPoints(landedOn(planetId), 75));
+        assert(Object.isFrozen(snapshot));
+        assert(Object.isFrozen(snapshot.services));
+        assert.equal(snapshot.visible, true);
+        assert.equal(snapshot.planetId, planetId);
+        assert.equal(snapshot.planetName, initialGameState.planets.find(candidate => candidate.id === planetId).name);
+        assert.equal(snapshot.credits, initialGameState.credits);
+        assert.equal(snapshot.cargoUsed, 0);
+        assert.equal(snapshot.cargoCapacity, 40);
+        assert.deepEqual(snapshot.clock, { remainingSeconds: 1800, runState: 'PAUSED' });
+
+        assert.equal(snapshot.repair.currentHitPoints, 75);
+        assert.equal(snapshot.repair.maximumHitPoints, maximumShipHitPoints);
+        assert.equal(snapshot.repair.incrementHitPoints, 10);
+        assert.equal(snapshot.repair.price, shipRepairCost);
+        assert.equal(snapshot.repair.failure, null, 'repair is available on every planet');
+
+        assert.deepEqual(snapshot.services.map(row => row.serviceId), ['cargo', 'engine', 'weaponary']);
+        assert.deepEqual(snapshot.services.map(row => row.label), ['Cargo Capacity', 'Engine System', 'Weapon System']);
+        assert.deepEqual(snapshot.services.map(row => row.available), shipServiceDefinitions.map(definition => definition.servicePlanetId === planetId));
+        for (const row of snapshot.services) {
+            const definition = shipServiceDefinitions.find(candidate => candidate.id === row.serviceId);
+            assert.equal(row.level, 1);
+            assert.equal(row.maximumLevel, definition.maximumLevel);
+            assert.equal(row.maximum, false);
+            assert.equal(row.servicePlanetId, definition.servicePlanetId);
+            assert.equal(row.servicePlanetName, initialGameState.planets.find(candidate => candidate.id === definition.servicePlanetId).name);
+            assert.equal(row.price, definition.upgradePrices[0]);
+            assert.equal(row.failure, row.available ? null : 'wrong-planet');
+            assert.equal(row.affordable, row.available);
+        }
+
+        assert.equal(snapshot.booster.owned, false);
+        assert.equal(snapshot.booster.price, shipBoosterCost);
+        assert.equal(snapshot.booster.servicePlanetId, 'lactozis-7c');
+        assert.equal(snapshot.booster.servicePlanetName, 'Lactozis-7C');
+        assert.equal(snapshot.booster.available, planetId === 'lactozis-7c');
+        assert.equal(snapshot.booster.affordable, planetId === 'lactozis-7c');
+        assert.equal(snapshot.services.find(row => row.serviceId === serviceId).price, price);
+    }
+
+    const broke = projectLandedShipyard(withHitPoints(landedOn('seroton', 900), 75));
+    assert.equal(broke.repair.failure, 'insufficient-credits');
+    assert.equal(broke.services.find(row => row.serviceId === 'cargo').failure, 'insufficient-credits');
+    assert.equal(broke.services.find(row => row.serviceId === 'cargo').affordable, false);
+    assert.equal(broke.services.find(row => row.serviceId === 'cargo').available, true);
+    assert.equal(broke.booster.affordable, false);
+
+    const fullyUpgraded = {
+        ...landedOn('maslo-prime'),
+        shipStatus: { currentHitPoints: 100, cargoLevel: 5, engineLevel: 5, weaponLevel: 10, boosterUnlocked: true }
+    };
+    const maxed = projectLandedShipyard(fullyUpgraded);
+    assert.deepEqual(maxed.services.map(row => row.maximum), [true, true, true]);
+    assert.deepEqual(maxed.services.map(row => row.available), [false, false, false]);
+    assert.deepEqual(maxed.services.map(row => row.price), [0, 0, 0]);
+    assert.deepEqual(maxed.services.map(row => row.failure), ['maximum-level', 'maximum-level', 'maximum-level']);
+    assert.equal(maxed.repair.failure, 'full-health');
+    assert.equal(maxed.booster.owned, true);
+    assert.equal(maxed.booster.available, false);
+    assert.equal(maxed.booster.failure, 'already-owned');
 });

@@ -470,6 +470,78 @@ test('landed market port rejects unlanded trade commands and rebuilds its visit-
     landedPort.destroy();
 });
 
+test('the landing port projects and refreshes landed ship services on every planet', () => {
+    const gameFor = provider => ({ registry: { get: key => key === 'telemetry' ? { emit: () => {} } : provider }, events: { emit: () => {} } });
+    const provider = new GameStateProvider(initialGameState);
+    const port = createLandingStatusPort(gameFor(provider));
+    assert.equal(port.getShipyardSnapshot().visible, false);
+    assert.equal(port.getShipyardSnapshot().repair.failure, 'not-landed');
+    const unlanded = provider.snapshot();
+    port.repairShip();
+    port.upgradeShipService('cargo');
+    port.purchaseBooster();
+    assert.deepEqual(provider.snapshot(), unlanded, 'unlanded shipyard commands are inert');
+
+    const land = planetId => provider.update(state => ({
+        ...state,
+        shipStatus: { ...state.shipStatus, currentHitPoints: 75 },
+        clock: pauseGameClock(state.clock, 'landed'),
+        planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
+    }));
+    const cases = [['seroton', 'cargo', 15_000], ['lactozis-7c', 'engine', 20_000], ['maslo-prime', 'weaponary', 20_000]];
+    for (const [planetId, serviceId, price] of cases) {
+        const before = land(planetId);
+        const shown = port.getShipyardSnapshot();
+        assert.equal(shown.visible, true, planetId);
+        assert.equal(shown.planetId, planetId);
+        assert.equal(shown.repair.currentHitPoints, 75);
+        assert.equal(shown.repair.price, 1_000);
+        assert.equal(shown.repair.failure, null);
+        const available = shown.services.filter(row => row.available);
+        assert.deepEqual(available.map(row => row.serviceId), [serviceId], planetId);
+        assert.equal(available[0].price, price);
+        assert.equal(available[0].affordable, true);
+        assert.equal(shown.booster.available, planetId === 'lactozis-7c');
+
+        for (const row of shown.services.filter(candidate => candidate.serviceId !== serviceId)) {
+            const untouched = provider.snapshot();
+            port.upgradeShipService(row.serviceId);
+            assert.deepEqual(provider.snapshot(), untouched, `${row.serviceId} is not sold on ${planetId}`);
+            assert.equal(port.getShipyardSnapshot().services.find(candidate => candidate.serviceId === row.serviceId).available, false);
+        }
+
+        port.upgradeShipService(serviceId);
+        const purchased = port.getShipyardSnapshot();
+        assert.equal(purchased.services.find(row => row.serviceId === serviceId).level, 2, planetId);
+        assert.equal(purchased.credits, before.credits - price);
+        assert.equal(provider.snapshot().credits, before.credits - price);
+
+        port.repairShip();
+        assert.equal(port.getShipyardSnapshot().repair.currentHitPoints, 85, planetId);
+        assert.equal(port.getShipyardSnapshot().credits, before.credits - price - 1_000);
+    }
+
+    provider.update(state => ({ ...state, credits: 100_000 }));
+    land('lactozis-7c');
+    assert.equal(port.getShipyardSnapshot().booster.available, true);
+    const beforeBooster = provider.snapshot();
+    port.purchaseBooster();
+    assert.equal(port.getShipyardSnapshot().booster.owned, true);
+    assert.equal(port.getShipyardSnapshot().booster.available, false);
+    assert.equal(port.getShipyardSnapshot().booster.failure, 'already-owned');
+    assert.equal(provider.snapshot().credits, beforeBooster.credits - 75_000);
+    const afterBooster = provider.snapshot();
+    port.purchaseBooster();
+    assert.deepEqual(provider.snapshot(), afterBooster, 'the booster is a one-time purchase');
+
+    port.launch();
+    assert.equal(port.getShipyardSnapshot().visible, false);
+    const launcher = provider.snapshot();
+    port.purchaseBooster();
+    assert.deepEqual(provider.snapshot(), launcher, 'launching ends shipyard service access');
+    port.destroy();
+});
+
 test('the landed market port shows, refreshes, trades, and launches from each planet own market', () => {
     const gameFor = provider => ({ registry: { get: key => key === 'telemetry' ? { emit: () => {} } : provider }, events: { emit: () => {} } });
     const stockOf = (state, planetId, commodityId) => state.markets

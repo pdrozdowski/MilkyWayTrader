@@ -31,6 +31,7 @@ export type ShipServiceFailure =
 export interface ShipServiceDefinition
 {
     readonly id: ShipServiceId;
+    readonly label: string;
     readonly servicePlanetId: PlanetId;
     readonly maximumLevel: number;
     /** Price paid to reach each level above one; the first entry buys level two. */
@@ -38,9 +39,9 @@ export interface ShipServiceDefinition
 }
 
 export const shipServiceDefinitions: readonly ShipServiceDefinition[] = [
-    { id: 'cargo', servicePlanetId: 'seroton', maximumLevel: 5, upgradePrices: cargoUpgradePrices },
-    { id: 'engine', servicePlanetId: 'lactozis-7c', maximumLevel: 5, upgradePrices: engineUpgradePrices },
-    { id: 'weaponary', servicePlanetId: 'maslo-prime', maximumLevel: 10, upgradePrices: weaponUpgradePrices }
+    { id: 'cargo', label: 'Cargo Capacity', servicePlanetId: 'seroton', maximumLevel: 5, upgradePrices: cargoUpgradePrices },
+    { id: 'engine', label: 'Engine System', servicePlanetId: 'lactozis-7c', maximumLevel: 5, upgradePrices: engineUpgradePrices },
+    { id: 'weaponary', label: 'Weapon System', servicePlanetId: 'maslo-prime', maximumLevel: 10, upgradePrices: weaponUpgradePrices }
 ];
 
 /** The booster is an independent one-time purchase on the engine-service planet (BR-036). */
