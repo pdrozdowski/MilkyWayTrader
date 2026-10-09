@@ -38,8 +38,8 @@
 - **Dimension**: Plan Adherence
 - **Location**: src/game/mechanics/projectile/trajectory.ts:18-29
 - **Detail**: The plan states "Offset order is deterministic: ascending angle from left to right" and then describes odd counts as "a forward shot then mirrored ±2.5°, ±7.5° … pairs". The implementation applies the stated ordering rule literally, so a level-three volley emits `-2.5°, 0°, +2.5°` (forward shot between the innermost pair) and level five emits `-7.5°, -2.5°, 0°, +2.5°, +7.5°`. Emission order only decides which `projectile-<volley>-<n>` index owns which mirrored path; the visible spread is identical under the alternative reading. The angle *sets* and the parity rule match BR-044a exactly (level two `±5°`, level three forward plus `±2.5°`).
-- **Fix**: Keep as implemented and confirm during the plan's manual check 2.4; only the index-to-path mapping would change if the user prefers forward-shot-first ordering.
-- **Decision**: PENDING
+- **Fix**: Superseded. The manual volley check found the parity patterns produced uneven spacing, so volleys now use one uniform 5° step centred on the heading (odd counts keep the forward shot, even counts straddle it at ±2.5°). `BR-044a` was rewritten and passes the `10x-prd-en-capability` gate; the decision is recorded in `change.md`.
+- **Decision**: FIXED — replaced by the uniform-step rule.
 
 ### F3 — Shipyard cards are static markup bound to the catalogue by data attributes
 

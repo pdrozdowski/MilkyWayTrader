@@ -593,7 +593,8 @@ test('purchased ship services change flight, cargo and volley behaviour through 
     }, 1));
     assert.deepEqual(firing.projectiles.map(projectile => projectile.id), ['projectile-1-1', 'projectile-1-2']);
     const offsets = firing.projectiles.map(projectile => Math.atan2(projectile.velocity.x, -projectile.velocity.y) * 180 / Math.PI);
-    assert(Math.abs(offsets[0] + 5) < 1e-9 && Math.abs(offsets[1] - 5) < 1e-9, 'a level-two weapon fires the mirrored 5 degree pair');
+    assert(Math.abs(offsets[0] + 2.5) < 1e-9 && Math.abs(offsets[1] - 2.5) < 1e-9,
+        'a level-two weapon straddles the heading half a volley step to each side');
 
     const restored = new GameStateProvider(initialGameState);
     restored.restore(encodeGameState(firing));
