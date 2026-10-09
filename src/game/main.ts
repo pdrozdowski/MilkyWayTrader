@@ -6,6 +6,7 @@ import { AUTO, Game, Scale } from 'phaser';
 import { Preloader } from './scenes/preloaderScene';
 import { initializeGameAudio } from './audio/gameAudio';
 import { GameStateProvider } from './application/gameStateProvider';
+import { createPerformanceMonitor } from './application/performanceMonitor';
 import type { ResultStorePort } from './application/results/resultStore';
 import type { GameOverReturnPort } from './application/results/gameOverReturn';
 import { initialGameState } from './definitions/initialGameState';
@@ -54,6 +55,7 @@ const StartGame = (parent: string, hooks: GameBootstrapHooks = {}) => {
             postBoot: game => {
                 initializeGameAudio(game);
                 game.registry.set('gameStateProvider', new GameStateProvider(initialGameState));
+                game.registry.set('performanceMonitor', createPerformanceMonitor({ now: () => performance.now(), windowMs: 5000 }));
                 game.registry.set('resultStore', hooks.resultStore);
                 game.registry.set('gameOverReturn', hooks.gameOverReturn);
                 hooks.onReady?.(game);

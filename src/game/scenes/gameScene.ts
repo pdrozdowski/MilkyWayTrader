@@ -17,6 +17,7 @@ import { teleportShipToAsteroid } from '../mechanics/debug/teleportShipToAsteroi
 import { spawnDebugCargo } from '../mechanics/debug/spawnDebugCargo';
 import { advanceShipServiceLevel } from '../application/planetShipServices';
 import type { ShipServiceId } from '../application/planetShipServices';
+import type { PerformanceMonitor, PerformanceStepId } from '../application/performanceMonitor';
 import { Planet } from '../objects/planet/planet';
 import { AsteroidProjection } from '../objects/asteroid/asteroidProjection';
 import { CargoProjection } from '../objects/cargo/cargo';
@@ -75,6 +76,9 @@ export class Game extends Scene
     private deathTransitionStarted = false;
     private lastItemCollectedAtMs = Number.NEGATIVE_INFINITY;
     private lastItemBlockedAtMs = Number.NEGATIVE_INFINITY;
+    private performanceMonitor: PerformanceMonitor;
+    private performanceMonitorEnabled = false;
+    private lastPerformanceSampleAtMs = 0;
 
     constructor ()
     {
@@ -95,6 +99,10 @@ export class Game extends Scene
         this.audio = getAudioService(this.game).createScope(this);
         this.stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
         this.telemetry = this.registry.get('telemetry') as TelemetryPort;
+        this.performanceMonitor = this.registry.get('performanceMonitor') as PerformanceMonitor;
+        this.performanceMonitor.setEnabled(false);
+        this.performanceMonitorEnabled = false;
+        this.game.events.emit('performance-monitor-sample');
         const state = this.stateProvider.snapshot();
         this.camera = this.cameras.main;
         this.camera.setZoom(1).removeBounds();
@@ -154,6 +162,7 @@ export class Game extends Scene
         this.game.events.on('debug-teleport-to-asteroid', this.teleportToAsteroid, this);
         this.game.events.on('debug-spawn-cargo', this.spawnDebugCargo, this);
         this.game.events.on('debug-upgrade-ship-service', this.debugUpgradeShipService, this);
+        this.game.events.on('debug-performance-monitor', this.setPerformanceMonitorEnabled, this);
         window.addEventListener('blur', this.loseFocus);
         window.addEventListener('focus', this.gainFocus);
         window.addEventListener('touchcancel', this.cancelTouch);
@@ -177,6 +186,11 @@ export class Game extends Scene
             this.game.events.off('debug-teleport-to-asteroid', this.teleportToAsteroid, this);
             this.game.events.off('debug-spawn-cargo', this.spawnDebugCargo, this);
             this.game.events.off('debug-upgrade-ship-service', this.debugUpgradeShipService, this);
+            this.game.events.off('debug-performance-monitor', this.setPerformanceMonitorEnabled, this);
+            this.detachPerformanceFrameListeners();
+            this.performanceMonitor.setEnabled(false);
+            this.performanceMonitorEnabled = false;
+            this.game.events.emit('performance-monitor-sample');
             window.removeEventListener('blur', this.loseFocus);
             window.removeEventListener('focus', this.gainFocus);
             window.removeEventListener('touchcancel', this.cancelTouch);
@@ -193,6 +207,57 @@ export class Game extends Scene
         this.cargo.synchronize(state.orbitalCargo);
         this.commodities.synchronize(state.looseItems, new Set());
         this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);
+    }
+
+    private readonly performanceFrameStarted = (): void => { this.performanceMonitor.frameStarted(); };
+
+    private readonly performanceUpdatePhaseEnded = (): void => { this.performanceMonitor.updatePhaseEnded(); };
+
+    private readonly performanceRenderStarted = (): void => { this.performanceMonitor.renderStarted(); };
+
+    private readonly performanceRenderEnded = (): void => { this.performanceMonitor.renderEnded(); };
+
+    private readonly setPerformanceMonitorEnabled = (enabled: boolean): void => {
+        this.performanceMonitorEnabled = enabled;
+        if (enabled) {
+            this.performanceMonitor.setEnabled(true);
+            this.lastPerformanceSampleAtMs = 0;
+            this.game.events.on('prestep', this.performanceFrameStarted);
+            this.game.events.on('poststep', this.performanceUpdatePhaseEnded);
+            this.game.events.on('prerender', this.performanceRenderStarted);
+            this.game.events.on('postrender', this.performanceRenderEnded);
+        } else {
+            this.detachPerformanceFrameListeners();
+            this.performanceMonitor.setEnabled(false);
+        }
+        this.game.events.emit('performance-monitor-sample');
+    };
+
+    private detachPerformanceFrameListeners (): void
+    {
+        this.game.events.off('prestep', this.performanceFrameStarted);
+        this.game.events.off('poststep', this.performanceUpdatePhaseEnded);
+        this.game.events.off('prerender', this.performanceRenderStarted);
+        this.game.events.off('postrender', this.performanceRenderEnded);
+    }
+
+    private markPerformanceStep (id: PerformanceStepId): void
+    {
+        if (!this.performanceMonitorEnabled) return;
+        this.performanceMonitor.stepStarted(id);
+    }
+
+    private endPerformanceStep (): void
+    {
+        if (!this.performanceMonitorEnabled) return;
+        this.performanceMonitor.stepEnded();
+    }
+
+    private samplePerformanceMonitor (time: number): void
+    {
+        if (!this.performanceMonitorEnabled || time - this.lastPerformanceSampleAtMs < 250) return;
+        this.lastPerformanceSampleAtMs = time;
+        this.game.events.emit('performance-monitor-sample');
     }
 
     private startSteering (pointer: Input.Pointer): void
@@ -417,6 +482,7 @@ export class Game extends Scene
 
     update (time: number, delta: number): void
     {
+        this.markPerformanceStep('input-intent');
         const pointer = this.steeringPointer;
         if (pointer?.isDown && (pointer.wasTouch || pointer.leftButtonDown())) {
             this.camera.getWorldPoint(pointer.x, pointer.y, this.pointerWorld);
@@ -429,9 +495,11 @@ export class Game extends Scene
         const joystickTarget = this.joystickDirection.lengthSq() > 0
             ? this.pointerWorld.copy(this.joystickDirection).scale(1000).add(this.ship.sprite)
             : null;
+        this.markPerformanceStep('state-snapshot');
         const before = this.stateProvider.snapshot();
         const isMoolarisContact = !resolveMoolarisContact(before.ship).hasControl;
         if (isMoolarisContact) this.lossOfControlUntilMs = time + 1500;
+        this.markPerformanceStep('state-commit');
         const state = this.stateProvider.update(current => advanceGameSimulation(current, {
             target: pointer?.isDown ? this.pointerWorld : joystickTarget,
             boostRequested: (this.boostHeld || this.boostPointer !== null) && (this.steeringPointer !== null || joystickTarget !== null),
@@ -445,6 +513,7 @@ export class Game extends Scene
             shotIntervalMs: 1000 / weaponTuning.shotsPerSecond,
             muzzleOffset: weaponTuning.noseOffset * this.ship.sprite.scaleX
         }));
+        this.markPerformanceStep('feedback-and-ship-sync');
         if (before.moolarisDamageArmed && !state.moolarisDamageArmed && state.terminalResult === null) this.playShipCrashFeedback(state.ship.position);
         const failedPickup = before.looseItems.some(item => Math.hypot(item.position.x - before.ship.position.x, item.position.y - before.ship.position.y) <= asteroidTuning.salvage.looseItemInteractionRadius)
             && state.looseItems.length === before.looseItems.length
@@ -458,9 +527,13 @@ export class Game extends Scene
         }
         if (before.terminalResult === null && state.terminalResult !== null) {
             this.beginDeathTransition(state.terminalResult, state.ship.position);
+            this.endPerformanceStep();
             return;
         }
-        if (this.deathTransitionStarted) return;
+        if (this.deathTransitionStarted) {
+            this.endPerformanceStep();
+            return;
+        }
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.clearFlightInput();
         if (before.planetLifecycle.landedPlanetId === null && state.planetLifecycle.landedPlanetId !== null) this.telemetry.emit('planet_landed', { planet: state.planetLifecycle.landedPlanetId, credits_after: state.credits });
         const renewedAsteroidControlLock = state.ship.asteroidControlLockedUntilActiveMs !== null
@@ -485,15 +558,18 @@ export class Game extends Scene
         this.camera.roundPixels = true;
         this.camera.centerOn(state.ship.position.x, state.ship.position.y);
         this.updateBackgroundTiles();
+        this.markPerformanceStep('planets');
         const planetsById = this.planetsById(state.planets);
         for (const planet of this.planets) {
             planet.synchronize(planetsById.get(planet.id)!);
             planet.update(state.clock.activeElapsedMs, time);
             planet.updateLandingIndicator(this.ship, state.planetLifecycle);
         }
+        this.markPerformanceStep('weapon-asteroids');
         this.weapon.synchronize(state.projectiles);
         this.playVisibleAsteroidFragmentation(before.asteroids, state.asteroids, before.projectiles, state.projectiles, state.planets, state.clock.activeElapsedMs - before.clock.activeElapsedMs);
         this.asteroids.synchronize(state.asteroids);
+        this.markPerformanceStep('removals-effects');
         const destroyedCargoIds = cargoDestroyedIds(before, state);
         for (const id of destroyedCargoIds) {
             this.audio.play('asteroid-crash-metal-clean');
@@ -518,8 +594,11 @@ export class Game extends Scene
             this.audio.stop('item-collected');
             this.audio.play('item-collected');
         }
+        this.markPerformanceStep('cargo-commodities');
         this.cargo.synchronize(state.orbitalCargo);
         this.commodities.synchronize(state.looseItems, sunConsumedItems);
+        this.endPerformanceStep();
+        this.samplePerformanceMonitor(time);
     }
 
     private readonly teleportToPlanet = (planetId: string): void => {

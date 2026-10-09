@@ -51,5 +51,24 @@ export const displayLabels = {
     cargoTransferTitle: 'CARGO TRANSFER', cargoFullWarning: 'WARNING - CARGO IS FULL',
     cargoTransferCargoHeader: 'Cargo', cargoTransferCommodityHeader: 'Commodity', cargoTransferShipHeader: 'Ship',
     toCargoMax: '<<max', toCargoOne: '<1', toShipOne: '1>', toShipMax: 'max>>',
-    cargoTransferConfirm: 'Transfer'
+    cargoTransferConfirm: 'Transfer',
+    debugPerformanceMonitor: 'Performance monitor',
+    performanceMonitorReadout: 'Performance monitor',
+    performanceMonitorColumnMetric: 'Metric', performanceMonitorColumnAverage: 'Avg', performanceMonitorColumnMinimum: 'Min', performanceMonitorColumnMaximum: 'Max',
+    performanceMonitorLoopsPerSecond: 'Loops/second', performanceMonitorLoopsPerSecondUnit: '/s',
+    performanceMonitorFrameInterval: 'Frame interval', performanceMonitorUpdatePhase: 'Update phase',
+    performanceMonitorSceneRender: 'Scene render', performanceMonitorUnaccounted: 'Unaccounted',
+    performanceMonitorMillisecondsUnit: 'ms', performanceMonitorSecondsUnit: 's',
+    performanceMonitorWindow: 'Window', performanceMonitorFrames: 'Frames',
+    performanceMonitorUpdatePhaseNote: 'Update phase also covers the step-event UI listeners, so its value exceeds the sum of the step rows.',
+    performanceMonitorStepLabels: {
+        'input-intent': 'Input intent',
+        'state-snapshot': 'State snapshot',
+        'state-commit': 'State commit',
+        'feedback-and-ship-sync': 'Feedback and ship sync',
+        planets: 'Planets',
+        'weapon-asteroids': 'Weapon and asteroids',
+        'removals-effects': 'Removals and effects',
+        'cargo-commodities': 'Cargo and commodities'
+    }
 } as const;
