@@ -44,6 +44,31 @@
   authoritative state boundary (the reducer + commit + publish + that frame's UI projections),
   not in Phaser scene rendering.
 
+## Attribution of the update phase
+
+The panel's own rows price the boundary work, so the cost can be attributed without a profiler:
+
+- `state-snapshot` measures exactly one `GameStateProvider.snapshot()` call: 4.83 ms average,
+  3.30 ms minimum. That is the unit price of one full `decode(JSON.stringify(decode(state)))`
+  round-trip over the whole aggregate.
+- One active frame performs ten of those round-trips: one explicit `snapshot()` before the frame,
+  one inside `publish()`, one in `runStatusAdapter.refresh`, four in `landingStatusAdapter.refresh`
+  (`refresh` itself, `projectFacilities`, `projectShipyard` and `project`, none of them gated on
+  being landed), and one in `cargoTransferAdapter.refresh`. Ten round-trips at the measured unit
+  price is about 48 ms of pure serialize/validate/deep-freeze plumbing per frame, which matches
+  the 21 validating decodes and 10 full serializations the change's research derived statically.
+- Seven of those ten sit inside the `state-commit` row (the commit plus the publish fan-out),
+  which is why it reads 41.28 ms and why its minimum (30.10 ms) is already above the frame budget:
+  this is a per-frame floor, not an occasional hitch.
+- The two remaining round-trips are the `step`-event listeners in `runStatusAdapter` and
+  `cargoTransferAdapter`, which run before the scene update and therefore land in the update phase
+  but in no step row: 2 x 4.83 ms = 9.7 ms, which is the ~9.87 ms surplus between the summed step
+  averages (53.69 ms) and the update phase (63.56 ms) reported above.
+
+Consequence: the plumbing, not gameplay, sets the ceiling. At ~48 ms of boundary work per frame
+the game cannot exceed roughly 15-20 loops/second on this machine whatever the simulation does,
+and a slow frame lengthens the delta the reducer must integrate on the next frame.
+
 ## Overhead comparison (monitor OFF)
 
 Not captured yet. The plan asks for the same gameplay spot with the monitor off so the instrument's
@@ -51,11 +76,12 @@ own cost can be judged; this needs a second pass and remains open for the manual
 
 ## Findings from this session
 
-- **Panel legibility (new)**: at the moment of capture the panel's translucent background
-  overlapped the run-status HUD, so the signed-in email rendered through the table header. The
-  panel is `pointer-events: none` and never intercepted input, but the header row is hard to read
-  against the HUD text behind it. Fix candidates: make the panel background opaque, and/or position
-  it below the status bar rather than at a fixed 72 px offset.
+- **Panel legibility (fixed in session)**: at the moment of capture the panel's translucent
+  background overlapped the run-status HUD, so the signed-in email rendered through the table
+  header. The panel is `pointer-events: none` and never intercepted input, but the header row was
+  hard to read against the HUD text behind it. The panel background is now opaque (`#07111b`) in
+  `public/style.css`, as requested; the position is unchanged, so on a window where the HUD wraps
+  far enough the opaque panel can now cover HUD text instead of bleeding through it.
 - **Refresh rate**: the panel updated while the debug dialog was closed, which is the behaviour
   required by the plan.
 
