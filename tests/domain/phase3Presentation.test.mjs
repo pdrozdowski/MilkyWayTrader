@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
 import { projectRunStatus } from '../../src/game/application/runStatus.ts';
+import { projectLandedShipyard } from '../../src/game/application/landedShipyard.ts';
 import { createResultDelivery } from '../../src/game/application/results/resultDelivery.ts';
 import { runStatusIsVisible } from '../../src/ui/adapters/runStatusAdapter.ts';
 import { createBrowserGameOverReturnPort } from '../../src/ui/adapters/browserGameOverReturn.ts';
@@ -15,6 +16,22 @@ test('health presentation has inclusive 70/69/30/29 semantic boundaries', () => 
     assert.equal(band(69), 'warning');
     assert.equal(band(30), 'warning');
     assert.equal(band(29), 'critical');
+});
+
+test('the shipyard repair band reuses the run-status hull-health boundaries', () => {
+    for (const currentHitPoints of [100, 70, 69, 30, 29, 0]) {
+        const state = { ...initialGameState, shipStatus: { ...initialGameState.shipStatus, currentHitPoints } };
+        assert.equal(projectLandedShipyard(state).repair.healthBand, projectRunStatus(state, true).healthBand, `HP ${currentHitPoints}`);
+    }
+    const landed = {
+        ...initialGameState,
+        clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
+        shipStatus: { ...initialGameState.shipStatus, currentHitPoints: 75 },
+        planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
+    };
+    assert.equal(projectLandedShipyard(landed).repair.healthBand, 'healthy');
+    assert.equal(projectLandedShipyard({ ...landed, shipStatus: { ...landed.shipStatus, currentHitPoints: 85 } }).repair.healthBand, 'healthy');
+    assert.equal(projectLandedShipyard({ ...landed, shipStatus: { ...landed.shipStatus, currentHitPoints: 25 } }).repair.healthBand, 'critical');
 });
 
 test('terminal state hides the run-status projection during the death sequence', () => {

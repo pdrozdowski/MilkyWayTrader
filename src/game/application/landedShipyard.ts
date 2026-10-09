@@ -1,7 +1,8 @@
 import { cargoCapacityByLevel, maximumShipHitPoints, shipBoosterCost, shipRepairCost, shipRepairHitPointPercent } from '../domain/runBalance.ts';
 import { quoteShipBooster, quoteShipRepair, quoteShipUpgrade, shipBoosterServicePlanetId, shipServiceDefinitions, shipServiceLevelOf } from './planetShipServices.ts';
 import type { ShipServiceFailure, ShipServiceId } from './planetShipServices.ts';
-import type { RunState } from './runStatus.ts';
+import { healthBandOf } from './runStatus.ts';
+import type { HealthBand, RunState } from './runStatus.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot.ts';
 import type { PlanetId } from '../state/planetState.ts';
 
@@ -19,6 +20,7 @@ export interface LandedShipyardRepairSnapshot
     readonly incrementHitPoints: number;
     readonly price: number;
     readonly failure: ShipServiceFailure | null;
+    readonly healthBand: HealthBand;
 }
 
 export interface LandedShipyardServiceSnapshot
@@ -83,7 +85,8 @@ export function projectLandedShipyard (state: GameStateSnapshot): LandedShipyard
         maximumHitPoints: maximumShipHitPoints,
         incrementHitPoints: Math.round(maximumShipHitPoints * shipRepairHitPointPercent / 100),
         price: shipRepairCost,
-        failure: repairQuote.failure
+        failure: repairQuote.failure,
+        healthBand: healthBandOf(state.shipStatus.currentHitPoints)
     };
     const services: readonly LandedShipyardServiceSnapshot[] = shipServiceDefinitions.map(definition => {
         const level = shipServiceLevelOf(state, definition.id);
