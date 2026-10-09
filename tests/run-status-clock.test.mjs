@@ -56,6 +56,19 @@ class FakeScheduler {
     }
 }
 
+test('every hull-health bar shares one colour-band skin', () => {
+    const stylesheet = readFileSync('public/style.css', 'utf8');
+    assert.match(stylesheet, /progress\[data-health-band\] \{ --ui-health-fill: var\(--ui-health\);/, 'the shared skin declares the healthy fill once');
+    assert.match(stylesheet, /progress\[data-health-band="warning"\] \{ --ui-health-fill: var\(--ui-health-warning\); \}/);
+    assert.match(stylesheet, /progress\[data-health-band="critical"\] \{ --ui-health-fill: var\(--ui-health-critical\); \}/);
+    assert.match(stylesheet, /progress\[data-health-band\]::-webkit-progress-value \{ background: var\(--ui-health-fill\); \}/);
+    assert.match(stylesheet, /progress\[data-health-band\]::-moz-progress-bar \{ background: var\(--ui-health-fill\); \}/);
+    assert.equal((stylesheet.match(/--ui-health-fill:/g) ?? []).length, 3, 'each band maps to the fill variable exactly once');
+    for (const selector of ['#run-status-hp', '\\.shipyard-repair-bar']) {
+        assert(!new RegExp(`${selector}(?:\\[[^\\]]*\\])?::`).test(stylesheet), `${selector} must paint through the shared skin`);
+    }
+});
+
 test('running clock selects the running image without an interval and exposes its semantic state', () => {
     const scheduler = new FakeScheduler();
     const clock = new RunStatusClock(scheduler, () => {});
