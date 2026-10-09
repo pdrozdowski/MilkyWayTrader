@@ -444,6 +444,12 @@ test('the shipyard view renders repair, local service cards and the booster row 
     const textOf = (card, selector) => card.querySelector(selector).textContent;
     const actionOf = card => card.querySelector('.shipyard-card-action');
 
+    const shipyardMarkup = readFileSync('index.html', 'utf8');
+    assert.match(shipyardMarkup, /<p id="landing-status-shipyard-repair-hp" class="shipyard-repair-hp">/,
+        'the repair readout owns the id the health bar points at');
+    assert.match(shipyardMarkup, /<progress class="shipyard-repair-bar" value="0" max="100" aria-labelledby="landing-status-shipyard-repair-hp">/,
+        'the shipyard health bar takes its accessible name from the Hull readout');
+
     assert.equal(shipyardButton.disabled, false, 'the shipyard control is enabled from the landed hub');
     assert.equal(shipyardButton.attributes['aria-label'], displayLabels.shipyard);
     shipyardButton.click();
