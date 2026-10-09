@@ -1,10 +1,10 @@
 ---
 change_id: s05-planet-ship-services
 title: S05 planet ship services
-status: impl_reviewed
+status: archived
 created: 2026-10-09
 updated: 2026-10-09
-archived_at: null
+archived_at: 2026-10-09T17:35:21Z
 ---
 
 ## Notes
