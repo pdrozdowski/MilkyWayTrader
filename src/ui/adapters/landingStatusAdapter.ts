@@ -74,6 +74,10 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
         if (destroyed || refreshSuppressed) return;
         const state = provider.snapshot();
         const eligible = state.planetLifecycle.landedPlanetId !== null;
+        // While the ship is flying and already was flying, nothing the landing views show can have
+        // changed, so the three projections below would be built and thrown away every frame. The
+        // transition out of a landing still projects once, which is what hides the panel again.
+        if (!eligible && !wasEligible) return;
         if (eligible && !wasEligible) {
             selectedCommodityId = 'milk';
             tradeQuantity = 0;
