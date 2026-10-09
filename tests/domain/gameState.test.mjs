@@ -558,6 +558,39 @@ test('the landing port projects and refreshes landed ship services on every plan
     port.destroy();
 });
 
+test('the landing port skips its projections while flying and still projects the landing itself', () => {
+    const gameFor = provider => ({ registry: { get: key => key === 'telemetry' ? { emit: () => {} } : provider }, events: { emit: () => {} } });
+    const provider = new GameStateProvider(initialGameState);
+    const port = createLandingStatusPort(gameFor(provider));
+    const facilitiesBefore = port.getFacilitiesSnapshot();
+    const shipyardBefore = port.getShipyardSnapshot();
+    const snapshotBefore = port.getSnapshot();
+    assert.equal(snapshotBefore.eligible, false);
+
+    for (let frame = 0; frame < 5; frame++) provider.update(state => ({ ...state, clock: advanceGameClock(state.clock, 16) }));
+    port.selectCommodity('spaceRation');
+    port.setTradeQuantity(1);
+    assert.equal(port.getFacilitiesSnapshot(), facilitiesBefore, 'an in-flight refresh must not re-project the facilities');
+    assert.equal(port.getShipyardSnapshot(), shipyardBefore, 'an in-flight refresh must not re-project the shipyard');
+    assert.equal(port.getSnapshot(), snapshotBefore, 'an in-flight refresh must not re-project the market');
+
+    provider.update(state => ({
+        ...state,
+        clock: pauseGameClock(state.clock, 'landed'),
+        planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
+    }));
+    assert.notEqual(port.getShipyardSnapshot(), shipyardBefore, 'landing must project immediately');
+    assert.equal(port.getSnapshot().eligible, true);
+    assert.equal(port.getSnapshot().planetId, 'seroton');
+    assert.equal(port.getSnapshot().selectedCommodityId, 'milk', 'the landing transition still resets the visit-local selection');
+    assert.equal(port.getShipyardSnapshot().visible, true);
+
+    port.launch();
+    assert.equal(port.getSnapshot().eligible, false, 'launching must project once so the panel hides');
+    assert.equal(port.getShipyardSnapshot().visible, false);
+    port.destroy();
+});
+
 test('purchased ship services change flight, cargo and volley behaviour through the authoritative boundary', () => {
     const gameFor = provider => ({ registry: { get: key => key === 'telemetry' ? { emit: () => {} } : provider }, events: { emit: () => {} } });
     const provider = new GameStateProvider({

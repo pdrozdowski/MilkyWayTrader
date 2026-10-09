@@ -280,9 +280,9 @@ Not applicable: no persisted format, schema version or saved data is touched, an
 
 #### Automated
 
-- [x] 1.1 `test:domain` passes with the updated provider read contract and the malformed-reducer validation case
-- [x] 1.2 `typecheck` passes
-- [x] 1.3 `test:architecture` still passes with one provider construction point
+- [x] 1.1 `test:domain` passes with the updated provider read contract and the malformed-reducer validation case — b4a876f
+- [x] 1.2 `typecheck` passes — b4a876f
+- [x] 1.3 `test:architecture` still passes with one provider construction point — b4a876f
 
 ### Phase 2: Stop the wasted fan-out
 
