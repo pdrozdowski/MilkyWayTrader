@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-    <title>White and gray cow-pattern spaceship pointing up, engines off</title>
+    <title>White and gray cow-pattern spaceship hull pointing up, without exhaust</title>
     <defs>
         <clipPath id="cow-hull">
             <path d="M0-25 L10-5 L20 16 L8 12 L0 17 L-8 12 L-20 16 L-10-5Z"/>
@@ -15,8 +15,5 @@
             <path d="M-3 6 Q1 3 3 7 Q5 10 1 12 Q-3 13-4 10Z" fill="#bac0c5"/>
         </g>
         <path d="M0-17 L6-3 L0 3 L-6-3Z" fill="#38bcde"/>
-        <rect x="-10" y="10" width="6" height="8" rx="1" fill="#335777" stroke="#182e4b"/>
-        <rect x="4" y="10" width="6" height="8" rx="1" fill="#335777" stroke="#182e4b"/>
-        <path d="M-10 17 L-4 17 M4 17 L10 17" stroke="#9dcce4" stroke-width="1.5"/>
     </g>
 </svg>

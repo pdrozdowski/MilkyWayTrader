@@ -472,7 +472,7 @@ export class Game extends Scene
         if (state.ship.asteroidImpactAtActiveMs !== null && state.ship.asteroidImpactAtActiveMs !== before.ship.asteroidImpactAtActiveMs) {
             this.playShipCrashFeedback(state.ship.position);
         }
-        this.ship.synchronize(state.ship, time);
+        this.ship.synchronize(state.ship, state.shipStatus.engineLevel, time);
         this.lossOfControl.setVisible(time < this.lossOfControlUntilMs);
         this.sun.synchronize(state.clock.activeElapsedMs, state.ship.position);
         this.shipVelocity.copy(state.ship.velocity);

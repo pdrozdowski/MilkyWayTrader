@@ -1,6 +1,7 @@
 import { GameObjects, Scene } from 'phaser';
 import { ObjectDepth } from '../../visual/layers';
-import { shipBoostTuning, shipFlameLengths } from './definition';
+import { shipBoostTuning } from './definition';
+import { engineExhaustLayout, engineFlamePulseLength } from './exhaustLayout';
 
 interface WingSample {
     time: number;
@@ -13,6 +14,7 @@ export class BoostEffects
     readonly flames: GameObjects.Graphics;
     readonly trails: GameObjects.Graphics;
     private samples: WingSample[] = [];
+    private readonly boostPipes = engineExhaustLayout(1, true);
 
     constructor (scene: Scene)
     {
@@ -25,8 +27,8 @@ export class BoostEffects
         this.flames.clear().setVisible(active).setPosition(sprite.x, sprite.y)
             .setRotation(sprite.rotation).setScale(sprite.scaleX);
         if (active) {
-            const length = shipFlameLengths[Math.floor(time * 18 / 1000) % shipFlameLengths.length] * shipBoostTuning.flameLengthMultiplier;
-            for (const x of [-7, 7]) {
+            const length = engineFlamePulseLength(time) * this.boostPipes[0].lengthMultiplier;
+            for (const { x } of this.boostPipes) {
                 this.flames.fillStyle(shipBoostTuning.flameColor, 0.12).fillTriangle(x - 5, 18, x + 5, 18, x, 18 + length);
                 this.flames.fillStyle(shipBoostTuning.flameColor, 0.9).fillTriangle(x - 3, 18, x + 3, 18, x, 18 + length);
                 this.flames.fillStyle(0xe2fbff, 1).fillTriangle(x - 1.4, 18, x + 1.4, 18, x, 18 + length * 0.75);

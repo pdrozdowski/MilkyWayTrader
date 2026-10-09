@@ -145,6 +145,52 @@ test('fragment feedback only recognizes committed parent-to-children transitions
     assert.deepEqual(projectileImpactPositions([bulletTarget], [damaged], [shot], [], 100, 4), [{ x: -76, y: 0 }]);
 });
 
+test('engine exhaust adds pipes and hotter flames as the engine levels up', () => {
+    const { engineExhaustLayout, engineExhaustPipeX, engineFlamePulseLength, hotFlameLengthMultiplier } = transpileModule('src/game/objects/spaceship/exhaustLayout.ts', {
+        './definition': {
+            shipBoostTuning: { flameLengthMultiplier: 5 },
+            shipFlameFrameRate: 18,
+            shipFlameLengths: [7, 10, 13, 11, 8, 6]
+        }
+    });
+    const shape = (level, boosting = false) => engineExhaustLayout(level, boosting)
+        .map(pipe => `${pipe.x}:${pipe.variant}:${pipe.lengthMultiplier}`);
+
+    assert.equal(hotFlameLengthMultiplier, 2.5);
+    assert.deepEqual(shape(1), [`${engineExhaustPipeX.centre}:normal:1`], 'level one keeps the single pipe');
+    assert.deepEqual(shape(2), [`${engineExhaustPipeX.centre}:hot:2.5`], 'level two lengthens that pipe and burns it red');
+    assert.deepEqual(shape(3), [`${engineExhaustPipeX.left}:normal:1`, `${engineExhaustPipeX.right}:normal:1`], 'level three adds the second pipe');
+    assert.deepEqual(shape(4), [`${engineExhaustPipeX.left}:hot:2.5`, `${engineExhaustPipeX.right}:hot:2.5`], 'level four lengthens both pipes');
+    assert.deepEqual(shape(5), [`${engineExhaustPipeX.left}:normal:1`, `${engineExhaustPipeX.centre}:hot:2.5`, `${engineExhaustPipeX.right}:normal:1`],
+        'level five fits a hot centre pipe between the twin pipes');
+    assert.deepEqual(shape(1, true), [`${engineExhaustPipeX.left}:boost:5`, `${engineExhaustPipeX.right}:boost:5`],
+        'boosting lights the two level-one pipes at the boosted length regardless of the engine level');
+    assert.deepEqual(shape(5, true), shape(1, true));
+    assert.equal(engineExhaustLayout(99, false).length, 3, 'an out-of-range level clamps to the strongest layout');
+    assert.deepEqual(shape(0), shape(1), 'an out-of-range level falls back to the single pipe');
+    assert(Object.isFrozen(engineExhaustLayout(3, false)));
+
+    assert.deepEqual([0, 56, 112, 167, 223, 278].map(engineFlamePulseLength), [7, 10, 13, 11, 8, 6], 'the flame pulses through the retired animation lengths');
+    assert.equal(engineFlamePulseLength(333), engineFlamePulseLength(1_333), 'the pulse runs on a whole-frame loop');
+});
+
+test('the split spaceship definition loads a hull and both flame variants from real assets', () => {
+    const { definition } = transpileModule('src/game/objects/spaceship/definition.ts', {
+        '../../visual/layers': { ObjectDepth: { Ship: 20 } },
+        '../../definitions/gameplayTuning.ts': { shipTuning: { collisionRadius: 18 } }
+    });
+    assert.equal(definition.visual.texture, 'object:spaceship:hull');
+    assert.equal(definition.animations.length, 0, 'flames no longer ride on a sprite animation');
+    assert.deepEqual(definition.assets.map(asset => asset.key), [
+        'object:spaceship:hull',
+        'object:spaceship:flame-normal',
+        'object:spaceship:flame-hot'
+    ]);
+    for (const asset of definition.assets) assert.ok(existsSync(`public/assets/${asset.path}`), asset.path);
+    assert(!existsSync('public/assets/objects/spaceship/engine-on-sequence.svg'), 'the retired twin-flame spritesheet is gone');
+    assert(!existsSync('public/assets/objects/spaceship/engines-off.svg'), 'the nozzle-baked hull is replaced by the split hull');
+});
+
 test('scaffold dry-run, validation, overwrite refusal and generated TypeScript integration', async () => {
     const root = resolve('.');
     await mkdir('.cache', { recursive: true });
