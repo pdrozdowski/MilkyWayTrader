@@ -15,6 +15,7 @@ export class BoostEffects
     readonly trails: GameObjects.Graphics;
     private samples: WingSample[] = [];
     private readonly boostPipes = engineExhaustLayout(1, true);
+    private visible = true;
 
     constructor (scene: Scene)
     {
@@ -24,9 +25,10 @@ export class BoostEffects
 
     update (time: number, sprite: GameObjects.Sprite, active: boolean): void
     {
-        this.flames.clear().setVisible(active).setPosition(sprite.x, sprite.y)
+        const burning = active && this.visible;
+        this.flames.clear().setVisible(burning).setPosition(sprite.x, sprite.y)
             .setRotation(sprite.rotation).setScale(sprite.scaleX);
-        if (active) {
+        if (burning) {
             const length = engineFlamePulseLength(time) * this.boostPipes[0].lengthMultiplier;
             for (const { x } of this.boostPipes) {
                 this.flames.fillStyle(shipBoostTuning.flameColor, 0.12).fillTriangle(x - 5, 18, x + 5, 18, x, 18 + length);
@@ -54,6 +56,14 @@ export class BoostEffects
                     .lineBetween(previous[side].x, previous[side].y, current[side].x, current[side].y);
             }
         }
+    }
+
+    /** Hides the boosted flame and its wing trails with the hull, for example once the ship is destroyed. */
+    setVisible (visible: boolean): void
+    {
+        this.visible = visible;
+        this.flames.setVisible(false);
+        this.trails.setVisible(visible);
     }
 
     destroy (): void
