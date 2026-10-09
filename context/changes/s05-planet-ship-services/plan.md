@@ -218,8 +218,8 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Automated
 
-- [x] 2.1 Engine normal-flight and fixed non-directed-speed tests pass
-- [x] 2.2 Volley count, angle, and ID tests pass
+- [x] 2.1 Engine normal-flight and fixed non-directed-speed tests pass — fc4eda5
+- [x] 2.2 Volley count, angle, and ID tests pass — fc4eda5
 
 #### Manual
 
@@ -230,9 +230,9 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Automated
 
-- [ ] 3.1 Shipyard projection and adapter refresh tests pass
-- [ ] 3.2 Shipyard DOM interaction and unavailable-service tests pass
-- [ ] 3.3 Type checking passes: `npm.cmd run typecheck`
+- [x] 3.1 Shipyard projection and adapter refresh tests pass
+- [x] 3.2 Shipyard DOM interaction and unavailable-service tests pass
+- [x] 3.3 Type checking passes: `npm.cmd run typecheck`
 
 #### Manual
 

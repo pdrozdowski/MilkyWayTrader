@@ -1,4 +1,7 @@
-import type { LandingCommodityId, LandingFacilityId, LandedFacilitiesSnapshot, LandingStatusSnapshot, LandingStatusPort, UiHandle } from '../contracts';
+import type {
+    LandingCommodityId, LandingFacilityId, LandingShipServiceId, LandedFacilitiesSnapshot, LandedShipyardSnapshot,
+    LandingStatusSnapshot, LandingStatusPort, UiHandle
+} from '../contracts';
 import { displayLabels } from './displayLabels';
 import { formatCredits } from './formatCredits';
 
@@ -34,11 +37,22 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const landingVisual = required<HTMLElement>(root, '.landing-visual');
     const marketView = required<HTMLElement>(root, '#landing-status-market-view');
     const facilitiesView = required<HTMLElement>(root, '#landing-status-facilities-view');
+    const shipyardView = required<HTMLElement>(root, '#landing-status-shipyard-view');
     const facilitiesHeading = required<HTMLElement>(root, '#landing-status-facilities-heading');
     const facilitiesBack = required<HTMLButtonElement>(root, '#landing-status-facilities-back');
     const facilitiesClock = required<HTMLElement>(root, '#landing-status-facilities-clock');
     const facilitiesCredits = required<HTMLElement>(root, '#landing-status-facilities-credits');
     const facilitiesCargo = required<HTMLElement>(root, '#landing-status-facilities-cargo');
+    const shipyardHeading = required<HTMLElement>(root, '#landing-status-shipyard-heading');
+    const shipyardPlanet = required<HTMLElement>(root, '#landing-status-shipyard-planet');
+    const shipyardBack = required<HTMLButtonElement>(root, '#landing-status-shipyard-back');
+    const shipyardClock = required<HTMLElement>(root, '#landing-status-shipyard-clock');
+    const shipyardCredits = required<HTMLElement>(root, '#landing-status-shipyard-credits');
+    const shipyardCargo = required<HTMLElement>(root, '#landing-status-shipyard-cargo');
+    const shipyardRepairButton = required<HTMLButtonElement>(root, '#landing-status-shipyard-repair');
+    const shipyardRepairCard = required<HTMLElement>(shipyardView, '.shipyard-repair-card');
+    const shipyardBoosterCard = required<HTMLElement>(shipyardView, '[data-booster-row]');
+    const shipyardCards = Array.from(shipyardView.querySelectorAll<HTMLElement>('[data-service-id]'));
     const title = required<HTMLElement>(root, '#landing-status-title');
     const landedBadge = root.querySelector<HTMLImageElement>('#landing-status-landed');
     const marketHeading = required<HTMLElement>(root, '#landing-status-market-heading');
@@ -69,7 +83,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const commodityIcon = required<HTMLElement>(root, '.market-commodity-icon');
     const catalogue = Array.from(root.querySelectorAll<HTMLButtonElement>('#landing-status-catalogue > button[data-commodity-id]'));
     let wasVisible = false;
-    let view: 'hub' | 'market' | 'facilities' = 'hub';
+    let view: 'hub' | 'market' | 'facilities' | 'shipyard' = 'hub';
     let landedBadgeFrame = 0;
     const updateLandedBadge = (): void => {
         landedBadgeFrame = landedBadgeFrame === 0 ? 1 : 0;
@@ -162,12 +176,77 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             }
         }
     };
+    const renderShipyard = (snapshot: Readonly<LandedShipyardSnapshot>): void => {
+        shipyardHeading.textContent = displayLabels.shipyard;
+        shipyardBack.textContent = displayLabels.facilitiesBackToPlanet;
+        shipyardBack.setAttribute('aria-label', displayLabels.facilitiesBackToPlanet);
+        shipyardClock.textContent = clockText(snapshot.clock);
+        shipyardClock.setAttribute('aria-label', shipyardClock.textContent);
+        shipyardCredits.textContent = `${displayLabels.marketCredits}: ${formatCredits(snapshot.credits)}`;
+        shipyardCargo.textContent = `${displayLabels.marketCargo}: ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
+        shipyardPlanet.textContent = snapshot.planetName ?? '';
+        shipyardView.style.backgroundImage = `url('${planetBackgroundAssetById[snapshot.planetId ?? ''] ?? '/assets/landing_bg_seroton.png'}')`;
+
+        required<HTMLElement>(shipyardRepairCard, '.shipyard-card-name').textContent = displayLabels.shipyardRepair;
+        const repairIcon = required<HTMLElement>(shipyardRepairCard, '.shipyard-repair-icon');
+        repairIcon.setAttribute('aria-label', displayLabels.shipyardRepairIcon);
+        required<HTMLElement>(shipyardRepairCard, '.shipyard-repair-hp').textContent =
+            `${displayLabels.shipyardHull}: ${snapshot.repair.currentHitPoints} / ${snapshot.repair.maximumHitPoints}`;
+        const repairBar = required<HTMLProgressElement>(shipyardRepairCard, '.shipyard-repair-bar');
+        repairBar.max = snapshot.repair.maximumHitPoints;
+        repairBar.value = snapshot.repair.currentHitPoints;
+        const repairIncrement = Math.round(snapshot.repair.incrementHitPoints / snapshot.repair.maximumHitPoints * 100);
+        required<HTMLElement>(shipyardRepairCard, '.shipyard-repair-increment').textContent = `+${repairIncrement}% ${displayLabels.shipyardMaxHitPoints}`;
+        shipyardRepairButton.textContent = `${displayLabels.shipyardRepairAction} ${formatCredits(snapshot.repair.price)}`;
+        shipyardRepairButton.setAttribute('aria-label', shipyardRepairButton.textContent);
+        shipyardRepairButton.disabled = snapshot.repair.failure !== null;
+
+        for (const card of shipyardCards) {
+            const serviceId = card.dataset.serviceId as LandingShipServiceId;
+            const row = snapshot.services.find(candidate => candidate.serviceId === serviceId);
+            if (!row) throw new Error(`Missing ship-service row: ${serviceId}`);
+            required<HTMLElement>(card, '.shipyard-card-name').textContent = row.label;
+            required<HTMLElement>(card, '.shipyard-card-level').textContent = `${displayLabels.facilityLevel} ${row.level} / ${row.maximumLevel}`;
+            required<HTMLElement>(card, '.shipyard-card-price').textContent = row.maximum ? '' : `${displayLabels.facilityPrice}: ${formatCredits(row.price)}`;
+            const availability = required<HTMLElement>(card, '.shipyard-card-availability');
+            availability.textContent = row.available
+                ? ''
+                : `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: ${row.servicePlanetName}`;
+            availability.hidden = availability.textContent === '';
+            const actionButton = required<HTMLButtonElement>(card, '.shipyard-card-action');
+            actionButton.dataset.serviceId = row.serviceId;
+            actionButton.textContent = row.maximum
+                ? displayLabels.facilityMaxLevel
+                : row.available ? displayLabels.facilityUpgrade : displayLabels.shipyardNotAvailable;
+            actionButton.setAttribute('aria-label', `${row.label}: ${actionButton.textContent}`);
+            actionButton.disabled = !row.available || !row.affordable;
+        }
+
+        required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-name').textContent = displayLabels.shipyardBooster;
+        required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-effect').textContent = displayLabels.shipyardBoosterEffect;
+        required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-price').textContent =
+            `${displayLabels.facilityPrice}: ${formatCredits(snapshot.booster.price)}`;
+        const boosterAvailability = required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-availability');
+        boosterAvailability.textContent = snapshot.booster.owned
+            ? displayLabels.shipyardOwned
+            : snapshot.booster.available
+                ? ''
+                : `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: ${snapshot.booster.servicePlanetName}`;
+        boosterAvailability.hidden = boosterAvailability.textContent === '';
+        const boosterButton = required<HTMLButtonElement>(shipyardBoosterCard, '.shipyard-card-action');
+        boosterButton.textContent = snapshot.booster.owned
+            ? displayLabels.shipyardOwned
+            : snapshot.booster.available ? displayLabels.shipyardPurchase : displayLabels.shipyardNotAvailable;
+        boosterButton.setAttribute('aria-label', `${displayLabels.shipyardBooster}: ${boosterButton.textContent}`);
+        boosterButton.disabled = snapshot.booster.owned || !snapshot.booster.available || !snapshot.booster.affordable;
+    };
     const render = (snapshot: Readonly<LandingStatusSnapshot>): void => {
         modal.hidden = !snapshot.visible;
         if (snapshot.visible && !wasVisible) view = 'hub';
         hub.hidden = view !== 'hub';
         marketView.hidden = view !== 'market';
         facilitiesView.hidden = view !== 'facilities';
+        shipyardView.hidden = view !== 'shipyard';
         landingVisual.style.backgroundImage = `url('${planetBackgroundAssetById[snapshot.planetId ?? ''] ?? '/assets/landing_bg_seroton.png'}')`;
         marketView.style.backgroundImage = `url('${planetBackgroundAssetById[snapshot.planetId ?? ''] ?? '/assets/landing_bg_seroton.png'}')`;
         if (title instanceof HTMLImageElement) {
@@ -182,7 +261,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         marketBack.setAttribute('aria-label', displayLabels.facilitiesBackToPlanet);
         launch.setAttribute('aria-label', displayLabels.launch);
         facilities.setAttribute('aria-label', displayLabels.facilities);
-        shipyard.setAttribute('aria-label', displayLabels.shipyardUnavailable);
+        shipyard.setAttribute('aria-label', displayLabels.shipyard);
         marketCredits.textContent = formatCredits(snapshot.credits);
         marketCargo.textContent = `${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
         marketClock.textContent = clockText(snapshot.clock);
@@ -277,12 +356,29 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         view = 'facilities';
         hub.hidden = true;
         marketView.hidden = true;
+        shipyardView.hidden = true;
         facilitiesView.hidden = false;
         const primaryAction = facilityActionButtons.values().next().value;
         if (primaryAction && !primaryAction.disabled) primaryAction.focus();
         else facilitiesBack.focus();
     };
-    const returnFromFacilities = (): void => { view = 'hub'; hub.hidden = false; marketView.hidden = true; facilitiesView.hidden = true; facilities.focus(); };
+    const returnFromFacilities = (): void => { view = 'hub'; hub.hidden = false; marketView.hidden = true; facilitiesView.hidden = true; shipyardView.hidden = true; facilities.focus(); };
+    const openShipyard = (): void => {
+        view = 'shipyard';
+        hub.hidden = true;
+        marketView.hidden = true;
+        facilitiesView.hidden = true;
+        shipyardView.hidden = false;
+        if (!shipyardRepairButton.disabled) shipyardRepairButton.focus();
+        else shipyardBack.focus();
+    };
+    const returnFromShipyard = (): void => { view = 'hub'; hub.hidden = false; marketView.hidden = true; facilitiesView.hidden = true; shipyardView.hidden = true; shipyard.focus(); };
+    const chooseServiceUpgrade = (event: Event): void => {
+        const button = event.currentTarget as HTMLButtonElement;
+        const serviceId = button.dataset.serviceId as LandingShipServiceId | undefined;
+        if (serviceId) port.upgradeShipService(serviceId);
+    };
+    const purchaseBooster = (): void => { port.purchaseBooster(); };
     const launchGame = (): void => { port.launch(); root.querySelector<HTMLCanvasElement>('#game-container canvas')?.focus(); };
     const keydown = (event: KeyboardEvent): void => {
         if (event.key !== 'Tab' || modal.hidden) return;
@@ -293,6 +389,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     };
     const unsubscribe = port.subscribe(render);
     const unsubscribeFacilities = port.subscribeFacilities(renderFacilities);
+    const unsubscribeShipyard = port.subscribeShipyard(renderShipyard);
     for (const button of catalogue) button.addEventListener('click', select);
     quantity.addEventListener('input', setQuantity);
     confirm.addEventListener('click', port.confirmTrade);
@@ -300,6 +397,11 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     marketBack.addEventListener('click', returnToHub);
     facilities.addEventListener('click', openFacilities);
     facilitiesBack.addEventListener('click', returnFromFacilities);
+    shipyard.addEventListener('click', openShipyard);
+    shipyardBack.addEventListener('click', returnFromShipyard);
+    shipyardRepairButton.addEventListener('click', port.repairShip);
+    for (const card of shipyardCards) required<HTMLButtonElement>(card, '.shipyard-card-action').addEventListener('click', chooseServiceUpgrade);
+    required<HTMLButtonElement>(shipyardBoosterCard, '.shipyard-card-action').addEventListener('click', purchaseBooster);
     launch.addEventListener('click', launchGame);
     window.addEventListener('keydown', keydown);
     let destroyed = false;
@@ -308,6 +410,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         destroyed = true;
         unsubscribe();
         unsubscribeFacilities();
+        unsubscribeShipyard();
         for (const button of catalogue) button.removeEventListener('click', select);
         quantity.removeEventListener('input', setQuantity);
         confirm.removeEventListener('click', port.confirmTrade);
@@ -315,6 +418,11 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         marketBack.removeEventListener('click', returnToHub);
         facilities.removeEventListener('click', openFacilities);
         facilitiesBack.removeEventListener('click', returnFromFacilities);
+        shipyard.removeEventListener('click', openShipyard);
+        shipyardBack.removeEventListener('click', returnFromShipyard);
+        shipyardRepairButton.removeEventListener('click', port.repairShip);
+        for (const card of shipyardCards) required<HTMLButtonElement>(card, '.shipyard-card-action').removeEventListener('click', chooseServiceUpgrade);
+        required<HTMLButtonElement>(shipyardBoosterCard, '.shipyard-card-action').removeEventListener('click', purchaseBooster);
         for (const button of facilityActionButtons.values()) button.removeEventListener('click', chooseFacilityInvestment);
         facilityActionButtons.clear();
         launch.removeEventListener('click', launchGame);

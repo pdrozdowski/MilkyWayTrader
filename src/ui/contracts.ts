@@ -6,14 +6,18 @@ export interface UiHandle
 export type { RunStatusSnapshot } from '../game/application/runStatus';
 export type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
 export type { LandedFacilitiesSnapshot } from '../game/application/landedFacilities';
+export type { LandedShipyardSnapshot } from '../game/application/landedShipyard';
 export type { AuthPort, AuthSnapshot } from '../game/application/auth/auth';
 import type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
 import type { LandedFacilitiesSnapshot } from '../game/application/landedFacilities';
+import type { LandedShipyardSnapshot } from '../game/application/landedShipyard';
+import type { ShipServiceId } from '../game/application/planetShipServices';
 import type { PlanetFacilityId, SerotonCommodityId } from '../game/state/serotonMarketState';
 import type { RunStatusSnapshot } from '../game/application/runStatus';
 
 export type LandingCommodityId = LandingStatusSnapshot['selectedCommodityId'];
 export type LandingFacilityId = PlanetFacilityId;
+export type LandingShipServiceId = ShipServiceId;
 
 export interface RunStatusPort extends UiHandle
 {
@@ -68,11 +72,16 @@ export interface LandingStatusPort extends UiHandle
     subscribe(listener: (snapshot: Readonly<LandingStatusSnapshot>) => void): () => void;
     getFacilitiesSnapshot(): Readonly<LandedFacilitiesSnapshot>;
     subscribeFacilities(listener: (snapshot: Readonly<LandedFacilitiesSnapshot>) => void): () => void;
+    getShipyardSnapshot(): Readonly<LandedShipyardSnapshot>;
+    subscribeShipyard(listener: (snapshot: Readonly<LandedShipyardSnapshot>) => void): () => void;
     selectCommodity(commodityId: SerotonCommodityId): void;
     setTradeQuantity(quantity: number): void;
     confirmTrade(): void;
     buildFacility(facilityId: LandingFacilityId): void;
     upgradeFacility(facilityId: LandingFacilityId): void;
+    repairShip(): void;
+    upgradeShipService(serviceId: LandingShipServiceId): void;
+    purchaseBooster(): void;
     launch(): void;
 }
 

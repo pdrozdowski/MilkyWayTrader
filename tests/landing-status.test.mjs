@@ -102,6 +102,10 @@ test('facilities view renders five cards with levels, states, recipes and action
     const hub = new FakeElement();
     const marketView = new FakeElement();
     const facilitiesView = new FakeElement(Object.fromEntries(facilityIdList.map(facilityId => [`[data-facility-id="${facilityId}"]`, cards[facilityId]])));
+    const shipyardView = new FakeElement({
+        '.shipyard-repair-card': new FakeElement(Object.fromEntries(['.shipyard-card-name', '.shipyard-repair-icon', '.shipyard-repair-hp', '.shipyard-repair-bar', '.shipyard-repair-increment'].map(selector => [selector, new FakeElement()]))),
+        '[data-booster-row]': new FakeElement(Object.fromEntries(['.shipyard-card-name', '.shipyard-card-effect', '.shipyard-card-price', '.shipyard-card-availability', '.shipyard-card-action'].map(selector => [selector, new FakeElement()])))
+    });
     const facilitiesHeading = new FakeElement();
     const facilitiesBack = new FakeElement();
     const facilitiesClock = new FakeElement();
@@ -123,6 +127,14 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-facilities-credits': facilitiesCredits,
         '#landing-status-facilities-cargo': facilitiesCargo,
         '#landing-status-facilities': facilitiesButton,
+        '#landing-status-shipyard-view': shipyardView,
+        '#landing-status-shipyard-heading': new FakeElement(),
+        '#landing-status-shipyard-planet': new FakeElement(),
+        '#landing-status-shipyard-back': new FakeElement(),
+        '#landing-status-shipyard-clock': new FakeElement(),
+        '#landing-status-shipyard-credits': new FakeElement(),
+        '#landing-status-shipyard-cargo': new FakeElement(),
+        '#landing-status-shipyard-repair': new FakeElement(),
         '#landing-status-catalogue > button[data-commodity-id]': [catalogueButton]
     });
     const row = (facilityId, label, level, status, outputCommodityId, outputPerCycle, inputsPerCycle, modifier, action) =>
@@ -141,6 +153,13 @@ test('facilities view renders five cards with levels, states, recipes and action
         clock: { remainingSeconds: 754, runState: 'PAUSED' },
         facilities: baseFacilities.map(facility => ({ ...facility, action: { ...facility.action, affordable: facility.action.kind === 'max' || facility.action.price <= credits } }))
     });
+    const emptyShipyardSnapshot = {
+        visible: false, eligible: false, planetId: null, planetName: null, credits: 0, cargoUsed: 0, cargoCapacity: 0,
+        clock: { remainingSeconds: 0, runState: 'RUNNING' },
+        repair: { currentHitPoints: 100, maximumHitPoints: 100, incrementHitPoints: 10, price: 1_000, failure: 'not-landed' },
+        services: [],
+        booster: { owned: false, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'not-landed' }
+    };
     const commodity = { commodityId: 'milk', stock: 400, carriedQuantity: 0, unitPrice: 100, averageBuyPrice: 0 };
     const marketSnapshot = {
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000,
@@ -162,6 +181,8 @@ test('facilities view renders five cards with levels, states, recipes and action
         subscribe: next => { marketListener = next; next(marketSnapshot); return () => { marketUnsubscribes++; }; },
         getFacilitiesSnapshot: () => facilitiesSnapshot(1_000_000),
         subscribeFacilities: next => { facilitiesListener = next; next(facilitiesSnapshot(1_000_000)); return () => { facilitiesUnsubscribes++; }; },
+        getShipyardSnapshot: () => emptyShipyardSnapshot,
+        subscribeShipyard: next => { next(emptyShipyardSnapshot); return () => {}; },
         selectCommodity: () => {},
         setTradeQuantity: () => {},
         confirmTrade: () => {},
@@ -311,4 +332,208 @@ test('facilities view renders five cards with levels, states, recipes and action
     for (const facilityId of facilityIdList) assert.equal(action(facilityId).listeners.size, 0);
     assert.equal(facilitiesButton.listeners.size, 0);
     assert.equal(facilitiesBack.listeners.size, 0);
+});
+test('the shipyard view renders repair, local service cards and the booster row from a fake port', () => {
+    const serviceIds = ['cargo', 'engine', 'weaponary'];
+    const serviceCards = Object.fromEntries(serviceIds.map(serviceId => [serviceId, new FakeElement({
+        '.shipyard-card-name': new FakeElement(),
+        '.shipyard-card-level': new FakeElement(),
+        '.shipyard-card-price': new FakeElement(),
+        '.shipyard-card-availability': new FakeElement(),
+        '.shipyard-card-action': new FakeElement()
+    })]));
+    for (const serviceId of serviceIds) serviceCards[serviceId].dataset.serviceId = serviceId;
+    const repairCard = new FakeElement({
+        '.shipyard-card-name': new FakeElement(),
+        '.shipyard-repair-icon': new FakeElement(),
+        '.shipyard-repair-hp': new FakeElement(),
+        '.shipyard-repair-bar': new FakeElement(),
+        '.shipyard-repair-increment': new FakeElement()
+    });
+    const boosterCard = new FakeElement({
+        '.shipyard-card-name': new FakeElement(),
+        '.shipyard-card-effect': new FakeElement(),
+        '.shipyard-card-price': new FakeElement(),
+        '.shipyard-card-availability': new FakeElement(),
+        '.shipyard-card-action': new FakeElement()
+    });
+    const shipyardView = new FakeElement({
+        '.shipyard-repair-card': repairCard,
+        '[data-booster-row]': boosterCard,
+        '[data-service-id]': serviceIds.map(serviceId => serviceCards[serviceId])
+    });
+    const clickable = ['#landing-status-commodity-name', '#landing-status-planet-stock', '#landing-status-supply', '#landing-status-production', '#landing-status-consumption', '#landing-status-stock-change', '#landing-status-player-stock',
+        '#landing-status-average-buy-price', '#landing-status-trade-income', '#landing-status-trade-result', '#landing-status-quantity-label',
+        '#landing-status-quantity', '#landing-status-quantity-value', '#landing-status-unit-price', '#landing-status-budget',
+        '#landing-status-confirm', '#landing-status-launch', '#landing-status-market', '#landing-status-shipyard', '#landing-status-market-back',
+        '.market-commodity-icon', '#landing-status-market-heading', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
+        '#landing-status-title', '.landing-visual',
+        '#landing-status-facilities-heading', '#landing-status-facilities-clock', '#landing-status-facilities-credits', '#landing-status-facilities-cargo', '#landing-status-facilities'];
+    const modal = new FakeElement();
+    const hub = new FakeElement();
+    const marketView = new FakeElement();
+    const facilitiesView = new FakeElement();
+    const facilitiesBack = new FakeElement();
+    const shipyardBack = new FakeElement();
+    const shipyardRepairButton = new FakeElement();
+    const shipyardButton = new FakeElement();
+    const root = new FakeElement({
+        ...Object.fromEntries(clickable.map(selector => [selector, new FakeElement()])),
+        '#landing-status': modal,
+        '#landing-status-hub': hub,
+        '#landing-status-market-view': marketView,
+        '#landing-status-facilities-view': facilitiesView,
+        '#landing-status-facilities-back': facilitiesBack,
+        '#landing-status-shipyard-view': shipyardView,
+        '#landing-status-shipyard-heading': new FakeElement(),
+        '#landing-status-shipyard-planet': new FakeElement(),
+        '#landing-status-shipyard-clock': new FakeElement(),
+        '#landing-status-shipyard-credits': new FakeElement(),
+        '#landing-status-shipyard-cargo': new FakeElement(),
+        '#landing-status-shipyard-back': shipyardBack,
+        '#landing-status-shipyard-repair': shipyardRepairButton,
+        '#landing-status-shipyard': shipyardButton
+    });
+    const services = [
+        { serviceId: 'cargo', label: 'Cargo Capacity', servicePlanetId: 'seroton', servicePlanetName: 'Seroton', level: 1, maximumLevel: 5, price: 15_000, available: true, affordable: true, maximum: false, failure: null },
+        { serviceId: 'engine', label: 'Engine System', servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', level: 2, maximumLevel: 5, price: 40_000, available: false, affordable: false, maximum: false, failure: 'wrong-planet' },
+        { serviceId: 'weaponary', label: 'Weapon System', servicePlanetId: 'maslo-prime', servicePlanetName: 'Maslo-Prime', level: 10, maximumLevel: 10, price: 0, available: false, affordable: false, maximum: true, failure: 'wrong-planet' }
+    ];
+    const shipyardSnapshot = overrides => ({
+        visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000, cargoUsed: 3, cargoCapacity: 40,
+        clock: { remainingSeconds: 754, runState: 'PAUSED' },
+        repair: { currentHitPoints: 75, maximumHitPoints: 100, incrementHitPoints: 10, price: 1_000, failure: null },
+        services, booster: { owned: false, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'wrong-planet' },
+        ...overrides
+    });
+    const commodity = { commodityId: 'milk', stock: 400, carriedQuantity: 0, unitPrice: 100, averageBuyPrice: 0 };
+    const marketSnapshot = {
+        visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000,
+        cargoUsed: 3, cargoCapacity: 40, commodities: [commodity], selectedCommodityId: 'milk', tradeQuantity: 0,
+        selectedCommodity: commodity, plannedStockDelta: 0, plannedCargoDelta: 0, supplyLevel: 'Medium',
+        clock: { remainingSeconds: 754, runState: 'PAUSED' },
+        commodityFlow: { productionPerSecond: 0, consumptionPerSecond: 0, netPerSecond: 0 },
+        quote: { quantity: 0, total: 0, failure: null, postTradeStock: 400, nextUnitPrice: 100 }
+    };
+    const facilitiesSnapshot = { visible: false, eligible: false, planetId: null, planetName: null, credits: 1_000_000, cargoUsed: 3, cargoCapacity: 40, clock: marketSnapshot.clock, facilities: [] };
+    let shipyardListener = null;
+    const repairs = [];
+    const upgrades = [];
+    const boosters = [];
+    let shipyardUnsubscribes = 0;
+    let portDestroyed = 0;
+    const port = {
+        getSnapshot: () => marketSnapshot,
+        subscribe: next => { next(marketSnapshot); return () => {}; },
+        getFacilitiesSnapshot: () => facilitiesSnapshot,
+        subscribeFacilities: next => { next(facilitiesSnapshot); return () => {}; },
+        getShipyardSnapshot: () => shipyardSnapshot({}),
+        subscribeShipyard: next => { shipyardListener = next; next(shipyardSnapshot({})); return () => { shipyardUnsubscribes++; }; },
+        selectCommodity: () => {},
+        setTradeQuantity: () => {},
+        confirmTrade: () => {},
+        buildFacility: () => {},
+        upgradeFacility: () => {},
+        repairShip: () => repairs.push('repair'),
+        upgradeShipService: serviceId => upgrades.push(serviceId),
+        purchaseBooster: () => boosters.push('booster'),
+        launch: () => {},
+        destroy: () => { portDestroyed++; }
+    };
+    const handle = mountLandingStatus(root, port);
+    const textOf = (card, selector) => card.querySelector(selector).textContent;
+    const actionOf = card => card.querySelector('.shipyard-card-action');
+
+    assert.equal(shipyardButton.disabled, false, 'the shipyard control is enabled from the landed hub');
+    assert.equal(shipyardButton.attributes['aria-label'], displayLabels.shipyard);
+    shipyardButton.click();
+    assert.equal(hub.hidden, true);
+    assert.equal(shipyardView.hidden, false, 'clicking Shipyard opens the landed shipyard view');
+    assert.equal(documentStub.activeElement, shipyardRepairButton, 'an available repair takes focus');
+
+    assert.equal(textOf(repairCard, '.shipyard-card-name'), displayLabels.shipyardRepair);
+    assert.equal(textOf(repairCard, '.shipyard-repair-hp'), `${displayLabels.shipyardHull}: 75 / 100`);
+    assert.equal(repairCard.querySelector('.shipyard-repair-bar').value, 75);
+    assert.equal(repairCard.querySelector('.shipyard-repair-bar').max, 100);
+    assert.equal(textOf(repairCard, '.shipyard-repair-increment'), `+10% ${displayLabels.shipyardMaxHitPoints}`);
+    assert.equal(shipyardRepairButton.textContent, `${displayLabels.shipyardRepairAction} 1,000`);
+    assert(!shipyardRepairButton.textContent.includes('cr'), 'the repair price carries no currency suffix');
+    assert.equal(shipyardRepairButton.disabled, false);
+    assert.equal(root.querySelector('#landing-status-shipyard-credits').textContent, `${displayLabels.marketCredits}: 1,000,000`, 'the shipyard balance uses grouped numerals');
+    assert.equal(root.querySelector('#landing-status-shipyard-cargo').textContent, `${displayLabels.marketCargo}: 3 / 40`);
+    const shipyardClockText = root.querySelector('#landing-status-shipyard-clock').textContent;
+    assert(shipyardClockText.startsWith('12:34 '), 'the shipyard header shows the run clock');
+    assert(shipyardClockText.endsWith(` ${displayLabels.clockPaused}`), 'the shipyard clock shows the paused run state');
+    assert.equal(root.querySelector('#landing-status-shipyard-heading').textContent, displayLabels.shipyard);
+    assert.equal(root.querySelector('#landing-status-shipyard-back').textContent, displayLabels.facilitiesBackToPlanet);
+    assert.equal(root.querySelector('#landing-status-shipyard-planet').textContent, 'Seroton');
+
+    assert.equal(textOf(serviceCards.cargo, '.shipyard-card-name'), 'Cargo Capacity');
+    assert.equal(textOf(serviceCards.cargo, '.shipyard-card-level'), `${displayLabels.facilityLevel} 1 / 5`);
+    assert.equal(textOf(serviceCards.cargo, '.shipyard-card-price'), `${displayLabels.facilityPrice}: 15,000`);
+    assert(!textOf(serviceCards.cargo, '.shipyard-card-price').includes('cr'), 'a shipyard price carries no currency suffix');
+    assert.equal(textOf(serviceCards.cargo, '.shipyard-card-availability'), '');
+    assert.equal(serviceCards.cargo.querySelector('.shipyard-card-availability').hidden, true);
+    assert.equal(actionOf(serviceCards.cargo).textContent, displayLabels.facilityUpgrade);
+    assert.equal(actionOf(serviceCards.cargo).disabled, false);
+    assert.equal(actionOf(serviceCards.cargo).attributes['aria-label'], `Cargo Capacity: ${displayLabels.facilityUpgrade}`);
+
+    assert.equal(textOf(serviceCards.engine, '.shipyard-card-availability'), `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: Lactozis-7C`);
+    assert.equal(serviceCards.engine.querySelector('.shipyard-card-availability').hidden, false);
+    assert.equal(actionOf(serviceCards.engine).textContent, displayLabels.shipyardNotAvailable);
+    assert.equal(actionOf(serviceCards.engine).disabled, true, 'an off-planet service is disabled');
+    assert.equal(actionOf(serviceCards.weaponary).textContent, displayLabels.facilityMaxLevel);
+    assert.equal(actionOf(serviceCards.weaponary).disabled, true, 'a maximum-level service is disabled');
+    assert.equal(textOf(serviceCards.weaponary, '.shipyard-card-price'), '', 'a maximum-level service shows no price');
+
+    assert.equal(textOf(boosterCard, '.shipyard-card-name'), displayLabels.shipyardBooster);
+    assert.equal(textOf(boosterCard, '.shipyard-card-effect'), displayLabels.shipyardBoosterEffect);
+    assert.equal(textOf(boosterCard, '.shipyard-card-price'), `${displayLabels.facilityPrice}: 75,000`);
+    assert.equal(textOf(boosterCard, '.shipyard-card-availability'), `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: Lactozis-7C`);
+    assert.equal(actionOf(boosterCard).textContent, displayLabels.shipyardNotAvailable);
+    assert.equal(actionOf(boosterCard).disabled, true);
+
+    actionOf(serviceCards.cargo).click();
+    shipyardRepairButton.click();
+    actionOf(boosterCard).click();
+    assert.deepEqual(upgrades, ['cargo']);
+    assert.deepEqual(repairs, ['repair']);
+    assert.deepEqual(boosters, ['booster']);
+
+    shipyardListener(shipyardSnapshot({
+        credits: 0,
+        repair: { currentHitPoints: 100, maximumHitPoints: 100, incrementHitPoints: 10, price: 1_000, failure: 'full-health' },
+        services: [
+            { ...services[0], price: 120_000, available: true, affordable: false, failure: 'insufficient-credits' },
+            { serviceId: 'engine', label: 'Engine System', servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', level: 1, maximumLevel: 5, price: 20_000, available: true, affordable: false, maximum: false, failure: 'insufficient-credits' },
+            services[2]
+        ],
+        booster: { owned: true, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'already-owned' }
+    }));
+    assert.equal(textOf(repairCard, '.shipyard-repair-hp'), `${displayLabels.shipyardHull}: 100 / 100`, 'the repair readout refreshes immediately');
+    assert.equal(shipyardRepairButton.disabled, true, 'a full hull disables repair');
+    assert.equal(actionOf(serviceCards.cargo).disabled, true, 'an unaffordable upgrade is disabled');
+    assert.equal(textOf(serviceCards.engine, '.shipyard-card-availability'), '', 'the local path becomes available on its own planet');
+    assert.equal(serviceCards.engine.querySelector('.shipyard-card-availability').hidden, true);
+    assert.equal(actionOf(serviceCards.engine).disabled, true, 'the local path stays disabled while unaffordable');
+    assert.equal(actionOf(boosterCard).textContent, displayLabels.shipyardOwned);
+    assert.equal(actionOf(boosterCard).disabled, true, 'an owned booster cannot be bought again');
+    assert.equal(textOf(boosterCard, '.shipyard-card-availability'), displayLabels.shipyardOwned);
+
+    shipyardButton.click();
+    assert.equal(documentStub.activeElement, shipyardBack, 'an unavailable repair moves focus to the always-enabled Back control');
+    shipyardBack.click();
+    assert.equal(shipyardView.hidden, true, 'Back returns to the hub without launching');
+    assert.equal(hub.hidden, false);
+    assert.equal(documentStub.activeElement, shipyardButton, 'returning from the shipyard refocuses its hub control');
+
+    handle.destroy();
+    handle.destroy();
+    assert.equal(shipyardUnsubscribes, 1, 'teardown unsubscribes the shipyard listener exactly once');
+    assert.equal(portDestroyed, 1);
+    assert.equal(shipyardButton.listeners.size, 0);
+    assert.equal(shipyardBack.listeners.size, 0);
+    assert.equal(shipyardRepairButton.listeners.size, 0);
+    for (const serviceId of serviceIds) assert.equal(actionOf(serviceCards[serviceId]).listeners.size, 0);
+    assert.equal(actionOf(boosterCard).listeners.size, 0);
 });
