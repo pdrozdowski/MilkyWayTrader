@@ -399,10 +399,19 @@ test('the shipyard view renders repair, local service cards and the booster row 
         { serviceId: 'engine', label: 'Engine System', servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', level: 2, maximumLevel: 5, price: 40_000, available: false, affordable: false, maximum: false, failure: 'wrong-planet' },
         { serviceId: 'weaponary', label: 'Weapon System', servicePlanetId: 'maslo-prime', servicePlanetName: 'Maslo-Prime', level: 10, maximumLevel: 10, price: 0, available: false, affordable: false, maximum: true, failure: 'wrong-planet' }
     ];
+    const healthBandOf = currentHitPoints => currentHitPoints >= 70 ? 'healthy' : currentHitPoints >= 30 ? 'warning' : 'critical';
+    const repairOf = currentHitPoints => ({
+        currentHitPoints,
+        maximumHitPoints: 100,
+        incrementHitPoints: 10,
+        price: 1_000,
+        failure: currentHitPoints >= 100 ? 'full-health' : null,
+        healthBand: healthBandOf(currentHitPoints)
+    });
     const shipyardSnapshot = overrides => ({
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000, cargoUsed: 3, cargoCapacity: 40,
         clock: { remainingSeconds: 754, runState: 'PAUSED' },
-        repair: { currentHitPoints: 75, maximumHitPoints: 100, incrementHitPoints: 10, price: 1_000, failure: null },
+        repair: repairOf(75),
         services, booster: { owned: false, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'wrong-planet' },
         ...overrides
     });
@@ -461,6 +470,15 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(textOf(repairCard, '.shipyard-repair-hp'), `${displayLabels.shipyardHull}: 75 / 100`);
     assert.equal(repairCard.querySelector('.shipyard-repair-bar').value, 75);
     assert.equal(repairCard.querySelector('.shipyard-repair-bar').max, 100);
+    assert.equal(repairCard.querySelector('.shipyard-repair-bar').dataset.healthBand, 'healthy', 'a healthy hull keeps the bar green');
+    shipyardListener(shipyardSnapshot({ repair: repairOf(25) }));
+    assert.equal(repairCard.querySelector('.shipyard-repair-bar').value, 25, 'the bar fill follows the current hit points');
+    assert.equal(repairCard.querySelector('.shipyard-repair-bar').dataset.healthBand, 'critical', 'a badly damaged hull turns the bar red');
+    shipyardListener(shipyardSnapshot({ repair: repairOf(60) }));
+    assert.equal(repairCard.querySelector('.shipyard-repair-bar').dataset.healthBand, 'warning', 'healing past 30 turns the bar amber');
+    shipyardListener(shipyardSnapshot({ repair: repairOf(85) }));
+    assert.equal(repairCard.querySelector('.shipyard-repair-bar').dataset.healthBand, 'healthy', 'healing back over 70 turns the bar green again');
+    shipyardListener(shipyardSnapshot({}));
     assert.equal(textOf(repairCard, '.shipyard-repair-increment'), `+10% ${displayLabels.shipyardMaxHitPoints}`);
     assert.equal(shipyardRepairButton.textContent, `${displayLabels.shipyardRepairAction} 1,000`);
     assert(!shipyardRepairButton.textContent.includes('cr'), 'the repair price carries no currency suffix');
@@ -508,7 +526,7 @@ test('the shipyard view renders repair, local service cards and the booster row 
 
     shipyardListener(shipyardSnapshot({
         credits: 0,
-        repair: { currentHitPoints: 100, maximumHitPoints: 100, incrementHitPoints: 10, price: 1_000, failure: 'full-health' },
+        repair: repairOf(100),
         services: [
             { ...services[0], price: 120_000, available: true, affordable: false, failure: 'insufficient-credits' },
             { serviceId: 'engine', label: 'Engine System', servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', level: 1, maximumLevel: 5, price: 20_000, available: true, affordable: false, maximum: false, failure: 'insufficient-credits' },

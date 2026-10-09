@@ -195,6 +195,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         const repairBar = required<HTMLProgressElement>(shipyardRepairCard, '.shipyard-repair-bar');
         repairBar.max = snapshot.repair.maximumHitPoints;
         repairBar.value = snapshot.repair.currentHitPoints;
+        repairBar.dataset.healthBand = snapshot.repair.healthBand;
         const repairIncrement = Math.round(snapshot.repair.incrementHitPoints / snapshot.repair.maximumHitPoints * 100);
         required<HTMLElement>(shipyardRepairCard, '.shipyard-repair-increment').textContent = `+${repairIncrement}% ${displayLabels.shipyardMaxHitPoints}`;
         shipyardRepairButton.textContent = `${displayLabels.shipyardRepairAction} ${formatCredits(snapshot.repair.price)}`;

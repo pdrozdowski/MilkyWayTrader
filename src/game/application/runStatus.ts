@@ -3,6 +3,13 @@ import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 
 export type RunState = 'RUNNING' | 'PAUSED';
 export type HealthBand = 'healthy' | 'warning' | 'critical';
+
+/** Inclusive 70/69/30/29 boundaries shared by every hull-health presentation. */
+export function healthBandOf (currentHitPoints: number): HealthBand
+{
+    return currentHitPoints >= 70 ? 'healthy' : currentHitPoints >= 30 ? 'warning' : 'critical';
+}
+
 export interface RunStatusCargoStack { readonly commodityId: string; readonly quantity: number; readonly totalCost: number; }
 export interface RunStatusSystem { readonly level: number; readonly available: boolean; }
 export interface RunStatusSnapshot
@@ -36,7 +43,7 @@ export function projectRunStatus (state: GameStateSnapshot, visible: boolean): R
         cargoCapacity: cargoCapacityByLevel[state.shipStatus.cargoLevel] ?? 0,
         currentHitPoints: state.shipStatus.currentHitPoints,
         maximumHitPoints: maximumShipHitPoints,
-        healthBand: state.shipStatus.currentHitPoints >= 70 ? 'healthy' : state.shipStatus.currentHitPoints >= 30 ? 'warning' : 'critical',
+        healthBand: healthBandOf(state.shipStatus.currentHitPoints),
         cargoSystem: { level: state.shipStatus.cargoLevel, available: true },
         engineSystem: { level: state.shipStatus.engineLevel, available: true },
         weaponSystem: { level: state.shipStatus.weaponLevel, available: true },
