@@ -23,7 +23,7 @@ Dependencies point toward pure state. Domain and state code never import Phaser,
 
 ## Presentation ownership
 
-`GameStateSnapshot` is the versioned aggregate for the active run. `GameStateProvider` is its sole owner and atomic replacement boundary; scenes submit reducers and render detached readonly snapshots. The current aggregate contains authoritative clock, ship, planet, weapon-cadence, projectile-sequence, and projectile state. Input intent, camera state, audio settings, effects, and cleanup handles are transient and are never persisted. Static tuning remains in definitions.
+`GameStateSnapshot` is the versioned aggregate for the active run. `GameStateProvider` is its sole owner and atomic replacement boundary; scenes submit reducers and render shared, deeply frozen readonly snapshots. The current aggregate contains authoritative clock, ship, planet, weapon-cadence, projectile-sequence, and projectile state. Input intent, camera state, audio settings, effects, and cleanup handles are transient and are never persisted. Static tuning remains in definitions.
 
 Each frame follows one order: collect input intent, update pause reasons and active clock, run pure reducers using active delta, commit once through the provider, then reconcile Phaser/UI/audio projections. Phaser's raw time may animate visuals and audio but may not drive restorable timers. Overlapping pauses are stored as unique reasons; active time advances only when the collection is empty.
 
