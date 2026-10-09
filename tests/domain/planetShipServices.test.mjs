@@ -47,6 +47,12 @@ const ladder = [
     ['weaponary', 'maslo-prime', [20_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000]]
 ];
 
+const capabilityTables = {
+    cargo: cargoCapacityByLevel,
+    engine: engineNormalSpeedPercentByLevel,
+    weaponary: weaponProjectileCountByLevel
+};
+
 test('each ship-service path is sold on exactly one planet with its configured maximum level', () => {
     assert.deepEqual(shipServiceDefinitions.map(definition => definition.id), ['cargo', 'engine', 'weaponary']);
     assert.deepEqual(shipServiceDefinitions.map(definition => definition.servicePlanetId), ['seroton', 'lactozis-7c', 'maslo-prime']);
@@ -296,6 +302,8 @@ test('the shipyard projection reports landed context, repair status and one loca
             assert.equal(row.level, 1);
             assert.equal(row.maximumLevel, definition.maximumLevel);
             assert.equal(row.maximum, false);
+            assert.equal(row.currentCapability, capabilityTables[row.serviceId][1], row.serviceId);
+            assert.equal(row.maximumCapability, capabilityTables[row.serviceId][definition.maximumLevel], row.serviceId);
             assert.equal(row.servicePlanetId, definition.servicePlanetId);
             assert.equal(row.servicePlanetName, initialGameState.planets.find(candidate => candidate.id === definition.servicePlanetId).name);
             assert.equal(row.price, definition.upgradePrices[0]);
@@ -332,4 +340,21 @@ test('the shipyard projection reports landed context, repair status and one loca
     assert.equal(maxed.booster.owned, true);
     assert.equal(maxed.booster.available, false);
     assert.equal(maxed.booster.failure, 'already-owned');
+});
+
+test('the shipyard projection quotes each system capability for every level', () => {
+    for (const [serviceId, planetId] of [['cargo', 'seroton'], ['engine', 'lactozis-7c'], ['weaponary', 'maslo-prime']]) {
+        let state = { ...landedOn(planetId), credits: 1_000_000 };
+        const maximumLevel = shipServiceDefinitions.find(definition => definition.id === serviceId).maximumLevel;
+        for (let level = 1; level <= maximumLevel; level++) {
+            const row = projectLandedShipyard(state).services.find(candidate => candidate.serviceId === serviceId);
+            assert.equal(row.level, level, serviceId);
+            assert.equal(row.currentCapability, capabilityTables[serviceId][level], `${serviceId} level ${level}`);
+            assert.equal(row.maximumCapability, capabilityTables[serviceId][maximumLevel], serviceId);
+            state = advanceShipServiceLevel(state, serviceId);
+        }
+    }
+    const cargo = projectLandedShipyard({ ...landedOn('seroton'), shipStatus: { ...clone(initialGameState).shipStatus, cargoLevel: 3 } }).services.find(row => row.serviceId === 'cargo');
+    assert.equal(cargo.currentCapability, 65, 'a mid-level cargo hold reports its own capacity');
+    assert.equal(cargo.maximumCapability, 110);
 });

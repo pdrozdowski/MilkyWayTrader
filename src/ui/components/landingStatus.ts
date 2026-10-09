@@ -29,6 +29,16 @@ const modifierText = (modifier: Readonly<{ upgradePriceMultiplier: number; outpu
     if (modifier.upgradePriceMultiplier !== 1) parts.push(`${displayLabels.facilityUpgradeDiscount} ${Math.round((1 - modifier.upgradePriceMultiplier) * 100)}%`);
     return parts.join(' · ');
 };
+const shipServiceCapabilityText: Readonly<Record<LandingShipServiceId, (value: number) => string>> = {
+    cargo: value => `${displayLabels.shipyardCapabilityCargo} ${value} ${displayLabels.shipyardCapabilityUnits}`,
+    engine: value => `${displayLabels.shipyardCapabilityEngine} ${value}${displayLabels.shipyardCapabilityPercent}`,
+    weaponary: value => `${displayLabels.shipyardCapabilityWeaponary} ${value} ${value === 1 ? displayLabels.shipyardCapabilityProjectile : displayLabels.shipyardCapabilityProjectiles}`
+};
+const shipServiceNotes: Readonly<Record<LandingShipServiceId, string>> = {
+    cargo: displayLabels.shipyardNoteCargo,
+    engine: displayLabels.shipyardNoteEngine,
+    weaponary: displayLabels.shipyardNoteWeaponary
+};
 
 export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort): UiHandle
 {
@@ -197,10 +207,11 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         repairBar.value = snapshot.repair.currentHitPoints;
         repairBar.dataset.healthBand = snapshot.repair.healthBand;
         const repairIncrement = Math.round(snapshot.repair.incrementHitPoints / snapshot.repair.maximumHitPoints * 100);
-        required<HTMLElement>(shipyardRepairCard, '.shipyard-repair-increment').textContent = `+${repairIncrement}% ${displayLabels.shipyardMaxHitPoints}`;
-        required<HTMLElement>(shipyardRepairButton, '.shipyard-card-action-label').textContent = displayLabels.shipyardRepairAction;
+        required<HTMLElement>(shipyardRepairButton, '.shipyard-card-action-label').textContent =
+            `${displayLabels.shipyardRepairAction} ${repairIncrement}% ${displayLabels.shipyardMaxHitPoints}`;
         required<HTMLElement>(shipyardRepairButton, '.shipyard-card-action-price').textContent = formatCredits(snapshot.repair.price);
-        shipyardRepairButton.setAttribute('aria-label', `${displayLabels.shipyardRepair}: ${displayLabels.shipyardRepairAction} ${formatCredits(snapshot.repair.price)}`);
+        shipyardRepairButton.setAttribute('aria-label',
+            `${displayLabels.shipyardRepair}: ${displayLabels.shipyardRepairAction} ${repairIncrement}% ${displayLabels.shipyardMaxHitPoints} ${formatCredits(snapshot.repair.price)}`);
         shipyardRepairButton.disabled = snapshot.repair.failure !== null;
 
         for (const card of shipyardCards) {
@@ -210,11 +221,16 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             required<HTMLElement>(card, '.shipyard-card-icon').setAttribute('aria-label', `${row.label}${displayLabels.shipServiceIconSuffix}`);
             required<HTMLElement>(card, '.shipyard-card-name').textContent = row.label;
             required<HTMLElement>(card, '.shipyard-card-level').textContent = `${displayLabels.facilityLevel} ${row.level} / ${row.maximumLevel}`;
+            required<HTMLElement>(card, '.shipyard-card-capability').textContent = shipServiceCapabilityText[row.serviceId](row.currentCapability);
+            required<HTMLElement>(card, '.shipyard-card-note').textContent = shipServiceNotes[row.serviceId];
             const availability = required<HTMLElement>(card, '.shipyard-card-availability');
-            availability.textContent = row.available
-                ? ''
-                : `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: ${row.servicePlanetName}`;
-            availability.hidden = availability.textContent === '';
+            const availabilityState = required<HTMLElement>(availability, '.shipyard-card-availability-state');
+            const availabilityLabel = required<HTMLElement>(availability, '.shipyard-card-availability-label');
+            const availabilityPlanet = required<HTMLElement>(availability, '.shipyard-card-availability-planet');
+            availabilityState.textContent = row.available ? '' : `${displayLabels.shipyardNotAvailable}.`;
+            availabilityLabel.textContent = row.available ? '' : `${displayLabels.shipyardServicePlanet}:`;
+            availabilityPlanet.textContent = row.available ? '' : row.servicePlanetName;
+            availability.hidden = row.available;
             const actionButton = required<HTMLButtonElement>(card, '.shipyard-card-action');
             actionButton.dataset.serviceId = row.serviceId;
             const actionLabel = required<HTMLElement>(actionButton, '.shipyard-card-action-label');
@@ -235,12 +251,14 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-icon').setAttribute('aria-label', `${displayLabels.shipyardBooster}${displayLabels.shipServiceIconSuffix}`);
         required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-effect').textContent = displayLabels.shipyardBoosterEffect;
         const boosterAvailability = required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-availability');
-        boosterAvailability.textContent = snapshot.booster.owned
-            ? displayLabels.shipyardOwned
-            : snapshot.booster.available
-                ? ''
-                : `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: ${snapshot.booster.servicePlanetName}`;
-        boosterAvailability.hidden = boosterAvailability.textContent === '';
+        const boosterAvailabilityState = required<HTMLElement>(boosterAvailability, '.shipyard-card-availability-state');
+        const boosterAvailabilityLabel = required<HTMLElement>(boosterAvailability, '.shipyard-card-availability-label');
+        const boosterAvailabilityPlanet = required<HTMLElement>(boosterAvailability, '.shipyard-card-availability-planet');
+        const boosterUnavailable = !snapshot.booster.available && !snapshot.booster.owned;
+        boosterAvailabilityState.textContent = snapshot.booster.owned ? displayLabels.shipyardOwned : boosterUnavailable ? `${displayLabels.shipyardNotAvailable}.` : '';
+        boosterAvailabilityLabel.textContent = boosterUnavailable ? `${displayLabels.shipyardServicePlanet}:` : '';
+        boosterAvailabilityPlanet.textContent = boosterUnavailable ? snapshot.booster.servicePlanetName : '';
+        boosterAvailability.hidden = !snapshot.booster.owned && !boosterUnavailable;
         const boosterButton = required<HTMLButtonElement>(shipyardBoosterCard, '.shipyard-card-action');
         const boosterLabel = required<HTMLElement>(boosterButton, '.shipyard-card-action-label');
         const boosterPrice = required<HTMLElement>(boosterButton, '.shipyard-card-action-price');
