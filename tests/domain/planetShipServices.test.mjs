@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+    advanceShipServiceLevel,
     applyShipBooster,
     applyShipRepair,
     applyShipUpgrade,
@@ -226,6 +227,36 @@ test('rejected ship-service commands return the identical aggregate through the 
     assert.deepEqual(attempted, before, 'a foreign-planet upgrade publishes the untouched aggregate');
     assert.equal(attempted.shipStatus.engineLevel, 1);
     assert.equal(attempted.credits, before.credits);
+});
+
+test('the debug level command raises one path per call without charging or requiring a landing', () => {
+    const unlanded = clone(initialGameState);
+    const cargo = advanceShipServiceLevel(unlanded, 'cargo');
+    assert.equal(cargo.shipStatus.cargoLevel, 2, 'the debug command ignores the landing and planet gates');
+    assert.equal(cargo.credits, unlanded.credits, 'the debug command never charges credits');
+    assert.equal(cargo.shipStatus.engineLevel, 1);
+    assert.equal(cargo.shipStatus.weaponLevel, 1);
+    assert.deepEqual(unlanded.shipStatus, clone(initialGameState).shipStatus, 'the reducer never mutates its input');
+    assert.deepEqual(cargo.cargo, unlanded.cargo);
+
+    for (const [serviceId, maximumLevel] of [['cargo', 5], ['engine', 5], ['weaponary', 10]]) {
+        let state = clone(initialGameState);
+        for (let level = 1; level < maximumLevel; level++) state = advanceShipServiceLevel(state, serviceId);
+        assert.equal(levelOf(state, serviceId), maximumLevel, serviceId);
+        assert.equal(advanceShipServiceLevel(state, serviceId), state, `${serviceId} cannot pass its catalogue maximum`);
+    }
+
+    const finished = { ...clone(initialGameState), terminalResult: { runId: initialGameState.runId, outcome: 'death', activeElapsedMs: 0, finalCredits: 0 } };
+    assert.equal(advanceShipServiceLevel(finished, 'engine'), finished, 'a finished run cannot be upgraded');
+    const unsupported = clone(initialGameState);
+    assert.equal(advanceShipServiceLevel(unsupported, 'unknownService'), unsupported, 'an unknown path is ignored unchanged');
+
+    const provider = new GameStateProvider(clone(initialGameState));
+    const published = provider.update(state => advanceShipServiceLevel(state, 'weaponary'));
+    assert.equal(published.shipStatus.weaponLevel, 2, 'the debug level survives the provider codec boundary');
+    const damaged = { ...landedOn('seroton'), shipStatus: { ...clone(initialGameState).shipStatus, currentHitPoints: 75 } };
+    assert.equal(projectLandedShipyard(advanceShipServiceLevel(damaged, 'cargo')).services.find(row => row.serviceId === 'cargo').level, 2,
+        'a debug upgrade shows up in the landed shipyard view immediately');
 });
 
 test('the shipyard projection reports landed context, repair status and one local path per planet', () => {
