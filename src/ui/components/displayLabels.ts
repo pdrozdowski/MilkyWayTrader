@@ -39,6 +39,7 @@ export const displayLabels = {
     commodityLabels,
     teleportToAsteroid: 'Teleport to live asteroid',
     spawnDebugCargo: 'Spawn cargo ahead of ship',
+    debugCargoLevel: 'Cargo level', debugEngineLevel: 'Engine level', debugWeaponaryLevel: 'Weapon level',
     orbitalCargo: 'Orbital cargo', shipCargo: 'Ship cargo', transferOne: 'TRANSFER ONE', transferMax: 'TRANSFER MAX', close: 'CLOSE',
     cargoTransferTitle: 'CARGO TRANSFER', cargoFullWarning: 'WARNING - CARGO IS FULL',
     cargoTransferCargoHeader: 'Cargo', cargoTransferCommodityHeader: 'Commodity', cargoTransferShipHeader: 'Ship',

@@ -1,5 +1,5 @@
 import { cargoCapacityByLevel, maximumShipHitPoints, shipBoosterCost, shipRepairCost, shipRepairHitPointPercent } from '../domain/runBalance.ts';
-import { quoteShipBooster, quoteShipRepair, quoteShipUpgrade, shipBoosterServicePlanetId, shipServiceDefinitions } from './planetShipServices.ts';
+import { quoteShipBooster, quoteShipRepair, quoteShipUpgrade, shipBoosterServicePlanetId, shipServiceDefinitions, shipServiceLevelOf } from './planetShipServices.ts';
 import type { ShipServiceFailure, ShipServiceId } from './planetShipServices.ts';
 import type { RunState } from './runStatus.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot.ts';
@@ -68,13 +68,6 @@ function planetNameOf (state: GameStateSnapshot, planetId: string): string
     return state.planets.find(planet => planet.id === planetId)?.name ?? planetId;
 }
 
-function shipLevelOf (state: GameStateSnapshot, serviceId: ShipServiceId): number
-{
-    if (serviceId === 'cargo') return state.shipStatus.cargoLevel;
-    if (serviceId === 'engine') return state.shipStatus.engineLevel;
-    return state.shipStatus.weaponLevel;
-}
-
 /** Readonly landed shipyard view: repair, the three upgrade paths and the booster row (BR-069 to BR-077). */
 export function projectLandedShipyard (state: GameStateSnapshot): LandedShipyardSnapshot
 {
@@ -93,7 +86,7 @@ export function projectLandedShipyard (state: GameStateSnapshot): LandedShipyard
         failure: repairQuote.failure
     };
     const services: readonly LandedShipyardServiceSnapshot[] = shipServiceDefinitions.map(definition => {
-        const level = shipLevelOf(state, definition.id);
+        const level = shipServiceLevelOf(state, definition.id);
         const quote = quoteShipUpgrade(state, definition.id);
         const maximum = level >= definition.maximumLevel;
         return Object.freeze({

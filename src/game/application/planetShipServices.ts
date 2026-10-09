@@ -68,7 +68,7 @@ export interface ShipServiceQuote
     readonly failure: ShipServiceFailure | null;
 }
 
-function shipLevel (state: GameStateSnapshot, serviceId: ShipServiceId): number
+export function shipServiceLevelOf (state: GameStateSnapshot, serviceId: ShipServiceId): number
 {
     if (serviceId === 'cargo') return state.shipStatus.cargoLevel;
     if (serviceId === 'engine') return state.shipStatus.engineLevel;
@@ -121,7 +121,7 @@ export function quoteShipUpgrade (state: GameStateSnapshot, serviceId: ShipServi
     if (!definition) return { action: 'upgrade', serviceId, level: 0, targetLevel: 0, price: 0, failure: 'unknown-service' };
     const market = landedMarketOf(state);
     if (market === null) return { action: 'upgrade', serviceId, level: 0, targetLevel: 0, price: 0, failure: 'not-landed' };
-    const level = shipLevel(state, serviceId);
+    const level = shipServiceLevelOf(state, serviceId);
     if (level >= definition.maximumLevel) {
         return { action: 'upgrade', serviceId, level, targetLevel: level, price: 0, failure: 'maximum-level' };
     }
@@ -165,4 +165,18 @@ export function applyShipBooster (state: GameStateSnapshot): GameStateSnapshot
         credits: state.credits - quote.price,
         shipStatus: { ...state.shipStatus, boosterUnlocked: true }
     };
+}
+
+/**
+ * Debug-only: raises one service path by a single level regardless of landing, planet or credits,
+ * clamped to the catalogue maximum. Used by the debug menu so a tester can reach any level quickly.
+ */
+export function advanceShipServiceLevel (state: GameStateSnapshot, serviceId: ShipServiceId): GameStateSnapshot
+{
+    if (state.terminalResult !== null) return state;
+    const definition = shipServiceDefinitionOf(serviceId);
+    if (!definition) return state;
+    const level = shipServiceLevelOf(state, serviceId);
+    if (level >= definition.maximumLevel) return state;
+    return withShipLevel(state, serviceId, level + 1);
 }

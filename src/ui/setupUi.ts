@@ -21,6 +21,9 @@ import type { UiHandle } from './contracts';
 import { resultLabels } from '../game/application/results/resultLabels';
 import { displayLabels } from './components/displayLabels';
 import { bindDebugCargoControl } from './components/debugCargoControl';
+import { shipServiceDefinitions, shipServiceLevelOf } from '../game/application/planetShipServices';
+import type { ShipServiceId } from '../game/application/planetShipServices';
+import type { GameStateProvider } from '../game/application/gameStateProvider';
 
 export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort, telemetry: TelemetryPort, gameOverReturn: GameOverReturnPort): UiHandle
 {
@@ -83,7 +86,36 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const teleportMasloPrime = root.querySelector<HTMLButtonElement>('#debug-teleport-maslo-prime');
     const teleportAsteroid = root.querySelector<HTMLButtonElement>('#debug-teleport-asteroid');
     const spawnCargo = root.querySelector<HTMLButtonElement>('#debug-spawn-cargo');
-    if (!mainMenu || !mainMenuNewGame || !mainMenuSignIn || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime || !teleportAsteroid || !spawnCargo) throw new Error('Missing game menu controls.');
+    const upgradeCargoLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-cargo');
+    const upgradeEngineLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-engine');
+    const upgradeWeaponaryLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-weaponary');
+    if (!mainMenu || !mainMenuNewGame || !mainMenuSignIn || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime || !teleportAsteroid || !spawnCargo || !upgradeCargoLevel || !upgradeEngineLevel || !upgradeWeaponaryLevel) throw new Error('Missing game menu controls.');
+    const stateProvider = game.registry.get('gameStateProvider') as GameStateProvider;
+    const upgradeButtons: Readonly<Record<ShipServiceId, HTMLButtonElement>> = {
+        cargo: upgradeCargoLevel,
+        engine: upgradeEngineLevel,
+        weaponary: upgradeWeaponaryLevel
+    };
+    const upgradeLabels: Readonly<Record<ShipServiceId, string>> = {
+        cargo: displayLabels.debugCargoLevel,
+        engine: displayLabels.debugEngineLevel,
+        weaponary: displayLabels.debugWeaponaryLevel
+    };
+    const renderDebugShipServices = (): void => {
+        const state = stateProvider.snapshot();
+        for (const definition of shipServiceDefinitions) {
+            upgradeButtons[definition.id].textContent =
+                `${upgradeLabels[definition.id]}: ${shipServiceLevelOf(state, definition.id)} / ${definition.maximumLevel}`;
+        }
+    };
+    const upgradeShipService = (serviceId: ShipServiceId): void => {
+        if (terminalDeathTransitionActive) return;
+        game.events.emit('debug-upgrade-ship-service', serviceId);
+        renderDebugShipServices();
+    };
+    const upgradeCargo = (): void => upgradeShipService('cargo');
+    const upgradeEngine = (): void => upgradeShipService('engine');
+    const upgradeWeaponary = (): void => upgradeShipService('weaponary');
     const showMainMenu = (): void => { mainMenu.hidden = false; };
     const hideMainMenu = (): void => { mainMenu.hidden = true; };
     const showGameOverSignIn = (terminalResult: TerminalResultState): void => { currentGameOverResult = terminalResult; showGameOverResults(terminalResult); root.append(mainMenuSignIn); };
@@ -107,6 +139,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         mouseMovementToggle.setAttribute('aria-pressed', String(mouseMovementEnabled));
         boosterToggle.textContent = `Booster enable: ${boosterEnabled ? 'ON' : 'OFF'}`;
         boosterToggle.setAttribute('aria-pressed', String(boosterEnabled));
+        renderDebugShipServices();
     };
     const closeDebugMenu = (): void => { debugMenu.hidden = true; game.canvas.focus(); };
     const openDebugMenu = (): void => { if (!terminalDeathTransitionActive) { debugMenu.hidden = false; renderDebugToggles(); debugClose.focus(); } };
@@ -140,6 +173,9 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     teleportLactozis.addEventListener('click', teleportToLactozis);
     teleportMasloPrime.addEventListener('click', teleportToMasloPrime);
     teleportAsteroid.addEventListener('click', teleportToAsteroid);
+    upgradeCargoLevel.addEventListener('click', upgradeCargo);
+    upgradeEngineLevel.addEventListener('click', upgradeEngine);
+    upgradeWeaponaryLevel.addEventListener('click', upgradeWeaponary);
     game.events.on('debug-controls-reset', resetDebugControls);
     const setTerminalDeathTransition = (active: boolean): void => { terminalDeathTransitionActive = active; if (active) closeDebugMenu(); };
     game.events.on('terminal-death-transition', setTerminalDeathTransition);
@@ -180,6 +216,9 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             teleportLactozis.removeEventListener('click', teleportToLactozis);
             teleportMasloPrime.removeEventListener('click', teleportToMasloPrime);
             teleportAsteroid.removeEventListener('click', teleportToAsteroid);
+            upgradeCargoLevel.removeEventListener('click', upgradeCargo);
+            upgradeEngineLevel.removeEventListener('click', upgradeEngine);
+            upgradeWeaponaryLevel.removeEventListener('click', upgradeWeaponary);
             destroyDebugCargoControl();
             game.events.off('debug-controls-reset', resetDebugControls);
             game.events.off('terminal-death-transition', setTerminalDeathTransition);

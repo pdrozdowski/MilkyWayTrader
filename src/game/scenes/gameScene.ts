@@ -15,6 +15,8 @@ import { LANDING_CENTRE_RADIUS } from '../mechanics/planet/landing';
 import { teleportShipToPlanet } from '../mechanics/debug/teleportShipToPlanet';
 import { teleportShipToAsteroid } from '../mechanics/debug/teleportShipToAsteroid';
 import { spawnDebugCargo } from '../mechanics/debug/spawnDebugCargo';
+import { advanceShipServiceLevel } from '../application/planetShipServices';
+import type { ShipServiceId } from '../application/planetShipServices';
 import { Planet } from '../objects/planet/planet';
 import { AsteroidProjection } from '../objects/asteroid/asteroidProjection';
 import { CargoProjection } from '../objects/cargo/cargo';
@@ -151,6 +153,7 @@ export class Game extends Scene
         this.game.events.on('debug-teleport-to-planet', this.teleportToPlanet, this);
         this.game.events.on('debug-teleport-to-asteroid', this.teleportToAsteroid, this);
         this.game.events.on('debug-spawn-cargo', this.spawnDebugCargo, this);
+        this.game.events.on('debug-upgrade-ship-service', this.debugUpgradeShipService, this);
         window.addEventListener('blur', this.loseFocus);
         window.addEventListener('focus', this.gainFocus);
         window.addEventListener('touchcancel', this.cancelTouch);
@@ -173,6 +176,7 @@ export class Game extends Scene
             this.game.events.off('debug-teleport-to-planet', this.teleportToPlanet, this);
             this.game.events.off('debug-teleport-to-asteroid', this.teleportToAsteroid, this);
             this.game.events.off('debug-spawn-cargo', this.spawnDebugCargo, this);
+            this.game.events.off('debug-upgrade-ship-service', this.debugUpgradeShipService, this);
             window.removeEventListener('blur', this.loseFocus);
             window.removeEventListener('focus', this.gainFocus);
             window.removeEventListener('touchcancel', this.cancelTouch);
@@ -530,6 +534,10 @@ export class Game extends Scene
 
     private readonly spawnDebugCargo = (): void => {
         this.stateProvider.update(spawnDebugCargo);
+    };
+
+    private readonly debugUpgradeShipService = (serviceId: ShipServiceId): void => {
+        this.stateProvider.update(state => advanceShipServiceLevel(state, serviceId));
     };
 
     private playShipCrashFeedback (position: Readonly<{ x: number; y: number }>): void
