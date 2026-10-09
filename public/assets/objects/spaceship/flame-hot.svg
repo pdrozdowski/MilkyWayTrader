@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="128" viewBox="0 0 6 32">
+    <title>Long red exhaust flame of an upgraded engine, mouth at the top, drawn at the 32-pixel reference length</title>
+    <g transform="translate(3 0)">
+        <path d="M-3 0 Q-3 17.6 0 32 Q3 17.6 3 0Z" fill="#ff3b30"/>
+        <path d="M-1.4 0 Q-1.4 12.8 0 24 Q1.4 12.8 1.4 0Z" fill="#fff4ad"/>
+    </g>
+</svg>
