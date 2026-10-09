@@ -198,8 +198,9 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         repairBar.dataset.healthBand = snapshot.repair.healthBand;
         const repairIncrement = Math.round(snapshot.repair.incrementHitPoints / snapshot.repair.maximumHitPoints * 100);
         required<HTMLElement>(shipyardRepairCard, '.shipyard-repair-increment').textContent = `+${repairIncrement}% ${displayLabels.shipyardMaxHitPoints}`;
-        shipyardRepairButton.textContent = `${displayLabels.shipyardRepairAction} ${formatCredits(snapshot.repair.price)}`;
-        shipyardRepairButton.setAttribute('aria-label', shipyardRepairButton.textContent);
+        required<HTMLElement>(shipyardRepairButton, '.shipyard-card-action-label').textContent = displayLabels.shipyardRepairAction;
+        required<HTMLElement>(shipyardRepairButton, '.shipyard-card-action-price').textContent = formatCredits(snapshot.repair.price);
+        shipyardRepairButton.setAttribute('aria-label', `${displayLabels.shipyardRepair}: ${displayLabels.shipyardRepairAction} ${formatCredits(snapshot.repair.price)}`);
         shipyardRepairButton.disabled = snapshot.repair.failure !== null;
 
         for (const card of shipyardCards) {
@@ -209,7 +210,6 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             required<HTMLElement>(card, '.shipyard-card-icon').setAttribute('aria-label', `${row.label}${displayLabels.shipServiceIconSuffix}`);
             required<HTMLElement>(card, '.shipyard-card-name').textContent = row.label;
             required<HTMLElement>(card, '.shipyard-card-level').textContent = `${displayLabels.facilityLevel} ${row.level} / ${row.maximumLevel}`;
-            required<HTMLElement>(card, '.shipyard-card-price').textContent = row.maximum ? '' : `${displayLabels.facilityPrice}: ${formatCredits(row.price)}`;
             const availability = required<HTMLElement>(card, '.shipyard-card-availability');
             availability.textContent = row.available
                 ? ''
@@ -217,19 +217,23 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             availability.hidden = availability.textContent === '';
             const actionButton = required<HTMLButtonElement>(card, '.shipyard-card-action');
             actionButton.dataset.serviceId = row.serviceId;
-            actionButton.textContent = row.maximum
+            const actionLabel = required<HTMLElement>(actionButton, '.shipyard-card-action-label');
+            const actionPrice = required<HTMLElement>(actionButton, '.shipyard-card-action-price');
+            actionLabel.textContent = row.maximum
                 ? displayLabels.facilityMaxLevel
                 : row.available ? displayLabels.facilityUpgrade : displayLabels.shipyardNotAvailable;
-            actionButton.setAttribute('aria-label', `${row.label}: ${actionButton.textContent}`);
+            actionPrice.textContent = row.price > 0 ? formatCredits(row.price) : '';
+            actionPrice.hidden = row.price <= 0;
+            actionButton.setAttribute('aria-label', row.price > 0
+                ? `${row.label}: ${actionLabel.textContent} ${formatCredits(row.price)}`
+                : `${row.label}: ${actionLabel.textContent}`);
             actionButton.disabled = !row.available || !row.affordable;
-            actionButton.hidden = actionButton.textContent === displayLabels.shipyardNotAvailable;
+            actionButton.hidden = actionLabel.textContent === displayLabels.shipyardNotAvailable;
         }
 
         required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-name').textContent = displayLabels.shipyardBooster;
         required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-icon').setAttribute('aria-label', `${displayLabels.shipyardBooster}${displayLabels.shipServiceIconSuffix}`);
         required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-effect').textContent = displayLabels.shipyardBoosterEffect;
-        required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-price').textContent =
-            `${displayLabels.facilityPrice}: ${formatCredits(snapshot.booster.price)}`;
         const boosterAvailability = required<HTMLElement>(shipyardBoosterCard, '.shipyard-card-availability');
         boosterAvailability.textContent = snapshot.booster.owned
             ? displayLabels.shipyardOwned
@@ -238,12 +242,18 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
                 : `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: ${snapshot.booster.servicePlanetName}`;
         boosterAvailability.hidden = boosterAvailability.textContent === '';
         const boosterButton = required<HTMLButtonElement>(shipyardBoosterCard, '.shipyard-card-action');
-        boosterButton.textContent = snapshot.booster.owned
+        const boosterLabel = required<HTMLElement>(boosterButton, '.shipyard-card-action-label');
+        const boosterPrice = required<HTMLElement>(boosterButton, '.shipyard-card-action-price');
+        boosterLabel.textContent = snapshot.booster.owned
             ? displayLabels.shipyardOwned
             : snapshot.booster.available ? displayLabels.shipyardPurchase : displayLabels.shipyardNotAvailable;
-        boosterButton.setAttribute('aria-label', `${displayLabels.shipyardBooster}: ${boosterButton.textContent}`);
+        boosterPrice.textContent = snapshot.booster.owned ? '' : formatCredits(snapshot.booster.price);
+        boosterPrice.hidden = snapshot.booster.owned;
+        boosterButton.setAttribute('aria-label', snapshot.booster.owned
+            ? `${displayLabels.shipyardBooster}: ${boosterLabel.textContent}`
+            : `${displayLabels.shipyardBooster}: ${boosterLabel.textContent} ${formatCredits(snapshot.booster.price)}`);
         boosterButton.disabled = snapshot.booster.owned || !snapshot.booster.available || !snapshot.booster.affordable;
-        boosterButton.hidden = boosterButton.textContent === displayLabels.shipyardNotAvailable;
+        boosterButton.hidden = boosterLabel.textContent === displayLabels.shipyardNotAvailable;
     };
     const render = (snapshot: Readonly<LandingStatusSnapshot>): void => {
         modal.hidden = !snapshot.visible;

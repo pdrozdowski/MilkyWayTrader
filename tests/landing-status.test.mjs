@@ -114,7 +114,10 @@ test('facilities view renders five cards with levels, states, recipes and action
     const facilitiesView = new FakeElement(Object.fromEntries(facilityIdList.map(facilityId => [`[data-facility-id="${facilityId}"]`, cards[facilityId]])));
     const shipyardView = new FakeElement({
         '.shipyard-repair-card': new FakeElement(Object.fromEntries(['.shipyard-card-name', '.shipyard-repair-icon', '.shipyard-repair-hp', '.shipyard-repair-bar', '.shipyard-repair-increment'].map(selector => [selector, new FakeElement()]))),
-        '[data-booster-row]': new FakeElement(Object.fromEntries(['.shipyard-card-icon', '.shipyard-card-name', '.shipyard-card-effect', '.shipyard-card-price', '.shipyard-card-availability', '.shipyard-card-action'].map(selector => [selector, new FakeElement()])))
+        '[data-booster-row]': new FakeElement({
+            ...Object.fromEntries(['.shipyard-card-icon', '.shipyard-card-name', '.shipyard-card-effect', '.shipyard-card-availability'].map(selector => [selector, new FakeElement()])),
+            '.shipyard-card-action': new FakeElement({ '.shipyard-card-action-label': new FakeElement(), '.shipyard-card-action-price': new FakeElement() })
+        })
     });
     const facilitiesHeading = new FakeElement();
     const facilitiesBack = new FakeElement();
@@ -144,7 +147,7 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-shipyard-clock': new FakeElement(),
         '#landing-status-shipyard-credits': new FakeElement(),
         '#landing-status-shipyard-cargo': new FakeElement(),
-        '#landing-status-shipyard-repair': new FakeElement(),
+        '#landing-status-shipyard-repair': new FakeElement({ '.shipyard-card-action-label': new FakeElement(), '.shipyard-card-action-price': new FakeElement() }),
         '#landing-status-catalogue > button[data-commodity-id]': [catalogueButton]
     });
     const row = (facilityId, label, level, status, outputCommodityId, outputPerCycle, inputsPerCycle, modifier, action) =>
@@ -349,9 +352,8 @@ test('the shipyard view renders repair, local service cards and the booster row 
         '.shipyard-card-icon': new FakeElement(),
         '.shipyard-card-name': new FakeElement(),
         '.shipyard-card-level': new FakeElement(),
-        '.shipyard-card-price': new FakeElement(),
         '.shipyard-card-availability': new FakeElement(),
-        '.shipyard-card-action': new FakeElement()
+        '.shipyard-card-action': new FakeElement({ '.shipyard-card-action-label': new FakeElement(), '.shipyard-card-action-price': new FakeElement() })
     })]));
     for (const serviceId of serviceIds) serviceCards[serviceId].dataset.serviceId = serviceId;
     const repairCard = new FakeElement({
@@ -365,9 +367,8 @@ test('the shipyard view renders repair, local service cards and the booster row 
         '.shipyard-card-icon': new FakeElement(),
         '.shipyard-card-name': new FakeElement(),
         '.shipyard-card-effect': new FakeElement(),
-        '.shipyard-card-price': new FakeElement(),
         '.shipyard-card-availability': new FakeElement(),
-        '.shipyard-card-action': new FakeElement()
+        '.shipyard-card-action': new FakeElement({ '.shipyard-card-action-label': new FakeElement(), '.shipyard-card-action-price': new FakeElement() })
     });
     const shipyardView = new FakeElement({
         '.shipyard-repair-card': repairCard,
@@ -387,7 +388,7 @@ test('the shipyard view renders repair, local service cards and the booster row 
     const facilitiesView = new FakeElement();
     const facilitiesBack = new FakeElement();
     const shipyardBack = new FakeElement();
-    const shipyardRepairButton = new FakeElement();
+    const shipyardRepairButton = new FakeElement({ '.shipyard-card-action-label': new FakeElement(), '.shipyard-card-action-price': new FakeElement() });
     const shipyardButton = new FakeElement();
     const root = new FakeElement({
         ...Object.fromEntries(clickable.map(selector => [selector, new FakeElement()])),
@@ -464,12 +465,21 @@ test('the shipyard view renders repair, local service cards and the booster row 
     const handle = mountLandingStatus(root, port);
     const textOf = (card, selector) => card.querySelector(selector).textContent;
     const actionOf = card => card.querySelector('.shipyard-card-action');
+    const actionLabelOf = card => actionOf(card).querySelector('.shipyard-card-action-label');
+    const actionPriceOf = card => actionOf(card).querySelector('.shipyard-card-action-price');
 
     const shipyardMarkup = readFileSync('index.html', 'utf8');
     assert.match(shipyardMarkup, /<p id="landing-status-shipyard-repair-hp" class="shipyard-repair-hp">/,
         'the repair readout owns the id the health bar points at');
     assert.match(shipyardMarkup, /<progress class="shipyard-repair-bar" value="0" max="100" aria-labelledby="landing-status-shipyard-repair-hp">/,
         'the shipyard health bar takes its accessible name from the Hull readout');
+    assert(!shipyardMarkup.includes('shipyard-card-price'), 'the separate Price row is gone');
+    assert.equal((shipyardMarkup.match(/<button[^>]*class="shipyard-card-action"[^>]*><span class="shipyard-card-action-label"><\/span><span class="shipyard-card-action-price"><\/span><\/button>/g) ?? []).length, 5,
+        'all five shipyard actions stack their label over the coin amount');
+    assert.match(shipyardStylesheet, /#landing-status-shipyard-view \.shipyard-card-action:not\(:disabled\) \{ color: var\(--ui-surface\); background: var\(--ui-action-enabled\); \}/,
+        'an enabled shipyard button turns green');
+    assert.match(shipyardStylesheet, /\.shipyard-card-action-price\[hidden\] \{ display: none; \}/, 'a priceless button hides its coin row');
+    assert.match(shipyardStylesheet, /\.shipyard-card-action-price::before \{[^}]*coins_32x32\.png/, 'the amount row shows the cash icon');
     for (const serviceId of shipServiceIconIds) {
         const cardMarker = serviceId === 'booster'
             ? '<article class="shipyard-card shipyard-booster-card" data-booster-row>'
@@ -499,8 +509,11 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(repairCard.querySelector('.shipyard-repair-bar').dataset.healthBand, 'healthy', 'healing back over 70 turns the bar green again');
     shipyardListener(shipyardSnapshot({}));
     assert.equal(textOf(repairCard, '.shipyard-repair-increment'), `+10% ${displayLabels.shipyardMaxHitPoints}`);
-    assert.equal(shipyardRepairButton.textContent, `${displayLabels.shipyardRepairAction} 1,000`);
-    assert(!shipyardRepairButton.textContent.includes('cr'), 'the repair price carries no currency suffix');
+    assert.equal(shipyardRepairButton.querySelector('.shipyard-card-action-label').textContent, displayLabels.shipyardRepairAction);
+    assert.equal(shipyardRepairButton.querySelector('.shipyard-card-action-price').textContent, '1,000', 'the repair price sits on the button');
+    assert.equal(shipyardRepairButton.querySelector('.shipyard-card-action-price').hidden, false);
+    assert(!shipyardRepairButton.querySelector('.shipyard-card-action-price').textContent.includes('cr'), 'the repair price carries no currency suffix');
+    assert.equal(shipyardRepairButton.attributes['aria-label'], `${displayLabels.shipyardRepair}: ${displayLabels.shipyardRepairAction} 1,000`);
     assert.equal(shipyardRepairButton.disabled, false);
     assert.equal(root.querySelector('#landing-status-shipyard-credits').textContent, `${displayLabels.marketCredits}: 1,000,000`, 'the shipyard balance uses grouped numerals');
     assert.equal(root.querySelector('#landing-status-shipyard-cargo').textContent, `${displayLabels.marketCargo}: 3 / 40`);
@@ -515,32 +528,34 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(serviceCards.cargo.querySelector('.shipyard-card-icon').attributes['aria-label'], `Cargo Capacity${displayLabels.shipServiceIconSuffix}`,
         'each service name is paired with its own placeholder icon');
     assert.equal(textOf(serviceCards.cargo, '.shipyard-card-level'), `${displayLabels.facilityLevel} 1 / 5`);
-    assert.equal(textOf(serviceCards.cargo, '.shipyard-card-price'), `${displayLabels.facilityPrice}: 15,000`);
-    assert(!textOf(serviceCards.cargo, '.shipyard-card-price').includes('cr'), 'a shipyard price carries no currency suffix');
+    assert.equal(actionLabelOf(serviceCards.cargo).textContent, displayLabels.facilityUpgrade);
+    assert.equal(actionPriceOf(serviceCards.cargo).textContent, '15,000', 'the upgrade price moved onto the button');
+    assert.equal(actionPriceOf(serviceCards.cargo).hidden, false);
+    assert(!actionPriceOf(serviceCards.cargo).textContent.includes('cr'), 'a shipyard price carries no currency suffix');
     assert.equal(textOf(serviceCards.cargo, '.shipyard-card-availability'), '');
     assert.equal(serviceCards.cargo.querySelector('.shipyard-card-availability').hidden, true);
-    assert.equal(actionOf(serviceCards.cargo).textContent, displayLabels.facilityUpgrade);
     assert.equal(actionOf(serviceCards.cargo).disabled, false);
     assert.equal(actionOf(serviceCards.cargo).hidden, false, 'an actionable upgrade keeps its button');
-    assert.equal(actionOf(serviceCards.cargo).attributes['aria-label'], `Cargo Capacity: ${displayLabels.facilityUpgrade}`);
+    assert.equal(actionOf(serviceCards.cargo).attributes['aria-label'], `Cargo Capacity: ${displayLabels.facilityUpgrade} 15,000`);
 
     assert.equal(textOf(serviceCards.engine, '.shipyard-card-availability'), `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: Lactozis-7C`);
     assert.equal(serviceCards.engine.querySelector('.shipyard-card-availability').hidden, false);
-    assert.equal(actionOf(serviceCards.engine).textContent, displayLabels.shipyardNotAvailable);
+    assert.equal(actionLabelOf(serviceCards.engine).textContent, displayLabels.shipyardNotAvailable);
     assert.equal(actionOf(serviceCards.engine).disabled, true, 'an off-planet service is disabled');
     assert.equal(actionOf(serviceCards.engine).hidden, true, 'a Not available button is hidden instead of shown disabled');
-    assert.equal(actionOf(serviceCards.weaponary).textContent, displayLabels.facilityMaxLevel);
+    assert.equal(actionLabelOf(serviceCards.weaponary).textContent, displayLabels.facilityMaxLevel);
     assert.equal(actionOf(serviceCards.weaponary).disabled, true, 'a maximum-level service is disabled');
     assert.equal(actionOf(serviceCards.weaponary).hidden, false, 'a maximum-level service keeps its MAX LEVEL button');
-    assert.equal(textOf(serviceCards.weaponary, '.shipyard-card-price'), '', 'a maximum-level service shows no price');
+    assert.equal(actionPriceOf(serviceCards.weaponary).textContent, '', 'a maximum-level service shows no price');
+    assert.equal(actionPriceOf(serviceCards.weaponary).hidden, true);
 
     assert.equal(textOf(boosterCard, '.shipyard-card-name'), displayLabels.shipyardBooster);
     assert.equal(boosterCard.querySelector('.shipyard-card-icon').attributes['aria-label'], `${displayLabels.shipyardBooster}${displayLabels.shipServiceIconSuffix}`,
         'the booster row carries its own placeholder icon');
     assert.equal(textOf(boosterCard, '.shipyard-card-effect'), displayLabels.shipyardBoosterEffect);
-    assert.equal(textOf(boosterCard, '.shipyard-card-price'), `${displayLabels.facilityPrice}: 75,000`);
+    assert.equal(actionLabelOf(boosterCard).textContent, displayLabels.shipyardNotAvailable);
+    assert.equal(actionPriceOf(boosterCard).textContent, '75,000', 'the booster price sits on its button');
     assert.equal(textOf(boosterCard, '.shipyard-card-availability'), `${displayLabels.shipyardNotAvailable} - ${displayLabels.shipyardServicePlanet}: Lactozis-7C`);
-    assert.equal(actionOf(boosterCard).textContent, displayLabels.shipyardNotAvailable);
     assert.equal(actionOf(boosterCard).disabled, true);
     assert.equal(actionOf(boosterCard).hidden, true, 'an off-planet booster button is hidden too');
 
@@ -568,9 +583,10 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(serviceCards.engine.querySelector('.shipyard-card-availability').hidden, true);
     assert.equal(actionOf(serviceCards.engine).disabled, true, 'the local path stays disabled while unaffordable');
     assert.equal(actionOf(serviceCards.engine).hidden, false, 'an unaffordable local upgrade still shows its disabled button');
-    assert.equal(actionOf(boosterCard).textContent, displayLabels.shipyardOwned);
+    assert.equal(actionLabelOf(boosterCard).textContent, displayLabels.shipyardOwned);
     assert.equal(actionOf(boosterCard).disabled, true, 'an owned booster cannot be bought again');
     assert.equal(actionOf(boosterCard).hidden, false, 'an owned booster keeps its Owned row');
+    assert.equal(actionPriceOf(boosterCard).hidden, true, 'an owned booster shows no price');
     assert.equal(textOf(boosterCard, '.shipyard-card-availability'), displayLabels.shipyardOwned);
 
     shipyardButton.click();
