@@ -1,4 +1,16 @@
+import { engineNormalSpeedPercentByLevel } from '../domain/runBalance.ts';
+
 export const shipTuning = { maxSpeed: 240, accelerationSeconds: 1, stoppingSeconds: 0.5, collisionRadius: 18 };
+
+/**
+ * Normal controlled-flight maximum speed for an engine level (BR-074). Collision recovery, asteroid
+ * impact pushback, Moolaris forced movement and boost deliberately keep the level-one basis.
+ */
+export function normalFlightMaxSpeed (engineLevel: number): number
+{
+    const percent = engineNormalSpeedPercentByLevel[engineLevel] ?? engineNormalSpeedPercentByLevel[1];
+    return shipTuning.maxSpeed * percent / 100;
+}
 
 export const shipBoostTuning = {
     speedMultiplier: 5,

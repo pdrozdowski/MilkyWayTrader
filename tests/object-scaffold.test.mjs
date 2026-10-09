@@ -154,6 +154,8 @@ test('scaffold dry-run, validation, overwrite refusal and generated TypeScript i
     await cp('src/game/visual', join(fixture, 'src/game/visual'), { recursive: true });
     await mkdir(join(fixture, 'src/game/definitions'), { recursive: true });
     await cp('src/game/definitions/gameplayTuning.ts', join(fixture, 'src/game/definitions/gameplayTuning.ts'));
+    await mkdir(join(fixture, 'src/game/domain'), { recursive: true });
+    await cp('src/game/domain/runBalance.ts', join(fixture, 'src/game/domain/runBalance.ts'));
     await rm(join(fixture, 'src/game/visual/orbitalPaths.ts'));
     await writeFile(join(fixture, 'src/game/scenes/gameScene.ts'), "import { Scene } from 'phaser';\nexport class Game extends Scene {}\n");
     await cp('src/viteEnv.d.ts', join(fixture, 'src/viteEnv.d.ts'));

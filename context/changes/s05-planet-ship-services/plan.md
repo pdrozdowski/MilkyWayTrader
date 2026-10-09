@@ -207,8 +207,8 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Automated
 
-- [x] 1.1 Catalogue, landed-operation, and rejection-path tests pass
-- [x] 1.2 Codec level-bound tests pass
+- [x] 1.1 Catalogue, landed-operation, and rejection-path tests pass — 21cf580
+- [x] 1.2 Codec level-bound tests pass — 21cf580
 
 #### Manual
 
@@ -218,8 +218,8 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Automated
 
-- [ ] 2.1 Engine normal-flight and fixed non-directed-speed tests pass
-- [ ] 2.2 Volley count, angle, and ID tests pass
+- [x] 2.1 Engine normal-flight and fixed non-directed-speed tests pass
+- [x] 2.2 Volley count, angle, and ID tests pass
 
 #### Manual
 

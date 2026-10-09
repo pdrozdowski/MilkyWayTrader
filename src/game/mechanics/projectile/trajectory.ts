@@ -10,6 +10,29 @@ export function shotTrajectory (ship: Point, rotation: number, muzzleOffset: num
     };
 }
 
+/**
+ * Degrees-from-forward offsets of one volley, ordered ascending from left to right (BR-044a).
+ * Odd counts add one forward projectile, even counts consist only of mirrored pairs; each pair sits
+ * 5 degrees farther out than the previous one.
+ */
+export function volleyAngleOffsetsDegrees (projectileCount: number): readonly number[]
+{
+    if (!Number.isSafeInteger(projectileCount) || projectileCount < 1) return [];
+    const pairCount = Math.floor(projectileCount / 2);
+    const outwardDegrees = (pair: number): number => projectileCount % 2 === 1 ? 2.5 + (pair - 1) * 5 : 5 * pair;
+    const offsets: number[] = [];
+    for (let pair = pairCount; pair >= 1; pair--) offsets.push(-outwardDegrees(pair));
+    if (projectileCount % 2 === 1) offsets.push(0);
+    for (let pair = 1; pair <= pairCount; pair++) offsets.push(outwardDegrees(pair));
+    return offsets;
+}
+
+/** Nose-offset trajectory of one volley projectile, rotated by its left-to-right angle offset. */
+export function volleyShotTrajectory (ship: Point, rotation: number, angleOffsetDegrees: number, muzzleOffset: number, speed: number): { start: Point; velocity: Point }
+{
+    return shotTrajectory(ship, rotation + angleOffsetDegrees * Math.PI / 180, muzzleOffset, speed);
+}
+
 // Closest point on the whole segment, including its endpoints and tangent hits.
 export function segmentHitsCircle (start: Point, end: Point, circle: Circle, padding: number): boolean
 {
