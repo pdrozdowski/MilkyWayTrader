@@ -215,9 +215,9 @@ Not applicable: no snapshot schema, persistence or saved data is touched. `chang
 
 #### Automated
 
-- [ ] 1.1 `test:domain` passes with the new monitor suite covering window, statistics, chain marks, early close, loop rate and reset
-- [ ] 1.2 `typecheck` passes
-- [ ] 1.3 `test:architecture` still passes with the pure module in place
+- [x] 1.1 `test:domain` passes with the new monitor suite covering window, statistics, chain marks, early close, loop rate and reset
+- [x] 1.2 `typecheck` passes
+- [x] 1.3 `test:architecture` still passes with the pure module in place
 
 ### Phase 2: Debug-controlled readout
 
