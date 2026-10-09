@@ -1,7 +1,7 @@
 ---
 change_id: s05-planet-ship-services
 title: S05 planet ship services
-status: planned
+status: implementing
 created: 2026-10-09
 updated: 2026-10-09
 archived_at: null
