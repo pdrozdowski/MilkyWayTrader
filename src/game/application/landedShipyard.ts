@@ -1,4 +1,12 @@
-import { cargoCapacityByLevel, maximumShipHitPoints, shipBoosterCost, shipRepairCost, shipRepairHitPointPercent } from '../domain/runBalance.ts';
+import {
+    cargoCapacityByLevel,
+    engineNormalSpeedPercentByLevel,
+    maximumShipHitPoints,
+    shipBoosterCost,
+    shipRepairCost,
+    shipRepairHitPointPercent,
+    weaponProjectileCountByLevel
+} from '../domain/runBalance.ts';
 import { quoteShipBooster, quoteShipRepair, quoteShipUpgrade, shipBoosterServicePlanetId, shipServiceDefinitions, shipServiceLevelOf } from './planetShipServices.ts';
 import type { ShipServiceFailure, ShipServiceId } from './planetShipServices.ts';
 import { healthBandOf } from './runStatus.ts';
@@ -37,6 +45,9 @@ export interface LandedShipyardServiceSnapshot
     readonly affordable: boolean;
     readonly maximum: boolean;
     readonly failure: ShipServiceFailure | null;
+    /** Capability the path currently provides, read from its balance table. */
+    readonly currentCapability: number;
+    readonly maximumCapability: number;
 }
 
 export interface LandedShipyardBoosterSnapshot
@@ -68,6 +79,17 @@ export interface LandedShipyardSnapshot
 function planetNameOf (state: GameStateSnapshot, planetId: string): string
 {
     return state.planets.find(planet => planet.id === planetId)?.name ?? planetId;
+}
+
+const capabilityByLevel: Readonly<Record<ShipServiceId, Readonly<Record<number, number>>>> = {
+    cargo: cargoCapacityByLevel,
+    engine: engineNormalSpeedPercentByLevel,
+    weaponary: weaponProjectileCountByLevel
+};
+
+function capabilityOf (serviceId: ShipServiceId, level: number): number
+{
+    return capabilityByLevel[serviceId][level] ?? 0;
 }
 
 /** Readonly landed shipyard view: repair, the three upgrade paths and the booster row (BR-069 to BR-077). */
@@ -103,7 +125,9 @@ export function projectLandedShipyard (state: GameStateSnapshot): LandedShipyard
             available: planetId === definition.servicePlanetId && !maximum,
             affordable: quote.failure === null,
             maximum,
-            failure: quote.failure
+            failure: quote.failure,
+            currentCapability: capabilityOf(definition.id, level),
+            maximumCapability: capabilityOf(definition.id, definition.maximumLevel)
         });
     });
     const boosterQuote = quoteShipBooster(state);

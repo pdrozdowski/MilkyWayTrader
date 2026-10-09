@@ -377,29 +377,31 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 }
 
 #landing-status-shipyard-view { position: relative; display: block; background: var(--ui-surface) center / cover; }
-.shipyard-planet { position: absolute; z-index: 1; top: 24%; left: clamp(16px, 3vw, 32px); margin: 0; font-weight: 700; }
+.shipyard-planet { position: absolute; z-index: 1; top: 24%; left: clamp(16px, 3vw, 32px); margin: 0; font-size: 1.25em; font-weight: 700; }
 .shipyard-cards { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1.5vw, 16px); min-height: 0; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
-.shipyard-card { box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: auto; padding: 12px; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }
+.shipyard-card { box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; min-width: 0; overflow: auto; padding: 14px; font-size: 1.05em; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }
 .shipyard-card h3, .shipyard-card p { margin: 0; overflow-wrap: anywhere; }
 .shipyard-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.shipyard-card-name { font-size: 1.1em; }
-.shipyard-card-icon { box-sizing: border-box; display: block; flex: 0 0 auto; width: 48px; height: 48px; border: 1px dashed var(--ui-border); border-radius: 4px; background-color: #1c4266; background-repeat: no-repeat; background-position: center; background-size: contain; }
+.shipyard-card-name { font-size: 1.35em; }
+.shipyard-card-icon { box-sizing: border-box; display: block; flex: 0 0 auto; width: 64px; height: 64px; border: 1px dashed var(--ui-border); border-radius: 4px; background-color: #1c4266; background-repeat: no-repeat; background-position: center; background-size: contain; }
 .shipyard-repair-icon { background-image: url('/assets/icons/ship_32x32.png'); }
 .shipyard-card[data-service-id="cargo"] .shipyard-card-icon { background-image: url('/assets/icons/shipService-cargo_48x48.png'); }
 .shipyard-card[data-service-id="engine"] .shipyard-card-icon { background-image: url('/assets/icons/shipService-engine_48x48.png'); }
 .shipyard-card[data-service-id="weaponary"] .shipyard-card-icon { background-image: url('/assets/icons/shipService-weaponary_48x48.png'); }
 .shipyard-booster-card .shipyard-card-icon { background-image: url('/assets/icons/shipService-booster_48x48.png'); }
-.shipyard-card-level { font-weight: 700; }
+.shipyard-card-level { font-size: 1.15em; font-weight: 700; }
+.shipyard-card-capability { color: #9fd1ff; font-weight: 700; }
+.shipyard-card-note { color: #cfe6ff; }
 .shipyard-card-effect { color: #9fd1ff; }
-.shipyard-card-availability { color: var(--ui-disabled); }
-.shipyard-card-action { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; margin-top: auto; }
+.shipyard-card-availability { display: flex; flex-direction: column; align-items: center; gap: 1px; color: var(--ui-health-critical); font-size: 1.2em; font-weight: 700; text-align: center; }
+.shipyard-card-action { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; min-height: 64px; padding: 8px 10px; font-size: 1.15em; margin-top: auto; }
 .shipyard-card-action-label { font-weight: 700; }
-.shipyard-card-action-price { display: flex; align-items: center; gap: 0.12em; white-space: nowrap; }
+.shipyard-card-action-price { display: flex; align-items: center; gap: 0.12em; font-size: 1.05em; white-space: nowrap; }
 .shipyard-card-action-price[hidden] { display: none; }
 .shipyard-card-action-price::before { content: ''; display: block; width: 0.8em; min-width: 0.8em; height: 0.8em; flex: 0 0 0.8em; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
 #landing-status-shipyard-view .shipyard-card-action:not(:disabled) { color: var(--ui-surface); background: var(--ui-action-enabled); }
 .shipyard-repair-bar { width: 100%; }
-.shipyard-repair-increment { font-weight: 700; }
+.shipyard-repair-hp { font-size: 1.15em; font-weight: 700; }
 
 @media (max-width: 420px) {
     #landing-status-shipyard-view { display: flex; flex-direction: column; overflow-y: auto; }
