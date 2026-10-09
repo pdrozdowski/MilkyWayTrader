@@ -25,7 +25,7 @@ On any of the three planets a player lands, opens Facilities, reads each facilit
 | Cycle cadence | Full recipe each active second, all-or-nothing | Your explicit answer; keeps integer stock | Plan |
 | Same-cycle order | Fixed order dairy -> grain -> cheese -> bakery -> processor | Deterministic, matches existing fixed-order convention | Plan |
 | Planet specialization | 20% upgrade-price discount and +20% output for the specialized pair | Creates real inter-planet divergence for the frame's trading-opportunity outcome | Plan |
-| Economy scale | Keep base prices; rescale stock thresholds and initial stock upward | Facility output is 40x the brief's per-40s table, so thresholds must grow with it | Plan |
+| Economy scale | Keep base prices; set one uniform 100/300 stock band and divide initial stock by 100 | A compact uniform band keeps stock and thresholds readable and prices responsive to single facility cycles | Plan |
 | Initial stock | Differentiated per planet around the specialization | Creates an opening arbitrage route | Plan |
 | Commodity icons | Five new 32x32 placeholder PNGs | Deterministic across platforms, consistent with the asset pipeline | Plan |
 | Salvage pool | Uniform over all five commodities | Simplest; matches the replace-everywhere decision | Plan |

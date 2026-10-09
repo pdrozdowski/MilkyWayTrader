@@ -1,4 +1,4 @@
-const commodityLabels = { supplies: 'Supplies', alloys: 'Alloys', medicines: 'Medicines' } as const;
+const commodityLabels = { milk: 'Milk', grain: 'Grain', cheese: 'Cheese', bun: 'Bun', spaceRation: 'Space Ration' } as const;
 
 export const displayLabels = {
     signInWithGoogle: 'Sign in with Google',
@@ -19,14 +19,19 @@ export const displayLabels = {
     landed: 'LANDED',
     landedSuffix: '— LANDED',
     launch: 'LAUNCH',
-    landedOn: 'Landed on', market: 'Market', back: 'BACK', facilities: 'Facilities', facilitiesUnavailable: 'Facilities unavailable', shipyard: 'Shipyard', shipyardUnavailable: 'Shipyard unavailable',
-    marketCredits: 'Credits', marketCargo: 'Cargo', marketQuantity: 'Trading',
+    landedOn: 'Landed on', market: 'Market', facilities: 'Facilities', shipyard: 'Shipyard', shipyardUnavailable: 'Shipyard unavailable',
+    marketCredits: 'Credits', marketCargo: 'Cargo', marketQuantity: 'Trading', commodityIconSuffix: ' commodity icon',
     marketConfirm: 'CONFIRM TRADE',
     marketBuy: 'BUY', marketSell: 'SELL', marketNoTrade: 'SELECT A QUANTITY', marketCashShortfall: 'Insufficient credits:',
-    planetStock: 'Planet stock', playerStock: 'Ship inventory', produces: 'Produces', consumes: 'Consumes', supply: 'Supply',
+    planetStock: 'Planet stock', playerStock: 'Ship inventory', supply: 'Supply',
+    marketProduction: 'Production', marketConsumption: 'Consumption', marketStockChange: 'Stock change',
     averageBuyPrice: 'Average buy price', inBudget: 'IN BUDGET', outOfBudget: 'OUT OF BUDGET',
     tradeIncome: 'INCOME', expense: 'EXPENSE', profit: 'PROFIT', loss: 'LOSS', clockRunning: 'RUNNING', clockPaused: 'PAUSED',
-    supplies: commodityLabels.supplies, alloys: commodityLabels.alloys, medicines: commodityLabels.medicines,
+    facilitiesBackToPlanet: 'Back to Planet', facilityLevel: 'Level', facilityProduces: 'Produces', facilityConsumes: 'Consumes', facilityNoInputs: 'No inputs', facilityPerCycle: 'per second',
+    facilityOutputBonus: 'Output bonus', facilityUpgradeDiscount: 'Upgrade discount', facilityPrice: 'Price',
+    facilityBuild: 'BUILD', facilityUpgrade: 'UPGRADE', facilityMaxLevel: 'MAX LEVEL',
+    facilityStatusLabels: { notBuilt: 'Not Built', working: 'Working', insufficientResources: 'Insufficient Resources' },
+    milk: commodityLabels.milk, grain: commodityLabels.grain, cheese: commodityLabels.cheese, bun: commodityLabels.bun, spaceRation: commodityLabels.spaceRation,
     commodityLabels,
     teleportToAsteroid: 'Teleport to live asteroid',
     spawnDebugCargo: 'Spawn cargo ahead of ship',

@@ -1,15 +1,17 @@
 import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 import type { PlanetId } from '../state/planetState';
-import type { SerotonCommodityId } from '../state/serotonMarketState';
+import type { PlanetFacilityId, PlanetFacilityStatus, SerotonCommodityId } from '../state/serotonMarketState';
 import type { AsteroidSize, AsteroidVariant } from '../state/asteroidState';
 import { maximumShipHitPoints, orbitalCargoCapacity } from '../domain/runBalance.ts';
 import { planetIds } from '../domain/planetCatalog.ts';
+import { planetFacilityIds, planetFacilityMaximumLevel } from '../domain/planetFacilityCatalog.ts';
 import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
 
 const asteroidMaximumHitPoints: Readonly<Record<AsteroidSize, number>> = { big: 3, medium: 2, small: 1 };
 
 const PAUSE_REASONS: readonly GamePauseReason[] = ['background', 'landed', 'manual', 'menu', 'orientation'];
+const facilityStatuses: readonly PlanetFacilityStatus[] = ['notBuilt', 'working', 'insufficientResources'];
 const keys = (value: object): string[] => Object.keys(value).sort();
 
 function isRecord (value: unknown): value is Record<string, unknown>
@@ -105,7 +107,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         catch { throw new Error('Game state is not valid JSON.'); }
     }
     const root = requireRecord(source, 'state', ['schemaVersion', 'runId', 'randomState', 'cargoSchedule', 'moolarisDamageArmed', 'terminalResult', 'clock', 'credits', 'cargo', 'orbitalCargo', 'looseItems', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
-    if (root.schemaVersion !== 16) throw new Error('Unsupported game-state schema version.');
+    if (root.schemaVersion !== 17) throw new Error('Unsupported game-state schema version.');
     const decodedRunId = runId(root.runId, 'state.runId');
     const randomState = uint32(root.randomState, 'state.randomState');
     if (!Array.isArray(root.cargoSchedule) || root.cargoSchedule.length > 5) {
@@ -260,7 +262,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     const marketPlanetIds = new Set<string>();
     const markets = root.markets.map((candidateMarket, index) => {
         const marketPath = `state.markets[${index}]`;
-        const market = requireRecord(candidateMarket, marketPath, ['planetId', 'commodityStocks']);
+        const market = requireRecord(candidateMarket, marketPath, ['planetId', 'commodityStocks', 'facilities']);
         const planetId = nonEmptyString(market.planetId, `${marketPath}.planetId`);
         if (!configuredPlanetIds.has(planetId)) throw new Error(`${marketPath}.planetId is not a configured planet.`);
         if (marketPlanetIds.has(planetId)) throw new Error(`Duplicate market planet id: ${planetId}.`);
@@ -281,7 +283,32 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
             return { commodityId: stock.commodityId as SerotonCommodityId, stock: nonNegativeSafeInteger(stock.stock, `${stockPath}.stock`) };
         });
         if (seenCommodityIds.size !== expectedCommodityIds.size) throw new Error(`${marketPath}.commodityStocks is missing a configured commodity.`);
-        return { planetId: planetId as PlanetId, commodityStocks };
+        if (!Array.isArray(market.facilities) || market.facilities.length !== planetFacilityIds.length) {
+            throw new Error(`${marketPath}.facilities must contain every configured facility.`);
+        }
+        const expectedFacilityIds = new Set<string>(planetFacilityIds);
+        const seenFacilityIds = new Set<string>();
+        const facilities = market.facilities.map((candidateFacility, facilityIndex) => {
+            const facilityPath = `${marketPath}.facilities[${facilityIndex}]`;
+            const facility = requireRecord(candidateFacility, facilityPath, ['facilityId', 'level', 'status']);
+            if (typeof facility.facilityId !== 'string' || !expectedFacilityIds.has(facility.facilityId)) {
+                throw new Error(`${facilityPath}.facilityId is not a configured facility.`);
+            }
+            if (seenFacilityIds.has(facility.facilityId)) throw new Error(`Duplicate facility id: ${facility.facilityId}.`);
+            seenFacilityIds.add(facility.facilityId);
+            const level = facility.level;
+            if (typeof level !== 'number' || !Number.isInteger(level) || level < 0 || level > planetFacilityMaximumLevel) {
+                throw new Error(`${facilityPath}.level must be an integer within the configured range.`);
+            }
+            if (typeof facility.status !== 'string' || !facilityStatuses.includes(facility.status as PlanetFacilityStatus)) {
+                throw new Error(`${facilityPath}.status is not a configured facility status.`);
+            }
+            const status = facility.status as PlanetFacilityStatus;
+            if ((level === 0) !== (status === 'notBuilt')) throw new Error(`${facilityPath} must pair level zero with the not-built status.`);
+            return { facilityId: facility.facilityId as PlanetFacilityId, level, status };
+        });
+        if (seenFacilityIds.size !== expectedFacilityIds.size) throw new Error(`${marketPath}.facilities is missing a configured facility.`);
+        return { planetId: planetId as PlanetId, commodityStocks, facilities };
     });
     if (marketPlanetIds.size !== configuredPlanetIds.size) throw new Error('state.markets must contain exactly one market for every configured planet.');
     if (planets.length !== configuredPlanetIds.size) throw new Error('state.planets must contain exactly the configured planets.');
@@ -362,7 +389,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 16,
+        schemaVersion: 17,
         runId: decodedRunId,
         randomState,
         cargoSchedule,

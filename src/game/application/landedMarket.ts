@@ -1,9 +1,9 @@
 import { cargoCapacityByLevel } from '../domain/runBalance.ts';
 import { commodityUnitPrice } from '../domain/marketPricing.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot.ts';
-import type { PlanetId } from '../state/planetState.ts';
 import type { SerotonCommodityId } from '../state/serotonMarketState.ts';
 import { containerAverageCost } from './commodityContainers.ts';
+import type { LandedCommodityFlowSnapshot, LandedFacilitiesClockSnapshot } from './landedFacilities.ts';
 
 export interface LandedMarketCommodityDefinition
 {
@@ -13,14 +13,6 @@ export interface LandedMarketCommodityDefinition
     readonly upperStockThreshold: number;
 }
 
-export interface LandedMarketCommodityTuning
-{
-    readonly productionPerSecond: number;
-    readonly consumptionPerSecond: number;
-}
-
-export type LandedMarketTuning = Readonly<Record<PlanetId, Readonly<Record<SerotonCommodityId, LandedMarketCommodityTuning>>>>;
-
 export interface LandedMarketCommoditySnapshot
 {
     readonly commodityId: SerotonCommodityId;
@@ -28,8 +20,6 @@ export interface LandedMarketCommoditySnapshot
     readonly carriedQuantity: number;
     readonly unitPrice: number;
     readonly averageBuyPrice: number;
-    readonly productionPerSecond: number;
-    readonly consumptionPerSecond: number;
 }
 
 export interface LandedMarketQuoteSnapshot
@@ -58,6 +48,8 @@ export interface LandedMarketSnapshot
     readonly plannedStockDelta: number;
     readonly plannedCargoDelta: number;
     readonly supplyLevel: 'Low' | 'Medium' | 'High';
+    readonly commodityFlow: LandedCommodityFlowSnapshot;
+    readonly clock: LandedFacilitiesClockSnapshot;
 }
 
 export interface LandedMarketQuoteInput
@@ -70,10 +62,11 @@ export interface LandedMarketQuoteInput
 export function projectLandedMarket (
     state: GameStateSnapshot,
     definitions: readonly LandedMarketCommodityDefinition[],
-    tunings: LandedMarketTuning,
     selectedCommodityId: SerotonCommodityId,
     tradeQuantity: number,
-    quote: LandedMarketQuoteInput
+    quote: LandedMarketQuoteInput,
+    commodityFlow: LandedCommodityFlowSnapshot,
+    clock: LandedFacilitiesClockSnapshot
 ): LandedMarketSnapshot
 {
     const planetId = state.planetLifecycle.landedPlanetId;
@@ -81,7 +74,6 @@ export function projectLandedMarket (
         ? null
         : state.markets.find(candidate => candidate.planetId === planetId) ?? null;
     if (planetId !== null && !market) throw new Error('Missing market for the landed planet.');
-    const tuning = market === null ? null : tunings[market.planetId];
     const cargoUsed = state.cargo.reduce((total, stack) => total + stack.quantity, 0);
     const selectedDefinition = definitions.find(definition => definition.id === selectedCommodityId);
     if (!selectedDefinition) throw new Error(`Missing selected landed commodity ${selectedCommodityId}.`);
@@ -94,15 +86,12 @@ export function projectLandedMarket (
         const stock = market === null ? undefined : market.commodityStocks.find(candidate => candidate.commodityId === definition.id);
         if (market !== null && !stock) throw new Error(`Missing landed stock for ${definition.id}.`);
         const stockLevel = stock?.stock ?? 0;
-        const commodityTuning = tuning === null ? undefined : tuning[definition.id];
         return Object.freeze({
             commodityId: definition.id,
             stock: stockLevel,
             carriedQuantity: state.cargo.find(stack => stack.commodityId === definition.id)?.quantity ?? 0,
             unitPrice: commodityUnitPrice(stockLevel, definition),
-            averageBuyPrice: containerAverageCost(state.cargo.find(stack => stack.commodityId === definition.id) ?? { commodityId: definition.id, quantity: 0, totalCost: 0 }),
-            productionPerSecond: commodityTuning?.productionPerSecond ?? 0,
-            consumptionPerSecond: commodityTuning?.consumptionPerSecond ?? 0
+            averageBuyPrice: containerAverageCost(state.cargo.find(stack => stack.commodityId === definition.id) ?? { commodityId: definition.id, quantity: 0, totalCost: 0 })
         });
     });
     const selectedCommodity = commodities.find(commodity => commodity.commodityId === selectedCommodityId);
@@ -125,6 +114,8 @@ export function projectLandedMarket (
         plannedStockDelta: -quote.quantity,
         plannedCargoDelta: quote.quantity,
         supplyLevel,
+        commodityFlow,
+        clock,
         quote: Object.freeze({
             ...quote,
             postTradeStock: selectedStockLevel - quote.quantity,

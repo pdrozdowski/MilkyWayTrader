@@ -1,7 +1,7 @@
 ---
 change_id: s16-planetary-facilities
 title: S16 planetary facilities
-status: planned
+status: impl_reviewed
 created: 2026-10-08
 updated: 2026-10-08
 archived_at: null

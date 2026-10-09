@@ -26,7 +26,7 @@
                 <span id="run-status-auth" aria-live="polite"></span>
             </div>
             <div id="run-status-primary"><label id="run-status-hp-label" for="run-status-hp"><img class="run-status-icon" src="/assets/icons/heart_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></label><progress id="run-status-hp" value="0" max="100"></progress><section id="run-status-ship-details" aria-label="Ship information" hidden><p id="run-status-cargo-system"></p><p id="run-status-engine-system"></p><p id="run-status-weapon-system"></p><p id="run-status-booster"></p></section><section id="run-status-cargo-details" aria-label="Cargo contents" hidden><p id="run-status-cargo-contents"></p><table id="run-status-cargo-table" aria-label="Cargo stock table"><thead><tr><th scope="col">Icon</th><th scope="col">Commodity</th><th scope="col">Stock</th></tr></thead><tbody id="run-status-cargo-rows"></tbody></table></section></div>
-            <div id="run-status-secondary"><span id="run-status-credits"><img class="run-status-icon" src="/assets/icons/coins_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></span><span id="run-status-cargo"><img class="run-status-icon" src="/assets/icons/cargo_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></span><button id="run-status-ship-toggle" type="button" aria-expanded="false" aria-controls="run-status-ship-details"><img class="run-status-icon" src="/assets/icons/ship_32x32.png" alt="" aria-hidden="true" />Ship info</button><button id="run-status-cargo-toggle" type="button" aria-expanded="false" aria-controls="run-status-cargo-details"><img class="run-status-icon" src="/assets/icons/cargo2_32x32.png" alt="" aria-hidden="true" />Cargo info</button></div>
+            <div id="run-status-secondary"><span id="run-status-credits" aria-label="Credits"><img class="run-status-icon" src="/assets/icons/coins_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></span><span id="run-status-cargo"><img class="run-status-icon" src="/assets/icons/cargo_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></span><button id="run-status-ship-toggle" type="button" aria-expanded="false" aria-controls="run-status-ship-details"><img class="run-status-icon" src="/assets/icons/ship_32x32.png" alt="" aria-hidden="true" />Ship info</button><button id="run-status-cargo-toggle" type="button" aria-expanded="false" aria-controls="run-status-cargo-details"><img class="run-status-icon" src="/assets/icons/cargo2_32x32.png" alt="" aria-hidden="true" />Cargo info</button></div>
         </section>
         <section id="game-over-results" data-game-input="ignore" aria-labelledby="game-over-results-title" hidden>
             <h1 id="game-over-results-title"></h1>
@@ -74,21 +74,87 @@
             <div class="landing-status-panel">
                 <section id="landing-status-hub" class="landing-view">
                     <div class="landing-visual"><div class="landing-title-stack"><img id="landing-status-title" src="" alt="" /><img id="landing-status-landed" src="/assets/banner_landed_01.png" alt="LANDED" /></div></div>
-                    <nav class="landing-actions" aria-label="Planet services"><button id="landing-status-market" class="landing-image-button" type="button" aria-label="Market"><img src="/assets/button_market.png" alt="" /></button><button id="landing-status-facilities" class="landing-image-button" type="button" aria-label="Facilities unavailable" disabled><img src="/assets/button_facilities.png" alt="" /></button><button id="landing-status-shipyard" class="landing-image-button" type="button" aria-label="Shipyard unavailable" disabled><img src="/assets/button_shipyard.png" alt="" /></button><button id="landing-status-launch" class="landing-image-button landing-launch" type="button" aria-label="Launch"><img src="/assets/button_launch.png" alt="" /></button></nav>
+                    <nav class="landing-actions" aria-label="Planet services"><button id="landing-status-market" class="landing-image-button" type="button" aria-label="Market"><img src="/assets/button_market.png" alt="" /></button><button id="landing-status-facilities" class="landing-image-button" type="button" aria-label="Facilities"><img src="/assets/button_facilities.png" alt="" /></button><button id="landing-status-shipyard" class="landing-image-button" type="button" aria-label="Shipyard unavailable" disabled><img src="/assets/button_shipyard.png" alt="" /></button><button id="landing-status-launch" class="landing-image-button landing-launch" type="button" aria-label="Launch"><img src="/assets/button_launch.png" alt="" /></button></nav>
                 </section>
                 <section id="landing-status-market-view" class="landing-view" hidden>
-                <header class="landing-market-header"><h2 id="landing-status-market-heading"></h2><div id="landing-status-balances"><span id="landing-status-credits"></span><span id="landing-status-cargo"></span></div></header>
+                <header class="landing-facilities-header">
+                    <div class="landing-facilities-nav-left"><button id="landing-status-market-back" class="action-button" type="button"></button><span id="landing-status-market-clock" class="landing-facilities-clock" role="timer"></span></div>
+                    <div class="landing-facilities-nav-right"><span id="landing-status-market-credits" class="landing-resource"></span><span id="landing-status-market-cargo" class="landing-resource"></span></div>
+                </header>
+                <h2 id="landing-status-market-heading" class="landing-facilities-heading"></h2>
+                <div id="landing-status-market-controls" class="landing-market-controls">
                 <div id="landing-status-catalogue" role="group" aria-label="Seroton commodities">
-                    <button type="button" data-commodity-id="supplies"></button>
-                    <button type="button" data-commodity-id="alloys"></button>
-                    <button type="button" data-commodity-id="medicines"></button>
+                    <button type="button" data-commodity-id="milk"><span class="commodity-icon catalogue-commodity-icon" data-commodity-id="milk" aria-hidden="true"></span><span class="catalogue-commodity-name"></span></button>
+                    <button type="button" data-commodity-id="grain"><span class="commodity-icon catalogue-commodity-icon" data-commodity-id="grain" aria-hidden="true"></span><span class="catalogue-commodity-name"></span></button>
+                    <button type="button" data-commodity-id="cheese"><span class="commodity-icon catalogue-commodity-icon" data-commodity-id="cheese" aria-hidden="true"></span><span class="catalogue-commodity-name"></span></button>
+                    <button type="button" data-commodity-id="bun"><span class="commodity-icon catalogue-commodity-icon" data-commodity-id="bun" aria-hidden="true"></span><span class="catalogue-commodity-name"></span></button>
+                    <button type="button" data-commodity-id="spaceRation"><span class="commodity-icon catalogue-commodity-icon" data-commodity-id="spaceRation" aria-hidden="true"></span><span class="catalogue-commodity-name"></span></button>
                 </div>
                 <section id="landing-status-trade" aria-label="Trade preview">
-                    <section class="market-inventory-panel" aria-label="Planet stock"><strong id="landing-status-commodity-name"></strong><p id="landing-status-planet-stock"></p><p id="landing-status-production"></p><p id="landing-status-consumption"></p><p id="landing-status-supply"></p></section>
-                    <section class="market-trade-control"><header class="market-trade-header"><div><strong id="landing-status-quantity-label"></strong><p id="landing-status-unit-price"></p></div><span class="market-commodity-icon" role="img"></span></header><input id="landing-status-quantity" type="range" step="1" value="0" /><output id="landing-status-quantity-value" for="landing-status-quantity"></output><p id="landing-status-budget" role="status"></p><button id="landing-status-confirm" type="button"></button></section>
+                    <section class="market-inventory-panel" aria-label="Planet stock"><strong id="landing-status-commodity-name"></strong><p id="landing-status-planet-stock"></p><p id="landing-status-supply"></p><p id="landing-status-production"></p><p id="landing-status-consumption"></p><p id="landing-status-stock-change"></p></section>
+                    <section class="market-trade-control"><header class="market-trade-header"><div><strong id="landing-status-quantity-label"></strong><p id="landing-status-unit-price"></p></div><span class="market-commodity-icon commodity-icon" role="img"></span></header><input id="landing-status-quantity" type="range" step="1" value="0" /><output id="landing-status-quantity-value" for="landing-status-quantity"></output><p id="landing-status-budget" role="status"></p><button id="landing-status-confirm" type="button"></button></section>
                     <section class="market-inventory-panel" aria-label="Ship inventory"><strong>Ship stock</strong><p id="landing-status-player-stock"></p><p id="landing-status-average-buy-price"></p><p id="landing-status-trade-income" class="market-trade-income"></p><p id="landing-status-trade-result"></p></section>
                 </section>
-                <button id="landing-status-back" class="action-button" type="button"></button>
+                </div>
+                </section>
+                <section id="landing-status-facilities-view" class="landing-view" hidden>
+                    <header class="landing-facilities-header">
+                        <div class="landing-facilities-nav-left"><button id="landing-status-facilities-back" class="action-button" type="button"></button><span id="landing-status-facilities-clock" class="landing-facilities-clock" role="timer"></span></div>
+                        <div class="landing-facilities-nav-right"><span id="landing-status-facilities-credits"></span><span id="landing-status-facilities-cargo"></span></div>
+                    </header>
+                    <h2 id="landing-status-facilities-heading" class="landing-facilities-heading"></h2>
+                    <div id="landing-status-facility-cards" class="landing-facility-cards" role="group" aria-label="Planetary facilities">
+                        <article class="facility-card" data-facility-id="dairyFarm">
+                            <div class="facility-card-header"><span class="facility-card-icon" role="img"></span><h3 class="facility-card-name"></h3></div>
+                            <p class="facility-card-level"></p>
+                            <p class="facility-card-status"></p>
+                            <p class="facility-card-output"></p>
+                            <p class="facility-card-inputs"></p>
+                            <p class="facility-card-modifier"></p>
+                            <p class="facility-card-price"></p>
+                            <button class="facility-card-action" type="button"></button>
+                        </article>
+                        <article class="facility-card" data-facility-id="grainFarm">
+                            <div class="facility-card-header"><span class="facility-card-icon" role="img"></span><h3 class="facility-card-name"></h3></div>
+                            <p class="facility-card-level"></p>
+                            <p class="facility-card-status"></p>
+                            <p class="facility-card-output"></p>
+                            <p class="facility-card-inputs"></p>
+                            <p class="facility-card-modifier"></p>
+                            <p class="facility-card-price"></p>
+                            <button class="facility-card-action" type="button"></button>
+                        </article>
+                        <article class="facility-card" data-facility-id="cheeseFactory">
+                            <div class="facility-card-header"><span class="facility-card-icon" role="img"></span><h3 class="facility-card-name"></h3></div>
+                            <p class="facility-card-level"></p>
+                            <p class="facility-card-status"></p>
+                            <p class="facility-card-output"></p>
+                            <p class="facility-card-inputs"></p>
+                            <p class="facility-card-modifier"></p>
+                            <p class="facility-card-price"></p>
+                            <button class="facility-card-action" type="button"></button>
+                        </article>
+                        <article class="facility-card" data-facility-id="bakery">
+                            <div class="facility-card-header"><span class="facility-card-icon" role="img"></span><h3 class="facility-card-name"></h3></div>
+                            <p class="facility-card-level"></p>
+                            <p class="facility-card-status"></p>
+                            <p class="facility-card-output"></p>
+                            <p class="facility-card-inputs"></p>
+                            <p class="facility-card-modifier"></p>
+                            <p class="facility-card-price"></p>
+                            <button class="facility-card-action" type="button"></button>
+                        </article>
+                        <article class="facility-card" data-facility-id="foodProcessor">
+                            <div class="facility-card-header"><span class="facility-card-icon" role="img"></span><h3 class="facility-card-name"></h3></div>
+                            <p class="facility-card-level"></p>
+                            <p class="facility-card-status"></p>
+                            <p class="facility-card-output"></p>
+                            <p class="facility-card-inputs"></p>
+                            <p class="facility-card-modifier"></p>
+                            <p class="facility-card-price"></p>
+                            <button class="facility-card-action" type="button"></button>
+                        </article>
+                    </div>
                 </section>
             </div>
         </section>
@@ -98,27 +164,22 @@
                 <div class="cargo-transfer-grid">
                     <div class="cargo-transfer-header" role="row">
                         <span id="cargo-transfer-cargo-header"></span>
-                        <span></span>
                         <span id="cargo-transfer-commodity-header"></span>
-                        <span></span>
                         <span id="cargo-transfer-ship-header"></span>
                     </div>
                     <div class="cargo-transfer-usage" role="row">
                         <span id="cargo-transfer-cargo-usage"></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
                         <span id="cargo-transfer-ship-usage"></span>
                     </div>
                     <div id="cargo-transfer-rows" role="group" aria-label="Cargo transfer commodities">
-                        <section class="cargo-transfer-row" data-commodity-id="supplies" hidden>
+                        <section class="cargo-transfer-row" data-commodity-id="milk" hidden>
                             <span class="cargo-transfer-row-cargo-quantity"></span>
                             <div class="cargo-transfer-row-controls">
                                 <button class="cargo-transfer-to-cargo-max" type="button"></button>
                                 <button class="cargo-transfer-to-cargo-one" type="button"></button>
                             </div>
                             <span class="cargo-transfer-row-commodity">
-                                <span class="cargo-transfer-row-icon cargo-commodity-icon" data-commodity-id="supplies" role="img"></span>
+                                <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="milk" aria-hidden="true"></span>
                                 <span class="cargo-transfer-row-name"></span>
                             </span>
                             <div class="cargo-transfer-row-controls">
@@ -127,14 +188,14 @@
                             </div>
                             <span class="cargo-transfer-row-ship-quantity"></span>
                         </section>
-                        <section class="cargo-transfer-row" data-commodity-id="alloys" hidden>
+                        <section class="cargo-transfer-row" data-commodity-id="grain" hidden>
                             <span class="cargo-transfer-row-cargo-quantity"></span>
                             <div class="cargo-transfer-row-controls">
                                 <button class="cargo-transfer-to-cargo-max" type="button"></button>
                                 <button class="cargo-transfer-to-cargo-one" type="button"></button>
                             </div>
                             <span class="cargo-transfer-row-commodity">
-                                <span class="cargo-transfer-row-icon cargo-commodity-icon" data-commodity-id="alloys" role="img"></span>
+                                <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="grain" aria-hidden="true"></span>
                                 <span class="cargo-transfer-row-name"></span>
                             </span>
                             <div class="cargo-transfer-row-controls">
@@ -143,14 +204,46 @@
                             </div>
                             <span class="cargo-transfer-row-ship-quantity"></span>
                         </section>
-                        <section class="cargo-transfer-row" data-commodity-id="medicines" hidden>
+                        <section class="cargo-transfer-row" data-commodity-id="cheese" hidden>
                             <span class="cargo-transfer-row-cargo-quantity"></span>
                             <div class="cargo-transfer-row-controls">
                                 <button class="cargo-transfer-to-cargo-max" type="button"></button>
                                 <button class="cargo-transfer-to-cargo-one" type="button"></button>
                             </div>
                             <span class="cargo-transfer-row-commodity">
-                                <span class="cargo-transfer-row-icon cargo-commodity-icon" data-commodity-id="medicines" role="img"></span>
+                                <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="cheese" aria-hidden="true"></span>
+                                <span class="cargo-transfer-row-name"></span>
+                            </span>
+                            <div class="cargo-transfer-row-controls">
+                                <button class="cargo-transfer-to-ship-one" type="button"></button>
+                                <button class="cargo-transfer-to-ship-max" type="button"></button>
+                            </div>
+                            <span class="cargo-transfer-row-ship-quantity"></span>
+                        </section>
+                        <section class="cargo-transfer-row" data-commodity-id="bun" hidden>
+                            <span class="cargo-transfer-row-cargo-quantity"></span>
+                            <div class="cargo-transfer-row-controls">
+                                <button class="cargo-transfer-to-cargo-max" type="button"></button>
+                                <button class="cargo-transfer-to-cargo-one" type="button"></button>
+                            </div>
+                            <span class="cargo-transfer-row-commodity">
+                                <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="bun" aria-hidden="true"></span>
+                                <span class="cargo-transfer-row-name"></span>
+                            </span>
+                            <div class="cargo-transfer-row-controls">
+                                <button class="cargo-transfer-to-ship-one" type="button"></button>
+                                <button class="cargo-transfer-to-ship-max" type="button"></button>
+                            </div>
+                            <span class="cargo-transfer-row-ship-quantity"></span>
+                        </section>
+                        <section class="cargo-transfer-row" data-commodity-id="spaceRation" hidden>
+                            <span class="cargo-transfer-row-cargo-quantity"></span>
+                            <div class="cargo-transfer-row-controls">
+                                <button class="cargo-transfer-to-cargo-max" type="button"></button>
+                                <button class="cargo-transfer-to-cargo-one" type="button"></button>
+                            </div>
+                            <span class="cargo-transfer-row-commodity">
+                                <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="spaceRation" aria-hidden="true"></span>
                                 <span class="cargo-transfer-row-name"></span>
                             </span>
                             <div class="cargo-transfer-row-controls">

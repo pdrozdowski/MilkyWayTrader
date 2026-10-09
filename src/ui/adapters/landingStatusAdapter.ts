@@ -1,7 +1,10 @@
 import type { Game } from 'phaser';
 import type { GameStateProvider } from '../../game/application/gameStateProvider.ts';
 import { projectLandedMarket } from '../../game/application/landedMarket.ts';
-import { planetMarketTunings, serotonCommodityDefinitions } from '../../game/definitions/serotonMarketDefinitions.ts';
+import { landedCommodityFlow, projectLandedFacilities, type LandedFacilitiesSnapshot, type LandedFacilityProjectionCatalogue } from '../../game/application/landedFacilities.ts';
+import { applyFacilityBuild, applyFacilityUpgrade } from '../../game/application/planetFacilities.ts';
+import { serotonCommodityDefinitions } from '../../game/definitions/serotonMarketDefinitions.ts';
+import { planetFacilityCatalogue, planetFacilityDefinitions, planetFacilityModifierOf, planetFacilityOutputCommodityIds } from '../../game/definitions/planetFacilityDefinitions.ts';
 import { cargoCapacityByLevel } from '../../game/domain/runBalance.ts';
 import { applyLandedTrade, landedMarketOf, quoteLandedTrade, type LandedTradeQuote } from '../../game/application/serotonMarket.ts';
 import { launchFromPlanet } from '../../game/mechanics/planet/landing.ts';
@@ -18,8 +21,13 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
         ? registeredTelemetry as Pick<TelemetryPort, 'emit'>
         : { emit: () => {} };
     const listeners = new Set<(snapshot: Readonly<LandingStatusSnapshot>) => void>();
+    const facilityListeners = new Set<(snapshot: Readonly<LandedFacilitiesSnapshot>) => void>();
+    const facilityCatalogue: LandedFacilityProjectionCatalogue = {
+        definitions: planetFacilityDefinitions.map(definition => ({ ...definition, outputCommodityId: planetFacilityOutputCommodityIds[definition.id] })),
+        modifierOf: planetFacilityModifierOf
+    };
     let destroyed = false;
-    let selectedCommodityId: SerotonCommodityId = 'supplies';
+    let selectedCommodityId: SerotonCommodityId = 'milk';
     let tradeQuantity = 0;
     let wasEligible = false;
     let refreshSuppressed = false;
@@ -50,24 +58,28 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
     };
     const selectedQuote = (): LandedTradeQuote => priceLadder.get(selectedCommodityId)?.get(tradeQuantity)
         ?? quoteLandedTrade(provider.snapshot(), selectedCommodityId, tradeQuantity);
-    const project = (): LandingStatusSnapshot => {
+    const project = (facilities: LandedFacilitiesSnapshot): LandingStatusSnapshot => {
         const state = provider.snapshot();
-        return projectLandedMarket(state, serotonCommodityDefinitions, planetMarketTunings, selectedCommodityId, tradeQuantity, selectedQuote());
+        return projectLandedMarket(state, serotonCommodityDefinitions, selectedCommodityId, tradeQuantity, selectedQuote(), landedCommodityFlow(facilities, selectedCommodityId), facilities.clock);
     };
-    let snapshot = project();
+    const projectFacilities = (): LandedFacilitiesSnapshot => projectLandedFacilities(provider.snapshot(), facilityCatalogue);
+    let facilitiesSnapshot = projectFacilities();
+    let snapshot = project(facilitiesSnapshot);
     const refresh = (): void => {
         if (destroyed || refreshSuppressed) return;
         const state = provider.snapshot();
         const eligible = state.planetLifecycle.landedPlanetId !== null;
         if (eligible && !wasEligible) {
-            selectedCommodityId = 'supplies';
+            selectedCommodityId = 'milk';
             tradeQuantity = 0;
             rebuildPriceLadder();
         }
         if (!eligible) tradeQuantity = 0;
         wasEligible = eligible;
-        snapshot = project();
+        facilitiesSnapshot = projectFacilities();
+        snapshot = project(facilitiesSnapshot);
         for (const listener of listeners) listener(snapshot);
+        for (const listener of facilityListeners) listener(facilitiesSnapshot);
     };
     if (provider.snapshot().planetLifecycle.landedPlanetId !== null) {
         wasEligible = true;
@@ -81,6 +93,13 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
             listeners.add(listener);
             listener(snapshot);
             return () => { listeners.delete(listener); };
+        },
+        getFacilitiesSnapshot: () => facilitiesSnapshot,
+        subscribeFacilities: listener => {
+            if (destroyed) return () => {};
+            facilityListeners.add(listener);
+            listener(facilitiesSnapshot);
+            return () => { facilityListeners.delete(listener); };
         },
         selectCommodity: commodityId => {
             if (destroyed || !serotonCommodityDefinitions.some(definition => definition.id === commodityId)) return;
@@ -114,6 +133,14 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
             tradeQuantity = 0;
             refresh();
         },
+        buildFacility: facilityId => {
+            if (destroyed || !wasEligible) return;
+            provider.update(state => applyFacilityBuild(state, planetFacilityCatalogue, facilityId));
+        },
+        upgradeFacility: facilityId => {
+            if (destroyed || !wasEligible) return;
+            provider.update(state => applyFacilityUpgrade(state, planetFacilityCatalogue, facilityId));
+        },
         launch: () => {
             if (destroyed) return;
             const before = provider.snapshot();
@@ -127,6 +154,7 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
             destroyed = true;
             unsubscribe();
             listeners.clear();
+            facilityListeners.clear();
         }
     };
 }

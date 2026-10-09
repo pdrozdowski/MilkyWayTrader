@@ -7,7 +7,6 @@ import { advanceGameClock, pauseGameClock, resumeGameClock } from '../../src/gam
 import { advanceGameSimulation } from '../../src/game/mechanics/gameSimulation.ts';
 import { projectRunStatus } from '../../src/game/application/runStatus.ts';
 import { applyLandedTrade, quoteLandedTrade } from '../../src/game/application/serotonMarket.ts';
-import { planetMarketTunings } from '../../src/game/definitions/serotonMarketDefinitions.ts';
 import { createLandingStatusPort } from '../../src/ui/adapters/landingStatusAdapter.ts';
 import { createCargoTransferPort, cargoFullWarning, cargoFullWarningDurationMs } from '../../src/ui/adapters/cargoTransferAdapter.ts';
 
@@ -21,8 +20,10 @@ test('provider returns detached immutable snapshots and publishes valid replacem
     assert(Object.isFrozen(first.planets));
     assert(Object.isFrozen(first.cargo));
     assert(Object.isFrozen(first.markets));
+    assert(Object.isFrozen(first.markets[0].facilities));
     assert(Object.isFrozen(first.shipStatus));
     assert.throws(() => { first.ship.position.x = 99; }, TypeError);
+    assert.throws(() => { first.markets[0].facilities[0].level = 2; }, TypeError);
 
     const notifications = [];
     const unsubscribe = provider.subscribe(state => notifications.push(state.clock.activeElapsedMs));
@@ -38,7 +39,14 @@ test('provider returns detached immutable snapshots and publishes valid replacem
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    assert.equal(state.schemaVersion, 16);
+    const openingFacilities = [
+        { facilityId: 'dairyFarm', level: 1, status: 'working' },
+        { facilityId: 'grainFarm', level: 1, status: 'working' },
+        { facilityId: 'cheeseFactory', level: 1, status: 'working' },
+        { facilityId: 'bakery', level: 0, status: 'notBuilt' },
+        { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
+    ];
+    assert.equal(state.schemaVersion, 17);
     assert.equal(state.runId, '00000000-0000-4000-8000-000000000001');
     assert.deepEqual(state.cargoSchedule, []);
     assert.equal(state.moolarisDamageArmed, true);
@@ -49,30 +57,41 @@ test('a new run starts with the complete S-01 authoritative state', () => {
         {
             planetId: 'seroton',
             commodityStocks: [
-                { commodityId: 'supplies', stock: 100 },
-                { commodityId: 'alloys', stock: 60 },
-                { commodityId: 'medicines', stock: 20 }
-            ]
+                { commodityId: 'milk', stock: 4 },
+                { commodityId: 'grain', stock: 100 },
+                { commodityId: 'cheese', stock: 60 },
+                { commodityId: 'bun', stock: 50 },
+                { commodityId: 'spaceRation', stock: 20 }
+            ],
+            facilities: clone(openingFacilities)
         },
         {
             planetId: 'lactozis-7c',
             commodityStocks: [
-                { commodityId: 'supplies', stock: 140 },
-                { commodityId: 'alloys', stock: 40 },
-                { commodityId: 'medicines', stock: 30 }
-            ]
+                { commodityId: 'milk', stock: 100 },
+                { commodityId: 'grain', stock: 120 },
+                { commodityId: 'cheese', stock: 50 },
+                { commodityId: 'bun', stock: 2 },
+                { commodityId: 'spaceRation', stock: 20 }
+            ],
+            facilities: clone(openingFacilities)
         },
         {
             planetId: 'maslo-prime',
             commodityStocks: [
-                { commodityId: 'supplies', stock: 80 },
-                { commodityId: 'alloys', stock: 90 },
-                { commodityId: 'medicines', stock: 15 }
-            ]
+                { commodityId: 'milk', stock: 120 },
+                { commodityId: 'grain', stock: 100 },
+                { commodityId: 'cheese', stock: 2 },
+                { commodityId: 'bun', stock: 50 },
+                { commodityId: 'spaceRation', stock: 20 }
+            ],
+            facilities: clone(openingFacilities)
         }
     ]);
     assert(Object.isFrozen(state.markets), 'every market collection is immutable');
     assert(Object.isFrozen(state.markets[0].commodityStocks), 'every market stock list is immutable');
+    assert(Object.isFrozen(state.markets[0].facilities), 'every planet facility list is immutable');
+    assert(Object.isFrozen(state.markets[0].facilities[0]), 'every facility record is immutable');
     assert.deepEqual(state.shipStatus, {
         currentHitPoints: 100,
         cargoLevel: 1,
@@ -101,14 +120,24 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
         { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: -1, totalCost: 0 }] },
         { ...clone(advanced), cargo: [{ commodityId: 'ore', quantity: 1, totalCost: -1 }] },
         { ...clone(advanced), schemaVersion: 15 },
+        { ...clone(advanced), schemaVersion: 16 },
         { ...clone(advanced), markets: [] },
         { ...clone(advanced), markets: clone(advanced.markets).slice(0, 2) },
         { ...clone(advanced), markets: [...clone(advanced.markets), clone(advanced.markets[0])] },
         { ...clone(advanced), markets: [{ ...clone(advanced.markets[0]), planetId: 'unknown' }, ...clone(advanced.markets.slice(1))] },
-        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'supplies', stock: 1 }, { commodityId: 'supplies', stock: 2 }, { commodityId: 'medicines', stock: 3 }] }] },
-        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'supplies', stock: 1 }, { commodityId: 'alloys', stock: 2 }] }] },
-        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'supplies', stock: -1 }, ...clone(advanced.markets[0].commodityStocks.slice(1))] }] },
-        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'supplies', stock: 1.5 }, ...clone(advanced.markets[0].commodityStocks.slice(1))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'milk', stock: 1 }, { commodityId: 'milk', stock: 2 }, { commodityId: 'cheese', stock: 3 }, { commodityId: 'bun', stock: 4 }, { commodityId: 'spaceRation', stock: 5 }] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'milk', stock: 1 }, { commodityId: 'grain', stock: 2 }] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'milk', stock: -1 }, ...clone(advanced.markets[0].commodityStocks.slice(1))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), commodityStocks: [{ commodityId: 'milk', stock: 1.5 }, ...clone(advanced.markets[0].commodityStocks.slice(1))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: clone(advanced.markets[0].facilities).slice(0, 4) }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [...clone(advanced.markets[0].facilities), clone(advanced.markets[0].facilities[0])] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [{ ...clone(advanced.markets[0].facilities[0]), facilityId: 'unknown' }, ...clone(advanced.markets[0].facilities.slice(1))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [{ ...clone(advanced.markets[0].facilities[0]), level: 4 }, ...clone(advanced.markets[0].facilities.slice(1))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [{ ...clone(advanced.markets[0].facilities[0]), level: 1.5 }, ...clone(advanced.markets[0].facilities.slice(1))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [{ ...clone(advanced.markets[0].facilities[0]), status: 'broken' }, ...clone(advanced.markets[0].facilities.slice(1))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [{ ...clone(advanced.markets[0].facilities[0]), status: 'notBuilt' }, ...clone(advanced.markets[0].facilities.slice(1))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [...clone(advanced.markets[0].facilities.slice(0, 3)), { ...clone(advanced.markets[0].facilities[3]), status: 'working' }, ...clone(advanced.markets[0].facilities.slice(4))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: {} }] },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), currentHitPoints: 101 } },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), cargoLevel: 0 } },
         {
@@ -133,6 +162,22 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
     }
     assert.throws(() => provider.restore('{broken json'));
     assert.deepEqual(provider.snapshot(), advanced);
+});
+
+test('v17 facility state rejects the previous schema and round trips detached records', () => {
+    const decoded = decodeGameState(initialGameState);
+    assert.equal(decoded.schemaVersion, 17);
+    assert.throws(() => decodeGameState({ ...clone(initialGameState), schemaVersion: 16 }));
+    assert.deepEqual(decodeGameState(encodeGameState(decoded)).markets, decoded.markets);
+    for (const market of decoded.markets) {
+        assert.deepEqual(market.facilities.map(facility => facility.facilityId), ['dairyFarm', 'grainFarm', 'cheeseFactory', 'bakery', 'foodProcessor']);
+    }
+    const source = clone(initialGameState);
+    const detached = decodeGameState(source);
+    source.markets[0].facilities[0].level = 3;
+    source.markets[0].facilities[0].status = 'notBuilt';
+    assert.equal(detached.markets[0].facilities[0].level, 1);
+    assert.equal(detached.markets[0].facilities[0].status, 'working');
 });
 
 test('codec rejects retired schemas and permits active boost only for an unlocked v3 booster', () => {
@@ -231,12 +276,12 @@ test('restoring a paused snapshot never counts time spent outside the game', () 
     assert.deepEqual(unchanged.planets, paused.planets);
 });
 
-test('v16 codec round trips independent ship, orbital, and loose commodity holders and rejects v15', () => {
+test('v17 codec round trips independent ship, orbital, and loose commodity holders and rejects v15', () => {
     const salvage = {
         ...clone(initialGameState),
-        cargo: [{ commodityId: 'supplies', quantity: 2, totalCost: 10 }],
-        orbitalCargo: [{ id: 'cargo-1', position: { x: 20, y: 30 }, orbit: { angleRadians: 0.5, radius: 100, rotationRadians: 0 }, hitPoints: 2, manifest: [{ commodityId: 'alloys', quantity: 3, totalCost: 21 }] }],
-        looseItems: [{ id: 'item-1', position: { x: 40, y: 50 }, motion: { ejectionVelocity: { x: 4, y: 5 }, sunVelocity: { x: -1, y: -2 }, createdAtActiveMs: 12 }, container: { commodityId: 'medicines', quantity: 1, totalCost: 7 } }]
+        cargo: [{ commodityId: 'milk', quantity: 2, totalCost: 10 }],
+        orbitalCargo: [{ id: 'cargo-1', position: { x: 20, y: 30 }, orbit: { angleRadians: 0.5, radius: 100, rotationRadians: 0 }, hitPoints: 2, manifest: [{ commodityId: 'grain', quantity: 3, totalCost: 21 }] }],
+        looseItems: [{ id: 'item-1', position: { x: 40, y: 50 }, motion: { ejectionVelocity: { x: 4, y: 5 }, sunVelocity: { x: -1, y: -2 }, createdAtActiveMs: 12 }, container: { commodityId: 'cheese', quantity: 1, totalCost: 7 } }]
     };
     const decoded = decodeGameState(salvage);
     assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
@@ -325,11 +370,11 @@ test('provider commits a valid landed trade as one immutable replacement', () =>
         clock: { ...state.clock, pauseReasons: ['landed'] },
         planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
     }));
-    const traded = provider.update(state => applyLandedTrade(state, 'alloys', 2));
-    assert.equal(traded.credits, landed.credits - 10_000);
-    assert.deepEqual(traded.cargo, [{ commodityId: 'alloys', quantity: 2, totalCost: 10_000 }]);
-    assert.equal(traded.markets.find(market => market.planetId === 'seroton').commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 58);
-    assert.equal(landed.markets.find(market => market.planetId === 'seroton').commodityStocks.find(stock => stock.commodityId === 'alloys').stock, 60);
+    const traded = provider.update(state => applyLandedTrade(state, 'grain', 2));
+    assert.equal(traded.credits, landed.credits - 302);
+    assert.deepEqual(traded.cargo, [{ commodityId: 'grain', quantity: 2, totalCost: 302 }]);
+    assert.equal(traded.markets.find(market => market.planetId === 'seroton').commodityStocks.find(stock => stock.commodityId === 'grain').stock, 98);
+    assert.equal(landed.markets.find(market => market.planetId === 'seroton').commodityStocks.find(stock => stock.commodityId === 'grain').stock, 100);
 });
 
 test('a landed trade routes to the landed planet and leaves every other market unchanged', () => {
@@ -342,14 +387,14 @@ test('a landed trade routes to the landed planet and leaves every other market u
             clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
             planetLifecycle: { capturedPlanetId: planet.id, landedPlanetId: planet.id, relandingLockedPlanetId: null }
         };
-        const quote = quoteLandedTrade(landed, 'supplies', 1);
+        const quote = quoteLandedTrade(landed, 'milk', 1);
         assert.equal(quote.failure, null, planet.name);
-        const traded = applyLandedTrade(landed, 'supplies', 1);
+        const traded = applyLandedTrade(landed, 'milk', 1);
         assert.equal(traded.credits, landed.credits - quote.total, planet.name);
-        assert.equal(stockOf(traded, planet.id, 'supplies'), stockOf(landed, planet.id, 'supplies') - 1, planet.name);
+        assert.equal(stockOf(traded, planet.id, 'milk'), stockOf(landed, planet.id, 'milk') - 1, planet.name);
         for (const other of initialGameState.planets) {
             if (other.id === planet.id) continue;
-            assert.equal(stockOf(traded, other.id, 'supplies'), stockOf(landed, other.id, 'supplies'), `${other.id} must not change when landing on ${planet.name}`);
+            assert.equal(stockOf(traded, other.id, 'milk'), stockOf(landed, other.id, 'milk'), `${other.id} must not change when landing on ${planet.name}`);
         }
     }
 });
@@ -358,7 +403,7 @@ test('landed market port rejects unlanded trade commands and rebuilds its visit-
     const gameFor = provider => ({ registry: { get: key => key === 'telemetry' ? { emit: () => {} } : provider }, events: { emit: () => {} } });
     const unlandedProvider = new GameStateProvider(initialGameState);
     const unlandedPort = createLandingStatusPort(gameFor(unlandedProvider));
-    unlandedPort.selectCommodity('supplies');
+    unlandedPort.selectCommodity('milk');
     unlandedPort.setTradeQuantity(1);
     unlandedPort.confirmTrade();
     assert.equal(unlandedPort.getSnapshot().eligible, false);
@@ -372,17 +417,18 @@ test('landed market port rejects unlanded trade commands and rebuilds its visit-
         markets: initialGameState.markets.map(market => market.planetId === 'seroton'
             ? {
                 ...market,
-                commodityStocks: market.commodityStocks.map(stock => stock.commodityId === 'supplies' ? { ...stock, stock: 51 } : { ...stock })
+                commodityStocks: market.commodityStocks.map(stock => stock.commodityId === 'spaceRation' ? { ...stock, stock: 101 } : { ...stock })
             }
             : market),
         planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
     });
     const landedPort = createLandingStatusPort(gameFor(landedProvider));
+    landedPort.selectCommodity('spaceRation');
     landedPort.setTradeQuantity(2);
-    assert.equal(landedPort.getSnapshot().quote.total, 2_000);
+    assert.equal(landedPort.getSnapshot().quote.total, 2_500);
     landedPort.confirmTrade();
     landedPort.setTradeQuantity(1);
-    assert.equal(landedPort.getSnapshot().quote.total, 1_020, 'the rebuilt ladder uses post-trade stock below the lower threshold');
+    assert.equal(landedPort.getSnapshot().quote.total, 1_263, 'the rebuilt ladder uses post-trade stock below the lower threshold');
     landedPort.destroy();
 });
 
@@ -401,27 +447,24 @@ test('the landed market port shows, refreshes, trades, and launches from each pl
             clock: pauseGameClock(state.clock, 'landed'),
             planetLifecycle: { capturedPlanetId: planet.id, landedPlanetId: planet.id, relandingLockedPlanetId: null }
         }));
-        const initialStock = stockOf(landed, planet.id, 'supplies');
-        const tuning = planetMarketTunings[planet.id].supplies;
-        port.selectCommodity('supplies');
+        const initialStock = stockOf(landed, planet.id, 'milk');
+        port.selectCommodity('milk');
         port.setTradeQuantity(1);
         const shown = port.getSnapshot();
         assert.equal(shown.planetId, planet.id, planet.name);
         assert.equal(shown.planetName, landed.planets.find(candidate => candidate.id === planet.id).name, planet.name);
-        assert.equal(shown.commodities.find(commodity => commodity.commodityId === 'supplies').stock, initialStock, planet.name);
-        assert.equal(shown.selectedCommodity.productionPerSecond, tuning.productionPerSecond, planet.name);
-        assert.equal(shown.selectedCommodity.consumptionPerSecond, tuning.consumptionPerSecond, planet.name);
+        assert.equal(shown.commodities.find(commodity => commodity.commodityId === 'milk').stock, initialStock, planet.name);
         port.confirmTrade();
-        assert.equal(port.getSnapshot().commodities.find(commodity => commodity.commodityId === 'supplies').stock, initialStock - 1, `${planet.name} projection refreshes after the trade`);
+        assert.equal(port.getSnapshot().commodities.find(commodity => commodity.commodityId === 'milk').stock, initialStock - 1, `${planet.name} projection refreshes after the trade`);
         const afterTrade = provider.snapshot();
-        assert.equal(stockOf(afterTrade, planet.id, 'supplies'), initialStock - 1, planet.name);
+        assert.equal(stockOf(afterTrade, planet.id, 'milk'), initialStock - 1, planet.name);
         for (const other of initialGameState.planets) {
             if (other.id === planet.id) continue;
-            assert.equal(stockOf(afterTrade, other.id, 'supplies'), stockOf(initialGameState, other.id, 'supplies'), `${other.id} stays independent after trading at ${planet.name}`);
+            assert.equal(stockOf(afterTrade, other.id, 'milk'), stockOf(initialGameState, other.id, 'milk'), `${other.id} stays independent after trading at ${planet.name}`);
         }
         port.setTradeQuantity(-1);
         port.confirmTrade();
-        assert.equal(stockOf(provider.snapshot(), planet.id, 'supplies'), initialStock, `${planet.name} restores its own stock after selling back`);
+        assert.equal(stockOf(provider.snapshot(), planet.id, 'milk'), initialStock, `${planet.name} restores its own stock after selling back`);
         port.launch();
         assert.equal(port.getSnapshot().eligible, false, planet.name);
     }
@@ -438,7 +481,7 @@ test('cargo transfer entry pauses, Close resumes, and exit/re-entry clears its v
     const cargo = {
         id: 'salvage-1', position: { x: 10, y: 0 }, hitPoints: 2,
         orbit: { radius: 10, angleRadians: 0, rotationRadians: 0 },
-        manifest: [{ commodityId: 'supplies', quantity: 2, totalCost: 0 }]
+        manifest: [{ commodityId: 'milk', quantity: 2, totalCost: 0 }]
     };
     const provider = new GameStateProvider({ ...initialGameState, ship: { ...initialGameState.ship, position: { x: 0, y: 0 } }, orbitalCargo: [cargo] });
     const port = createCargoTransferPort({ registry: { get: () => provider }, events });
@@ -466,21 +509,21 @@ test('emptying the last orbital cargo stack keeps the transfer modal open instea
     const cargo = {
         id: 'salvage-1', position: { x: 10, y: 0 }, hitPoints: 2,
         orbit: { radius: 10, angleRadians: 0, rotationRadians: 0 },
-        manifest: [{ commodityId: 'supplies', quantity: 1, totalCost: 0 }]
+        manifest: [{ commodityId: 'milk', quantity: 1, totalCost: 0 }]
     };
     const provider = new GameStateProvider({ ...initialGameState, ship: { ...initialGameState.ship, position: { x: 0, y: 0 } }, orbitalCargo: [cargo] });
     const port = createCargoTransferPort({ registry: { get: () => provider }, events });
     assert.equal(port.getSnapshot().visible, true);
-    port.transfer('supplies', 'to-ship', 'max');
+    port.transfer('milk', 'to-ship', 'max');
     const snapshot = port.getSnapshot();
     assert.equal(snapshot.visible, true, 'a transfer must not close the modal');
     assert.equal(snapshot.cargoId, 'salvage-1');
-    assert.equal(snapshot.rows.find(row => row.commodityId === 'supplies').shipQuantity, 1);
+    assert.equal(snapshot.rows.find(row => row.commodityId === 'milk').shipQuantity, 1);
     assert(provider.snapshot().clock.pauseReasons.includes('manual'));
-    port.transfer('supplies', 'to-orbit', 'one');
+    port.transfer('milk', 'to-orbit', 'one');
     const restored = port.getSnapshot();
-    assert.equal(restored.rows.find(row => row.commodityId === 'supplies').cargoQuantity, 1);
-    assert.equal(restored.rows.find(row => row.commodityId === 'supplies').shipQuantity, 0);
+    assert.equal(restored.rows.find(row => row.commodityId === 'milk').cargoQuantity, 1);
+    assert.equal(restored.rows.find(row => row.commodityId === 'milk').shipQuantity, 0);
     assert.equal(provider.snapshot().orbitalCargo.length, 1);
     port.destroy();
 });
@@ -576,7 +619,7 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 16);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 17);
 });
 
 test('v14 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
@@ -616,8 +659,8 @@ test('codec validates the capacity-limited multi-commodity orbital manifest and 
     const valid = {
         ...clone(initialGameState),
         orbitalCargo: [cargo([
-            { commodityId: 'supplies', quantity: 3, totalCost: 15 },
-            { commodityId: 'alloys', quantity: 5, totalCost: 10 }
+            { commodityId: 'milk', quantity: 3, totalCost: 15 },
+            { commodityId: 'grain', quantity: 5, totalCost: 10 }
         ])]
     };
     const decoded = decodeGameState(valid);
@@ -626,13 +669,13 @@ test('codec validates the capacity-limited multi-commodity orbital manifest and 
 
     const invalidCases = [
         { ...clone(valid), schemaVersion: 14 },
-        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'supplies', quantity: 1, totalCost: 0 }, { commodityId: 'supplies', quantity: 2, totalCost: 0 }])] },
+        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'milk', quantity: 1, totalCost: 0 }, { commodityId: 'milk', quantity: 2, totalCost: 0 }])] },
         { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'unknown', quantity: 1, totalCost: 0 }])] },
-        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'supplies', quantity: 0, totalCost: 0 }])] },
+        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'milk', quantity: 0, totalCost: 0 }])] },
         { ...clone(valid), orbitalCargo: [cargo([])] },
-        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'supplies', quantity: 11, totalCost: 0 }, { commodityId: 'alloys', quantity: 10, totalCost: 0 }])] },
-        { ...clone(valid), orbitalCargo: [cargo({ commodityId: 'supplies', quantity: 1, totalCost: 0 })] },
-        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'supplies', quantity: -1, totalCost: 0 }])] }
+        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'milk', quantity: 11, totalCost: 0 }, { commodityId: 'grain', quantity: 10, totalCost: 0 }])] },
+        { ...clone(valid), orbitalCargo: [cargo({ commodityId: 'milk', quantity: 1, totalCost: 0 })] },
+        { ...clone(valid), orbitalCargo: [cargo([{ commodityId: 'milk', quantity: -1, totalCost: 0 }])] }
     ];
     for (const invalid of invalidCases) assert.throws(() => decodeGameState(invalid));
 });

@@ -1,7 +1,7 @@
-﻿import assert from 'node:assert/strict';
+import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import ts from 'typescript';
@@ -66,7 +66,13 @@ test('salvage projections reconcile state IDs, use approved frames/icons and cle
     const commodityDefinition = transpileModule('src/game/objects/commodity/definition.ts', { '../../visual/layers': { ObjectDepth: { Asteroid: 15 } } }).definition;
     assert.deepEqual(cargoDefinition.assets.map(asset => asset.path), ['icons/cargo_32x32.png', 'icons/cargo_2_32x32.png']);
     assert.deepEqual(commodityDefinition.assets.map(asset => asset.path), [
-        'icons/commodity-supplies-placeholder_32x32.png', 'icons/commodity-alloys-placeholder_32x32.png', 'icons/commodity-medicines-placeholder_32x32.png'
+        'icons/commodity-milk-48x48.png', 'icons/commodity-grain_48x48.png', 'icons/commodity-cheese-48x48.png', 'icons/commodity-bun_48x48.png', 'icons/commodity-spaceRation-48x48.png'
+    ]);
+    const { serotonCommodityIds: commodityIds } = transpileModule('src/game/domain/serotonMarketCatalog.ts', {});
+    for (const asset of commodityDefinition.assets) assert(existsSync(join('public/assets', asset.path)), `missing commodity asset ${asset.path}`);
+    assert.deepEqual(Object.keys(commodityDefinition.variants ?? {}), commodityIds);
+    assert.deepEqual(commodityIds.map(id => commodityDefinition.variants[id]?.texture ?? commodityDefinition.visual.texture), [
+        'object:commodity:milk', 'object:commodity:grain', 'object:commodity:cheese', 'object:commodity:bun', 'object:commodity:spaceRation'
     ]);
     assert.equal(commodityDefinition.physics, undefined, 'loose commodity projection creates no Arcade body');
     assert.equal(cargoDefinition.physics, undefined, 'cargo projection creates no Arcade body');
@@ -77,18 +83,21 @@ test('salvage projections reconcile state IDs, use approved frames/icons and cle
         phaser: {}, '../_shared/sceneObject': { SceneObject }, './definition': { definition: {} }
     });
     const cargo = new CargoProjection(scene);
-    cargo.synchronize([{ id: 'cargo-1', position: { x: 4, y: 5 }, orbit: {}, hitPoints: 2, manifest: [{ commodityId: 'alloys', quantity: 2, totalCost: 0 }] }]);
+    cargo.synchronize([{ id: 'cargo-1', position: { x: 4, y: 5 }, orbit: {}, hitPoints: 2, manifest: [{ commodityId: 'grain', quantity: 2, totalCost: 0 }] }]);
     scene.time.now = 300;
-    cargo.synchronize([{ id: 'cargo-1', position: { x: 7, y: 9 }, orbit: {}, hitPoints: 1, manifest: [{ commodityId: 'alloys', quantity: 2, totalCost: 0 }] }]);
+    cargo.synchronize([{ id: 'cargo-1', position: { x: 7, y: 9 }, orbit: {}, hitPoints: 1, manifest: [{ commodityId: 'grain', quantity: 2, totalCost: 0 }] }]);
     assert.equal(cargo.cargoById.get('cargo-1').sprite.texture, 'object:cargo:open');
     cargo.synchronize([]);
     assert.equal(cargo.cargoById.size, 0);
     const commodities = new CommodityProjection(scene);
-    commodities.synchronize([{ id: 'loose-1', position: { x: 1, y: 2 }, motion: {}, container: { commodityId: 'medicines', quantity: 1, totalCost: 0 } }], new Set());
-    assert.equal(commodities.commodityById.get('loose-1').sprite.texture, 'object:commodity:medicines');
-    commodities.synchronize([{ id: 'loose-1', position: { x: 3, y: 4 }, motion: {}, container: { commodityId: 'medicines', quantity: 1, totalCost: 0 } }], new Set());
-    assert.deepEqual({ x: commodities.commodityById.get('loose-1').sprite.x, y: commodities.commodityById.get('loose-1').sprite.y }, { x: 3, y: 4 });
-    commodities.synchronize([], new Set(['loose-1']));
+    commodities.synchronize(commodityIds.map((commodityId, index) => ({ id: `loose-${commodityId}`, position: { x: index, y: index }, motion: {}, container: { commodityId, quantity: 1, totalCost: 0 } })), new Set());
+    for (const commodityId of commodityIds) {
+        assert.equal(commodities.commodityById.get(`loose-${commodityId}`).sprite.texture, `object:commodity:${commodityId}`);
+    }
+    commodities.synchronize([{ id: 'loose-milk', position: { x: 3, y: 4 }, motion: {}, container: { commodityId: 'milk', quantity: 1, totalCost: 0 } }], new Set());
+    assert.equal(commodities.commodityById.size, 1, 'commodities absent from the manifest are destroyed');
+    assert.deepEqual({ x: commodities.commodityById.get('loose-milk').sprite.x, y: commodities.commodityById.get('loose-milk').sprite.y }, { x: 3, y: 4 });
+    commodities.synchronize([], new Set(['loose-milk']));
     assert.equal(commodities.commodityById.size, 0, 'sun fade completion destroys its scoped projection');
     assert(destroyed.length >= 2, 'projection wrappers release their owned presentation objects');
 });

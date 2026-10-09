@@ -1,6 +1,6 @@
 import type { PlanetId } from '../state/planetState';
 import type { SerotonCommodityId } from '../state/serotonMarketState';
-import { serotonCommodityPriceProfiles } from '../domain/serotonMarketCatalog.ts';
+import { serotonCommodityIds, serotonCommodityPriceProfiles } from '../domain/serotonMarketCatalog.ts';
 
 export interface SerotonCommodityDefinition
 {
@@ -10,11 +10,10 @@ export interface SerotonCommodityDefinition
     readonly upperStockThreshold: number;
 }
 
-export const serotonCommodityDefinitions: readonly SerotonCommodityDefinition[] = [
-    { id: 'supplies', ...serotonCommodityPriceProfiles.supplies },
-    { id: 'alloys', ...serotonCommodityPriceProfiles.alloys },
-    { id: 'medicines', ...serotonCommodityPriceProfiles.medicines }
-];
+export const serotonCommodityDefinitions: readonly SerotonCommodityDefinition[] = serotonCommodityIds.map(id => ({
+    id,
+    ...serotonCommodityPriceProfiles[id]
+}));
 
 export const serotonCommodityDefinitionById: Readonly<Record<SerotonCommodityId, SerotonCommodityDefinition>> = Object.freeze(
     Object.fromEntries(serotonCommodityDefinitions.map(definition => [definition.id, definition])) as Record<SerotonCommodityId, SerotonCommodityDefinition>
@@ -23,8 +22,6 @@ export const serotonCommodityDefinitionById: Readonly<Record<SerotonCommodityId,
 export interface PlanetMarketCommodityTuning
 {
     readonly initialStock: number;
-    readonly productionPerSecond: number;
-    readonly consumptionPerSecond: number;
 }
 
 export type PlanetMarketTuning = Readonly<Record<SerotonCommodityId, PlanetMarketCommodityTuning>>;
@@ -32,18 +29,24 @@ export type PlanetMarketTuning = Readonly<Record<SerotonCommodityId, PlanetMarke
 /** One independent, statically tuned market profile per configured landable planet. */
 export const planetMarketTunings: Readonly<Record<PlanetId, PlanetMarketTuning>> = Object.freeze({
     seroton: {
-        supplies: { initialStock: 100, productionPerSecond: 4, consumptionPerSecond: 2 },
-        alloys: { initialStock: 60, productionPerSecond: 1, consumptionPerSecond: 2 },
-        medicines: { initialStock: 20, productionPerSecond: 0, consumptionPerSecond: 1 }
+        milk: { initialStock: 4 },
+        grain: { initialStock: 100 },
+        cheese: { initialStock: 60 },
+        bun: { initialStock: 50 },
+        spaceRation: { initialStock: 20 }
     },
     'lactozis-7c': {
-        supplies: { initialStock: 140, productionPerSecond: 6, consumptionPerSecond: 1 },
-        alloys: { initialStock: 40, productionPerSecond: 0, consumptionPerSecond: 1 },
-        medicines: { initialStock: 30, productionPerSecond: 2, consumptionPerSecond: 1 }
+        milk: { initialStock: 100 },
+        grain: { initialStock: 120 },
+        cheese: { initialStock: 50 },
+        bun: { initialStock: 2 },
+        spaceRation: { initialStock: 20 }
     },
     'maslo-prime': {
-        supplies: { initialStock: 80, productionPerSecond: 2, consumptionPerSecond: 3 },
-        alloys: { initialStock: 90, productionPerSecond: 2, consumptionPerSecond: 3 },
-        medicines: { initialStock: 15, productionPerSecond: 1, consumptionPerSecond: 2 }
+        milk: { initialStock: 120 },
+        grain: { initialStock: 100 },
+        cheese: { initialStock: 2 },
+        bun: { initialStock: 50 },
+        spaceRation: { initialStock: 20 }
     }
 });

@@ -31,6 +31,18 @@ Command rules: [.codex/rules/project.rules](.codex/rules/project.rules).
 
 - Every authoritative game-state, clock, timer, lifecycle, snapshot, save, or restore change requires @.agents/skills/utils-add-state/SKILL.md. Generate architecture artifacts only when a task explicitly requests them.
 
+## Code exploration
+
+Use Serena semantic tools as the primary mechanism for exploring source code.
+
+Prefer symbol-aware operations such as `get_symbols_overview`, `find_symbol`,
+`find_referencing_symbols`, and `find_implementations` over recursive filesystem
+searches or reading entire source files.
+
+Use `rg`, `Get-Content`, or recursive filesystem exploration for source code only
+when Serena cannot provide the required information, or when working with
+non-code files.
+
 ## Lessons learned
 
 Zobacz: `context/foundation/lessons.md`. Czytaj przed planowaniem/implementacją. Nowe wpisy dopisuj na końcu; istniejących nie zmieniaj ani nie usuwaj.

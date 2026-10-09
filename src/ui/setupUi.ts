@@ -11,6 +11,7 @@ import { mountGameMenu } from './components/gameMenu';
 import { mountRunStatus } from './components/runStatus';
 import { mountLandingStatus } from './components/landingStatus';
 import { mountCargoTransfer } from './components/cargoTransfer';
+import { formatCredits } from './components/formatCredits';
 import { mountAuthControls } from './components/authControls';
 import type { AuthPort } from '../game/application/auth/auth';
 import type { TelemetryPort } from '../game/application/telemetry/telemetry';
@@ -58,7 +59,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         gameOverSurvivalTimeLabel.textContent = resultLabels.survived;
         gameOverSurvivalTime.textContent = `${(terminalResult.activeElapsedMs / 1000).toFixed(1)} seconds`;
         gameOverFinalCashLabel.textContent = resultLabels.finalCash;
-        gameOverFinalCash.textContent = `${terminalResult.finalCredits.toLocaleString('en-US')} cr`;
+        gameOverFinalCash.textContent = formatCredits(terminalResult.finalCredits);
         gameOverResults.hidden = false;
     };
     const hideGameOverResults = (): void => { gameOverResults.hidden = true; };
