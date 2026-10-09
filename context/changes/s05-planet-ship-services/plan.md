@@ -230,9 +230,9 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Automated
 
-- [x] 3.1 Shipyard projection and adapter refresh tests pass
-- [x] 3.2 Shipyard DOM interaction and unavailable-service tests pass
-- [x] 3.3 Type checking passes: `npm.cmd run typecheck`
+- [x] 3.1 Shipyard projection and adapter refresh tests pass — 43f485f
+- [x] 3.2 Shipyard DOM interaction and unavailable-service tests pass — 43f485f
+- [x] 3.3 Type checking passes: `npm.cmd run typecheck` — 43f485f
 
 #### Manual
 
@@ -243,8 +243,8 @@ No snapshot migration is introduced. Existing level-one ship status receives the
 
 #### Automated
 
-- [ ] 4.1 Focused domain, mechanics, and UI suites pass
-- [ ] 4.2 Type checking passes after the complete change: `npm.cmd run typecheck`
+- [x] 4.1 Focused domain, mechanics, and UI suites pass
+- [x] 4.2 Type checking passes after the complete change: `npm.cmd run typecheck`
 
 #### Manual
 

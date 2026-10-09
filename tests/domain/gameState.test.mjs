@@ -542,6 +542,68 @@ test('the landing port projects and refreshes landed ship services on every plan
     port.destroy();
 });
 
+test('purchased ship services change flight, cargo and volley behaviour through the authoritative boundary', () => {
+    const gameFor = provider => ({ registry: { get: key => key === 'telemetry' ? { emit: () => {} } : provider }, events: { emit: () => {} } });
+    const provider = new GameStateProvider({
+        ...initialGameState,
+        credits: 1_000_000,
+        asteroids: [],
+        ship: { ...initialGameState.ship, position: { x: 20_000, y: 20_000 }, velocity: { x: 0, y: 0 } },
+        clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
+        planetLifecycle: { capturedPlanetId: 'lactozis-7c', landedPlanetId: 'lactozis-7c', relandingLockedPlanetId: null }
+    });
+    const port = createLandingStatusPort(gameFor(provider));
+    const land = planetId => provider.update(state => ({
+        ...state,
+        clock: pauseGameClock(state.clock, 'landed'),
+        planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
+    }));
+
+    port.upgradeShipService('engine');
+    port.purchaseBooster();
+    assert.equal(provider.snapshot().shipStatus.engineLevel, 2);
+    assert.equal(provider.snapshot().shipStatus.boosterUnlocked, true);
+    assert.equal(provider.snapshot().credits, 1_000_000 - 20_000 - 75_000);
+
+    port.launch();
+    const target = { x: 420_000, y: 20_000 };
+    let cruising = provider.snapshot();
+    for (let tick = 0; tick < 10; tick++) cruising = advanceGameSimulation(cruising, { target, boostRequested: false, firing: false }, 100);
+    assert(Math.abs(Math.hypot(cruising.ship.velocity.x, cruising.ship.velocity.y) - 264) < 1e-9, 'a level-two engine cruises at 110% of the level-one speed');
+    let boosted = cruising;
+    for (let tick = 0; tick < 20; tick++) boosted = advanceGameSimulation(boosted, { target, boostRequested: true, firing: false }, 100);
+    assert(Math.abs(Math.hypot(boosted.ship.velocity.x, boosted.ship.velocity.y) - 1200) < 1e-9, 'the purchased booster keeps the fixed level-one 5x speed');
+
+    land('seroton');
+    port.upgradeShipService('cargo');
+    assert.equal(provider.snapshot().shipStatus.cargoLevel, 2);
+    assert.equal(quoteLandedTrade(provider.snapshot(), 'grain', 50).failure, null, 'a level-two cargo hold fits 50 units');
+    assert.equal(quoteLandedTrade(provider.snapshot(), 'grain', 51).failure, 'insufficient-cargo');
+
+    provider.update(state => ({ ...state, shipStatus: { ...state.shipStatus, currentHitPoints: 75 } }));
+    port.repairShip();
+    assert.equal(provider.snapshot().shipStatus.currentHitPoints, 85, 'a repair restores 10% of maximum HP');
+
+    land('maslo-prime');
+    port.upgradeShipService('weaponary');
+    assert.equal(provider.snapshot().shipStatus.weaponLevel, 2);
+    port.launch();
+    const firing = provider.update(state => advanceGameSimulation({ ...state, ship: { ...state.ship, rotation: 0 } }, {
+        target: null, boostRequested: false, firing: true
+    }, 1));
+    assert.deepEqual(firing.projectiles.map(projectile => projectile.id), ['projectile-1-1', 'projectile-1-2']);
+    const offsets = firing.projectiles.map(projectile => Math.atan2(projectile.velocity.x, -projectile.velocity.y) * 180 / Math.PI);
+    assert(Math.abs(offsets[0] + 5) < 1e-9 && Math.abs(offsets[1] - 5) < 1e-9, 'a level-two weapon fires the mirrored 5 degree pair');
+
+    const restored = new GameStateProvider(initialGameState);
+    restored.restore(encodeGameState(firing));
+    assert.deepEqual(restored.snapshot().shipStatus, firing.shipStatus, 'every purchase survives serialization');
+    const undisturbed = { target: null, boostRequested: false, firing: false };
+    assert.deepEqual(advanceGameSimulation(restored.snapshot(), undisturbed, 400), advanceGameSimulation(firing, undisturbed, 400),
+        'a restored upgraded run continues identically');
+    port.destroy();
+});
+
 test('the landed market port shows, refreshes, trades, and launches from each planet own market', () => {
     const gameFor = provider => ({ registry: { get: key => key === 'telemetry' ? { emit: () => {} } : provider }, events: { emit: () => {} } });
     const stockOf = (state, planetId, commodityId) => state.markets
