@@ -1,7 +1,7 @@
 ---
 change_id: req01-performance-monitor
 title: Req01 performance monitor
-status: implementing
+status: impl_reviewed
 created: 2026-10-09
 updated: 2026-10-09
 archived_at: null

@@ -223,10 +223,10 @@ Not applicable: no snapshot schema, persistence or saved data is touched. `chang
 
 #### Automated
 
-- [x] 2.1 `test:ui-presentation` passes with the new readout component test
-- [x] 2.2 `test:fast` passes covering the new files, contracts re-export and filename rules
-- [x] 2.3 `typecheck` passes
-- [x] 2.4 `build-nolog` succeeds with the new modules bundled
+- [x] 2.1 `test:ui-presentation` passes with the new readout component test — 7586ebb
+- [x] 2.2 `test:fast` passes covering the new files, contracts re-export and filename rules — 7586ebb
+- [x] 2.3 `typecheck` passes — 7586ebb
+- [x] 2.4 `build-nolog` succeeds with the new modules bundled — 7586ebb
 
 #### Manual
 
