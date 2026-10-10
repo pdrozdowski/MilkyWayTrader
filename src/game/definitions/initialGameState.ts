@@ -1,5 +1,4 @@
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
-import type { PlanetFacilityId } from '../state/serotonMarketState';
 import { initialCredits, maximumShipHitPoints } from '../domain/runBalance.ts';
 import { planetDefinitions } from './planetDefinitions.ts';
 import { projectPlanetPosition } from '../mechanics/planet/orbit.ts';
@@ -8,15 +7,6 @@ import { planetFacilityDefinitions } from './planetFacilityDefinitions.ts';
 import { asteroidBeltDefinition, asteroidBeltLayout, asteroidTuning } from './gameplayTuning.ts';
 
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
-
-/** Every configured planet opens with the three primary facilities already built. */
-const initialPlanetFacilityLevels: Readonly<Record<PlanetFacilityId, number>> = {
-    dairyFarm: 1,
-    grainFarm: 1,
-    cheeseFactory: 1,
-    bakery: 0,
-    foodProcessor: 0
-};
 
 export interface InitialGameStateInput
 {
@@ -46,7 +36,7 @@ export function createInitialGameState ({ runId, randomSeed }: InitialGameStateI
         planetId: definition.id,
         commodityStocks: serotonCommodityDefinitions.map(commodity => ({ commodityId: commodity.id, stock: planetMarketTunings[definition.id][commodity.id].initialStock })),
         facilities: planetFacilityDefinitions.map(facility => {
-            const level = initialPlanetFacilityLevels[facility.id];
+            const level = facility.initialLevel;
             return { facilityId: facility.id, level, status: level === 0 ? 'notBuilt' : 'working' };
         })
     })),

@@ -1,5 +1,5 @@
 import { cargoCapacityByLevel } from '../domain/runBalance.ts';
-import { quoteFacilityInvestment } from './planetFacilities.ts';
+import { quoteFacilityDowngrade, quoteFacilityInvestment } from './planetFacilities.ts';
 import type { LandedFacilityInvestmentAction } from './planetFacilities.ts';
 import type { RunState } from './runStatus.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot.ts';
@@ -16,6 +16,7 @@ export interface LandedFacilityProjectionDefinition
 {
     readonly id: PlanetFacilityId;
     readonly label: string;
+    readonly initialLevel: number;
     readonly maxLevel: number;
     readonly outputCommodityId: SerotonCommodityId;
     readonly outputByLevel: readonly number[];
@@ -55,8 +56,11 @@ export interface LandedFacilityRowSnapshot
     readonly outputCommodityId: SerotonCommodityId;
     readonly outputPerCycle: number;
     readonly inputsPerCycle: readonly LandedFacilityProjectionInput[];
+    readonly buildOutputPerCycle: number;
+    readonly buildInputsPerCycle: readonly LandedFacilityProjectionInput[];
     readonly modifier: LandedFacilityProjectionModifier;
     readonly action: LandedFacilityActionSnapshot;
+    readonly downgrade: Readonly<{ available: boolean; targetLevel: number; refund: number }>;
 }
 
 export interface LandedFacilitiesClockSnapshot
@@ -124,11 +128,17 @@ export function projectLandedFacilities (
         const inputsPerCycle: LandedFacilityProjectionInput[] = facility.level > 0
             ? definition.inputsPerOutput.map(input => Object.freeze({ commodityId: input.commodityId, quantity: input.quantity * outputPerCycle }))
             : [];
+        const buildOutputPerCycle = Math.round(definition.outputByLevel[0] * modifier.outputMultiplier);
+        const buildInputsPerCycle = definition.inputsPerOutput.map(input => Object.freeze({
+            commodityId: input.commodityId,
+            quantity: input.quantity * buildOutputPerCycle
+        }));
         const action: LandedFacilityActionSnapshot = facility.level === 0
             ? investmentAction(state, catalogue, definition.id, 'build')
             : facility.level >= definition.maxLevel
                 ? Object.freeze({ kind: 'max' as const, targetLevel: definition.maxLevel, price: 0, affordable: true })
                 : investmentAction(state, catalogue, definition.id, 'upgrade');
+        const downgradeQuote = quoteFacilityDowngrade(state, catalogue, definition.id);
         return Object.freeze({
             facilityId: definition.id,
             label: definition.label,
@@ -138,8 +148,11 @@ export function projectLandedFacilities (
             outputCommodityId: definition.outputCommodityId,
             outputPerCycle,
             inputsPerCycle: Object.freeze(inputsPerCycle),
+            buildOutputPerCycle,
+            buildInputsPerCycle: Object.freeze(buildInputsPerCycle),
             modifier: Object.freeze({ ...modifier }),
-            action
+            action,
+            downgrade: Object.freeze({ available: downgradeQuote.failure === null, targetLevel: downgradeQuote.targetLevel, refund: downgradeQuote.refund })
         });
     });
     return Object.freeze({

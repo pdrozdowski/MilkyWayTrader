@@ -109,9 +109,9 @@
                     <button type="button" data-commodity-id="spaceRation"><span class="commodity-icon catalogue-commodity-icon" data-commodity-id="spaceRation" aria-hidden="true"></span><span class="catalogue-commodity-name"></span></button>
                 </div>
                 <section id="landing-status-trade" aria-label="Trade preview">
-                    <section class="market-inventory-panel" aria-label="Planet stock"><strong id="landing-status-commodity-name"></strong><p id="landing-status-planet-stock"></p><p id="landing-status-supply"></p><p id="landing-status-production"></p><p id="landing-status-consumption"></p><p id="landing-status-stock-change"></p></section>
-                    <section class="market-trade-control"><header class="market-trade-header"><div><strong id="landing-status-quantity-label"></strong><p id="landing-status-unit-price"></p></div><span class="market-commodity-icon commodity-icon" role="img"></span></header><input id="landing-status-quantity" type="range" step="1" value="0" /><output id="landing-status-quantity-value" for="landing-status-quantity"></output><p id="landing-status-budget" role="status"></p><button id="landing-status-confirm" type="button"></button></section>
-                    <section class="market-inventory-panel" aria-label="Ship inventory"><strong>Ship stock</strong><p id="landing-status-player-stock"></p><p id="landing-status-average-buy-price"></p><p id="landing-status-trade-income" class="market-trade-income"></p><p id="landing-status-trade-result"></p></section>
+                    <section class="market-inventory-panel" aria-label="Planet stock"><strong id="landing-status-commodity-name"></strong><div id="landing-status-planet-stock-bar" class="market-stock-track market-stock-track--planet" role="progressbar" aria-label="Planet stock"><span class="market-stock-segment market-stock-segment--low"><span class="market-stock-fill"></span></span><span class="market-stock-segment market-stock-segment--medium"><span class="market-stock-fill"></span></span><span class="market-stock-segment market-stock-segment--high"><span class="market-stock-fill"></span></span></div><p id="landing-status-planet-stock"></p><p id="landing-status-supply"></p><p id="landing-status-production"></p><p id="landing-status-consumption"></p><p id="landing-status-stock-change"><span class="market-stock-change-label"></span><span class="market-stock-change-rate"></span></p></section>
+                    <section class="market-trade-control"><header class="market-trade-header"><div><strong id="landing-status-quantity-label"></strong><p id="landing-status-unit-price"></p></div><span class="market-commodity-icon commodity-icon" role="img"></span></header><input id="landing-status-quantity" type="range" step="1" value="0" /><output id="landing-status-quantity-value" for="landing-status-quantity"></output><button id="landing-status-confirm" class="market-confirm-action" type="button"><span class="market-confirm-label"></span><span class="market-confirm-price"></span></button></section>
+                    <section class="market-inventory-panel" aria-label="Ship inventory"><strong id="landing-status-player-stock-heading"></strong><div id="landing-status-player-stock-bar" class="market-stock-track" role="progressbar" aria-label="Ship stock"><span class="market-stock-fill"></span></div><p id="landing-status-player-stock"></p><p id="landing-status-average-buy-price"></p><p id="landing-status-trade-income" class="market-trade-income"></p><p id="landing-status-trade-result"></p></section>
                 </section>
                 </div>
                 </section>
@@ -129,8 +129,8 @@
                             <p class="facility-card-output"></p>
                             <p class="facility-card-inputs"></p>
                             <p class="facility-card-modifier"></p>
-                            <p class="facility-card-price"></p>
-                            <button class="facility-card-action" type="button"></button>
+                            <button class="facility-card-action" type="button"><span class="facility-card-action-label"></span><span class="facility-card-action-price"></span></button>
+                            <button class="facility-card-downgrade" type="button"><span class="facility-card-downgrade-label"></span><span class="facility-card-downgrade-refund"><span class="facility-card-downgrade-refund-label"></span><span class="facility-card-downgrade-coin" aria-hidden="true"></span><span class="facility-card-downgrade-amount"></span></span></button>
                         </article>
                         <article class="facility-card" data-facility-id="grainFarm">
                             <div class="facility-card-header"><span class="facility-card-icon" role="img"></span><h3 class="facility-card-name"></h3></div>
@@ -139,8 +139,8 @@
                             <p class="facility-card-output"></p>
                             <p class="facility-card-inputs"></p>
                             <p class="facility-card-modifier"></p>
-                            <p class="facility-card-price"></p>
-                            <button class="facility-card-action" type="button"></button>
+                            <button class="facility-card-action" type="button"><span class="facility-card-action-label"></span><span class="facility-card-action-price"></span></button>
+                            <button class="facility-card-downgrade" type="button"><span class="facility-card-downgrade-label"></span><span class="facility-card-downgrade-refund"><span class="facility-card-downgrade-refund-label"></span><span class="facility-card-downgrade-coin" aria-hidden="true"></span><span class="facility-card-downgrade-amount"></span></span></button>
                         </article>
                         <article class="facility-card" data-facility-id="cheeseFactory">
                             <div class="facility-card-header"><span class="facility-card-icon" role="img"></span><h3 class="facility-card-name"></h3></div>
@@ -149,8 +149,8 @@
                             <p class="facility-card-output"></p>
                             <p class="facility-card-inputs"></p>
                             <p class="facility-card-modifier"></p>
-                            <p class="facility-card-price"></p>
-                            <button class="facility-card-action" type="button"></button>
+                            <button class="facility-card-action" type="button"><span class="facility-card-action-label"></span><span class="facility-card-action-price"></span></button>
+                            <button class="facility-card-downgrade" type="button"><span class="facility-card-downgrade-label"></span><span class="facility-card-downgrade-refund"><span class="facility-card-downgrade-refund-label"></span><span class="facility-card-downgrade-coin" aria-hidden="true"></span><span class="facility-card-downgrade-amount"></span></span></button>
                         </article>
                         <article class="facility-card" data-facility-id="bakery">
                             <div class="facility-card-header"><span class="facility-card-icon" role="img"></span><h3 class="facility-card-name"></h3></div>
@@ -159,8 +159,8 @@
                             <p class="facility-card-output"></p>
                             <p class="facility-card-inputs"></p>
                             <p class="facility-card-modifier"></p>
-                            <p class="facility-card-price"></p>
-                            <button class="facility-card-action" type="button"></button>
+                            <button class="facility-card-action" type="button"><span class="facility-card-action-label"></span><span class="facility-card-action-price"></span></button>
+                            <button class="facility-card-downgrade" type="button"><span class="facility-card-downgrade-label"></span><span class="facility-card-downgrade-refund"><span class="facility-card-downgrade-refund-label"></span><span class="facility-card-downgrade-coin" aria-hidden="true"></span><span class="facility-card-downgrade-amount"></span></span></button>
                         </article>
                         <article class="facility-card" data-facility-id="foodProcessor">
                             <div class="facility-card-header"><span class="facility-card-icon" role="img"></span><h3 class="facility-card-name"></h3></div>
@@ -169,8 +169,8 @@
                             <p class="facility-card-output"></p>
                             <p class="facility-card-inputs"></p>
                             <p class="facility-card-modifier"></p>
-                            <p class="facility-card-price"></p>
-                            <button class="facility-card-action" type="button"></button>
+                            <button class="facility-card-action" type="button"><span class="facility-card-action-label"></span><span class="facility-card-action-price"></span></button>
+                            <button class="facility-card-downgrade" type="button"><span class="facility-card-downgrade-label"></span><span class="facility-card-downgrade-refund"><span class="facility-card-downgrade-refund-label"></span><span class="facility-card-downgrade-coin" aria-hidden="true"></span><span class="facility-card-downgrade-amount"></span></span></button>
                         </article>
                     </div>
                 </section>

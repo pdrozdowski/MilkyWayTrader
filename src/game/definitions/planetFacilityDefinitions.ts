@@ -17,6 +17,7 @@ export interface PlanetFacilityDefinition
 {
     readonly id: PlanetFacilityId;
     readonly label: string;
+    readonly initialLevel: number;
     readonly maxLevel: number;
     readonly outputByLevel: readonly number[];
     readonly inputsPerOutput: readonly PlanetFacilityInput[];
@@ -25,12 +26,12 @@ export interface PlanetFacilityDefinition
 
 /** A facility attempts its recipe once per active second in this fixed order. */
 export const planetFacilityDefinitions: readonly PlanetFacilityDefinition[] = [
-    { id: 'dairyFarm', label: 'Dairy Farm', maxLevel: 3, outputByLevel: [10, 20, 40], inputsPerOutput: [], upgradePrices: [25_000, 75_000] },
-    { id: 'grainFarm', label: 'Grain Farm', maxLevel: 3, outputByLevel: [10, 20, 40], inputsPerOutput: [], upgradePrices: [25_000, 75_000] },
-    { id: 'cheeseFactory', label: 'Cheese Factory', maxLevel: 3, outputByLevel: [5, 10, 20], inputsPerOutput: [{ commodityId: 'milk', quantity: 2 }], upgradePrices: [35_000, 100_000] },
-    { id: 'bakery', label: 'Bakery', maxLevel: 3, outputByLevel: [5, 10, 20], inputsPerOutput: [{ commodityId: 'grain', quantity: 2 }], upgradePrices: [35_000, 100_000] },
+    { id: 'dairyFarm', label: 'Dairy Farm', initialLevel: 1, maxLevel: 3, outputByLevel: [10, 20, 40], inputsPerOutput: [], upgradePrices: [25_000, 75_000] },
+    { id: 'grainFarm', label: 'Grain Farm', initialLevel: 1, maxLevel: 3, outputByLevel: [10, 20, 40], inputsPerOutput: [], upgradePrices: [25_000, 75_000] },
+    { id: 'cheeseFactory', label: 'Cheese Factory', initialLevel: 1, maxLevel: 3, outputByLevel: [5, 10, 20], inputsPerOutput: [{ commodityId: 'milk', quantity: 2 }], upgradePrices: [35_000, 100_000] },
+    { id: 'bakery', label: 'Bakery', initialLevel: 0, maxLevel: 3, outputByLevel: [5, 10, 20], inputsPerOutput: [{ commodityId: 'grain', quantity: 2 }], upgradePrices: [35_000, 100_000] },
     {
-        id: 'foodProcessor', label: 'Food Processor', maxLevel: 3, outputByLevel: [5, 10, 20],
+        id: 'foodProcessor', label: 'Food Processor', initialLevel: 0, maxLevel: 3, outputByLevel: [5, 10, 20],
         inputsPerOutput: [{ commodityId: 'cheese', quantity: 2 }, { commodityId: 'bun', quantity: 1 }, { commodityId: 'milk', quantity: 1 }],
         upgradePrices: [50_000, 150_000]
     }

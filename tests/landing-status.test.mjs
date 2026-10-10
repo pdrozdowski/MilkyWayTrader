@@ -114,9 +114,9 @@ assert.ok(
 
 test('facilities view renders five cards with levels, states, recipes and actions from a fake port', () => {
     const selectors = [
-        '#landing-status-commodity-name', '#landing-status-planet-stock', '#landing-status-supply', '#landing-status-production', '#landing-status-consumption', '#landing-status-stock-change', '#landing-status-player-stock',
+        '#landing-status-commodity-name', '#landing-status-planet-stock', '#landing-status-supply', '#landing-status-production', '#landing-status-consumption', '#landing-status-stock-change', '#landing-status-player-stock', '#landing-status-player-stock-heading', '#landing-status-planet-stock-bar', '#landing-status-player-stock-bar',
         '#landing-status-average-buy-price', '#landing-status-trade-income', '#landing-status-trade-result', '#landing-status-quantity-label',
-        '#landing-status-quantity', '#landing-status-quantity-value', '#landing-status-unit-price', '#landing-status-budget',
+        '#landing-status-quantity', '#landing-status-quantity-value', '#landing-status-unit-price',
         '#landing-status-confirm', '#landing-status-launch', '#landing-status-market', '#landing-status-shipyard', '#landing-status-market-back',
         '.market-commodity-icon', '#landing-status-market-heading', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
         '#landing-status-title', '.landing-visual'
@@ -130,8 +130,18 @@ test('facilities view renders five cards with levels, states, recipes and action
         '.facility-card-output': new FakeElement(),
         '.facility-card-inputs': new FakeElement(),
         '.facility-card-modifier': new FakeElement(),
-        '.facility-card-price': new FakeElement(),
-        '.facility-card-action': new FakeElement()
+        '.facility-card-action': new FakeElement({
+            '.facility-card-action-label': new FakeElement(),
+            '.facility-card-action-price': new FakeElement()
+        }),
+        '.facility-card-downgrade': new FakeElement({
+            '.facility-card-downgrade-label': new FakeElement(),
+            '.facility-card-downgrade-refund': new FakeElement({
+                '.facility-card-downgrade-refund-label': new FakeElement(),
+                '.facility-card-downgrade-coin': new FakeElement(),
+                '.facility-card-downgrade-amount': new FakeElement()
+            })
+        })
     })]));
     const modal = new FakeElement();
     const hub = new FakeElement();
@@ -157,6 +167,13 @@ test('facilities view renders five cards with levels, states, recipes and action
     const root = new FakeElement({
         ...Object.fromEntries(selectors.map(selector => [selector, new FakeElement()])),
         '#landing-status': modal,
+        '#landing-status-confirm': new FakeElement({ '.market-confirm-label': new FakeElement(), '.market-confirm-price': new FakeElement() }),
+        '#landing-status-planet-stock-bar': new FakeElement({
+            '.market-stock-segment--low': new FakeElement({ '.market-stock-fill': new FakeElement() }),
+            '.market-stock-segment--medium': new FakeElement({ '.market-stock-fill': new FakeElement() }),
+            '.market-stock-segment--high': new FakeElement({ '.market-stock-fill': new FakeElement() })
+        }),
+        '#landing-status-player-stock-bar': new FakeElement({ '.market-stock-fill': new FakeElement() }),
         '#landing-status-hub': hub,
         '#landing-status-market-view': marketView,
         '#landing-status-facilities-view': facilitiesView,
@@ -176,14 +193,15 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-shipyard-repair': new FakeElement({ '.shipyard-card-action-label': new FakeElement(), '.shipyard-card-action-price': new FakeElement() }),
         '#landing-status-catalogue > button[data-commodity-id]': [catalogueButton]
     });
-    const row = (facilityId, label, level, status, outputCommodityId, outputPerCycle, inputsPerCycle, modifier, action) =>
-        ({ facilityId, label, level, maxLevel: 3, status, outputCommodityId, outputPerCycle, inputsPerCycle, modifier, action });
+    const initialLevelOf = facilityId => ['dairyFarm', 'grainFarm', 'cheeseFactory'].includes(facilityId) ? 1 : 0;
+    const row = (facilityId, label, level, status, outputCommodityId, outputPerCycle, inputsPerCycle, modifier, action, buildOutputPerCycle = outputPerCycle || 5, buildInputsPerCycle = inputsPerCycle) =>
+        ({ facilityId, label, level, initialLevel: initialLevelOf(facilityId), maxLevel: 3, status, outputCommodityId, outputPerCycle, inputsPerCycle, buildOutputPerCycle, buildInputsPerCycle, modifier, action, downgrade: { available: level > initialLevelOf(facilityId), targetLevel: Math.max(initialLevelOf(facilityId), level - 1), refund: level > initialLevelOf(facilityId) ? 75_000 : 0 } });
     const noModifier = { upgradePriceMultiplier: 1, outputMultiplier: 1 };
     const baseFacilities = [
     row('dairyFarm', 'Dairy Farm', 1, 'working', 'milk', 10, [], noModifier, { kind: 'upgrade', targetLevel: 2, price: 25_000, affordable: true }),
     row('grainFarm', 'Grain Farm', 1, 'insufficientResources', 'grain', 10, [], noModifier, { kind: 'upgrade', targetLevel: 2, price: 25_000, affordable: true }),
     row('cheeseFactory', 'Cheese Factory', 1, 'working', 'cheese', 6, [{ commodityId: 'milk', quantity: 12 }], { upgradePriceMultiplier: 0.8, outputMultiplier: 1.2 }, { kind: 'upgrade', targetLevel: 2, price: 28_000, affordable: true }),
-    row('bakery', 'Bakery', 0, 'notBuilt', 'bun', 0, [], noModifier, { kind: 'build', targetLevel: 1, price: 35_000, affordable: true }),
+    row('bakery', 'Bakery', 0, 'notBuilt', 'bun', 0, [], noModifier, { kind: 'build', targetLevel: 1, price: 35_000, affordable: true }, 5, [{ commodityId: 'grain', quantity: 10 }]),
     row('foodProcessor', 'Food Processor', 3, 'working', 'spaceRation', 20, [{ commodityId: 'cheese', quantity: 40 }], noModifier, { kind: 'max', targetLevel: 3, price: 0, affordable: true })
     ];
     const facilitiesSnapshot = credits => ({
@@ -199,7 +217,7 @@ test('facilities view renders five cards with levels, states, recipes and action
         services: [],
         booster: { owned: false, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'not-landed' }
     };
-    const commodity = { commodityId: 'milk', stock: 400, carriedQuantity: 0, unitPrice: 100, averageBuyPrice: 0 };
+    const commodity = { commodityId: 'milk', stock: 400, stockCapacity: 400, lowerStockThreshold: 100, upperStockThreshold: 300, carriedQuantity: 0, unitPrice: 100, averageBuyPrice: 0, netPerSecond: -2 };
     const marketSnapshot = {
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000,
         cargoUsed: 3, cargoCapacity: 20, commodities: [commodity], selectedCommodityId: 'milk', tradeQuantity: 0,
@@ -215,6 +233,7 @@ test('facilities view renders five cards with levels, states, recipes and action
     let portDestroyed = 0;
     const builds = [];
     const upgrades = [];
+    const downgrades = [];
     const port = {
         getSnapshot: () => marketSnapshot,
         subscribe: next => { marketListener = next; next(marketSnapshot); return () => { marketUnsubscribes++; }; },
@@ -227,6 +246,7 @@ test('facilities view renders five cards with levels, states, recipes and action
         confirmTrade: () => {},
         buildFacility: facilityId => builds.push(facilityId),
         upgradeFacility: facilityId => upgrades.push(facilityId),
+        downgradeFacility: facilityId => downgrades.push(facilityId),
         launch: () => {},
         destroy: () => { portDestroyed++; }
     };
@@ -241,14 +261,50 @@ test('facilities view renders five cards with levels, states, recipes and action
     marketListener(marketSnapshot);
     assert.equal(element('#landing-status-production').textContent, `${displayLabels.marketProduction}: 10 ${displayLabels.commodityLabels.milk} ${displayLabels.facilityPerCycle}`);
     assert.equal(element('#landing-status-consumption').textContent, `${displayLabels.marketConsumption}: 12 ${displayLabels.commodityLabels.milk} ${displayLabels.facilityPerCycle}`);
-    assert.equal(element('#landing-status-stock-change').textContent, `${displayLabels.marketStockChange}: -2 ${displayLabels.commodityLabels.milk} ${displayLabels.facilityPerCycle}`);
+    assert.equal(element('#landing-status-stock-change').replacedChildren[0].textContent, `${displayLabels.marketStockChange}:`);
+    assert.equal(element('#landing-status-stock-change').replacedChildren[1].textContent, '-2/s');
+    const planetBar = element('#landing-status-planet-stock-bar');
+    assert.equal(planetBar.querySelector('.market-stock-segment--low').querySelector('.market-stock-fill').style.width, '100%');
+    assert.equal(planetBar.querySelector('.market-stock-segment--medium').querySelector('.market-stock-fill').style.width, '100%');
+    assert.equal(planetBar.querySelector('.market-stock-segment--high').querySelector('.market-stock-fill').style.width, '100%');
+    assert.equal(planetBar.querySelector('.market-stock-segment--low').style.flex, '0 0 25%');
+    assert.equal(planetBar.querySelector('.market-stock-segment--medium').style.flex, '0 0 50%');
+    assert.equal(planetBar.querySelector('.market-stock-segment--high').style.flex, '0 0 25%');
+    assert.equal(element('#landing-status-planet-stock-bar').attributes['aria-valuetext'], '400 of 400');
+    marketListener({ ...marketSnapshot, quote: { ...marketSnapshot.quote, postTradeStock: 150 } });
+    assert.equal(planetBar.querySelector('.market-stock-segment--low').querySelector('.market-stock-fill').style.width, '100%');
+    assert.equal(planetBar.querySelector('.market-stock-segment--medium').querySelector('.market-stock-fill').style.width, '25%');
+    assert.equal(planetBar.querySelector('.market-stock-segment--high').querySelector('.market-stock-fill').style.width, '0%');
+    marketListener(marketSnapshot);
+    assert.equal(element('#landing-status-player-stock-bar').querySelector('.market-stock-fill').style.width, '0%');
+    assert.equal(element('#landing-status-player-stock-bar').attributes['aria-valuemax'], '20');
+    const confirmButton = element('#landing-status-confirm');
+    assert.equal(confirmButton.querySelector('.market-confirm-label').textContent, displayLabels.marketConfirm);
+    assert.equal(confirmButton.querySelector('.market-confirm-price').textContent, '0');
+    assert.equal(confirmButton.disabled, false);
+    marketListener({ ...marketSnapshot, credits: 1_000, quote: { ...marketSnapshot.quote, total: 2_000, failure: 'insufficient-credits' } });
+    assert.equal(confirmButton.querySelector('.market-confirm-label').textContent, displayLabels.marketInsufficientCash);
+    assert.equal(confirmButton.querySelector('.market-confirm-price').textContent, '1,000');
+    assert.equal(confirmButton.querySelector('.market-confirm-price').dataset.state, 'insufficient-credits');
+    assert.equal(confirmButton.disabled, true);
+    marketListener({ ...marketSnapshot, tradeQuantity: 1, credits: 17_000, quote: { ...marketSnapshot.quote, total: 37_000, failure: null } });
+    assert.equal(confirmButton.querySelector('.market-confirm-label').textContent, displayLabels.marketInsufficientCash);
+    assert.equal(confirmButton.querySelector('.market-confirm-price').textContent, '20,000');
+    assert.equal(confirmButton.querySelector('.market-confirm-price').dataset.state, 'insufficient-credits');
+    assert.equal(confirmButton.disabled, true);
+    marketListener(marketSnapshot);
     assert(element('#landing-status-stock-change').classList.values.has('market-stock-delta--negative'), 'a net decrease is flagged negative');
     assert(!element('#landing-status-stock-change').classList.values.has('market-stock-delta--positive'), 'a net decrease is not flagged positive');
     assert.equal(element('#landing-status-market-credits').textContent, (1_000_000).toLocaleString('en-US'));
     assert.equal(element('#landing-status-market-cargo').textContent, '3 / 20');
+    assert.equal(element('#landing-status-commodity-name').textContent, `${displayLabels.planetaryStockOf}: ${displayLabels.commodityLabels.milk}`);
+    assert.equal(element('#landing-status-player-stock-heading').textContent, `${displayLabels.shipStockOf}: ${displayLabels.commodityLabels.milk}`);
     assert.equal(element('.market-commodity-icon').dataset.commodityId, marketSnapshot.selectedCommodityId);
     assert.equal(element('.market-commodity-icon').textContent, '');
-    assert.equal(catalogueName.textContent, displayLabels.commodityLabels.milk, 'a catalogue button shows the commodity label in its name span');
+    assert.equal(catalogueName.textContent, `${displayLabels.commodityLabels.milk} (-2/s)`, 'a catalogue button shows the commodity label and its signed stock-change rate');
+    marketListener({ ...marketSnapshot, commodities: [{ ...commodity, netPerSecond: 10 }] });
+    assert.equal(catalogueName.textContent, `${displayLabels.commodityLabels.milk} (+10/s)`, 'a positive stock-change rate receives an explicit plus sign');
+    marketListener(marketSnapshot);
     assert.equal(catalogueButton.attributes['aria-pressed'], 'true', 'the selected catalogue button is pressed');
     assert.equal(catalogueButton.disabled, false, 'an eligible catalogue button stays enabled');
     const marketClock = element('#landing-status-market-clock');
@@ -290,8 +346,14 @@ test('facilities view renders five cards with levels, states, recipes and action
     const output = facilityId => cards[facilityId].querySelector('.facility-card-output');
     const inputs = facilityId => cards[facilityId].querySelector('.facility-card-inputs');
     const modifier = facilityId => cards[facilityId].querySelector('.facility-card-modifier');
-    const price = facilityId => cards[facilityId].querySelector('.facility-card-price');
     const action = facilityId => cards[facilityId].querySelector('.facility-card-action');
+    const actionLabel = facilityId => action(facilityId).querySelector('.facility-card-action-label');
+    const actionPrice = facilityId => action(facilityId).querySelector('.facility-card-action-price');
+    const downgrade = facilityId => cards[facilityId].querySelector('.facility-card-downgrade');
+    const downgradeLabel = facilityId => downgrade(facilityId).querySelector('.facility-card-downgrade-label');
+    const downgradeRefundLabel = facilityId => downgrade(facilityId).querySelector('.facility-card-downgrade-refund').querySelector('.facility-card-downgrade-refund-label');
+    const downgradeCoin = facilityId => downgrade(facilityId).querySelector('.facility-card-downgrade-refund').querySelector('.facility-card-downgrade-coin');
+    const downgradeAmount = facilityId => downgrade(facilityId).querySelector('.facility-card-downgrade-refund').querySelector('.facility-card-downgrade-amount');
     const textOf = element => (element.replacedChildren ?? []).map(child => child.textContent).join('');
 
     const renderedFacilities = facilitiesSnapshot(1_000_000).facilities;
@@ -306,9 +368,14 @@ test('facilities view renders five cards with levels, states, recipes and action
     }
     assert.equal(status('dairyFarm').textContent, displayLabels.facilityStatusLabels.working);
     assert.equal(status('grainFarm').textContent, displayLabels.facilityStatusLabels.insufficientResources);
+    assert.equal(textOf(output('grainFarm')), `${displayLabels.facilityProduces}: 10 ${displayLabels.commodityLabels.grain} ${displayLabels.facilityPerCycle} ${displayLabels.facilityMissing}`);
+    assert.ok((output('grainFarm').replacedChildren ?? []).some(child => child.className === 'facility-card-missing'), 'missing resources add a visible missing marker to production');
     assert.equal(status('bakery').textContent, displayLabels.facilityStatusLabels.notBuilt);
+    assert.equal(textOf(output('bakery')), `${displayLabels.facilityProduces}: 5 ${displayLabels.commodityLabels.bun} ${displayLabels.facilityPerCycle}`);
+    assert.equal(textOf(inputs('bakery')), `${displayLabels.facilityConsumes}: 10 ${displayLabels.commodityLabels.grain} ${displayLabels.facilityPerCycle}`);
     assert.equal(textOf(output('dairyFarm')), `${displayLabels.facilityProduces}: 10 ${displayLabels.commodityLabels.milk} ${displayLabels.facilityPerCycle}`);
     assert.equal(inputs('dairyFarm').textContent, displayLabels.facilityNoInputs);
+    assert(inputs('dairyFarm').classList.values.has('facility-card-recipe-empty'), 'the No inputs message is gray');
     const iconIds = element => (element.replacedChildren ?? []).filter(child => child.className.includes('facility-card-commodity-icon')).map(child => child.dataset.commodityId);
     assert.deepEqual(iconIds(output('dairyFarm')), ['milk'], 'the produced commodity renders a small commodity icon');
     assert.deepEqual(iconIds(inputs('cheeseFactory')), ['milk'], 'the consumed commodity renders a small commodity icon');
@@ -317,18 +384,40 @@ test('facilities view renders five cards with levels, states, recipes and action
     assert.equal(modifier('dairyFarm').hidden, true);
     assert.equal(modifier('cheeseFactory').textContent, `${displayLabels.facilityOutputBonus} +20% · ${displayLabels.facilityUpgradeDiscount} 20%`);
     assert.equal(modifier('cheeseFactory').hidden, false);
-    assert.equal(action('bakery').textContent, displayLabels.facilityBuild);
+    assert.equal(actionLabel('bakery').textContent, displayLabels.facilityBuild);
     assert.equal(action('bakery').dataset.action, 'build');
     assert.equal(action('bakery').attributes['aria-label'], `Bakery: ${displayLabels.facilityBuild}`);
-    assert.equal(action('dairyFarm').textContent, displayLabels.facilityUpgrade);
+    assert.equal(actionPrice('bakery').textContent, (35_000).toLocaleString('en-US'));
+    assert.equal(action('bakery').disabled, false);
+    assert.equal(action('dairyFarm').querySelector('.facility-card-action-label').textContent, displayLabels.facilityUpgrade);
     assert.equal(action('dairyFarm').dataset.action, 'upgrade');
     assert.equal(action('dairyFarm').attributes['aria-label'], `Dairy Farm: ${displayLabels.facilityUpgrade}`);
-    assert.equal(action('foodProcessor').textContent, displayLabels.facilityMaxLevel);
+    assert.equal(action('foodProcessor').querySelector('.facility-card-action-label').textContent, displayLabels.facilityMaxLevel);
     assert.equal(action('foodProcessor').dataset.action, 'max');
     assert.equal(action('foodProcessor').attributes['aria-label'], `Food Processor: ${displayLabels.facilityMaxLevel}`);
     assert.equal(action('foodProcessor').disabled, false);
-    assert.equal(price('bakery').textContent, `${displayLabels.facilityPrice}: ${(35_000).toLocaleString('en-US')}`);
-    assert.equal(price('foodProcessor').textContent, '');
+    assert.equal(actionPrice('foodProcessor').textContent, '');
+    assert.equal(actionPrice('foodProcessor').hidden, true);
+    assert.equal(downgradeLabel('dairyFarm').textContent, displayLabels.facilityDowngrade);
+    assert.equal(downgradeRefundLabel('dairyFarm').textContent, displayLabels.facilityDowngradeUnavailable);
+    assert.equal(downgradeCoin('dairyFarm').hidden, true);
+    assert.equal(downgrade('dairyFarm').disabled, true, 'a facility at its starting level cannot be downgraded');
+    assert.equal(downgrade('foodProcessor').disabled, false);
+    assert.equal(downgradeRefundLabel('foodProcessor').textContent, `${displayLabels.facilityRefund} - `);
+    assert.equal(downgradeCoin('foodProcessor').hidden, false);
+    assert.equal(downgradeAmount('foodProcessor').textContent, '75,000');
+    const unbuiltProcessor = baseFacilities.map(facility => facility.facilityId === 'foodProcessor'
+        ? { ...facility, level: 0, status: 'notBuilt', outputPerCycle: 0, inputsPerCycle: [], buildOutputPerCycle: 5, action: { kind: 'build', targetLevel: 1, price: 75_000, affordable: true } }
+        : facility);
+    unbuiltProcessor.find(facility => facility.facilityId === 'foodProcessor').buildInputsPerCycle = [
+        { commodityId: 'cheese', quantity: 10 },
+        { commodityId: 'bun', quantity: 5 },
+        { commodityId: 'milk', quantity: 5 }
+    ];
+    facilitiesListener({ ...facilitiesSnapshot(1_000_000), facilities: unbuiltProcessor });
+    assert.equal(textOf(output('foodProcessor')), `${displayLabels.facilityProduces}: 5 ${displayLabels.commodityLabels.spaceRation} ${displayLabels.facilityPerCycle}`);
+    assert.equal(textOf(inputs('foodProcessor')), `${displayLabels.facilityConsumes}: 10 ${displayLabels.commodityLabels.cheese} + 5 ${displayLabels.commodityLabels.bun} + 5 ${displayLabels.commodityLabels.milk} ${displayLabels.facilityPerCycle}`);
+    facilitiesListener(facilitiesSnapshot(1_000_000));
     assert.equal(facilitiesBack.textContent, displayLabels.facilitiesBackToPlanet);
     assert.equal(facilitiesBack.attributes['aria-label'], displayLabels.facilitiesBackToPlanet);
     assert.equal(facilitiesHeading.textContent, displayLabels.facilities);
@@ -342,8 +431,10 @@ test('facilities view renders five cards with levels, states, recipes and action
     action('bakery').click();
     action('dairyFarm').click();
     action('foodProcessor').click();
+    downgrade('foodProcessor').click();
     assert.deepEqual(builds, ['bakery']);
     assert.deepEqual(upgrades, ['dairyFarm']);
+    assert.deepEqual(downgrades, ['foodProcessor']);
 
     assert.notEqual(marketListener, null);
     facilitiesButton.click();
@@ -368,7 +459,10 @@ test('facilities view renders five cards with levels, states, recipes and action
     assert.equal(marketUnsubscribes, 1, 'teardown unsubscribes the market listener exactly once');
     assert.equal(facilitiesUnsubscribes, 1, 'teardown unsubscribes the facilities listener exactly once');
     assert.equal(portDestroyed, 1, 'teardown destroys the port exactly once');
-    for (const facilityId of facilityIdList) assert.equal(action(facilityId).listeners.size, 0);
+    for (const facilityId of facilityIdList) {
+        assert.equal(action(facilityId).listeners.size, 0);
+        assert.equal(downgrade(facilityId).listeners.size, 0);
+    }
     assert.equal(facilitiesButton.listeners.size, 0);
     assert.equal(facilitiesBack.listeners.size, 0);
 });
@@ -403,9 +497,9 @@ test('the shipyard view renders repair, local service cards and the booster row 
         '[data-booster-row]': boosterCard,
         '[data-service-id]': serviceIds.map(serviceId => serviceCards[serviceId])
     });
-    const clickable = ['#landing-status-commodity-name', '#landing-status-planet-stock', '#landing-status-supply', '#landing-status-production', '#landing-status-consumption', '#landing-status-stock-change', '#landing-status-player-stock',
+    const clickable = ['#landing-status-commodity-name', '#landing-status-planet-stock', '#landing-status-supply', '#landing-status-production', '#landing-status-consumption', '#landing-status-stock-change', '#landing-status-player-stock', '#landing-status-player-stock-heading', '#landing-status-planet-stock-bar', '#landing-status-player-stock-bar',
         '#landing-status-average-buy-price', '#landing-status-trade-income', '#landing-status-trade-result', '#landing-status-quantity-label',
-        '#landing-status-quantity', '#landing-status-quantity-value', '#landing-status-unit-price', '#landing-status-budget',
+        '#landing-status-quantity', '#landing-status-quantity-value', '#landing-status-unit-price',
         '#landing-status-confirm', '#landing-status-launch', '#landing-status-market', '#landing-status-shipyard', '#landing-status-market-back',
         '.market-commodity-icon', '#landing-status-market-heading', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
         '#landing-status-title', '.landing-visual',
@@ -421,6 +515,13 @@ test('the shipyard view renders repair, local service cards and the booster row 
     const root = new FakeElement({
         ...Object.fromEntries(clickable.map(selector => [selector, new FakeElement()])),
         '#landing-status': modal,
+        '#landing-status-confirm': new FakeElement({ '.market-confirm-label': new FakeElement(), '.market-confirm-price': new FakeElement() }),
+        '#landing-status-planet-stock-bar': new FakeElement({
+            '.market-stock-segment--low': new FakeElement({ '.market-stock-fill': new FakeElement() }),
+            '.market-stock-segment--medium': new FakeElement({ '.market-stock-fill': new FakeElement() }),
+            '.market-stock-segment--high': new FakeElement({ '.market-stock-fill': new FakeElement() })
+        }),
+        '#landing-status-player-stock-bar': new FakeElement({ '.market-stock-fill': new FakeElement() }),
         '#landing-status-hub': hub,
         '#landing-status-market-view': marketView,
         '#landing-status-facilities-view': facilitiesView,
@@ -456,7 +557,7 @@ test('the shipyard view renders repair, local service cards and the booster row 
         services, booster: { owned: false, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'wrong-planet' },
         ...overrides
     });
-    const commodity = { commodityId: 'milk', stock: 400, carriedQuantity: 0, unitPrice: 100, averageBuyPrice: 0 };
+    const commodity = { commodityId: 'milk', stock: 400, stockCapacity: 400, lowerStockThreshold: 100, upperStockThreshold: 300, carriedQuantity: 0, unitPrice: 100, averageBuyPrice: 0, netPerSecond: 0 };
     const marketSnapshot = {
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000,
         cargoUsed: 3, cargoCapacity: 40, commodities: [commodity], selectedCommodityId: 'milk', tradeQuantity: 0,
@@ -484,6 +585,7 @@ test('the shipyard view renders repair, local service cards and the booster row 
         confirmTrade: () => {},
         buildFacility: () => {},
         upgradeFacility: () => {},
+        downgradeFacility: () => {},
         repairShip: () => repairs.push('repair'),
         upgradeShipService: serviceId => upgrades.push(serviceId),
         purchaseBooster: () => boosters.push('booster'),

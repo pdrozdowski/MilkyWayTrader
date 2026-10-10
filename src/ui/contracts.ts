@@ -87,6 +87,7 @@ export interface LandingStatusPort extends UiHandle
     confirmTrade(): void;
     buildFacility(facilityId: LandingFacilityId): void;
     upgradeFacility(facilityId: LandingFacilityId): void;
+    downgradeFacility(facilityId: LandingFacilityId): void;
     repairShip(): void;
     upgradeShipService(serviceId: LandingShipServiceId): void;
     purchaseBooster(): void;

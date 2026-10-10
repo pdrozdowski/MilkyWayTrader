@@ -72,12 +72,15 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const marketCredits = required<HTMLElement>(root, '#landing-status-market-credits');
     const marketCargo = required<HTMLElement>(root, '#landing-status-market-cargo');
     const commodityName = required<HTMLElement>(root, '#landing-status-commodity-name');
+    const planetStockBar = required<HTMLElement>(root, '#landing-status-planet-stock-bar');
     const planetStock = required<HTMLElement>(root, '#landing-status-planet-stock');
     const supply = required<HTMLElement>(root, '#landing-status-supply');
     const production = required<HTMLElement>(root, '#landing-status-production');
     const consumption = required<HTMLElement>(root, '#landing-status-consumption');
     const stockChange = required<HTMLElement>(root, '#landing-status-stock-change');
     const playerStock = required<HTMLElement>(root, '#landing-status-player-stock');
+    const playerStockHeading = required<HTMLElement>(root, '#landing-status-player-stock-heading');
+    const playerStockBar = required<HTMLElement>(root, '#landing-status-player-stock-bar');
     const averageBuyPrice = required<HTMLElement>(root, '#landing-status-average-buy-price');
     const tradeIncome = required<HTMLElement>(root, '#landing-status-trade-income');
     const tradeResult = required<HTMLElement>(root, '#landing-status-trade-result');
@@ -85,8 +88,9 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const quantity = required<HTMLInputElement>(root, '#landing-status-quantity');
     const quantityValue = required<HTMLOutputElement>(root, '#landing-status-quantity-value');
     const unitPrice = required<HTMLElement>(root, '#landing-status-unit-price');
-    const budget = required<HTMLElement>(root, '#landing-status-budget');
     const confirm = required<HTMLButtonElement>(root, '#landing-status-confirm');
+    const confirmLabel = required<HTMLElement>(confirm, '.market-confirm-label');
+    const confirmPrice = required<HTMLElement>(confirm, '.market-confirm-price');
     const launch = required<HTMLButtonElement>(root, '#landing-status-launch');
     const market = required<HTMLButtonElement>(root, '#landing-status-market');
     const facilities = required<HTMLButtonElement>(root, '#landing-status-facilities');
@@ -104,12 +108,17 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const focusable = (): HTMLElement[] => Array.from(modal.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])'))
         .filter(element => !element.closest('[hidden]'));
     const facilityActionButtons = new Map<LandingFacilityId, HTMLButtonElement>();
+    const facilityDowngradeButtons = new Map<LandingFacilityId, HTMLButtonElement>();
     const chooseFacilityInvestment = (event: Event): void => {
         const button = event.currentTarget as HTMLButtonElement;
         const facilityId = button.dataset.facilityId as LandingFacilityId | undefined;
         if (!facilityId) return;
         if (button.dataset.action === 'build') port.buildFacility(facilityId);
         else if (button.dataset.action === 'upgrade') port.upgradeFacility(facilityId);
+    };
+    const chooseFacilityDowngrade = (event: Event): void => {
+        const facilityId = (event.currentTarget as HTMLButtonElement).dataset.facilityId as LandingFacilityId | undefined;
+        if (facilityId) port.downgradeFacility(facilityId);
     };
     const recipePart = (commodityId: LandingCommodityId, quantity: number): readonly HTMLElement[] => {
         const icon = document.createElement('span');
@@ -121,8 +130,14 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         amount.textContent = `${quantity} ${commodityLabels[commodityId]}`;
         return [icon, amount];
     };
-    const renderRecipe = (element: HTMLElement, lead: string, parts: readonly Readonly<{ commodityId: LandingCommodityId; quantity: number }>[]): void => {
-        if (parts.length === 0) { element.replaceChildren(); element.textContent = displayLabels.facilityNoInputs; return; }
+    const renderRecipe = (element: HTMLElement, lead: string, parts: readonly Readonly<{ commodityId: LandingCommodityId; quantity: number }>[], missing = false): void => {
+        if (parts.length === 0) {
+            element.replaceChildren();
+            element.textContent = displayLabels.facilityNoInputs;
+            element.classList.toggle('facility-card-recipe-empty', true);
+            return;
+        }
+        element.classList.toggle('facility-card-recipe-empty', false);
         const nodes: HTMLElement[] = [];
         const leadNode = document.createElement('span');
         leadNode.className = 'facility-card-recipe-lead';
@@ -141,6 +156,12 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         suffix.className = 'facility-card-recipe-suffix';
         suffix.textContent = ` ${displayLabels.facilityPerCycle}`;
         nodes.push(suffix);
+        if (missing) {
+            const missingNode = document.createElement('span');
+            missingNode.className = 'facility-card-missing';
+            missingNode.textContent = ` ${displayLabels.facilityMissing}`;
+            nodes.push(missingNode);
+        }
         element.replaceChildren(...nodes);
     };
     const renderFacilities = (snapshot: Readonly<LandedFacilitiesSnapshot>): void => {
@@ -158,25 +179,46 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             const icon = required<HTMLElement>(card, '.facility-card-icon');
             icon.setAttribute('aria-label', `${commodityLabels[row.outputCommodityId]}${displayLabels.commodityIconSuffix}`);
             const outputElement = required<HTMLElement>(card, '.facility-card-output');
-            if (row.level > 0) renderRecipe(outputElement, displayLabels.facilityProduces, [{ commodityId: row.outputCommodityId, quantity: row.outputPerCycle }]);
-            else { outputElement.replaceChildren(); outputElement.textContent = ''; }
+            const outputPerCycle = row.level > 0 ? row.outputPerCycle : row.buildOutputPerCycle;
+            const inputsPerCycle = row.level > 0 ? row.inputsPerCycle : row.buildInputsPerCycle;
+            renderRecipe(outputElement, displayLabels.facilityProduces, [{ commodityId: row.outputCommodityId, quantity: outputPerCycle }], row.status === 'insufficientResources');
             const inputsElement = required<HTMLElement>(card, '.facility-card-inputs');
-            if (row.level > 0) renderRecipe(inputsElement, displayLabels.facilityConsumes, row.inputsPerCycle);
-            else { inputsElement.replaceChildren(); inputsElement.textContent = ''; }
+            renderRecipe(inputsElement, displayLabels.facilityConsumes, inputsPerCycle);
             const modifierElement = required<HTMLElement>(card, '.facility-card-modifier');
             modifierElement.textContent = modifierText(row.modifier);
             modifierElement.hidden = modifierElement.textContent === '';
-            required<HTMLElement>(card, '.facility-card-price').textContent = row.action.kind === 'max' ? '' : `${displayLabels.facilityPrice}: ${formatCredits(row.action.price)}`;
             const actionButton = required<HTMLButtonElement>(card, '.facility-card-action');
+            required<HTMLElement>(actionButton, '.facility-card-action-label').textContent = row.action.kind === 'build' ? displayLabels.facilityBuild : row.action.kind === 'upgrade' ? displayLabels.facilityUpgrade : displayLabels.facilityMaxLevel;
+            const actionPrice = required<HTMLElement>(actionButton, '.facility-card-action-price');
+            actionPrice.textContent = row.action.kind === 'max' ? '' : formatCredits(row.action.price);
+            actionPrice.hidden = row.action.kind === 'max';
             actionButton.dataset.action = row.action.kind;
             actionButton.disabled = row.action.kind !== 'max' && !row.action.affordable;
             const actionText = row.action.kind === 'build' ? displayLabels.facilityBuild : row.action.kind === 'upgrade' ? displayLabels.facilityUpgrade : displayLabels.facilityMaxLevel;
-            actionButton.textContent = actionText;
             actionButton.setAttribute('aria-label', `${row.label}: ${actionText}`);
             if (!facilityActionButtons.has(row.facilityId)) {
                 actionButton.dataset.facilityId = row.facilityId;
                 actionButton.addEventListener('click', chooseFacilityInvestment);
                 facilityActionButtons.set(row.facilityId, actionButton);
+            }
+            const downgradeButton = required<HTMLButtonElement>(card, '.facility-card-downgrade');
+            required<HTMLElement>(downgradeButton, '.facility-card-downgrade-label').textContent = displayLabels.facilityDowngrade;
+            const downgradeRefund = required<HTMLElement>(downgradeButton, '.facility-card-downgrade-refund');
+            required<HTMLElement>(downgradeRefund, '.facility-card-downgrade-refund-label').textContent = row.downgrade.available
+                ? `${displayLabels.facilityRefund} - `
+                : displayLabels.facilityDowngradeUnavailable;
+            required<HTMLElement>(downgradeRefund, '.facility-card-downgrade-coin').hidden = !row.downgrade.available;
+            required<HTMLElement>(downgradeRefund, '.facility-card-downgrade-amount').textContent = row.downgrade.available
+                ? formatCredits(row.downgrade.refund)
+                : '';
+            downgradeButton.disabled = !row.downgrade.available;
+            downgradeButton.dataset.facilityId = row.facilityId;
+            downgradeButton.setAttribute('aria-label', row.downgrade.available
+                ? `${row.label}: ${displayLabels.facilityDowngrade}, ${displayLabels.facilityRefund} ${formatCredits(row.downgrade.refund)}`
+                : `${row.label}: ${displayLabels.facilityDowngrade} ${displayLabels.facilityDowngradeUnavailable}`);
+            if (!facilityDowngradeButtons.has(row.facilityId)) {
+                downgradeButton.addEventListener('click', chooseFacilityDowngrade);
+                facilityDowngradeButtons.set(row.facilityId, downgradeButton);
             }
         }
     };
@@ -291,20 +333,75 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             deltaElement.textContent = ` (${signed(delta)})`;
             element.replaceChildren(String(value), deltaElement);
         };
+    const renderStockBar = (element: HTMLElement, amount: number, capacity: number, label: string): void => {
+        const fill = required<HTMLElement>(element, '.market-stock-fill');
+        const percentage = capacity > 0 ? Math.min(100, Math.max(0, amount / capacity * 100)) : 0;
+        fill.style.width = `${percentage}%`;
+        element.setAttribute('aria-valuemin', '0');
+        element.setAttribute('aria-valuemax', String(capacity));
+        element.setAttribute('aria-valuenow', String(Math.min(capacity, Math.max(0, amount))));
+        element.setAttribute('aria-valuetext', `${amount} of ${capacity}`);
+        element.setAttribute('aria-label', label);
+    };
+    const renderPlanetStockBar = (
+        element: HTMLElement,
+        amount: number,
+        capacity: number,
+        lowerThreshold: number,
+        upperThreshold: number,
+        label: string
+    ): void => {
+        const boundedAmount = Math.min(capacity, Math.max(0, amount));
+        const segments = [
+            { selector: '.market-stock-segment--low', start: 0, end: lowerThreshold },
+            { selector: '.market-stock-segment--medium', start: lowerThreshold, end: upperThreshold },
+            { selector: '.market-stock-segment--high', start: upperThreshold, end: capacity }
+        ];
+        for (const segment of segments) {
+            const segmentElement = required<HTMLElement>(element, segment.selector);
+            const fill = required<HTMLElement>(segmentElement, '.market-stock-fill');
+            const segmentCapacity = Math.max(0, segment.end - segment.start);
+            segmentElement.style.flex = `0 0 ${capacity > 0 ? segmentCapacity / capacity * 100 : 0}%`;
+            const amountInSegment = Math.min(segmentCapacity, Math.max(0, boundedAmount - segment.start));
+            fill.style.width = `${segmentCapacity > 0 ? amountInSegment / segmentCapacity * 100 : 0}%`;
+        }
+        element.setAttribute('aria-valuemin', '0');
+        element.setAttribute('aria-valuemax', String(capacity));
+        element.setAttribute('aria-valuenow', String(boundedAmount));
+        element.setAttribute('aria-valuetext', `${amount} of ${capacity}`);
+        element.setAttribute('aria-label', label);
+    };
         const selected = snapshot.selectedCommodity;
-        commodityName.textContent = commodityLabels[selected.commodityId];
+        commodityName.textContent = `${displayLabels.planetaryStockOf}: ${commodityLabels[selected.commodityId]}`;
+        playerStockHeading.textContent = `${displayLabels.shipStockOf}: ${commodityLabels[selected.commodityId]}`;
         commodityIcon.setAttribute('aria-label', `${commodityLabels[selected.commodityId]}${displayLabels.commodityIconSuffix}`);
         commodityIcon.dataset.commodityId = selected.commodityId;
         stockWithDelta(planetStock, snapshot.quote.postTradeStock, snapshot.plannedStockDelta, true);
+        renderPlanetStockBar(
+            planetStockBar,
+            snapshot.quote.postTradeStock,
+            selected.stockCapacity,
+            selected.lowerStockThreshold,
+            selected.upperStockThreshold,
+            `${displayLabels.planetStock}: ${commodityLabels[selected.commodityId]}`
+        );
         supply.textContent = `${displayLabels.supply}: ${snapshot.supplyLevel}`;
         supply.dataset.supplyLevel = snapshot.supplyLevel;
         production.textContent = `${displayLabels.marketProduction}: ${snapshot.commodityFlow.productionPerSecond} ${commodityLabels[selected.commodityId]} ${displayLabels.facilityPerCycle}`;
         consumption.textContent = `${displayLabels.marketConsumption}: ${snapshot.commodityFlow.consumptionPerSecond} ${commodityLabels[selected.commodityId]} ${displayLabels.facilityPerCycle}`;
-        stockChange.textContent = `${displayLabels.marketStockChange}: ${signed(snapshot.commodityFlow.netPerSecond)} ${commodityLabels[selected.commodityId]} ${displayLabels.facilityPerCycle}`;
+        const stockChangeLabel = document.createElement('span');
+        stockChangeLabel.className = 'market-stock-change-label';
+        stockChangeLabel.textContent = `${displayLabels.marketStockChange}:`;
+        const stockChangeRate = document.createElement('span');
+        stockChangeRate.className = 'market-stock-change-rate';
+        stockChangeRate.dataset.commodityId = selected.commodityId;
+        stockChangeRate.textContent = `${signed(snapshot.commodityFlow.netPerSecond)}/s`;
+        stockChange.replaceChildren(stockChangeLabel, stockChangeRate);
         stockChange.classList.toggle('market-stock-delta--positive', snapshot.commodityFlow.netPerSecond > 0);
         stockChange.classList.toggle('market-stock-delta--negative', snapshot.commodityFlow.netPerSecond < 0);
         stockWithDelta(playerStock, selected.carriedQuantity + snapshot.plannedCargoDelta, snapshot.plannedCargoDelta, true);
         const postTradeQuantity = selected.carriedQuantity + snapshot.plannedCargoDelta;
+        renderStockBar(playerStockBar, postTradeQuantity, snapshot.cargoCapacity, `${displayLabels.playerStock}: ${commodityLabels[selected.commodityId]}`);
         const postTradeAverageBuyPrice = snapshot.tradeQuantity > 0
             ? ((selected.carriedQuantity * selected.averageBuyPrice) + snapshot.quote.total) / postTradeQuantity
             : postTradeQuantity === 0 ? 0 : selected.averageBuyPrice;
@@ -341,18 +438,24 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         quantityLabel.textContent = `${displayLabels.marketQuantity}: ${commodity ? commodityLabels[commodity.commodityId] : ''}`;
         unitPrice.textContent = `Price: ${formatCredits(snapshot.quote.nextUnitPrice)}`;
         quantityValue.textContent = snapshot.tradeQuantity > 0 ? `+${snapshot.tradeQuantity} ${displayLabels.marketBuy}` : snapshot.tradeQuantity < 0 ? `${Math.abs(snapshot.tradeQuantity)} ${displayLabels.marketSell}` : displayLabels.marketNoTrade;
-        budget.textContent = snapshot.quote.failure === 'insufficient-credits'
-            ? `${displayLabels.outOfBudget} — ${displayLabels.marketCashShortfall} ${formatCredits(Math.max(0, snapshot.quote.total - snapshot.credits))}`
-            : displayLabels.inBudget;
-        budget.classList.toggle('market-budget--warning', snapshot.quote.failure === 'insufficient-credits');
-        confirm.textContent = displayLabels.marketConfirm;
-        confirm.disabled = !snapshot.eligible || snapshot.quote.failure !== null;
+        const insufficientCash = snapshot.quote.failure === 'insufficient-credits'
+            || (snapshot.tradeQuantity > 0 && snapshot.quote.total > snapshot.credits);
+        const cashShortfall = Math.max(0, snapshot.quote.total - snapshot.credits);
+        confirmLabel.textContent = insufficientCash ? displayLabels.marketInsufficientCash : displayLabels.marketConfirm;
+        confirmPrice.textContent = formatCredits(insufficientCash ? cashShortfall : snapshot.quote.total);
+        confirmPrice.dataset.state = insufficientCash ? 'insufficient-credits' : 'ready';
+        confirm.dataset.state = insufficientCash ? 'insufficient-credits' : 'ready';
+        confirm.disabled = !snapshot.eligible || snapshot.quote.failure !== null || insufficientCash;
+        confirm.setAttribute('aria-label', insufficientCash
+            ? `${displayLabels.marketInsufficientCash}: ${formatCredits(cashShortfall)} ${displayLabels.marketCredits}`
+            : `${displayLabels.marketConfirm}: ${formatCredits(snapshot.quote.total)}`);
         for (const button of catalogue) {
             const commodityId = button.dataset.commodityId as LandingCommodityId;
             const nameElement = required<HTMLElement>(button, '.catalogue-commodity-name');
-            nameElement.textContent = commodityLabels[commodityId];
             const commoditySnapshot = snapshot.commodities.find(candidate => candidate.commodityId === commodityId);
             if (!commoditySnapshot) throw new Error(`Missing catalogue commodity ${commodityId}.`);
+            const netRate = commoditySnapshot.netPerSecond ?? 0;
+            nameElement.textContent = `${commodityLabels[commodityId]} (${signed(netRate)}/s)`;
             button.dataset.supplyLevel = commoditySnapshot.supplyLevel;
             button.setAttribute('aria-pressed', String(commodityId === snapshot.selectedCommodityId));
             button.disabled = !snapshot.eligible;
@@ -442,6 +545,8 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         required<HTMLButtonElement>(shipyardBoosterCard, '.shipyard-card-action').removeEventListener('click', purchaseBooster);
         for (const button of facilityActionButtons.values()) button.removeEventListener('click', chooseFacilityInvestment);
         facilityActionButtons.clear();
+        for (const button of facilityDowngradeButtons.values()) button.removeEventListener('click', chooseFacilityDowngrade);
+        facilityDowngradeButtons.clear();
         launch.removeEventListener('click', launchGame);
         window.removeEventListener('keydown', keydown);
         window.clearInterval(landedBadgeTimer);

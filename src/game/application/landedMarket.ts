@@ -17,10 +17,14 @@ export interface LandedMarketCommoditySnapshot
 {
     readonly commodityId: SerotonCommodityId;
     readonly stock: number;
+    readonly stockCapacity: number;
+    readonly lowerStockThreshold: number;
+    readonly upperStockThreshold: number;
     readonly supplyLevel: 'Low' | 'Medium' | 'High';
     readonly carriedQuantity: number;
     readonly unitPrice: number;
     readonly averageBuyPrice: number;
+    readonly netPerSecond: number;
 }
 
 export interface LandedMarketQuoteSnapshot
@@ -67,7 +71,8 @@ export function projectLandedMarket (
     tradeQuantity: number,
     quote: LandedMarketQuoteInput,
     commodityFlow: LandedCommodityFlowSnapshot,
-    clock: LandedFacilitiesClockSnapshot
+    clock: LandedFacilitiesClockSnapshot,
+    commodityFlows: Readonly<Partial<Record<SerotonCommodityId, LandedCommodityFlowSnapshot>>> = {}
 ): LandedMarketSnapshot
 {
     const planetId = state.planetLifecycle.landedPlanetId;
@@ -93,10 +98,14 @@ export function projectLandedMarket (
         return Object.freeze({
             commodityId: definition.id,
             stock: stockLevel,
+            stockCapacity: definition.lowerStockThreshold + definition.upperStockThreshold,
+            lowerStockThreshold: definition.lowerStockThreshold,
+            upperStockThreshold: definition.upperStockThreshold,
             supplyLevel,
             carriedQuantity: state.cargo.find(stack => stack.commodityId === definition.id)?.quantity ?? 0,
             unitPrice: commodityUnitPrice(stockLevel, definition),
-            averageBuyPrice: containerAverageCost(state.cargo.find(stack => stack.commodityId === definition.id) ?? { commodityId: definition.id, quantity: 0, totalCost: 0 })
+            averageBuyPrice: containerAverageCost(state.cargo.find(stack => stack.commodityId === definition.id) ?? { commodityId: definition.id, quantity: 0, totalCost: 0 }),
+            netPerSecond: commodityFlows[definition.id]?.netPerSecond ?? (definition.id === selectedCommodityId ? commodityFlow.netPerSecond : 0)
         });
     });
     const selectedCommodity = commodities.find(commodity => commodity.commodityId === selectedCommodityId);
