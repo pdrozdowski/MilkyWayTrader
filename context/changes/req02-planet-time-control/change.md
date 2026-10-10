@@ -1,7 +1,7 @@
 ---
 change_id: req02-planet-time-control
 title: Planet menu time control
-status: impl_reviewed
+status: implemented
 created: 2026-10-10
 updated: 2026-10-10
 archived_at: null
