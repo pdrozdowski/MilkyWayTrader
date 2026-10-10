@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { applyFacilityBuild, applyFacilityUpgrade, quoteFacilityInvestment } from '../../src/game/application/planetFacilities.ts';
+import { applyFacilityBuild, applyFacilityDowngrade, applyFacilityUpgrade, quoteFacilityDowngrade, quoteFacilityInvestment } from '../../src/game/application/planetFacilities.ts';
 import { landedCommodityFlow, projectLandedFacilities } from '../../src/game/application/landedFacilities.ts';
 import { GameStateProvider } from '../../src/game/application/gameStateProvider.ts';
 import { planetFacilityCatalogue, planetFacilityDefinitions, planetFacilityModifierOf, planetFacilityOutputCommodityIds } from '../../src/game/definitions/planetFacilityDefinitions.ts';
@@ -115,6 +115,23 @@ test('upgrade steps use each step price and stop at the maximum level', () => {
 
     const blocked = provider.update(state => applyFacilityUpgrade(state, planetFacilityCatalogue, 'dairyFarm'));
     assert.deepEqual(blocked, third);
+});
+
+test('downgrades refund 75 percent of the most recent planet-adjusted upgrade and respect the starting level', () => {
+    const initial = landedOn('maslo-prime');
+    const cannotDowngrade = quoteFacilityDowngrade(initial, planetFacilityCatalogue, 'dairyFarm');
+    assert.equal(cannotDowngrade.failure, 'minimum-level');
+    assert.equal(applyFacilityDowngrade(initial, planetFacilityCatalogue, 'dairyFarm'), initial);
+
+    const upgraded = withFacilityLevel(initial, 'maslo-prime', 'dairyFarm', 2);
+    const quote = quoteFacilityDowngrade(upgraded, planetFacilityCatalogue, 'dairyFarm');
+    assert.equal(quote.failure, null);
+    assert.equal(quote.targetLevel, 1);
+    assert.equal(quote.refund, 15_000, '75% of the 20,000 discounted upgrade price is refunded');
+    const downgraded = applyFacilityDowngrade(upgraded, planetFacilityCatalogue, 'dairyFarm');
+    assert.equal(downgraded.credits, upgraded.credits + 15_000);
+    assert.equal(facilityOf(downgraded, 'maslo-prime', 'dairyFarm').level, 1);
+    assert.equal(quoteFacilityDowngrade(withFacilityLevel(initial, 'maslo-prime', 'dairyFarm', 3), planetFacilityCatalogue, 'dairyFarm').refund, 45_000);
 });
 
 test('rejected investment commands return the unchanged aggregate', () => {

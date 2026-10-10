@@ -6,10 +6,12 @@ import { landedMarketOf } from './serotonMarket.ts';
 export type LandedFacilityInvestmentAction = 'build' | 'upgrade';
 
 export type LandedFacilityInvestmentFailure = 'not-landed' | 'unknown-facility' | 'unavailable' | 'insufficient-credits';
+export type LandedFacilityDowngradeFailure = 'not-landed' | 'unknown-facility' | 'minimum-level';
 
 export interface LandedFacilityInvestmentDefinition
 {
     readonly id: PlanetFacilityId;
+    readonly initialLevel: number;
     readonly maxLevel: number;
     readonly upgradePrices: readonly [number, number];
 }
@@ -33,6 +35,15 @@ export interface LandedFacilityInvestmentQuote
     readonly targetLevel: number;
     readonly price: number;
     readonly failure: LandedFacilityInvestmentFailure | null;
+}
+
+export interface LandedFacilityDowngradeQuote
+{
+    readonly facilityId: PlanetFacilityId;
+    readonly level: number;
+    readonly targetLevel: number;
+    readonly refund: number;
+    readonly failure: LandedFacilityDowngradeFailure | null;
 }
 
 function facilityStateOf (market: SerotonMarketState, facilityId: PlanetFacilityId): PlanetFacilityState
@@ -97,4 +108,36 @@ export function applyFacilityBuild (state: GameStateSnapshot, catalogue: LandedF
 export function applyFacilityUpgrade (state: GameStateSnapshot, catalogue: LandedFacilityCatalogue, facilityId: PlanetFacilityId): GameStateSnapshot
 {
     return applyFacilityInvestment(state, catalogue, facilityId, 'upgrade');
+}
+
+export function quoteFacilityDowngrade (state: GameStateSnapshot, catalogue: LandedFacilityCatalogue, facilityId: PlanetFacilityId): LandedFacilityDowngradeQuote
+{
+    const market = landedMarketOf(state);
+    if (market === null) return { facilityId, level: 0, targetLevel: 0, refund: 0, failure: 'not-landed' };
+    const definition = catalogue.definitions.find(candidate => candidate.id === facilityId);
+    if (!definition) return { facilityId, level: 0, targetLevel: 0, refund: 0, failure: 'unknown-facility' };
+    const level = facilityStateOf(market, facilityId).level;
+    if (level <= definition.initialLevel) return { facilityId, level, targetLevel: level, refund: 0, failure: 'minimum-level' };
+    const investedStepPrice = definition.upgradePrices[level - 2];
+    if (investedStepPrice === undefined) return { facilityId, level, targetLevel: level, refund: 0, failure: 'minimum-level' };
+    const actualStepPrice = Math.round(investedStepPrice * catalogue.modifierOf(facilityId, market.planetId).upgradePriceMultiplier);
+    return { facilityId, level, targetLevel: level - 1, refund: Math.round(actualStepPrice * 0.75), failure: null };
+}
+
+export function applyFacilityDowngrade (state: GameStateSnapshot, catalogue: LandedFacilityCatalogue, facilityId: PlanetFacilityId): GameStateSnapshot
+{
+    const quote = quoteFacilityDowngrade(state, catalogue, facilityId);
+    if (quote.failure !== null) return state;
+    const market = landedMarketOf(state);
+    if (market === null) throw new Error('Missing landed market.');
+    return {
+        ...state,
+        credits: state.credits + quote.refund,
+        markets: state.markets.map(candidate => candidate.planetId === market.planetId ? {
+            ...candidate,
+            facilities: candidate.facilities.map(facility => facility.facilityId === facilityId
+                ? { ...facility, level: quote.targetLevel, status: 'working' }
+                : facility)
+        } : candidate)
+    };
 }

@@ -165,32 +165,62 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .landing-status-panel button:disabled, .landing-status-panel input:disabled { opacity: 0.55; cursor: default; }
 .landing-status-panel :focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
 #landing-status-catalogue { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-#landing-status-catalogue button { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; padding: 10px; font-size: clamp(13px, 2vw, 16px); }
+#landing-status-catalogue button { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; padding: 10px; font-size: clamp(13px, 2vw, 16px); }
 .catalogue-commodity-icon { width: 48px; height: 48px; min-width: 48px; flex: 0 0 48px; }
 .catalogue-commodity-name { font-size: clamp(13px, 1.9vw, 18px); line-height: 1.15; text-align: center; overflow-wrap: anywhere; }
-#landing-status-catalogue button[aria-pressed="true"] { border-color: var(--ui-focus); background: #1c4266; }
+#landing-status-catalogue button:not([aria-pressed="true"]) { box-shadow: 0 2px 4px rgb(0 0 0 / 35%); }
 #landing-status-catalogue button[data-supply-level="Low"] { color: #fca5a5; }
 #landing-status-catalogue button[data-supply-level="Medium"] { color: #ffd479; }
 #landing-status-catalogue button[data-supply-level="High"] { color: #86efac; }
 #landing-status-catalogue button[data-supply-level="Low"],
+#landing-status-catalogue button[data-supply-level="Medium"],
 #landing-status-catalogue button[data-supply-level="High"] { background: currentColor; }
 #landing-status-catalogue button[data-supply-level="Low"] *,
+#landing-status-catalogue button[data-supply-level="Medium"] *,
 #landing-status-catalogue button[data-supply-level="High"] * { color: #17212b; }
 #landing-status-catalogue button[aria-pressed="true"][data-supply-level="Low"],
-#landing-status-catalogue button[aria-pressed="true"][data-supply-level="High"] { border-color: var(--ui-focus); }
+#landing-status-catalogue button[aria-pressed="true"][data-supply-level="Medium"],
+#landing-status-catalogue button[aria-pressed="true"][data-supply-level="High"] { box-sizing: border-box; border: 3px solid #fff; background-color: color-mix(in srgb, currentColor 82%, #17212b); box-shadow: inset 0 2px 6px rgb(0 0 0 / 45%); }
+#landing-status-catalogue button[aria-pressed="true"] > * { transform: translateY(2px); }
 #landing-status-quantity-label { font-size: 1.4em; }
 #landing-status-trade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr); gap: 8px; padding: 12px; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }
 .landing-market-controls { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: flex; flex-direction: column; gap: clamp(8px, 1.5vw, 16px); min-height: 0; overflow-y: auto; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
-.market-inventory-panel > p:nth-child(2), #landing-status-unit-price { font-size: 2em; font-weight: 700; }
-#landing-status-supply, #landing-status-stock-change { font-size: 2em; font-weight: 700; }
+.market-inventory-panel > #landing-status-planet-stock, .market-inventory-panel > #landing-status-player-stock, #landing-status-unit-price { font-size: 2em; font-weight: 700; }
+.market-inventory-panel > #landing-status-planet-stock, .market-inventory-panel > #landing-status-player-stock { display: flex; align-items: center; gap: 0.3em; }
+.market-inventory-panel > #landing-status-planet-stock::before, .market-inventory-panel > #landing-status-player-stock::before { content: ''; display: inline-block; width: 32px; height: 32px; flex: 0 0 32px; background: url('/assets/icons/cargo2_32x32.png') center / contain no-repeat; }
+.market-stock-track { display: block; height: 6px; overflow: hidden; border: 1px solid #416587; border-radius: 999px; background: #102339; }
+.market-stock-fill { display: block; width: 0; height: 100%; border-radius: inherit; background: #4da7ff; transition: width 120ms ease-out, background-color 120ms ease-out; }
+.market-stock-track--planet { display: flex; }
+.market-stock-segment { display: block; flex: 0 0 auto; height: 100%; overflow: hidden; background: #102339; }
+.market-stock-segment + .market-stock-segment { border-left: 1px solid #416587; }
+.market-stock-segment .market-stock-fill { max-width: 100%; }
+.market-stock-segment--low .market-stock-fill { background: #fca5a5; }
+.market-stock-segment--medium .market-stock-fill { background: #ffd479; }
+.market-stock-segment--high .market-stock-fill { background: #86efac; }
+@media (prefers-reduced-motion: reduce) { .market-stock-fill { transition: none; } }
+#landing-status-supply { font-size: 2em; font-weight: 700; }
+#landing-status-stock-change { display: flex; flex-direction: column; align-items: flex-start; gap: 0.15em; }
+.market-stock-change-label { font-size: 1.4em; font-weight: 700; }
+.market-stock-change-rate { display: inline-flex; align-items: center; gap: 0.3em; font-size: 1.5em; font-weight: 700; }
+.market-stock-change-rate::before { content: ''; display: inline-block; width: 24px; height: 24px; flex: 0 0 24px; background-image: url('/assets/icons/commodity-milk-48x48.png'); background-position: center; background-size: contain; background-repeat: no-repeat; }
+.market-stock-change-rate[data-commodity-id="grain"]::before { background-image: url('/assets/icons/commodity-grain_48x48.png'); }
+.market-stock-change-rate[data-commodity-id="cheese"]::before { background-image: url('/assets/icons/commodity-cheese-48x48.png'); }
+.market-stock-change-rate[data-commodity-id="bun"]::before { background-image: url('/assets/icons/commodity-bun_48x48.png'); }
+.market-stock-change-rate[data-commodity-id="spaceRation"]::before { background-image: url('/assets/icons/commodity-spaceRation-48x48.png'); }
 #landing-status-supply[data-supply-level="Low"] { color: #fca5a5; }
 #landing-status-supply[data-supply-level="Medium"] { color: #ffd479; }
 #landing-status-supply[data-supply-level="High"] { color: #86efac; }
 .market-stock-delta { font-weight: 700; }
 .market-stock-delta--positive { color: #86efac; }
 .market-stock-delta--negative { color: #fca5a5; }
-#landing-status-budget { font-weight: 700; }
-#landing-status-budget.market-budget--warning { color: #ffca8b; }
+.market-confirm-action { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 100%; min-height: 64px; font-weight: 700; }
+.market-confirm-label { font-weight: 700; }
+.market-confirm-price { display: flex; align-items: center; gap: 0.2em; font-size: 1.05em; }
+.market-confirm-price::before { content: ''; display: block; width: 1em; height: 1em; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; }
+#landing-status-confirm:not(:disabled) { color: var(--ui-surface); background: var(--ui-action-enabled); }
+#landing-status-confirm[data-state="insufficient-credits"]:disabled { opacity: 1; color: #fecaca; border-color: var(--ui-health-critical); background: #4c1018; }
+#landing-status-confirm[data-state="insufficient-credits"] .market-confirm-price::before { background-image: url('/assets/icons/coins_red_32x32.png'); }
+#landing-status-confirm[data-state="insufficient-credits"] .market-confirm-price { color: #fecaca; }
 #cargo-transfer { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; overflow-y: auto; padding: 12px; background: var(--ui-overlay); }
 #cargo-transfer[hidden] { display: none; }
 .cargo-transfer-panel { --cargo-transfer-icon-size: 32px; --cargo-transfer-controls-width: 66px; box-sizing: border-box; display: grid; gap: 10px; width: min(680px, calc(100vw - 24px)); max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow: auto; padding: 16px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-surface-raised); color: #fff; }
@@ -237,6 +267,8 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .cargo-transfer-confirm { width: 100%; min-height: 44px; font-weight: 700; }
 @media (max-width: 520px) { .cargo-transfer-panel { --cargo-transfer-icon-size: 22px; --cargo-transfer-controls-width: 66px; gap: 8px; padding: 12px; } .cargo-transfer-header, .cargo-transfer-usage, .cargo-transfer-row { grid-template-columns: minmax(0, 1fr) minmax(40px, .3fr) minmax(0, 1fr); gap: 4px; } .cargo-transfer-row-side { gap: 2px; } .cargo-transfer-row-controls { gap: 2px; } .cargo-transfer-row-cargo-quantity, .cargo-transfer-row-ship-quantity { min-width: 16px; font-size: .9em; } }
 .market-inventory-panel, .market-trade-control { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 10px; border: 1px solid #406587; border-radius: 6px; }
+.market-trade-control { display: flex; flex-direction: column; }
+.market-trade-control .market-confirm-action { margin-top: auto; }
 .market-trade-header { display: grid; grid-template-columns: minmax(0, 1fr) 80px; align-items: center; gap: 8px; }
 .market-trade-header .market-commodity-icon { justify-self: end; background-size: 100% 100%; }
 .market-inventory-panel > span { font-weight: 700; text-align: center; }
@@ -387,13 +419,28 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .facility-card-status { font-weight: 700; }
 .facility-card-status[data-status="working"] { color: #86efac; }
 .facility-card-status[data-status="insufficientResources"] { color: #fca5a5; }
-.facility-card-status[data-status="notBuilt"] { color: var(--ui-disabled); }
+.facility-card-status[data-status="notBuilt"] { color: var(--ui-health-critical); }
 .facility-card-output, .facility-card-inputs { color: #9fd1ff; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.facility-card-recipe-empty { color: var(--ui-disabled); }
+.facility-card[data-facility-id] .facility-card-status[data-status="notBuilt"] ~ .facility-card-output,
+.facility-card[data-facility-id] .facility-card-status[data-status="notBuilt"] ~ .facility-card-inputs { color: var(--ui-disabled); }
+.facility-card .facility-card-status[data-status="insufficientResources"] ~ .facility-card-output { color: var(--ui-health-critical); }
 .facility-card-commodity-icon { width: 20px; height: 20px; flex: 0 0 auto; }
 .facility-card-recipe-lead, .facility-card-recipe-separator, .facility-card-recipe-suffix, .facility-card-commodity-amount { flex: 0 0 auto; }
 .facility-card-modifier { color: #ffca8b; }
-.facility-card-price { font-weight: 700; }
-.facility-card-action { margin-top: auto; }
+.facility-card-action { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; min-height: 64px; padding: 8px 10px; font-size: 1.15em; margin-top: auto; }
+.facility-card-action-label { font-weight: 700; }
+.facility-card-action-price { display: flex; align-items: center; gap: 0.12em; font-size: 1.05em; white-space: nowrap; }
+.facility-card-action-price[hidden] { display: none; }
+.facility-card-action-price::before { content: ''; display: block; width: 0.8em; min-width: 0.8em; height: 0.8em; flex: 0 0 0.8em; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
+#landing-status-facilities-view .facility-card-action:not(:disabled) { color: var(--ui-surface); background: var(--ui-action-enabled); }
+.facility-card-downgrade { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; min-height: 64px; width: 100%; padding: 8px 10px; font-size: 1.05em; margin-top: 6px; color: #fee2e2; border-color: #7f1d1d; background: #7f1d1d; }
+#landing-status-facilities-view .facility-card-downgrade:not(:disabled) { color: #fee2e2; border-color: #b91c1c; background: #b91c1c; }
+.facility-card-downgrade-label { font-weight: 700; }
+.facility-card-downgrade-refund { display: flex; align-items: center; gap: 0.15em; font-size: 0.95em; white-space: nowrap; }
+.facility-card-downgrade-coin { display: inline-block; width: 0.85em; height: 0.85em; flex: 0 0 0.85em; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; }
+.facility-card-downgrade-coin[hidden] { display: none; }
+#landing-status-facilities-view .facility-card-downgrade:disabled { color: #a1a1aa; border-color: #52525b; background: #3f3f46; cursor: not-allowed; }
 @media (max-width: 420px) {
     #landing-status-facilities-view { display: flex; flex-direction: column; overflow-y: auto; }
     .landing-facilities-header { position: static; }

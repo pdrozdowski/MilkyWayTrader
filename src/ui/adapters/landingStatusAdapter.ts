@@ -2,7 +2,7 @@ import type { Game } from 'phaser';
 import type { GameStateProvider } from '../../game/application/gameStateProvider.ts';
 import { projectLandedMarket } from '../../game/application/landedMarket.ts';
 import { landedCommodityFlow, projectLandedFacilities, type LandedFacilitiesSnapshot, type LandedFacilityProjectionCatalogue } from '../../game/application/landedFacilities.ts';
-import { applyFacilityBuild, applyFacilityUpgrade } from '../../game/application/planetFacilities.ts';
+import { applyFacilityBuild, applyFacilityDowngrade, applyFacilityUpgrade } from '../../game/application/planetFacilities.ts';
 import { projectLandedShipyard, type LandedShipyardSnapshot } from '../../game/application/landedShipyard.ts';
 import { applyShipBooster, applyShipRepair, applyShipUpgrade } from '../../game/application/planetShipServices.ts';
 import { serotonCommodityDefinitions } from '../../game/definitions/serotonMarketDefinitions.ts';
@@ -63,7 +63,8 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
         ?? quoteLandedTrade(provider.snapshot(), selectedCommodityId, tradeQuantity);
     const project = (facilities: LandedFacilitiesSnapshot): LandingStatusSnapshot => {
         const state = provider.snapshot();
-        return projectLandedMarket(state, serotonCommodityDefinitions, selectedCommodityId, tradeQuantity, selectedQuote(), landedCommodityFlow(facilities, selectedCommodityId), facilities.clock);
+        const commodityFlows = Object.fromEntries(serotonCommodityDefinitions.map(definition => [definition.id, landedCommodityFlow(facilities, definition.id)]));
+        return projectLandedMarket(state, serotonCommodityDefinitions, selectedCommodityId, tradeQuantity, selectedQuote(), landedCommodityFlow(facilities, selectedCommodityId), facilities.clock, commodityFlows);
     };
     const projectFacilities = (): LandedFacilitiesSnapshot => projectLandedFacilities(provider.snapshot(), facilityCatalogue);
     const projectShipyard = (): LandedShipyardSnapshot => projectLandedShipyard(provider.snapshot());
@@ -158,6 +159,10 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
         upgradeFacility: facilityId => {
             if (destroyed || !wasEligible) return;
             provider.update(state => applyFacilityUpgrade(state, planetFacilityCatalogue, facilityId));
+        },
+        downgradeFacility: facilityId => {
+            if (destroyed || !wasEligible) return;
+            provider.update(state => applyFacilityDowngrade(state, planetFacilityCatalogue, facilityId));
         },
         repairShip: () => {
             if (destroyed || !wasEligible) return;
