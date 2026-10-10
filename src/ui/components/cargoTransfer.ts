@@ -17,7 +17,8 @@ interface RowControls
     readonly section: HTMLElement;
     readonly cargoQuantity: HTMLElement;
     readonly shipQuantity: HTMLElement;
-    readonly icon: HTMLElement;
+    readonly cargoIcon: HTMLElement;
+    readonly shipIcon: HTMLElement;
     readonly name: HTMLElement;
     readonly toCargoMax: HTMLButtonElement;
     readonly toCargoOne: HTMLButtonElement;
@@ -34,6 +35,8 @@ export function mountCargoTransfer (root: HTMLElement, port: CargoTransferPort):
     const shipHeader = required<HTMLElement>(root, '#cargo-transfer-ship-header');
     const cargoUsage = required<HTMLElement>(root, '#cargo-transfer-cargo-usage');
     const shipUsage = required<HTMLElement>(root, '#cargo-transfer-ship-usage');
+    const cargoCapacity = required<HTMLElement>(root, '#cargo-transfer-cargo-capacity');
+    const shipCapacity = required<HTMLElement>(root, '#cargo-transfer-ship-capacity');
     const rowsContainer = required<HTMLElement>(root, '#cargo-transfer-rows');
     const warning = required<HTMLElement>(root, '#cargo-transfer-warning');
     const close = required<HTMLButtonElement>(root, '#cargo-transfer-close');
@@ -44,7 +47,8 @@ export function mountCargoTransfer (root: HTMLElement, port: CargoTransferPort):
             section,
             cargoQuantity: required<HTMLElement>(section, '.cargo-transfer-row-cargo-quantity'),
             shipQuantity: required<HTMLElement>(section, '.cargo-transfer-row-ship-quantity'),
-            icon: required<HTMLElement>(section, '.cargo-transfer-row-icon'),
+            cargoIcon: required<HTMLElement>(section, '.cargo-transfer-row-cargo .cargo-transfer-row-icon'),
+            shipIcon: required<HTMLElement>(section, '.cargo-transfer-row-ship .cargo-transfer-row-icon'),
             name: required<HTMLElement>(section, '.cargo-transfer-row-name'),
             toCargoMax: required<HTMLButtonElement>(section, '.cargo-transfer-to-cargo-max'),
             toCargoOne: required<HTMLButtonElement>(section, '.cargo-transfer-to-cargo-one'),
@@ -66,6 +70,21 @@ export function mountCargoTransfer (root: HTMLElement, port: CargoTransferPort):
     }
     const closeListener = (): void => port.close();
     close.addEventListener('click', closeListener);
+    const renderCapacity = (element: HTMLElement, used: number, capacity: number, label: string): void => {
+        const full = capacity > 0 && used >= capacity;
+        const empty = used <= 0;
+        const fill = required<HTMLElement>(element, '.cargo-transfer-capacity-fill');
+        const state = required<HTMLElement>(element, '.cargo-transfer-capacity-state');
+        const track = required<HTMLElement>(element, '.cargo-transfer-capacity-track');
+        const percentage = capacity > 0 ? Math.min(100, Math.max(0, used / capacity * 100)) : 0;
+        element.dataset.capacityState = full ? 'full' : empty ? 'empty' : 'normal';
+        fill.style.width = `${percentage}%`;
+        state.textContent = full ? 'FULL' : empty ? 'EMPTY' : '';
+        track.setAttribute('aria-valuemin', '0');
+        track.setAttribute('aria-valuemax', String(capacity));
+        track.setAttribute('aria-valuenow', String(used));
+        track.setAttribute('aria-label', `${label}: ${used} of ${capacity}`);
+    };
     const render = (snapshot: Readonly<CargoTransferSnapshot>): void => {
         modal.hidden = !snapshot.visible;
         title.textContent = displayLabels.cargoTransferTitle;
@@ -74,6 +93,8 @@ export function mountCargoTransfer (root: HTMLElement, port: CargoTransferPort):
         shipHeader.textContent = displayLabels.cargoTransferShipHeader;
         cargoUsage.textContent = `${snapshot.cargoUsed}/${snapshot.cargoCapacity}`;
         shipUsage.textContent = `${snapshot.shipUsed}/${snapshot.shipCapacity}`;
+        renderCapacity(cargoCapacity, snapshot.cargoUsed, snapshot.cargoCapacity, displayLabels.cargoTransferCargoHeader);
+        renderCapacity(shipCapacity, snapshot.shipUsed, snapshot.shipCapacity, displayLabels.cargoTransferShipHeader);
         const cargoById = new Map(snapshot.rows.map(row => [row.commodityId, row]));
         const shipFull = snapshot.shipUsed >= snapshot.shipCapacity;
         const cargoFull = snapshot.cargoUsed >= snapshot.cargoCapacity;
@@ -85,18 +106,26 @@ export function mountCargoTransfer (root: HTMLElement, port: CargoTransferPort):
             row.cargoQuantity.textContent = String(snapshotRow.cargoQuantity);
             row.shipQuantity.textContent = String(snapshotRow.shipQuantity);
             const label = commodityLabel(row.commodityId);
-            row.icon.className = 'cargo-transfer-row-icon cargo-commodity-icon commodity-icon';
-            row.icon.dataset.commodityId = row.commodityId;
-            row.icon.setAttribute('aria-hidden', 'true');
+            for (const icon of [row.cargoIcon, row.shipIcon]) {
+                icon.className = 'cargo-transfer-row-icon cargo-commodity-icon commodity-icon';
+                icon.dataset.commodityId = row.commodityId;
+                icon.setAttribute('aria-hidden', 'true');
+            }
+            row.cargoIcon.hidden = snapshotRow.cargoQuantity <= 0;
+            row.shipIcon.hidden = snapshotRow.shipQuantity <= 0;
             row.name.textContent = label;
-            row.toCargoMax.textContent = displayLabels.toCargoMax;
-            row.toCargoOne.textContent = displayLabels.toCargoOne;
-            row.toShipOne.textContent = displayLabels.toShipOne;
-            row.toShipMax.textContent = displayLabels.toShipMax;
-            row.toCargoMax.disabled = noCargo || snapshotRow.shipQuantity === 0 || cargoFull;
-            row.toCargoOne.disabled = noCargo || snapshotRow.shipQuantity === 0 || cargoFull;
-            row.toShipOne.disabled = noCargo || snapshotRow.cargoQuantity === 0 || shipFull;
-            row.toShipMax.disabled = noCargo || snapshotRow.cargoQuantity === 0 || shipFull;
+            row.cargoQuantity.classList.toggle('is-zero', snapshotRow.cargoQuantity <= 0);
+            row.shipQuantity.classList.toggle('is-zero', snapshotRow.shipQuantity <= 0);
+            const canTransferToCargo = !noCargo && snapshotRow.shipQuantity > 0;
+            const canTransferToShip = !noCargo && snapshotRow.cargoQuantity > 0;
+            row.toCargoMax.hidden = !canTransferToCargo;
+            row.toCargoOne.hidden = !canTransferToCargo;
+            row.toShipOne.hidden = !canTransferToShip;
+            row.toShipMax.hidden = !canTransferToShip;
+            row.toCargoMax.disabled = !canTransferToCargo || cargoFull;
+            row.toCargoOne.disabled = !canTransferToCargo || cargoFull;
+            row.toShipOne.disabled = !canTransferToShip || shipFull;
+            row.toShipMax.disabled = !canTransferToShip || shipFull;
         }
         warning.hidden = snapshot.warning === null;
         warning.textContent = snapshot.warning ?? '';

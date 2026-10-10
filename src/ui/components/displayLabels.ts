@@ -50,7 +50,6 @@ export const displayLabels = {
     orbitalCargo: 'Orbital cargo', shipCargo: 'Ship cargo', transferOne: 'TRANSFER ONE', transferMax: 'TRANSFER MAX', close: 'CLOSE',
     cargoTransferTitle: 'CARGO TRANSFER', cargoFullWarning: 'WARNING - CARGO IS FULL',
     cargoTransferCargoHeader: 'Cargo', cargoTransferCommodityHeader: 'Commodity', cargoTransferShipHeader: 'Ship',
-    toCargoMax: '<<max', toCargoOne: '<1', toShipOne: '1>', toShipMax: 'max>>',
     cargoTransferConfirm: 'Transfer',
     debugPerformanceMonitor: 'Performance monitor',
     performanceMonitorReadout: 'Performance monitor',
