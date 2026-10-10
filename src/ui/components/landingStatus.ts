@@ -45,6 +45,11 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
 {
     const modal = required<HTMLElement>(root, '#landing-status');
     const hub = required<HTMLElement>(root, '#landing-status-hub');
+    const hubBack = required<HTMLButtonElement>(root, '#landing-status-hub-back');
+    const hubClockElement = required<HTMLElement>(root, '#landing-status-hub-clock');
+    const hubCredits = required<HTMLElement>(root, '#landing-status-hub-credits');
+    const hubCargo = required<HTMLElement>(root, '#landing-status-hub-cargo');
+    const hubTimeControl = required<HTMLButtonElement>(root, '#landing-status-hub-time-control');
     const landingVisual = required<HTMLElement>(root, '.landing-visual');
     const marketView = required<HTMLElement>(root, '#landing-status-market-view');
     const facilitiesView = required<HTMLElement>(root, '#landing-status-facilities-view');
@@ -52,12 +57,14 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const facilitiesHeading = required<HTMLElement>(root, '#landing-status-facilities-heading');
     const facilitiesBack = required<HTMLButtonElement>(root, '#landing-status-facilities-back');
     const facilitiesClockElement = required<HTMLElement>(root, '#landing-status-facilities-clock');
+    const facilitiesTimeControl = required<HTMLButtonElement>(root, '#landing-status-facilities-time-control');
     const facilitiesCredits = required<HTMLElement>(root, '#landing-status-facilities-credits');
     const facilitiesCargo = required<HTMLElement>(root, '#landing-status-facilities-cargo');
     const shipyardHeading = required<HTMLElement>(root, '#landing-status-shipyard-heading');
     const shipyardPlanet = required<HTMLElement>(root, '#landing-status-shipyard-planet');
     const shipyardBack = required<HTMLButtonElement>(root, '#landing-status-shipyard-back');
     const shipyardClockElement = required<HTMLElement>(root, '#landing-status-shipyard-clock');
+    const shipyardTimeControl = required<HTMLButtonElement>(root, '#landing-status-shipyard-time-control');
     const shipyardCredits = required<HTMLElement>(root, '#landing-status-shipyard-credits');
     const shipyardCargo = required<HTMLElement>(root, '#landing-status-shipyard-cargo');
     const shipyardRepairButton = required<HTMLButtonElement>(root, '#landing-status-shipyard-repair');
@@ -69,6 +76,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const marketHeading = required<HTMLElement>(root, '#landing-status-market-heading');
     const marketBack = required<HTMLButtonElement>(root, '#landing-status-market-back');
     const marketClockElement = required<HTMLElement>(root, '#landing-status-market-clock');
+    const marketTimeControl = required<HTMLButtonElement>(root, '#landing-status-market-time-control');
     const marketCredits = required<HTMLElement>(root, '#landing-status-market-credits');
     const marketCargo = required<HTMLElement>(root, '#landing-status-market-cargo');
     const commodityName = required<HTMLElement>(root, '#landing-status-commodity-name');
@@ -105,7 +113,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         if (landedBadge) landedBadge.src = `/assets/banner_landed_0${landedBadgeFrame + 1}.png`;
     };
     const landedBadgeTimer = window.setInterval(updateLandedBadge, 500);
-    const focusable = (): HTMLElement[] => Array.from(modal.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])'))
+    const focusable = (): HTMLElement[] => Array.from(modal.querySelectorAll<HTMLElement>('button:not([disabled]):not([hidden]), input:not([disabled]):not([hidden])'))
         .filter(element => !element.closest('[hidden]'));
     const facilityActionButtons = new Map<LandingFacilityId, HTMLButtonElement>();
     const facilityDowngradeButtons = new Map<LandingFacilityId, HTMLButtonElement>();
@@ -322,6 +330,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         marketHeading.textContent = displayLabels.market;
         market.setAttribute('aria-label', displayLabels.market);
         marketHeader.render(snapshot);
+        hubHeader.render(snapshot);
         launch.setAttribute('aria-label', displayLabels.launch);
         facilities.setAttribute('aria-label', displayLabels.facilities);
         shipyard.setAttribute('aria-label', displayLabels.shipyard);
@@ -483,7 +492,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         facilitiesView.hidden = false;
         const primaryAction = facilityActionButtons.values().next().value;
         if (primaryAction && !primaryAction.disabled) primaryAction.focus();
-        else facilitiesHeader.backButton.focus();
+        else facilitiesHeader.backButton?.focus();
     };
     const returnFromFacilities = (): void => { view = 'hub'; hub.hidden = false; marketView.hidden = true; facilitiesView.hidden = true; shipyardView.hidden = true; facilities.focus(); };
     const openShipyard = (): void => {
@@ -493,7 +502,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         facilitiesView.hidden = true;
         shipyardView.hidden = false;
         if (!shipyardRepairButton.disabled) shipyardRepairButton.focus();
-        else shipyardHeader.backButton.focus();
+        else shipyardHeader.backButton?.focus();
     };
     const returnFromShipyard = (): void => { view = 'hub'; hub.hidden = false; marketView.hidden = true; facilitiesView.hidden = true; shipyardView.hidden = true; shipyard.focus(); };
     const chooseServiceUpgrade = (event: Event): void => {
@@ -503,9 +512,10 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     };
     const purchaseBooster = (): void => { port.purchaseBooster(); };
     const launchGame = (): void => { port.launch(); root.querySelector<HTMLCanvasElement>('#game-container canvas')?.focus(); };
-    const marketHeader = mountLandingMenuHeader(marketBack, marketClockElement, marketCredits, marketCargo, () => !marketView.hidden && !modal.hidden, returnToHub);
-    const facilitiesHeader = mountLandingMenuHeader(facilitiesBack, facilitiesClockElement, facilitiesCredits, facilitiesCargo, () => !facilitiesView.hidden && !modal.hidden, returnFromFacilities);
-    const shipyardHeader = mountLandingMenuHeader(shipyardBack, shipyardClockElement, shipyardCredits, shipyardCargo, () => !shipyardView.hidden && !modal.hidden, returnFromShipyard);
+    const marketHeader = mountLandingMenuHeader(marketBack, marketClockElement, marketCredits, marketCargo, marketTimeControl, () => !marketView.hidden && !modal.hidden, returnToHub, port.togglePlayerPause);
+    const facilitiesHeader = mountLandingMenuHeader(facilitiesBack, facilitiesClockElement, facilitiesCredits, facilitiesCargo, facilitiesTimeControl, () => !facilitiesView.hidden && !modal.hidden, returnFromFacilities, port.togglePlayerPause);
+    const shipyardHeader = mountLandingMenuHeader(shipyardBack, shipyardClockElement, shipyardCredits, shipyardCargo, shipyardTimeControl, () => !shipyardView.hidden && !modal.hidden, returnFromShipyard, port.togglePlayerPause);
+    const hubHeader = mountLandingMenuHeader(hubBack, hubClockElement, hubCredits, hubCargo, hubTimeControl, () => !hub.hidden && !modal.hidden, () => {}, port.togglePlayerPause);
     const keydown = (event: KeyboardEvent): void => {
         if (event.key !== 'Tab' || modal.hidden) return;
         const controls = focusable(); const first = controls[0]; const last = controls[controls.length - 1];
@@ -553,6 +563,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         marketHeader.destroy();
         facilitiesHeader.destroy();
         shipyardHeader.destroy();
+        hubHeader.destroy();
         port.destroy();
     } };
 }

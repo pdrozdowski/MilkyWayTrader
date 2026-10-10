@@ -91,6 +91,7 @@ export interface LandingStatusPort extends UiHandle
     repairShip(): void;
     upgradeShipService(serviceId: LandingShipServiceId): void;
     purchaseBooster(): void;
+    togglePlayerPause(): void;
     launch(): void;
 }
 

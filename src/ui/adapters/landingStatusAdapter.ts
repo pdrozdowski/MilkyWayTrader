@@ -176,6 +176,10 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
             if (destroyed || !wasEligible) return;
             provider.update(applyShipBooster);
         },
+        togglePlayerPause: () => {
+            if (destroyed || !wasEligible) return;
+            provider.update(state => ({ ...state, clock: { ...state.clock, playerPaused: !state.clock.playerPaused } }));
+        },
         launch: () => {
             if (destroyed) return;
             const before = provider.snapshot();

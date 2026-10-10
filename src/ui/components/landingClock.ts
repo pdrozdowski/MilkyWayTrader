@@ -4,6 +4,7 @@ export interface LandingClockState
 {
     readonly remainingSeconds: number;
     readonly runState: string;
+    readonly playerPaused: boolean;
 }
 
 export interface LandingClockHandle

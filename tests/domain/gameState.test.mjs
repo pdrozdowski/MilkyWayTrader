@@ -456,6 +456,27 @@ test('a landed trade routes to the landed planet and leaves every other market u
     }
 });
 
+test('the landing status adapter toggles only player pause intent while environmental pauses remain', () => {
+    const gameFor = provider => ({ registry: { get: key => key === 'telemetry' ? { emit: () => {} } : provider }, events: { emit: () => {} } });
+    const landedState = {
+        ...initialGameState,
+        clock: { ...initialGameState.clock, playerPaused: true, pauseReasons: ['background', 'menu'] },
+        planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
+    };
+    const provider = new GameStateProvider(landedState);
+    const port = createLandingStatusPort(gameFor(provider));
+
+    port.togglePlayerPause();
+    assert.equal(provider.snapshot().clock.playerPaused, false, 'Play clears only the player pause choice');
+    assert.deepEqual(provider.snapshot().clock.pauseReasons, ['background', 'menu'], 'environmental blockers remain active');
+    assert.deepEqual(provider.snapshot(), { ...landedState, clock: { ...landedState.clock, playerPaused: false } }, 'all other authoritative state remains unchanged');
+
+    port.togglePlayerPause();
+    assert.equal(provider.snapshot().clock.playerPaused, true, 'Pause restores the player pause choice');
+    assert.deepEqual(provider.snapshot().clock.pauseReasons, ['background', 'menu'], 'toggling does not clear environmental blockers');
+    port.destroy();
+});
+
 test('landed market port rejects unlanded trade commands and rebuilds its visit-local price ladder after a trade', () => {
     const gameFor = provider => ({ registry: { get: key => key === 'telemetry' ? { emit: () => {} } : provider }, events: { emit: () => {} } });
     const unlandedProvider = new GameStateProvider(initialGameState);

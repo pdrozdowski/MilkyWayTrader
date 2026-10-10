@@ -67,6 +67,7 @@ export interface LandedFacilitiesClockSnapshot
 {
     readonly remainingSeconds: number;
     readonly runState: RunState;
+    readonly playerPaused: boolean;
 }
 
 export interface LandedFacilitiesSnapshot
@@ -105,7 +106,8 @@ export function projectLandedFacilities (
     const cargoCapacity = cargoCapacityByLevel[state.shipStatus.cargoLevel] ?? 0;
     const clock: LandedFacilitiesClockSnapshot = {
         remainingSeconds: Math.max(0, Math.ceil((state.clock.budgetMs - state.clock.activeElapsedMs) / 1000)),
-        runState: state.clock.playerPaused || state.clock.pauseReasons.length > 0 ? 'PAUSED' : 'RUNNING'
+        runState: state.clock.playerPaused || state.clock.pauseReasons.length > 0 ? 'PAUSED' : 'RUNNING',
+        playerPaused: state.clock.playerPaused
     };
     if (planetId === null || market === null) {
         return Object.freeze({
