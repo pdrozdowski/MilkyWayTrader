@@ -4,6 +4,7 @@ import type {
 } from '../contracts';
 import { displayLabels } from './displayLabels';
 import { formatCredits } from './formatCredits';
+import { mountLandingMenuHeader } from './landingMenuHeader';
 
 function required<T extends Element> (root: HTMLElement, selector: string): T
 {
@@ -50,13 +51,13 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const shipyardView = required<HTMLElement>(root, '#landing-status-shipyard-view');
     const facilitiesHeading = required<HTMLElement>(root, '#landing-status-facilities-heading');
     const facilitiesBack = required<HTMLButtonElement>(root, '#landing-status-facilities-back');
-    const facilitiesClock = required<HTMLElement>(root, '#landing-status-facilities-clock');
+    const facilitiesClockElement = required<HTMLElement>(root, '#landing-status-facilities-clock');
     const facilitiesCredits = required<HTMLElement>(root, '#landing-status-facilities-credits');
     const facilitiesCargo = required<HTMLElement>(root, '#landing-status-facilities-cargo');
     const shipyardHeading = required<HTMLElement>(root, '#landing-status-shipyard-heading');
     const shipyardPlanet = required<HTMLElement>(root, '#landing-status-shipyard-planet');
     const shipyardBack = required<HTMLButtonElement>(root, '#landing-status-shipyard-back');
-    const shipyardClock = required<HTMLElement>(root, '#landing-status-shipyard-clock');
+    const shipyardClockElement = required<HTMLElement>(root, '#landing-status-shipyard-clock');
     const shipyardCredits = required<HTMLElement>(root, '#landing-status-shipyard-credits');
     const shipyardCargo = required<HTMLElement>(root, '#landing-status-shipyard-cargo');
     const shipyardRepairButton = required<HTMLButtonElement>(root, '#landing-status-shipyard-repair');
@@ -67,7 +68,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const landedBadge = root.querySelector<HTMLImageElement>('#landing-status-landed');
     const marketHeading = required<HTMLElement>(root, '#landing-status-market-heading');
     const marketBack = required<HTMLButtonElement>(root, '#landing-status-market-back');
-    const marketClock = required<HTMLElement>(root, '#landing-status-market-clock');
+    const marketClockElement = required<HTMLElement>(root, '#landing-status-market-clock');
     const marketCredits = required<HTMLElement>(root, '#landing-status-market-credits');
     const marketCargo = required<HTMLElement>(root, '#landing-status-market-cargo');
     const commodityName = required<HTMLElement>(root, '#landing-status-commodity-name');
@@ -110,8 +111,6 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         if (button.dataset.action === 'build') port.buildFacility(facilityId);
         else if (button.dataset.action === 'upgrade') port.upgradeFacility(facilityId);
     };
-    const formatClock = (remainingSeconds: number): string => `${String(Math.floor(remainingSeconds / 60)).padStart(2, '0')}:${String(Math.floor(remainingSeconds % 60)).padStart(2, '0')}`;
-    const clockText = (clock: Readonly<{ remainingSeconds: number; runState: string }>): string => `${formatClock(clock.remainingSeconds)} · ${clock.runState === 'PAUSED' ? displayLabels.clockPaused : displayLabels.clockRunning}`;
     const recipePart = (commodityId: LandingCommodityId, quantity: number): readonly HTMLElement[] => {
         const icon = document.createElement('span');
         icon.className = 'commodity-icon facility-card-commodity-icon';
@@ -146,12 +145,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     };
     const renderFacilities = (snapshot: Readonly<LandedFacilitiesSnapshot>): void => {
         facilitiesHeading.textContent = displayLabels.facilities;
-        facilitiesBack.textContent = displayLabels.facilitiesBackToPlanet;
-        facilitiesBack.setAttribute('aria-label', displayLabels.facilitiesBackToPlanet);
-        facilitiesClock.textContent = clockText(snapshot.clock);
-        facilitiesClock.setAttribute('aria-label', facilitiesClock.textContent);
-        facilitiesCredits.textContent = `${displayLabels.marketCredits}: ${formatCredits(snapshot.credits)}`;
-        facilitiesCargo.textContent = `${displayLabels.marketCargo}: ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
+        facilitiesHeader.render(snapshot);
         facilitiesView.style.backgroundImage = `url('${planetBackgroundAssetById[snapshot.planetId ?? ''] ?? '/assets/landing_bg_seroton.png'}')`;
         for (const row of snapshot.facilities) {
             const card = facilitiesView.querySelector<HTMLElement>(`[data-facility-id="${row.facilityId}"]`);
@@ -188,12 +182,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     };
     const renderShipyard = (snapshot: Readonly<LandedShipyardSnapshot>): void => {
         shipyardHeading.textContent = displayLabels.shipyard;
-        shipyardBack.textContent = displayLabels.facilitiesBackToPlanet;
-        shipyardBack.setAttribute('aria-label', displayLabels.facilitiesBackToPlanet);
-        shipyardClock.textContent = clockText(snapshot.clock);
-        shipyardClock.setAttribute('aria-label', shipyardClock.textContent);
-        shipyardCredits.textContent = `${displayLabels.marketCredits}: ${formatCredits(snapshot.credits)}`;
-        shipyardCargo.textContent = `${displayLabels.marketCargo}: ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
+        shipyardHeader.render(snapshot);
         shipyardPlanet.textContent = snapshot.planetName ?? '';
         shipyardView.style.backgroundImage = `url('${planetBackgroundAssetById[snapshot.planetId ?? ''] ?? '/assets/landing_bg_seroton.png'}')`;
 
@@ -290,15 +279,10 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         }
         marketHeading.textContent = displayLabels.market;
         market.setAttribute('aria-label', displayLabels.market);
-        marketBack.textContent = displayLabels.facilitiesBackToPlanet;
-        marketBack.setAttribute('aria-label', displayLabels.facilitiesBackToPlanet);
+        marketHeader.render(snapshot);
         launch.setAttribute('aria-label', displayLabels.launch);
         facilities.setAttribute('aria-label', displayLabels.facilities);
         shipyard.setAttribute('aria-label', displayLabels.shipyard);
-        marketCredits.textContent = formatCredits(snapshot.credits);
-        marketCargo.textContent = `${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`;
-        marketClock.textContent = clockText(snapshot.clock);
-        marketClock.setAttribute('aria-label', marketClock.textContent);
         const commodity = snapshot.commodities.find(candidate => candidate.commodityId === snapshot.selectedCommodityId);
         const signed = (value: number): string => value > 0 ? `+${value}` : String(value);
         const stockWithDelta = (element: HTMLElement, value: number, delta: number, decreaseIsBad: boolean): void => {
@@ -367,6 +351,9 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
             const commodityId = button.dataset.commodityId as LandingCommodityId;
             const nameElement = required<HTMLElement>(button, '.catalogue-commodity-name');
             nameElement.textContent = commodityLabels[commodityId];
+            const commoditySnapshot = snapshot.commodities.find(candidate => candidate.commodityId === commodityId);
+            if (!commoditySnapshot) throw new Error(`Missing catalogue commodity ${commodityId}.`);
+            button.dataset.supplyLevel = commoditySnapshot.supplyLevel;
             button.setAttribute('aria-pressed', String(commodityId === snapshot.selectedCommodityId));
             button.disabled = !snapshot.eligible;
         }
@@ -393,7 +380,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         facilitiesView.hidden = false;
         const primaryAction = facilityActionButtons.values().next().value;
         if (primaryAction && !primaryAction.disabled) primaryAction.focus();
-        else facilitiesBack.focus();
+        else facilitiesHeader.backButton.focus();
     };
     const returnFromFacilities = (): void => { view = 'hub'; hub.hidden = false; marketView.hidden = true; facilitiesView.hidden = true; shipyardView.hidden = true; facilities.focus(); };
     const openShipyard = (): void => {
@@ -403,7 +390,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         facilitiesView.hidden = true;
         shipyardView.hidden = false;
         if (!shipyardRepairButton.disabled) shipyardRepairButton.focus();
-        else shipyardBack.focus();
+        else shipyardHeader.backButton.focus();
     };
     const returnFromShipyard = (): void => { view = 'hub'; hub.hidden = false; marketView.hidden = true; facilitiesView.hidden = true; shipyardView.hidden = true; shipyard.focus(); };
     const chooseServiceUpgrade = (event: Event): void => {
@@ -413,6 +400,9 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     };
     const purchaseBooster = (): void => { port.purchaseBooster(); };
     const launchGame = (): void => { port.launch(); root.querySelector<HTMLCanvasElement>('#game-container canvas')?.focus(); };
+    const marketHeader = mountLandingMenuHeader(marketBack, marketClockElement, marketCredits, marketCargo, () => !marketView.hidden && !modal.hidden, returnToHub);
+    const facilitiesHeader = mountLandingMenuHeader(facilitiesBack, facilitiesClockElement, facilitiesCredits, facilitiesCargo, () => !facilitiesView.hidden && !modal.hidden, returnFromFacilities);
+    const shipyardHeader = mountLandingMenuHeader(shipyardBack, shipyardClockElement, shipyardCredits, shipyardCargo, () => !shipyardView.hidden && !modal.hidden, returnFromShipyard);
     const keydown = (event: KeyboardEvent): void => {
         if (event.key !== 'Tab' || modal.hidden) return;
         const controls = focusable(); const first = controls[0]; const last = controls[controls.length - 1];
@@ -427,11 +417,8 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     quantity.addEventListener('input', setQuantity);
     confirm.addEventListener('click', port.confirmTrade);
     market.addEventListener('click', openMarket);
-    marketBack.addEventListener('click', returnToHub);
     facilities.addEventListener('click', openFacilities);
-    facilitiesBack.addEventListener('click', returnFromFacilities);
     shipyard.addEventListener('click', openShipyard);
-    shipyardBack.addEventListener('click', returnFromShipyard);
     shipyardRepairButton.addEventListener('click', port.repairShip);
     for (const card of shipyardCards) required<HTMLButtonElement>(card, '.shipyard-card-action').addEventListener('click', chooseServiceUpgrade);
     required<HTMLButtonElement>(shipyardBoosterCard, '.shipyard-card-action').addEventListener('click', purchaseBooster);
@@ -448,11 +435,8 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         quantity.removeEventListener('input', setQuantity);
         confirm.removeEventListener('click', port.confirmTrade);
         market.removeEventListener('click', openMarket);
-        marketBack.removeEventListener('click', returnToHub);
         facilities.removeEventListener('click', openFacilities);
-        facilitiesBack.removeEventListener('click', returnFromFacilities);
         shipyard.removeEventListener('click', openShipyard);
-        shipyardBack.removeEventListener('click', returnFromShipyard);
         shipyardRepairButton.removeEventListener('click', port.repairShip);
         for (const card of shipyardCards) required<HTMLButtonElement>(card, '.shipyard-card-action').removeEventListener('click', chooseServiceUpgrade);
         required<HTMLButtonElement>(shipyardBoosterCard, '.shipyard-card-action').removeEventListener('click', purchaseBooster);
@@ -461,6 +445,9 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
         launch.removeEventListener('click', launchGame);
         window.removeEventListener('keydown', keydown);
         window.clearInterval(landedBadgeTimer);
+        marketHeader.destroy();
+        facilitiesHeader.destroy();
+        shipyardHeader.destroy();
         port.destroy();
     } };
 }

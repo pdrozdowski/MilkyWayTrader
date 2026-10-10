@@ -12,7 +12,6 @@ export function mountAuthControls (root: HTMLElement, port: AuthPort, beforeSign
 {
     const signIn = required<HTMLButtonElement>(root, '#main-menu-sign-in-preview');
     const signInLabel = required<HTMLElement>(signIn, '.main-menu-sign-in-preview-label');
-    const status = required<HTMLElement>(root, '#run-status-auth');
     let currentSnapshot = port.getSnapshot();
     const render = (snapshot: Readonly<AuthSnapshot>): void => {
         currentSnapshot = snapshot;
@@ -21,9 +20,6 @@ export function mountAuthControls (root: HTMLElement, port: AuthPort, beforeSign
         signIn.disabled = unavailable;
         signIn.title = unavailable ? displayLabels.authUnavailable : '';
         signInLabel.textContent = signedIn ? snapshot.email ?? displayLabels.unsigned : 'Sign In';
-        status.textContent = signedIn ? snapshot.email ?? displayLabels.unsigned : snapshot.status === 'error' ? displayLabels.authError : displayLabels.unsigned;
-        status.classList.toggle('run-status-auth--signed-in', signedIn);
-        status.title = unavailable ? displayLabels.authUnavailable : snapshot.message ?? '';
     };
     const signInClick = (): void => {
         if (currentSnapshot.status === 'signed-in') void port.signOut();

@@ -23,10 +23,9 @@
             <div id="run-status-left">
                 <button id="game-menu-toggle" type="button" aria-expanded="false" aria-controls="game-menu"><img class="run-status-icon" src="/assets/icons/menu_32x32.png" alt="" aria-hidden="true" />Menu</button>
                 <span id="run-status-clock"><img class="run-status-icon" data-run-status-clock-image src="/assets/icons/clock_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></span>
-                <span id="run-status-auth" aria-live="polite"></span>
             </div>
             <div id="run-status-primary"><label id="run-status-hp-label" for="run-status-hp"><img class="run-status-icon" src="/assets/icons/heart_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></label><progress id="run-status-hp" value="0" max="100"></progress><section id="run-status-ship-details" aria-label="Ship information" hidden><p id="run-status-cargo-system"></p><p id="run-status-engine-system"></p><p id="run-status-weapon-system"></p><p id="run-status-booster"></p></section><section id="run-status-cargo-details" aria-label="Cargo contents" hidden><p id="run-status-cargo-contents"></p><table id="run-status-cargo-table" aria-label="Cargo stock table"><thead><tr><th scope="col">Icon</th><th scope="col">Commodity</th><th scope="col">Stock</th></tr></thead><tbody id="run-status-cargo-rows"></tbody></table></section></div>
-            <div id="run-status-secondary"><span id="run-status-credits" aria-label="Credits"><img class="run-status-icon" src="/assets/icons/coins_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></span><span id="run-status-cargo"><img class="run-status-icon" src="/assets/icons/cargo_32x32.png" alt="" aria-hidden="true" /><span data-run-status-value></span></span><button id="run-status-ship-toggle" type="button" aria-expanded="false" aria-controls="run-status-ship-details"><img class="run-status-icon" src="/assets/icons/ship_32x32.png" alt="" aria-hidden="true" />Ship info</button><button id="run-status-cargo-toggle" type="button" aria-expanded="false" aria-controls="run-status-cargo-details"><img class="run-status-icon" src="/assets/icons/cargo2_32x32.png" alt="" aria-hidden="true" />Cargo info</button></div>
+            <div id="run-status-secondary"><span id="run-status-credits" class="landing-resource" data-landing-credits aria-label="Credits"><span data-run-status-value></span></span><span id="run-status-cargo" class="landing-resource" data-landing-cargo aria-label="Cargo"><span data-run-status-value></span></span><button id="run-status-ship-toggle" type="button" aria-expanded="false" aria-controls="run-status-ship-details"><img class="run-status-icon" src="/assets/icons/ship_32x32.png" alt="" aria-hidden="true" /><span>Ship<br />Info</span></button><button id="run-status-cargo-toggle" type="button" aria-expanded="false" aria-controls="run-status-cargo-details"><img class="run-status-icon" src="/assets/icons/cargo2_32x32.png" alt="" aria-hidden="true" /><span>Cargo<br />Info</span></button></div>
         </section>
         <section id="game-over-results" data-game-input="ignore" aria-labelledby="game-over-results-title" hidden>
             <h1 id="game-over-results-title"></h1>
@@ -97,8 +96,8 @@
                 </section>
                 <section id="landing-status-market-view" class="landing-view" hidden>
                 <header class="landing-facilities-header">
-                    <div class="landing-facilities-nav-left"><button id="landing-status-market-back" class="action-button" type="button"></button><span id="landing-status-market-clock" class="landing-facilities-clock" role="timer"></span></div>
-                    <div class="landing-facilities-nav-right"><span id="landing-status-market-credits" class="landing-resource"></span><span id="landing-status-market-cargo" class="landing-resource"></span></div>
+                    <div class="landing-facilities-nav-left"><button id="landing-status-market-back" data-landing-back class="action-button" type="button"></button><span id="landing-status-market-clock" data-landing-clock class="landing-facilities-clock" role="timer"><img class="run-status-icon" data-landing-clock-image src="/assets/icons/clock_32x32.png" alt="" aria-hidden="true" /><span data-landing-clock-value></span></span></div>
+                    <div class="landing-facilities-nav-right"><span id="landing-status-market-credits" data-landing-credits class="landing-resource"></span><span id="landing-status-market-cargo" data-landing-cargo class="landing-resource"></span></div>
                 </header>
                 <h2 id="landing-status-market-heading" class="landing-facilities-heading"></h2>
                 <div id="landing-status-market-controls" class="landing-market-controls">
@@ -118,8 +117,8 @@
                 </section>
                 <section id="landing-status-facilities-view" class="landing-view" hidden>
                     <header class="landing-facilities-header">
-                        <div class="landing-facilities-nav-left"><button id="landing-status-facilities-back" class="action-button" type="button"></button><span id="landing-status-facilities-clock" class="landing-facilities-clock" role="timer"></span></div>
-                        <div class="landing-facilities-nav-right"><span id="landing-status-facilities-credits"></span><span id="landing-status-facilities-cargo"></span></div>
+                    <div class="landing-facilities-nav-left"><button id="landing-status-facilities-back" data-landing-back class="action-button" type="button"></button><span id="landing-status-facilities-clock" data-landing-clock class="landing-facilities-clock" role="timer"><img class="run-status-icon" data-landing-clock-image src="/assets/icons/clock_32x32.png" alt="" aria-hidden="true" /><span data-landing-clock-value></span></span></div>
+                        <div class="landing-facilities-nav-right"><span id="landing-status-facilities-credits" data-landing-credits class="landing-resource"></span><span id="landing-status-facilities-cargo" data-landing-cargo class="landing-resource"></span></div>
                     </header>
                     <h2 id="landing-status-facilities-heading" class="landing-facilities-heading"></h2>
                     <div id="landing-status-facility-cards" class="landing-facility-cards" role="group" aria-label="Planetary facilities">
@@ -177,8 +176,8 @@
                 </section>
                 <section id="landing-status-shipyard-view" class="landing-view" hidden>
                     <header class="landing-facilities-header">
-                        <div class="landing-facilities-nav-left"><button id="landing-status-shipyard-back" class="action-button" type="button"></button><span id="landing-status-shipyard-clock" class="landing-facilities-clock" role="timer"></span></div>
-                        <div class="landing-facilities-nav-right"><span id="landing-status-shipyard-credits"></span><span id="landing-status-shipyard-cargo"></span></div>
+                        <div class="landing-facilities-nav-left"><button id="landing-status-shipyard-back" data-landing-back class="action-button" type="button"></button><span id="landing-status-shipyard-clock" data-landing-clock class="landing-facilities-clock" role="timer"><img class="run-status-icon" data-landing-clock-image src="/assets/icons/clock_32x32.png" alt="" aria-hidden="true" /><span data-landing-clock-value></span></span></div>
+                        <div class="landing-facilities-nav-right"><span id="landing-status-shipyard-credits" data-landing-credits class="landing-resource"></span><span id="landing-status-shipyard-cargo" data-landing-cargo class="landing-resource"></span></div>
                     </header>
                     <h2 id="landing-status-shipyard-heading" class="landing-facilities-heading"></h2>
                     <p id="landing-status-shipyard-planet" class="shipyard-planet"></p>

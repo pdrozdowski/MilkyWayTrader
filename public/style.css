@@ -65,9 +65,9 @@ body {
 #main-menu-sign-in-preview:disabled { opacity: .55; cursor: default; }
 #main-menu-fullscreen-preview:focus-visible, #main-menu-sign-in-preview:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 
-.landing-resource { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 999px; color: #fff; background: rgb(5 17 52 / 78%); font: 700 clamp(12px, 1.2vw, 16px) / 1.1 Arial, sans-serif; text-align: left; text-shadow: 1px 2px 3px rgb(0 0 0 / 75%); cursor: default; pointer-events: none; }
-#landing-status-market-credits::before { content: ''; display: block; width: 22px; min-width: 22px; height: 22px; flex: 0 0 22px; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
-#landing-status-market-cargo::before { content: ''; display: block; width: 22px; min-width: 22px; height: 22px; flex: 0 0 22px; background: url('/assets/icons/cargo2_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
+.landing-resource { box-sizing: border-box; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 999px; color: #fff; background: rgb(0 0 0 / 68%); font: 700 clamp(12px, 1.2vw, 16px) / 1.1 Arial, sans-serif; text-align: left; text-shadow: 1px 2px 3px rgb(0 0 0 / 75%); cursor: default; pointer-events: none; }
+[data-landing-credits]::before { content: ''; display: block; width: 22px; min-width: 22px; height: 22px; flex: 0 0 22px; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
+[data-landing-cargo]::before { content: ''; display: block; width: 22px; min-width: 22px; height: 22px; flex: 0 0 22px; background: url('/assets/icons/cargo2_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
 
 @media (max-width: 599px) {
     #main-menu { padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
@@ -81,19 +81,19 @@ body {
 }
 
 #run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 36vw) minmax(0, 1fr); align-items: start; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }
-#run-status-auth, #run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
+#run-status-primary, #run-status button, #run-status-ship-details, #run-status-cargo-details { border: 1px solid #406587; border-radius: 8px; background: #102039e8; }
+#run-status #game-menu-toggle { border: 0; background: rgb(0 0 0 / 68%); }
 #run-status-left { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; width: min(100%, 310px); min-width: 0; }
-#run-status-auth { grid-column: 1 / -1; min-width: 0; padding: 10px 12px; overflow: hidden; color: #fff; text-overflow: ellipsis; white-space: nowrap; }
-#run-status-auth.run-status-auth--signed-in::before { display: inline-block; width: 1em; height: 1em; margin-right: .4em; content: ''; background: #fff; vertical-align: -.15em; mask: url('/assets/ui/userIcon.svg') center / contain no-repeat; }
-#run-status-clock { min-width: 0; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-#run-status-primary { grid-column: 2; position: relative; box-sizing: border-box; justify-self: stretch; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; min-width: 0; padding: 10px 12px; }
-#run-status-secondary { grid-column: 3; position: relative; justify-self: end; display: grid; gap: 5px; width: min(100%, 200px); min-width: 0; text-align: left; }
-#run-status-secondary > span { box-sizing: border-box; display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 8px 10px; border: 1px solid #406587; border-radius: 8px; background: #102039e8; white-space: nowrap; }
+#run-status-clock { box-sizing: border-box; display: inline-flex; align-items: center; gap: 6px; width: 100px; min-width: 0; min-height: 48px; overflow: hidden; padding: 8px 10px; border-radius: 8px; background: rgb(0 0 0 / 68%); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+#run-status-primary { grid-column: 2; position: relative; box-sizing: border-box; justify-self: stretch; display: flex; justify-content: center; align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; min-width: 0; padding: 6px 12px; border: 0; background: rgb(0 0 0 / 68%); }
+#run-status-secondary { grid-column: 3; position: relative; justify-self: end; display: grid; grid-template-columns: repeat(2, max-content); align-items: center; gap: 5px; width: max-content; min-width: 0; text-align: left; }
 #run-status-primary > span, #run-status-hp-label, #run-status p { white-space: nowrap; }
 #run-status-hp-label, #run-status-clock, #run-status button { display: inline-flex; align-items: center; }
 #run-status-hp-label { gap: 10px; }
 #run-status-clock, #run-status button { gap: 6px; }
-#run-status-secondary > button { justify-content: flex-start; gap: 10px; width: 100%; }
+#run-status #run-status-secondary > button { grid-column: auto; justify-self: center; box-sizing: border-box; justify-content: center; gap: 0; width: 100px; height: 50px; margin: 0; padding: 0; border: 0; border-radius: 999px; text-align: center; white-space: normal; }
+#run-status #run-status-secondary > button .run-status-icon { margin-right: 2px; margin-left: 2px; }
+#run-status #run-status-ship-toggle { padding-right: 4px; }
 #run-status-secondary > button[aria-expanded="true"] { border-color: var(--ui-border); background: var(--ui-action); }
 .run-status-icon { display: inline-block; flex: 0 0 auto; width: 32px; height: 32px; object-fit: contain; image-rendering: pixelated; }
 /* One hull-health skin for every health bar: the HUD bar and the landed repair bar share it. */
@@ -169,6 +169,15 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .catalogue-commodity-icon { width: 48px; height: 48px; min-width: 48px; flex: 0 0 48px; }
 .catalogue-commodity-name { font-size: clamp(13px, 1.9vw, 18px); line-height: 1.15; text-align: center; overflow-wrap: anywhere; }
 #landing-status-catalogue button[aria-pressed="true"] { border-color: var(--ui-focus); background: #1c4266; }
+#landing-status-catalogue button[data-supply-level="Low"] { color: #fca5a5; }
+#landing-status-catalogue button[data-supply-level="Medium"] { color: #ffd479; }
+#landing-status-catalogue button[data-supply-level="High"] { color: #86efac; }
+#landing-status-catalogue button[data-supply-level="Low"],
+#landing-status-catalogue button[data-supply-level="High"] { background: currentColor; }
+#landing-status-catalogue button[data-supply-level="Low"] *,
+#landing-status-catalogue button[data-supply-level="High"] * { color: #17212b; }
+#landing-status-catalogue button[aria-pressed="true"][data-supply-level="Low"],
+#landing-status-catalogue button[aria-pressed="true"][data-supply-level="High"] { border-color: var(--ui-focus); }
 #landing-status-quantity-label { font-size: 1.4em; }
 #landing-status-trade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr); gap: 8px; padding: 12px; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }
 .landing-market-controls { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: flex; flex-direction: column; gap: clamp(8px, 1.5vw, 16px); min-height: 0; overflow-y: auto; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
@@ -314,7 +323,7 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 
 @media (max-width: 420px) {
     #audio-controls { gap: 6px; padding: 4px 6px; }
-    #run-status { gap: 4px; font-size: 11px; } #run-status-primary { gap: 5px; padding: 8px; } #run-status button { min-height: 36px; padding: 7px; }
+    #run-status { gap: 4px; font-size: 11px; } #run-status-primary { gap: 5px; padding: 8px; } #run-status button { min-height: 36px; padding: 7px; } #run-status-clock { min-height: 46px; padding: 7px; } #run-status #run-status-secondary > button { height: 48px; }
     #game-menu, #debug-menu { padding: 10px; }
     #landing-status-market-view { display: flex; flex-direction: column; overflow-y: auto; padding: 20px 14px; gap: 10px; }
     .landing-market-controls { position: static; inset: auto; }
@@ -340,7 +349,7 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .landing-facilities-header { position: absolute; top: 0; right: 0; left: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: clamp(12px, 2vw, 20px) clamp(16px, 3vw, 32px); background: linear-gradient(to bottom, rgba(7, 17, 27, 0.85), transparent); }
 .landing-facilities-nav-left, .landing-facilities-nav-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .landing-facilities-nav-right { text-align: right; }
-.landing-facilities-clock { font-weight: 700; white-space: nowrap; }
+.landing-facilities-clock { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; white-space: nowrap; }
 .landing-facilities-heading { position: absolute; z-index: 1; top: 19%; left: clamp(16px, 3vw, 32px); margin: 0; }
 .landing-facility-cards { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1.5vw, 16px); min-height: 0; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
 .facility-card { box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: auto; padding: 12px; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }

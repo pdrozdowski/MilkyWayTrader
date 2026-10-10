@@ -178,8 +178,7 @@ class FakeElement {
 test('a signed-in player can locally sign out without changing the game-facing controls', async () => {
     const label = new FakeElement();
     const signIn = new FakeElement({ '.main-menu-sign-in-preview-label': label });
-    const status = new FakeElement();
-    const root = new FakeElement({ '#main-menu-sign-in-preview': signIn, '#run-status-auth': status });
+    const root = new FakeElement({ '#main-menu-sign-in-preview': signIn });
     let snapshot = { status: 'signed-in', email: 'pilot@example.test', message: null };
     let listener = null;
     let signOuts = 0;
@@ -198,15 +197,11 @@ test('a signed-in player can locally sign out without changing the game-facing c
 
     const handle = mountAuthControls(root, port);
     assert.equal(label.textContent, 'pilot@example.test');
-    assert.equal(status.textContent, 'pilot@example.test');
-    assert(status.classList.values.has('run-status-auth--signed-in'));
 
     signIn.click();
     await Promise.resolve();
     assert.equal(signOuts, 1);
     assert.equal(label.textContent, 'Sign In');
-    assert.equal(status.textContent, displayLabels.unsigned);
-    assert(!status.classList.values.has('run-status-auth--signed-in'));
 
     handle.destroy();
     assert(unsubscribed);

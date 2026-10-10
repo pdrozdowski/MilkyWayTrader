@@ -13,7 +13,32 @@ function transpileModule (path, imports) {
 
 const { displayLabels } = transpileModule('src/ui/components/displayLabels.ts', {});
 const { formatCredits } = transpileModule('src/ui/components/formatCredits.ts', {});
-const { mountLandingStatus } = transpileModule('src/ui/components/landingStatus.ts', { './displayLabels': { displayLabels }, './formatCredits': { formatCredits } });
+const { mountLandingStatus } = transpileModule('src/ui/components/landingStatus.ts', {
+    './displayLabels': { displayLabels },
+    './formatCredits': { formatCredits },
+    './landingMenuHeader': { mountLandingMenuHeader: (backButton, clockElement, credits, cargo, isActive, onBack) => {
+        const clockImage = new FakeElement();
+        const clockValue = new FakeElement();
+        const clock = { render: state => {
+            const time = `${String(Math.floor(state.remainingSeconds / 60)).padStart(2, '0')}:${String(state.remainingSeconds % 60).padStart(2, '0')}`;
+            clockValue.textContent = `${time} · ${state.runState === 'PAUSED' ? displayLabels.clockPaused : displayLabels.clockRunning}`;
+            clockElement.textContent = clockValue.textContent;
+            clockElement.setAttribute('aria-label', clockValue.textContent);
+        }, destroy: () => {} };
+        backButton.addEventListener('click', onBack);
+        return {
+            backButton,
+            render: state => {
+                backButton.textContent = displayLabels.facilitiesBackToPlanet;
+                backButton.setAttribute('aria-label', displayLabels.facilitiesBackToPlanet);
+                clock.render(state.clock);
+                credits.textContent = formatCredits(state.credits);
+                cargo.textContent = `${state.cargoUsed} / ${state.cargoCapacity}`;
+            },
+            destroy: () => { backButton.removeEventListener('click', onBack); clock.destroy(); }
+        };
+    } }
+});
 
 const documentStub = { activeElement: null, createElement: () => new FakeElement() };
 
@@ -309,8 +334,8 @@ test('facilities view renders five cards with levels, states, recipes and action
     assert.equal(facilitiesHeading.textContent, displayLabels.facilities);
     assert.equal(facilitiesClock.textContent, `12:34 · ${displayLabels.clockPaused}`);
     assert.equal(facilitiesClock.attributes['aria-label'], `12:34 · ${displayLabels.clockPaused}`);
-    assert.equal(facilitiesCredits.textContent, `${displayLabels.marketCredits}: ${(1_000_000).toLocaleString('en-US')}`);
-    assert.equal(facilitiesCargo.textContent, `${displayLabels.marketCargo}: 3 / 20`);
+    assert.equal(facilitiesCredits.textContent, (1_000_000).toLocaleString('en-US'));
+    assert.equal(facilitiesCargo.textContent, '3 / 20');
     assert.equal(cards['dairyFarm'].querySelector('.facility-card-icon').textContent, '');
     assert.equal(cards['dairyFarm'].querySelector('.facility-card-icon').attributes['aria-label'], `${displayLabels.commodityLabels.milk}${displayLabels.commodityIconSuffix}`);
 
@@ -527,8 +552,8 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(shipyardRepairButton.attributes['aria-label'],
         `${displayLabels.shipyardRepair}: ${displayLabels.shipyardRepairAction} 10% ${displayLabels.shipyardMaxHitPoints} 1,000`);
     assert.equal(shipyardRepairButton.disabled, false);
-    assert.equal(root.querySelector('#landing-status-shipyard-credits').textContent, `${displayLabels.marketCredits}: 1,000,000`, 'the shipyard balance uses grouped numerals');
-    assert.equal(root.querySelector('#landing-status-shipyard-cargo').textContent, `${displayLabels.marketCargo}: 3 / 40`);
+    assert.equal(root.querySelector('#landing-status-shipyard-credits').textContent, '1,000,000', 'the shipyard balance uses the shared market header format');
+    assert.equal(root.querySelector('#landing-status-shipyard-cargo').textContent, '3 / 40');
     const shipyardClockText = root.querySelector('#landing-status-shipyard-clock').textContent;
     assert(shipyardClockText.startsWith('12:34 '), 'the shipyard header shows the run clock');
     assert(shipyardClockText.endsWith(` ${displayLabels.clockPaused}`), 'the shipyard clock shows the paused run state');
