@@ -6,7 +6,7 @@ const clockName = (state: typeof displayLabels.clockRunning | typeof displayLabe
 
 async function expectClock (page: Page, state: typeof displayLabels.clockRunning | typeof displayLabels.clockPaused): Promise<void>
 {
-    await expect(page.getByLabel(clockName(state))).toBeVisible();
+    await expect(page.getByLabel('Run status').getByLabel(clockName(state))).toBeVisible();
     const image = state === displayLabels.clockRunning ? /clock_32x32\.png$/ : /clock_paused_[12]_32x32\.png$/;
     await expect(page.locator('#run-status-clock img')).toHaveAttribute('src', image);
 }

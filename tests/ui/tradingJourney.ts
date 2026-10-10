@@ -23,7 +23,7 @@ async function trade (page: Page, direction: 'buy' | 'sell', quantityUnits: numb
 
 async function launch (page: Page): Promise<void>
 {
-    await page.getByRole('button', { name: 'BACK', exact: true }).click();
+    await page.getByRole('button', { name: 'Back to Planet', exact: true }).click();
     await page.getByRole('button', { name: displayLabels.launch, exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Landed status' })).toBeHidden();
 }
@@ -41,26 +41,23 @@ export async function completeSignedInTradeJourney (page: Page): Promise<void>
     await teleportTo(page, 'Seroton');
     const cashBeforePurchase = await cashBalance.innerText();
     await trade(page, 'buy', 2);
-    await expect(page.getByText(/^Credits: \d[\d,]*$/)).toBeVisible();
-    await expect(page.getByText('Cargo: 2 / 20', { exact: true })).toBeVisible();
     await expect(cashBalance).not.toHaveText(cashBeforePurchase);
+    await expect(page.getByRole('region', { name: 'Ship inventory' }).getByText('2 (0)', { exact: true })).toBeVisible();
     await launch(page);
-    await expect(page.getByText('Cargo 2 / 20', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Cargo', { exact: true })).toHaveText('2 / 40');
 
     await teleportTo(page, 'Lactozis-7C');
     const cashBeforeFirstSale = await cashBalance.innerText();
     await trade(page, 'sell', 1);
-    await expect(page.getByText(/^Credits: \d[\d,]*$/)).toBeVisible();
-    await expect(page.getByText('Cargo: 1 / 20', { exact: true })).toBeVisible();
     await expect(cashBalance).not.toHaveText(cashBeforeFirstSale);
+    await expect(page.getByRole('region', { name: 'Ship inventory' }).getByText('1 (0)', { exact: true })).toBeVisible();
     await launch(page);
-    await expect(page.getByText('Cargo 1 / 20', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Cargo', { exact: true })).toHaveText('1 / 40');
 
     await teleportTo(page, 'Maslo-Prime');
     const cashBeforeFinalSale = await cashBalance.innerText();
     await trade(page, 'sell', 1);
-    await expect(page.getByText(/^Credits: \d[\d,]*$/)).toBeVisible();
-    await expect(page.getByText('Cargo: 0 / 20', { exact: true })).toBeVisible();
     await expect(cashBalance).not.toHaveText(cashBeforeFinalSale);
-    await expect(page.getByText('Cargo 0 / 20', { exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Ship inventory' }).getByText('0 (0)', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Cargo', { exact: true })).toHaveText('0 / 40');
 }

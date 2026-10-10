@@ -6,6 +6,11 @@ import { completeSignedInTradeJourney } from './tradingJourney';
 
 const clockName = (state: typeof displayLabels.clockRunning | typeof displayLabels.clockPaused): RegExp => new RegExp(`^\\d{2}:\\d{2} · ${state}$`);
 
+function runStatusClock (page: Page): ReturnType<Page['getByLabel']>
+{
+    return page.getByLabel('Run status').getByLabel(clockName(displayLabels.clockRunning));
+}
+
 type AsteroidCollisionOutcome = 'damaged' | 'terminal';
 
 async function hitPoints (healthBar: Locator): Promise<number>
@@ -18,8 +23,12 @@ async function waitForAsteroidCollisionOutcome (
 ): Promise<AsteroidCollisionOutcome>
 {
     let outcome: AsteroidCollisionOutcome | null = null;
-    await expect.poll(async () => {
-        if (await resultStatus.isVisible() || !await runStatus.isVisible()) {
+    const collisionObserved = await expect.poll(async () => {
+        if (!await runStatus.isVisible()) {
+            outcome = 'terminal';
+            return true;
+        }
+        if (await resultStatus.isVisible()) {
             outcome = 'terminal';
             return true;
         }
@@ -32,7 +41,10 @@ async function waitForAsteroidCollisionOutcome (
         timeout: 5_000,
         intervals: [100, 250, 500],
         message: `Asteroid teleport attempt ${attempt} did not damage the ship or begin the terminal transition.`
-    }).toBe(true);
+    }).toBe(true).then(() => true).catch(() => false);
+    if (!collisionObserved && (await resultStatus.isVisible() || !await runStatus.isVisible())) {
+        return 'terminal';
+    }
     if (!outcome) throw new Error(`Asteroid teleport attempt ${attempt} completed without a collision outcome.`);
     return outcome;
 }
@@ -50,7 +62,7 @@ async function startRun (page: Page): Promise<void>
     await expect(page.locator('#game-container canvas')).toBeVisible();
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
     await expect(page.getByLabel('Run status')).toBeVisible();
-    await expect(page.getByLabel(clockName(displayLabels.clockRunning))).toBeVisible();
+    await expect(runStatusClock(page)).toBeVisible();
     await expect(page.locator('#run-status-clock img')).toHaveAttribute('src', /clock_32x32\.png$/);
 }
 
@@ -63,7 +75,7 @@ test('an anonymous player can start a new game, pause from the menu, resume, and
     await expect(page.locator('#run-status-clock img')).toHaveAttribute('src', /clock_paused_[12]_32x32\.png$/);
     await page.getByRole('button', { name: 'Resume' }).click();
     await expect(page.getByRole('dialog', { name: 'Game menu' })).toBeHidden();
-    await expect(page.getByLabel(clockName(displayLabels.clockRunning))).toBeVisible();
+    await expect(runStatusClock(page)).toBeVisible();
     await expect(page.locator('#run-status-clock img')).toHaveAttribute('src', /clock_32x32\.png$/);
 
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
@@ -91,7 +103,7 @@ test.describe('authenticated trading journey', () => {
         await page.getByRole('button', { name: 'New Game', exact: true }).click();
         const runStatus = page.getByLabel('Run status');
         await expect(runStatus).toBeVisible();
-        const healthBar = page.getByRole('progressbar', { includeHidden: true });
+        const healthBar = runStatus.getByRole('progressbar', { name: /HP/ });
         await expect(healthBar).toBeVisible();
 
         const resultStatus = page.getByLabel('Result delivery status');
