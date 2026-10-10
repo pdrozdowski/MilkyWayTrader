@@ -232,89 +232,52 @@
                         <span id="cargo-transfer-ship-header"></span>
                     </div>
                     <div class="cargo-transfer-usage" role="row">
-                        <span id="cargo-transfer-cargo-usage"></span>
-                        <span id="cargo-transfer-ship-usage"></span>
+                        <div class="cargo-transfer-capacity" id="cargo-transfer-cargo-capacity">
+                            <span class="cargo-transfer-capacity-value"><span id="cargo-transfer-cargo-usage"></span><span class="cargo-transfer-capacity-state"></span></span>
+                            <span class="cargo-transfer-capacity-track" role="progressbar" aria-label="Cargo capacity"><span class="cargo-transfer-capacity-fill"></span></span>
+                        </div>
+                        <div class="cargo-transfer-capacity" id="cargo-transfer-ship-capacity">
+                            <span class="cargo-transfer-capacity-value"><span id="cargo-transfer-ship-usage"></span><span class="cargo-transfer-capacity-state"></span></span>
+                            <span class="cargo-transfer-capacity-track" role="progressbar" aria-label="Ship capacity"><span class="cargo-transfer-capacity-fill"></span></span>
+                        </div>
                     </div>
                     <div id="cargo-transfer-rows" role="group" aria-label="Cargo transfer commodities">
                         <section class="cargo-transfer-row" data-commodity-id="milk" hidden>
-                            <span class="cargo-transfer-row-cargo-quantity"></span>
-                            <div class="cargo-transfer-row-controls">
-                                <button class="cargo-transfer-to-cargo-max" type="button"></button>
-                                <button class="cargo-transfer-to-cargo-one" type="button"></button>
+                            <div class="cargo-transfer-row-side cargo-transfer-row-cargo">
+                                <div class="cargo-transfer-row-inventory">
+                                    <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="milk" aria-hidden="true"></span>
+                                    <span class="cargo-transfer-row-cargo-quantity"></span>
+                                </div>
+                                <div class="cargo-transfer-row-controls"><button class="cargo-transfer-to-ship-one" type="button" aria-label="Transfer one unit to ship"><img src="/assets/button_one_right.png" alt=""></button><button class="cargo-transfer-to-ship-max" type="button" aria-label="Transfer all to ship"><img src="/assets/button_all_right.png" alt=""></button></div>
                             </div>
-                            <span class="cargo-transfer-row-commodity">
-                                <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="milk" aria-hidden="true"></span>
-                                <span class="cargo-transfer-row-name"></span>
-                            </span>
-                            <div class="cargo-transfer-row-controls">
-                                <button class="cargo-transfer-to-ship-one" type="button"></button>
-                                <button class="cargo-transfer-to-ship-max" type="button"></button>
+                            <span class="cargo-transfer-row-name"></span>
+                            <div class="cargo-transfer-row-side cargo-transfer-row-ship">
+                                <div class="cargo-transfer-row-controls"><button class="cargo-transfer-to-cargo-max" type="button" aria-label="Transfer all to cargo"><img src="/assets/button_all_left.png" alt=""></button><button class="cargo-transfer-to-cargo-one" type="button" aria-label="Transfer one unit to cargo"><img src="/assets/button_one_left.png" alt=""></button></div>
+                                <div class="cargo-transfer-row-inventory">
+                                    <span class="cargo-transfer-row-ship-quantity"></span>
+                                    <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="milk" aria-hidden="true"></span>
+                                </div>
                             </div>
-                            <span class="cargo-transfer-row-ship-quantity"></span>
                         </section>
                         <section class="cargo-transfer-row" data-commodity-id="grain" hidden>
-                            <span class="cargo-transfer-row-cargo-quantity"></span>
-                            <div class="cargo-transfer-row-controls">
-                                <button class="cargo-transfer-to-cargo-max" type="button"></button>
-                                <button class="cargo-transfer-to-cargo-one" type="button"></button>
-                            </div>
-                            <span class="cargo-transfer-row-commodity">
-                                <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="grain" aria-hidden="true"></span>
-                                <span class="cargo-transfer-row-name"></span>
-                            </span>
-                            <div class="cargo-transfer-row-controls">
-                                <button class="cargo-transfer-to-ship-one" type="button"></button>
-                                <button class="cargo-transfer-to-ship-max" type="button"></button>
-                            </div>
-                            <span class="cargo-transfer-row-ship-quantity"></span>
+                            <div class="cargo-transfer-row-side cargo-transfer-row-cargo"><div class="cargo-transfer-row-inventory"><span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="grain" aria-hidden="true"></span><span class="cargo-transfer-row-cargo-quantity"></span></div><div class="cargo-transfer-row-controls"><button class="cargo-transfer-to-ship-one" type="button" aria-label="Transfer one unit to ship"><img src="/assets/button_one_right.png" alt=""></button><button class="cargo-transfer-to-ship-max" type="button" aria-label="Transfer all to ship"><img src="/assets/button_all_right.png" alt=""></button></div></div>
+                            <span class="cargo-transfer-row-name"></span>
+                            <div class="cargo-transfer-row-side cargo-transfer-row-ship"><div class="cargo-transfer-row-controls"><button class="cargo-transfer-to-cargo-max" type="button" aria-label="Transfer all to cargo"><img src="/assets/button_all_left.png" alt=""></button><button class="cargo-transfer-to-cargo-one" type="button" aria-label="Transfer one unit to cargo"><img src="/assets/button_one_left.png" alt=""></button></div><div class="cargo-transfer-row-inventory"><span class="cargo-transfer-row-ship-quantity"></span><span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="grain" aria-hidden="true"></span></div></div>
                         </section>
                         <section class="cargo-transfer-row" data-commodity-id="cheese" hidden>
-                            <span class="cargo-transfer-row-cargo-quantity"></span>
-                            <div class="cargo-transfer-row-controls">
-                                <button class="cargo-transfer-to-cargo-max" type="button"></button>
-                                <button class="cargo-transfer-to-cargo-one" type="button"></button>
-                            </div>
-                            <span class="cargo-transfer-row-commodity">
-                                <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="cheese" aria-hidden="true"></span>
-                                <span class="cargo-transfer-row-name"></span>
-                            </span>
-                            <div class="cargo-transfer-row-controls">
-                                <button class="cargo-transfer-to-ship-one" type="button"></button>
-                                <button class="cargo-transfer-to-ship-max" type="button"></button>
-                            </div>
-                            <span class="cargo-transfer-row-ship-quantity"></span>
+                            <div class="cargo-transfer-row-side cargo-transfer-row-cargo"><div class="cargo-transfer-row-inventory"><span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="cheese" aria-hidden="true"></span><span class="cargo-transfer-row-cargo-quantity"></span></div><div class="cargo-transfer-row-controls"><button class="cargo-transfer-to-ship-one" type="button" aria-label="Transfer one unit to ship"><img src="/assets/button_one_right.png" alt=""></button><button class="cargo-transfer-to-ship-max" type="button" aria-label="Transfer all to ship"><img src="/assets/button_all_right.png" alt=""></button></div></div>
+                            <span class="cargo-transfer-row-name"></span>
+                            <div class="cargo-transfer-row-side cargo-transfer-row-ship"><div class="cargo-transfer-row-controls"><button class="cargo-transfer-to-cargo-max" type="button" aria-label="Transfer all to cargo"><img src="/assets/button_all_left.png" alt=""></button><button class="cargo-transfer-to-cargo-one" type="button" aria-label="Transfer one unit to cargo"><img src="/assets/button_one_left.png" alt=""></button></div><div class="cargo-transfer-row-inventory"><span class="cargo-transfer-row-ship-quantity"></span><span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="cheese" aria-hidden="true"></span></div></div>
                         </section>
                         <section class="cargo-transfer-row" data-commodity-id="bun" hidden>
-                            <span class="cargo-transfer-row-cargo-quantity"></span>
-                            <div class="cargo-transfer-row-controls">
-                                <button class="cargo-transfer-to-cargo-max" type="button"></button>
-                                <button class="cargo-transfer-to-cargo-one" type="button"></button>
-                            </div>
-                            <span class="cargo-transfer-row-commodity">
-                                <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="bun" aria-hidden="true"></span>
-                                <span class="cargo-transfer-row-name"></span>
-                            </span>
-                            <div class="cargo-transfer-row-controls">
-                                <button class="cargo-transfer-to-ship-one" type="button"></button>
-                                <button class="cargo-transfer-to-ship-max" type="button"></button>
-                            </div>
-                            <span class="cargo-transfer-row-ship-quantity"></span>
+                            <div class="cargo-transfer-row-side cargo-transfer-row-cargo"><div class="cargo-transfer-row-inventory"><span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="bun" aria-hidden="true"></span><span class="cargo-transfer-row-cargo-quantity"></span></div><div class="cargo-transfer-row-controls"><button class="cargo-transfer-to-ship-one" type="button" aria-label="Transfer one unit to ship"><img src="/assets/button_one_right.png" alt=""></button><button class="cargo-transfer-to-ship-max" type="button" aria-label="Transfer all to ship"><img src="/assets/button_all_right.png" alt=""></button></div></div>
+                            <span class="cargo-transfer-row-name"></span>
+                            <div class="cargo-transfer-row-side cargo-transfer-row-ship"><div class="cargo-transfer-row-controls"><button class="cargo-transfer-to-cargo-max" type="button" aria-label="Transfer all to cargo"><img src="/assets/button_all_left.png" alt=""></button><button class="cargo-transfer-to-cargo-one" type="button" aria-label="Transfer one unit to cargo"><img src="/assets/button_one_left.png" alt=""></button></div><div class="cargo-transfer-row-inventory"><span class="cargo-transfer-row-ship-quantity"></span><span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="bun" aria-hidden="true"></span></div></div>
                         </section>
                         <section class="cargo-transfer-row" data-commodity-id="spaceRation" hidden>
-                            <span class="cargo-transfer-row-cargo-quantity"></span>
-                            <div class="cargo-transfer-row-controls">
-                                <button class="cargo-transfer-to-cargo-max" type="button"></button>
-                                <button class="cargo-transfer-to-cargo-one" type="button"></button>
-                            </div>
-                            <span class="cargo-transfer-row-commodity">
-                                <span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="spaceRation" aria-hidden="true"></span>
-                                <span class="cargo-transfer-row-name"></span>
-                            </span>
-                            <div class="cargo-transfer-row-controls">
-                                <button class="cargo-transfer-to-ship-one" type="button"></button>
-                                <button class="cargo-transfer-to-ship-max" type="button"></button>
-                            </div>
-                            <span class="cargo-transfer-row-ship-quantity"></span>
+                            <div class="cargo-transfer-row-side cargo-transfer-row-cargo"><div class="cargo-transfer-row-inventory"><span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="spaceRation" aria-hidden="true"></span><span class="cargo-transfer-row-cargo-quantity"></span></div><div class="cargo-transfer-row-controls"><button class="cargo-transfer-to-ship-one" type="button" aria-label="Transfer one unit to ship"><img src="/assets/button_one_right.png" alt=""></button><button class="cargo-transfer-to-ship-max" type="button" aria-label="Transfer all to ship"><img src="/assets/button_all_right.png" alt=""></button></div></div>
+                            <span class="cargo-transfer-row-name"></span>
+                            <div class="cargo-transfer-row-side cargo-transfer-row-ship"><div class="cargo-transfer-row-controls"><button class="cargo-transfer-to-cargo-max" type="button" aria-label="Transfer all to cargo"><img src="/assets/button_all_left.png" alt=""></button><button class="cargo-transfer-to-cargo-one" type="button" aria-label="Transfer one unit to cargo"><img src="/assets/button_one_left.png" alt=""></button></div><div class="cargo-transfer-row-inventory"><span class="cargo-transfer-row-ship-quantity"></span><span class="cargo-transfer-row-icon cargo-commodity-icon commodity-icon" data-commodity-id="spaceRation" aria-hidden="true"></span></div></div>
                         </section>
                     </div>
                 </div>
