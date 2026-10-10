@@ -990,6 +990,15 @@ test('salvage intents preserve full ships and only transfer explicit holders', (
     assert.equal(transferred.state.orbitalCargo[0].manifest[0].quantity, 1);
 });
 
+test('loose-item pickup uses the configured 30-unit interaction radius after a ship impact', () => {
+    const itemAt = x => ({ id: `item-${x}`, position: { x, y: 0 }, motion: { ejectionVelocity: { x: 0, y: 0 }, sunVelocity: { x: -1, y: 0 }, createdAtActiveMs: 0 }, container: { commodityId: 'grain', quantity: 1, totalCost: 0 } });
+    const impactState = item => ({ ...initialGameState, ship: { ...initialGameState.ship, position: { x: 4_000, y: 0 } }, asteroids: [asteroid('pickup-impact', { x: 4_000, y: 0 })], looseItems: [item] });
+    const atBoundary = advanceGameSimulation(impactState(itemAt(4_030)), quietInput, 1);
+    assert.equal(atBoundary.looseItems.length, 0, 'an item at the pickup boundary is collected');
+    const outsideBoundary = advanceGameSimulation(impactState(itemAt(4_030.01)), quietInput, 1);
+    assert.equal(outsideBoundary.looseItems.length, 1, 'an item beyond the pickup boundary remains loose');
+});
+
 test('orbital cargo transfers exact one and max quantities atomically within both capacity limits', () => {
     const cargo = (id, stacks) => ({ id, position: { x: 2_000, y: 0 }, orbit: { angleRadians: 0, radius: 2_000, rotationRadians: 0 }, hitPoints: 2, manifest: stacks });
     const source = { ...initialGameState, orbitalCargo: [cargo('cargo-1', [{ commodityId: 'grain', quantity: 2, totalCost: 8 }])] };

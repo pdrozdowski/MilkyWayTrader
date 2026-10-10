@@ -58,7 +58,7 @@ export const asteroidTuning = {
         cargoMaximumQuantity: 5,
         cargoHitPoints: 2,
         cargoCollisionRadius: 15,
-        looseItemInteractionRadius: 20,
+        looseItemPickupRadius: 30,
         looseItemBlendDurationMs: 10_000,
         looseItemEjectionSpeed: 126,
         looseItemSunSpeed: 240
