@@ -166,6 +166,10 @@ class FakeElement {
         this.attributes[name] = value;
     }
 
+    getAttribute (name) {
+        return this.attributes[name] ?? null;
+    }
+
     removeEventListener (type, listener) {
         if (this.listeners.get(type) === listener) this.listeners.delete(type);
     }
@@ -212,12 +216,14 @@ test('cargo transfer renders cargo/commodity/ship columns, usage, and directiona
     const row = () => new FakeElement({
         '.cargo-transfer-row-cargo-quantity': new FakeElement(),
         '.cargo-transfer-row-ship-quantity': new FakeElement(),
-        '.cargo-transfer-row-icon': new FakeElement(),
+        '.cargo-transfer-row-cargo .cargo-transfer-row-icon': new FakeElement(),
+        '.cargo-transfer-row-ship .cargo-transfer-row-icon': new FakeElement(),
         '.cargo-transfer-row-name': new FakeElement(),
-        '.cargo-transfer-to-ship-one': new FakeElement(),
-        '.cargo-transfer-to-ship-max': new FakeElement(),
-        '.cargo-transfer-to-cargo-one': new FakeElement(),
-        '.cargo-transfer-to-cargo-max': new FakeElement()
+        ...Object.fromEntries(Object.entries(buttonLabels).map(([selector, label]) => {
+            const button = new FakeElement();
+            button.setAttribute('aria-label', label);
+            return [selector, button];
+        }))
     });
     const modal = new FakeElement();
     const title = new FakeElement();
@@ -226,9 +232,27 @@ test('cargo transfer renders cargo/commodity/ship columns, usage, and directiona
     const shipHeader = new FakeElement();
     const cargoUsage = new FakeElement();
     const shipUsage = new FakeElement();
+    const cargoCapacity = new FakeElement({
+        '.cargo-transfer-capacity-fill': new FakeElement(),
+        '.cargo-transfer-capacity-state': new FakeElement(),
+        '.cargo-transfer-capacity-track': new FakeElement()
+    });
+    cargoCapacity.children['.cargo-transfer-capacity-fill'].style = {};
+    const shipCapacity = new FakeElement({
+        '.cargo-transfer-capacity-fill': new FakeElement(),
+        '.cargo-transfer-capacity-state': new FakeElement(),
+        '.cargo-transfer-capacity-track': new FakeElement()
+    });
+    shipCapacity.children['.cargo-transfer-capacity-fill'].style = {};
     const warning = new FakeElement();
     const close = new FakeElement();
     const commodityIds = transpileModule('src/game/domain/serotonMarketCatalog.ts', {}).serotonCommodityIds;
+    const buttonLabels = {
+        '.cargo-transfer-to-ship-one': 'Transfer one unit to ship',
+        '.cargo-transfer-to-ship-max': 'Transfer all to ship',
+        '.cargo-transfer-to-cargo-one': 'Transfer one unit to cargo',
+        '.cargo-transfer-to-cargo-max': 'Transfer all to cargo'
+    };
     const quantities = { milk: [2, 1], grain: [0, 3], cheese: [5, 0], bun: [1, 2], spaceRation: [3, 4] };
     assert.deepEqual(Object.keys(quantities), [...commodityIds], 'derived commodity ids stay aligned with the transfer fixtures');
     const rows = Object.fromEntries(commodityIds.map(commodityId => [commodityId, row()]));
@@ -241,6 +265,8 @@ test('cargo transfer renders cargo/commodity/ship columns, usage, and directiona
         '#cargo-transfer-ship-header': shipHeader,
         '#cargo-transfer-cargo-usage': cargoUsage,
         '#cargo-transfer-ship-usage': shipUsage,
+        '#cargo-transfer-cargo-capacity': cargoCapacity,
+        '#cargo-transfer-ship-capacity': shipCapacity,
         '#cargo-transfer-rows': rowsContainer,
         '#cargo-transfer-warning': warning,
         '#cargo-transfer-close': close
@@ -265,21 +291,26 @@ test('cargo transfer renders cargo/commodity/ship columns, usage, and directiona
     assert.equal(shipHeader.textContent, displayLabels.cargoTransferShipHeader);
     assert.equal(cargoUsage.textContent, '11/20');
     assert.equal(shipUsage.textContent, '10/20');
+    assert(Math.abs(parseFloat(cargoCapacity.children['.cargo-transfer-capacity-fill'].style.width) - 55) < 0.0001);
+    assert(Math.abs(parseFloat(shipCapacity.children['.cargo-transfer-capacity-fill'].style.width) - 50) < 0.0001);
+    assert.equal(cargoCapacity.children['.cargo-transfer-capacity-track'].attributes['aria-valuenow'], '11');
+    assert.equal(shipCapacity.children['.cargo-transfer-capacity-track'].attributes['aria-valuemax'], '20');
     const control = (commodityId, selector) => rows[commodityId].querySelector(selector);
     for (const commodityId of commodityIds) {
         const label = displayLabels.commodityLabels[commodityId];
         assert.equal(rows[commodityId].hidden, false, `${commodityId} row is visible while it appears in the transfer manifest`);
         assert.equal(control(commodityId, '.cargo-transfer-row-cargo-quantity').textContent, String(quantities[commodityId][0]));
         assert.equal(control(commodityId, '.cargo-transfer-row-ship-quantity').textContent, String(quantities[commodityId][1]));
-        assert.equal(control(commodityId, '.cargo-transfer-row-icon').textContent, '', 'the row icon is an image tile, not a letter');
-        assert.equal(control(commodityId, '.cargo-transfer-row-icon').dataset.commodityId, commodityId);
-        assert(control(commodityId, '.cargo-transfer-row-icon').className.includes('commodity-icon'));
-        assert.equal(control(commodityId, '.cargo-transfer-row-icon').attributes['aria-hidden'], 'true');
+        for (const selector of ['.cargo-transfer-row-cargo .cargo-transfer-row-icon', '.cargo-transfer-row-ship .cargo-transfer-row-icon']) {
+            assert.equal(control(commodityId, selector).textContent, '', 'the row icon is an image tile, not a letter');
+            assert.equal(control(commodityId, selector).dataset.commodityId, commodityId);
+            assert(control(commodityId, selector).className.includes('commodity-icon'));
+            assert.equal(control(commodityId, selector).attributes['aria-hidden'], 'true');
+        }
         assert.equal(control(commodityId, '.cargo-transfer-row-name').textContent, label);
-        assert.equal(control(commodityId, '.cargo-transfer-to-ship-one').textContent, displayLabels.toShipOne);
-        assert.equal(control(commodityId, '.cargo-transfer-to-ship-max').textContent, displayLabels.toShipMax);
-        assert.equal(control(commodityId, '.cargo-transfer-to-cargo-one').textContent, displayLabels.toCargoOne);
-        assert.equal(control(commodityId, '.cargo-transfer-to-cargo-max').textContent, displayLabels.toCargoMax);
+        for (const [selector, label] of Object.entries(buttonLabels)) {
+            assert.equal(control(commodityId, selector).getAttribute('aria-label'), label);
+        }
     }
     assert.equal(control('milk', '.cargo-transfer-to-ship-one').disabled, false);
     assert.equal(control('milk', '.cargo-transfer-to-cargo-one').disabled, false);
