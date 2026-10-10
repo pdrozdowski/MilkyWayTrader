@@ -1,5 +1,4 @@
 import { getPlanetDefinition } from '../../definitions/planetDefinitions.ts';
-import { pauseGameClock, resumeGameClock } from '../clock/gameClock.ts';
 import type { GameStateSnapshot } from '../../state/gameStateSnapshot.ts';
 
 export const LANDING_CENTRE_RADIUS = 35;
@@ -12,7 +11,7 @@ export function tryLandAtCapturedPlanet (state: GameStateSnapshot, landingReques
     if (!planet || Math.hypot(state.ship.position.x - planet.position.x, state.ship.position.y - planet.position.y) > LANDING_CENTRE_RADIUS) return state;
     return {
         ...state,
-        clock: pauseGameClock(state.clock, 'landed'),
+        clock: { ...state.clock, playerPaused: true },
         ship: {
             ...state.ship,
             velocity: { x: 0, y: 0 },
@@ -31,7 +30,7 @@ export function launchFromPlanet (state: GameStateSnapshot): GameStateSnapshot
     getPlanetDefinition(planetId);
     return {
         ...state,
-        clock: resumeGameClock(state.clock, 'landed'),
+        clock: { ...state.clock, playerPaused: false },
         planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: null, relandingLockedPlanetId: planetId }
     };
 }

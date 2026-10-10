@@ -16,7 +16,7 @@ import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
 
 const asteroidMaximumHitPoints: Readonly<Record<AsteroidSize, number>> = { big: 3, medium: 2, small: 1 };
 
-const PAUSE_REASONS: readonly GamePauseReason[] = ['background', 'landed', 'manual', 'menu', 'orientation'];
+const PAUSE_REASONS: readonly GamePauseReason[] = ['background', 'manual', 'menu', 'orientation'];
 const facilityStatuses: readonly PlanetFacilityStatus[] = ['notBuilt', 'working', 'insufficientResources'];
 const keys = (value: object): string[] => Object.keys(value).sort();
 
@@ -122,7 +122,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         catch { throw new Error('Game state is not valid JSON.'); }
     }
     const root = requireRecord(source, 'state', ['schemaVersion', 'runId', 'randomState', 'cargoSchedule', 'moolarisDamageArmed', 'terminalResult', 'clock', 'credits', 'cargo', 'orbitalCargo', 'looseItems', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
-    if (root.schemaVersion !== 17) throw new Error('Unsupported game-state schema version.');
+    if (root.schemaVersion !== 18) throw new Error('Unsupported game-state schema version.');
     const decodedRunId = runId(root.runId, 'state.runId');
     const randomState = uint32(root.randomState, 'state.randomState');
     if (!Array.isArray(root.cargoSchedule) || root.cargoSchedule.length > 5) {
@@ -222,11 +222,12 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         };
     });
 
-    const clock = requireRecord(root.clock, 'state.clock', ['budgetMs', 'activeElapsedMs', 'pauseReasons']);
+    const clock = requireRecord(root.clock, 'state.clock', ['budgetMs', 'activeElapsedMs', 'playerPaused', 'pauseReasons']);
     const budgetMs = nonNegativeNumber(clock.budgetMs, 'state.clock.budgetMs');
     if (budgetMs === 0) throw new Error('state.clock.budgetMs must be positive.');
     const activeElapsedMs = nonNegativeNumber(clock.activeElapsedMs, 'state.clock.activeElapsedMs');
     if (activeElapsedMs > budgetMs) throw new Error('state.clock.activeElapsedMs exceeds its budget.');
+    if (typeof clock.playerPaused !== 'boolean') throw new Error('state.clock.playerPaused must be a boolean.');
     if (!Array.isArray(clock.pauseReasons)) throw new Error('state.clock.pauseReasons must be an array.');
     const pauseReasons = clock.pauseReasons.map((reason, index) => {
         if (typeof reason !== 'string' || !PAUSE_REASONS.includes(reason as GamePauseReason)) {
@@ -339,8 +340,6 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     const landedPlanetId = planetIdentity(lifecycle.landedPlanetId, 'state.planetLifecycle.landedPlanetId');
     const relandingLockedPlanetId = planetIdentity(lifecycle.relandingLockedPlanetId, 'state.planetLifecycle.relandingLockedPlanetId');
     if (landedPlanetId !== null && landedPlanetId !== capturedPlanetId) throw new Error('A landed planet must be captured.');
-    if (landedPlanetId !== null && !pauseReasons.includes('landed')) throw new Error('A landed planet requires the landed pause reason.');
-    if (landedPlanetId === null && pauseReasons.includes('landed')) throw new Error('The landed pause reason requires a landed planet.');
     if (relandingLockedPlanetId !== null && relandingLockedPlanetId === landedPlanetId) {
         throw new Error('A relanding lock cannot coexist with landing for that planet.');
     }
@@ -404,7 +403,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 17,
+        schemaVersion: 18,
         runId: decodedRunId,
         randomState,
         cargoSchedule,
@@ -415,7 +414,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
             activeElapsedMs: Math.floor(activeElapsedMs),
             finalCredits: credits
         },
-        clock: { budgetMs, activeElapsedMs, pauseReasons },
+        clock: { budgetMs, activeElapsedMs, playerPaused: clock.playerPaused, pauseReasons },
         credits,
         cargo,
         orbitalCargo,

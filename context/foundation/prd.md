@@ -21,7 +21,7 @@ timeline_budget:
 
 A casual browser player wants a focused space-trading challenge without installing a game or learning a large ruleset. The player has a thirty-minute active-time run to repay a debt of 20,000,000 credits by navigating a moving solar system, trading commodities, upgrading and repairing a ship, surviving hazards, and salvaging occasional asteroid loot.
 
-MilkyWayTrader combines a readable economic simulation with direct ship control and the humor of a cow astronaut trying to avoid life imprisonment. Trading decisions, planetary facility investment, piloting skill, route choice, ship condition, combat, and time pressure contribute to the outcome while landing provides a safe, paused planning state.
+MilkyWayTrader combines a readable economic simulation with direct ship control and the humor of a cow astronaut trying to avoid life imprisonment. Trading decisions, planetary facility investment, piloting skill, route choice, ship condition, combat, and time pressure contribute to the outcome while landing provides a safe place to plan or let active time progress by player choice.
 
 ## User & Persona
 
@@ -44,7 +44,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 ### Guardrails
 
 - Anonymous play remains available; sign-in is not required to begin or finish a run.
-- Active game time does not advance while the player is landed, the application is backgrounded, or the application is closed.
+- Active game time advances while landed only when the player chooses to run it and no environmental pause is active; backgrounding or closing the application pauses it.
 - Buying, repairs, upgrades, and salvage transfers cannot exceed available credits, stock, cargo capacity, missing HP, or crate contents.
 - The player retains direct control during flight; navigation guidance never steers or locks the ship.
 - A failed background save never blocks flight, landing, trading, combat, or salvage interactions.
@@ -81,14 +81,16 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 ### US-03: Player trades and services the ship
 
-- **Given** the player has landed on a planet and game time is paused
+- **Given** the player has landed on a planet with game time paused
 - **When** the player visits the market or shipyard
-- **Then** the player can trade, repair, and buy that planet's available upgrades without consuming active game time
+- **Then** the player can trade, repair, and buy that planet's available upgrades while choosing whether active game time progresses
 
 #### Acceptance Criteria
 
-- Landing visibly changes the clock state to paused and stops the countdown.
-- Launching visibly changes the clock state to running and resumes the countdown.
+- Landing visibly changes the clock state to paused and stops the countdown until the player chooses Play.
+- The player can pause or resume active time while landed; environmental pauses continue to hold the clock and clear back to the player's chosen state.
+- Launching clears the player's landed pause choice and resumes the countdown unless an environmental pause remains.
+- While active time runs on a planet, planetary facility cycles and other active simulation progress; the landed ship follows its planet, cannot be steered or fire, and takes no asteroid impact damage.
 - The market shows local stock and current prices only after landing.
 - Transactions immediately update stock, cargo, credits, and subsequent prices.
 - Repairs are purchased in selectable increments of 10% maximum HP.
@@ -244,13 +246,17 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - FR-055: A player can hear gameplay audio feedback. Priority: must-have
 
+### Planetary time control
+
+- FR-056: A landed player can choose whether active game time progresses. Priority: must-have
+
 ## Non-Functional Requirements
 
 - The game remains usable in currently supported desktop and mobile browser releases.
 - The player sees acknowledgement of an interaction within one second.
 - The displayed countdown remains accurate to active elapsed game time within one second over a complete run.
 - Clock state, remaining time, credits, cargo capacity, and HP remain readable during flight without obscuring direct control.
-- Landing, backgrounding, and restoration cannot advance paused time-based simulations.
+- Landing begins with active time paused; while landed, time-based simulations advance only when the player has chosen to run time and no environmental pause is active. Backgrounding and restoration preserve paused-time behavior.
 - Saving occurs in the background and does not delay visible gameplay responses.
 - A failed save is retried once per second up to five times.
 - After five consecutive failures, the player is informed of the temporary save problem and retries continue every thirty seconds.
@@ -268,10 +274,11 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-003: Remaining active time is continuously visible whenever an active run is open.
 - BR-004: The clock's running or paused state is continuously visible whenever an active run is open.
 - BR-005: Active time advances during orbit, open-space flight, combat, and salvage.
-- BR-006: Landing pauses the countdown, planetary motion, asteroid motion, crate motion, asteroid replenishment, crate lifetimes, and scheduled market ticks.
+- BR-006: Landing begins with the player's time choice paused. While the player has chosen to run time and no environmental pause is active, the countdown, planetary motion, asteroid motion, crate motion, asteroid replenishment, crate lifetimes, and scheduled market ticks advance, including facility cycles for every market.
 - BR-007: While paused, the visible countdown does not decrement and the visible clock state reads paused.
-- BR-008: Launching resumes all time-based systems, resumes decrementing the visible countdown, and changes the visible clock state to running.
+- BR-008: Launching clears the player's pause choice made while landed and resumes time-based systems unless an environmental pause remains active.
 - BR-009: Backgrounding or closing the game pauses active-time progression.
+- BR-009a: Landing remains safe while active time advances: the ship follows its planet's movement, cannot be steered, boosted, or fired, and is protected from asteroid impact damage.
 - BR-010: The countdown and every time-based simulation use the same authoritative clock state.
 - BR-011: The debt target is 20,000,000 liquid credits at the instant the countdown reaches zero.
 - BR-012: Reaching the debt target before timeout does not end the run.

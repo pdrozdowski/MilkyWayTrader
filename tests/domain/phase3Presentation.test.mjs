@@ -25,7 +25,7 @@ test('the shipyard repair band reuses the run-status hull-health boundaries', ()
     }
     const landed = {
         ...initialGameState,
-        clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
+        clock: { ...initialGameState.clock, playerPaused: true, pauseReasons: [] },
         shipStatus: { ...initialGameState.shipStatus, currentHitPoints: 75 },
         planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
     };

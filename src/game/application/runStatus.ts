@@ -36,7 +36,7 @@ export function projectRunStatus (state: GameStateSnapshot, visible: boolean): R
     return {
         visible,
         remainingSeconds: Math.max(0, Math.ceil((state.clock.budgetMs - state.clock.activeElapsedMs) / 1000)),
-        runState: state.clock.pauseReasons.length > 0 ? 'PAUSED' : 'RUNNING',
+        runState: state.clock.playerPaused || state.clock.pauseReasons.length > 0 ? 'PAUSED' : 'RUNNING',
         credits: state.credits,
         cargo,
         cargoUsed: cargo.reduce((used, stack) => used + stack.quantity, 0),

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { decodeGameState, encodeGameState } from '../../src/game/application/gameStateCodec.ts';
 import { GameStateProvider } from '../../src/game/application/gameStateProvider.ts';
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
-import { advanceGameClock, pauseGameClock, resumeGameClock } from '../../src/game/mechanics/clock/gameClock.ts';
+import { advanceGameClock, pauseGameClock, resumeGameClock, setGameClockPlayerPaused } from '../../src/game/mechanics/clock/gameClock.ts';
 import { advanceGameSimulation } from '../../src/game/mechanics/gameSimulation.ts';
 import { projectRunStatus } from '../../src/game/application/runStatus.ts';
 import { applyLandedTrade, quoteLandedTrade } from '../../src/game/application/serotonMarket.ts';
@@ -62,7 +62,7 @@ test('a new run starts with the complete S-01 authoritative state', () => {
         { facilityId: 'bakery', level: 0, status: 'notBuilt' },
         { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
     ];
-    assert.equal(state.schemaVersion, 17);
+    assert.equal(state.schemaVersion, 18);
     assert.equal(state.runId, '00000000-0000-4000-8000-000000000001');
     assert.deepEqual(state.cargoSchedule, []);
     assert.equal(state.moolarisDamageArmed, true);
@@ -167,7 +167,8 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
             shipStatus: { ...clone(advanced.shipStatus), boosterUnlocked: false }
         },
         { ...clone(advanced), clock: { ...clone(advanced.clock), pauseReasons: ['unknown'] } },
-        { ...clone(advanced), clock: { ...clone(advanced.clock), pauseReasons: ['landed', 'landed'] } },
+        { ...clone(advanced), clock: { ...clone(advanced.clock), pauseReasons: ['manual', 'manual'] } },
+        { ...clone(advanced), clock: { ...clone(advanced.clock), playerPaused: 'false' } },
         { ...clone(advanced), ship: { ...clone(advanced.ship), position: { ...clone(advanced.ship.position), x: Number.NaN } } },
         { ...clone(advanced), ship: { ...clone(advanced.ship), asteroidImpactAtActiveMs: -1 } },
         { ...clone(advanced), planets: [...clone(advanced.planets), clone(advanced.planets[0])] },
@@ -185,10 +186,10 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
     assert.deepEqual(provider.snapshot(), advanced);
 });
 
-test('v17 facility state rejects the previous schema and round trips detached records', () => {
+test('v18 facility state rejects the previous schema and round trips detached records', () => {
     const decoded = decodeGameState(initialGameState);
-    assert.equal(decoded.schemaVersion, 17);
-    assert.throws(() => decodeGameState({ ...clone(initialGameState), schemaVersion: 16 }));
+    assert.equal(decoded.schemaVersion, 18);
+    assert.throws(() => decodeGameState({ ...clone(initialGameState), schemaVersion: 17 }));
     assert.deepEqual(decodeGameState(encodeGameState(decoded)).markets, decoded.markets);
     for (const market of decoded.markets) {
         assert.deepEqual(market.facilities.map(facility => facility.facilityId), ['dairyFarm', 'grainFarm', 'cheeseFactory', 'bakery', 'foodProcessor']);
@@ -280,20 +281,22 @@ test('codec rejects retired schemas and permits active boost only for an unlocke
     assert.equal(decodeGameState(activeBoost).ship.boosting, true);
 });
 
-test('clock uses unique overlapping pause reasons and advances only active time', () => {
+test('clock composes player pause intent with unique environmental pause reasons', () => {
     let clock = initialGameState.clock;
-    clock = pauseGameClock(clock, 'landed');
+    clock = setGameClockPlayerPaused(clock, true);
     clock = pauseGameClock(clock, 'background');
-    assert.deepEqual(clock.pauseReasons, ['background', 'landed']);
-    assert.equal(pauseGameClock(clock, 'landed'), clock, 'pause is idempotent');
+    assert.deepEqual(clock.pauseReasons, ['background']);
     assert.equal(advanceGameClock(clock, 60_000).activeElapsedMs, 0);
     clock = resumeGameClock(clock, 'background');
-    assert.equal(advanceGameClock(clock, 60_000).activeElapsedMs, 0, 'one remaining reason keeps time paused');
-    clock = resumeGameClock(clock, 'landed');
-    assert.deepEqual(clock.pauseReasons, []);
-    assert.equal(resumeGameClock(clock, 'landed'), clock, 'resume is idempotent');
+    assert.equal(advanceGameClock(clock, 60_000).activeElapsedMs, 0, 'the player pause remains after the blocker clears');
+    clock = setGameClockPlayerPaused(clock, false);
+    assert.equal(setGameClockPlayerPaused(clock, false), clock, 'setting the current player choice is idempotent');
     clock = advanceGameClock(clock, 65_432);
     assert.equal(clock.activeElapsedMs, 65_432, 'long active frames retain their full clock delta');
+    let environmentallyBlocked = pauseGameClock(setGameClockPlayerPaused(initialGameState.clock, false), 'background');
+    assert.equal(advanceGameClock(environmentallyBlocked, 1_000).activeElapsedMs, 0);
+    environmentallyBlocked = resumeGameClock(environmentallyBlocked, 'background');
+    assert.equal(advanceGameClock(environmentallyBlocked, 1_000).activeElapsedMs, 1_000, 'clearing the environmental blocker restores the running player choice');
     assert.throws(() => advanceGameClock(clock, -1));
 });
 
@@ -421,7 +424,7 @@ test('provider commits a valid landed trade as one immutable replacement', () =>
     const provider = new GameStateProvider(initialGameState);
     const landed = provider.update(state => ({
         ...state,
-        clock: { ...state.clock, pauseReasons: ['landed'] },
+        clock: { ...state.clock, playerPaused: true, pauseReasons: [] },
         planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
     }));
     const traded = provider.update(state => applyLandedTrade(state, 'grain', 2));
@@ -438,7 +441,7 @@ test('a landed trade routes to the landed planet and leaves every other market u
     for (const planet of initialGameState.planets) {
         const landed = {
             ...initialGameState,
-            clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
+            clock: { ...initialGameState.clock, playerPaused: true, pauseReasons: [] },
             planetLifecycle: { capturedPlanetId: planet.id, landedPlanetId: planet.id, relandingLockedPlanetId: null }
         };
         const quote = quoteLandedTrade(landed, 'milk', 1);
@@ -467,7 +470,7 @@ test('landed market port rejects unlanded trade commands and rebuilds its visit-
 
     const landedProvider = new GameStateProvider({
         ...initialGameState,
-        clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
+        clock: { ...initialGameState.clock, playerPaused: true, pauseReasons: [] },
         markets: initialGameState.markets.map(market => market.planetId === 'seroton'
             ? {
                 ...market,
@@ -501,7 +504,7 @@ test('the landing port projects and refreshes landed ship services on every plan
     const land = planetId => provider.update(state => ({
         ...state,
         shipStatus: { ...state.shipStatus, currentHitPoints: 75 },
-        clock: pauseGameClock(state.clock, 'landed'),
+        clock: { ...state.clock, playerPaused: true },
         planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
     }));
     const cases = [['seroton', 'cargo', 15_000], ['lactozis-7c', 'engine', 20_000], ['maslo-prime', 'weaponary', 20_000]];
@@ -576,7 +579,7 @@ test('the landing port skips its projections while flying and still projects the
 
     provider.update(state => ({
         ...state,
-        clock: pauseGameClock(state.clock, 'landed'),
+        clock: { ...state.clock, playerPaused: true },
         planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
     }));
     assert.notEqual(port.getShipyardSnapshot(), shipyardBefore, 'landing must project immediately');
@@ -598,13 +601,13 @@ test('purchased ship services change flight, cargo and volley behaviour through 
         credits: 1_000_000,
         asteroids: [],
         ship: { ...initialGameState.ship, position: { x: 20_000, y: 20_000 }, velocity: { x: 0, y: 0 } },
-        clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
+        clock: { ...initialGameState.clock, playerPaused: true, pauseReasons: [] },
         planetLifecycle: { capturedPlanetId: 'lactozis-7c', landedPlanetId: 'lactozis-7c', relandingLockedPlanetId: null }
     });
     const port = createLandingStatusPort(gameFor(provider));
     const land = planetId => provider.update(state => ({
         ...state,
-        clock: pauseGameClock(state.clock, 'landed'),
+        clock: { ...state.clock, playerPaused: true },
         planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
     }));
 
@@ -666,7 +669,7 @@ test('the landed market port shows, refreshes, trades, and launches from each pl
     for (const planet of initialGameState.planets) {
         const landed = provider.update(state => ({
             ...state,
-            clock: pauseGameClock(state.clock, 'landed'),
+            clock: { ...state.clock, playerPaused: true },
             planetLifecycle: { capturedPlanetId: planet.id, landedPlanetId: planet.id, relandingLockedPlanetId: null }
         }));
         const initialStock = stockOf(landed, planet.id, 'milk');
@@ -779,25 +782,26 @@ test('cargo full warning is shown only for the failure event and expires after e
     }
 });
 
-test('v7 codec preserves lifecycle JSON and rejects v4 and inconsistent lifecycle shapes', () => {
+test('v18 codec preserves lifecycle JSON and rejects v17 and inconsistent lifecycle shapes', () => {
     const planetId = initialGameState.planets[0].id;
     const landed = {
         ...clone(initialGameState),
-        clock: { ...clone(initialGameState.clock), pauseReasons: ['landed'] },
+        clock: { ...clone(initialGameState.clock), playerPaused: true, pauseReasons: [] },
         planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
     };
     const decoded = decodeGameState(landed);
     assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
     assert(Object.isFrozen(decoded.planetLifecycle));
 
-    const legacyV4 = clone(initialGameState);
-    legacyV4.schemaVersion = 4;
-    delete legacyV4.markets;
-    assert.throws(() => decodeGameState(legacyV4));
-    assert.throws(() => decodeGameState({
+    const legacyV17 = clone(initialGameState);
+    legacyV17.schemaVersion = 17;
+    assert.throws(() => decodeGameState(legacyV17));
+    const landedWhileRunning = decodeGameState({
         ...clone(initialGameState),
         planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
-    }));
+    });
+    assert.equal(landedWhileRunning.clock.playerPaused, false);
+    assert.equal(landedWhileRunning.planetLifecycle.landedPlanetId, planetId);
     assert.throws(() => decodeGameState({
         ...clone(landed),
         planetLifecycle: { capturedPlanetId: null, landedPlanetId: planetId, relandingLockedPlanetId: null }
@@ -841,7 +845,7 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 17);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 18);
 });
 
 test('v14 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
@@ -920,7 +924,8 @@ test('run status projection derives clock, capacity and readable run values', ()
     state.clock.activeElapsedMs = 1_000;
     assert.equal(projectRunStatus(state, true).remainingSeconds, 1799);
     state.clock.activeElapsedMs = 1_800_001;
-    state.clock.pauseReasons = ['background', 'landed'];
+    state.clock.playerPaused = true;
+    state.clock.pauseReasons = ['background'];
     const finished = projectRunStatus(state, false);
     assert.equal(finished.remainingSeconds, 0);
     assert.equal(finished.runState, 'PAUSED');

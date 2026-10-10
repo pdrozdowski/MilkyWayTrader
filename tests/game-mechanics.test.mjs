@@ -314,7 +314,8 @@ test('capture detaches outside its shared boundary and landing requires captured
     const centre = lifecycleState(LANDING_CENTRE_RADIUS, { capturedPlanetId: planet.id });
     const landed = advanceGameSimulation(centre, { target: null, boostRequested: false, firing: false, landingRequested: true }, 1);
     assert.equal(landed.planetLifecycle.landedPlanetId, planet.id);
-    assert.deepEqual(landed.clock.pauseReasons, ['landed']);
+    assert.equal(landed.clock.playerPaused, true);
+    assert.deepEqual(landed.clock.pauseReasons, []);
     assert.deepEqual(landed.ship.velocity, { x: 0, y: 0 }, 'landing immediately stops the ship');
     assert.equal(landed.ship.enginesOn, false, 'landing immediately silences the engine loop');
     const boosting = { ...centre, ship: { ...centre.ship, boosting: true } };
@@ -328,7 +329,7 @@ test('capture detaches outside its shared boundary and landing requires captured
 test('launch composes pauses, locks relanding until physical-radius exit, and landed input is inert', () => {
     const planet = initialGameState.planets[0];
     const landed = lifecycleState(0, { capturedPlanetId: planet.id, landedPlanetId: planet.id }, 100);
-    const paused = { ...landed, clock: { ...landed.clock, pauseReasons: ['background', 'landed'] } };
+    const paused = { ...landed, clock: { ...landed.clock, playerPaused: false, pauseReasons: ['background'] } };
     const inert = advanceGameSimulation(paused, {
         target: { x: 10_000, y: 10_000 }, boostRequested: true, firing: true
     }, 1000);
@@ -336,6 +337,7 @@ test('launch composes pauses, locks relanding until physical-radius exit, and la
     assert.equal(inert.projectiles.length, 0);
     const launched = launchFromPlanet(paused);
     assert.deepEqual(launched.clock.pauseReasons, ['background']);
+    assert.equal(launched.clock.playerPaused, false);
     assert.deepEqual(launched.planetLifecycle, { capturedPlanetId: planet.id, landedPlanetId: null, relandingLockedPlanetId: planet.id });
 
     const blocked = advanceGameSimulation({ ...launched, clock: { ...launched.clock, pauseReasons: [] } }, {
@@ -350,6 +352,36 @@ test('launch composes pauses, locks relanding until physical-radius exit, and la
     const orbitExit = lifecycleState(planetOrbitBoundaryRadius(planet.radius, 18) + 0.01, { capturedPlanetId: planet.id });
     const detached = advanceGameSimulation(orbitExit, { target: null, boostRequested: false, firing: false }, 1);
     assert.equal(detached.planetLifecycle.capturedPlanetId, null);
+});
+
+test('active landed simulation follows the planet without flight control or asteroid damage', () => {
+    const planetId = initialGameState.planets[0].id;
+    const landed = lifecycleState(0, { capturedPlanetId: planetId, landedPlanetId: planetId });
+    const beforePlanet = landed.planets.find(planet => planet.id === planetId);
+    const asteroidAtShip = asteroid('landed-impact', landed.ship.position);
+    const running = {
+        ...landed,
+        clock: { ...landed.clock, budgetMs: landed.clock.activeElapsedMs + 1_000, playerPaused: false },
+        asteroids: [asteroidAtShip]
+    };
+    const advanced = advanceGameSimulation(running, {
+        target: { x: 10_000, y: 10_000 }, boostRequested: true, firing: true
+    }, 1_500);
+    const afterPlanet = advanced.planets.find(planet => planet.id === planetId);
+    assert.equal(advanced.clock.activeElapsedMs, running.clock.budgetMs, 'landed running time reaches, then caps at, its active-time budget');
+    for (const market of landed.markets) {
+        assert.notDeepEqual(advanced.markets.find(candidate => candidate.planetId === market.planetId), market,
+            `${market.planetId} facility cycles advance with active time`);
+    }
+    assert.deepEqual(advanced.ship.velocity, { x: 0, y: 0 });
+    assert.deepEqual(advanced.ship.position, {
+        x: landed.ship.position.x + afterPlanet.position.x - beforePlanet.position.x,
+        y: landed.ship.position.y + afterPlanet.position.y - beforePlanet.position.y
+    });
+    assert.equal(advanced.ship.boosting, false);
+    assert.equal(advanced.weapon.projectileSequence, landed.weapon.projectileSequence);
+    assert.equal(advanced.shipStatus.currentHitPoints, landed.shipStatus.currentHitPoints);
+    assert.equal(advanced.ship.asteroidImpactAtActiveMs, null);
 });
 
 test('planet definitions project exact counter-clockwise active-time orbits', () => {
@@ -1144,15 +1176,12 @@ test('an all-or-nothing shortfall leaves the stock untouched and flips the statu
     assert.equal(facilityIn(repeated, 'bakery').status, 'insufficientResources', 'the stored status persists until the next cycle evaluates it');
 });
 
-test('every pause reason freezes facility cycles and resuming continues from the stored stock', () => {
+test('environmental pauses freeze facility cycles and player pause holds all active simulation', () => {
     const expected = advanceGameSimulation(initialGameState, quietInput, 1_000).markets;
-    for (const reason of ['background', 'landed', 'manual', 'menu', 'orientation']) {
+    for (const reason of ['background', 'manual', 'menu', 'orientation']) {
         const paused = {
             ...initialGameState,
-            clock: { ...initialGameState.clock, pauseReasons: [reason] },
-            planetLifecycle: reason === 'landed'
-                ? { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
-                : initialGameState.planetLifecycle
+            clock: { ...initialGameState.clock, pauseReasons: [reason] }
         };
         const frozen = advanceGameSimulation(paused, quietInput, 5_000);
         assert.equal(frozen.clock.activeElapsedMs, 0, `${reason} keeps active time frozen`);
@@ -1165,6 +1194,10 @@ test('every pause reason freezes facility cycles and resuming continues from the
         }, quietInput, 1_000);
         assert.deepEqual(resumed.markets, expected, `${reason} resumes the normal one-second cycle`);
     }
+    const playerPaused = { ...initialGameState, clock: { ...initialGameState.clock, playerPaused: true } };
+    const frozen = advanceGameSimulation(playerPaused, quietInput, 5_000);
+    assert.equal(frozen.clock.activeElapsedMs, 0);
+    assert.deepEqual(frozen.markets, playerPaused.markets);
 });
 
 test('facility stock and status survive an encode and restore and keep cycling', () => {
