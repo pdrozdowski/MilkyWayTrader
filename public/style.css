@@ -301,12 +301,13 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 #landing-status-quantity-value { text-align: center; font-size: 2em; font-weight: 700; }
 .landing-view { box-sizing: border-box; width: 100%; height: 100%; min-height: 0; }
 #landing-status-hub { position: relative; display: block; }
+.landing-time-control { min-width: 76px; padding: 6px 10px; font-weight: 700; }
 .landing-visual { position: absolute; inset: 0; display: flex; align-items: end; min-width: 0; padding: clamp(16px, 3vw, 44px); background: url('/assets/landing_bg_seroton.png') center / cover; }
 .landing-visual::after { position: absolute; right: 0; bottom: 0; left: 0; height: 25%; content: ''; background: linear-gradient(to bottom, transparent, #07111b); pointer-events: none; }
-.landing-title-stack { position: static; }
-#landing-status-title { position: absolute; z-index: 1; bottom: clamp(16px, 3vw, 44px); left: clamp(16px, 3vw, 44px); display: block; width: min(38vw, 520px); height: auto; }
-#landing-status-landed { position: absolute; z-index: 1; top: clamp(16px, 3vw, 44px); left: clamp(16px, 3vw, 44px); display: block; width: min(26vw, 230px); height: auto; }
-.landing-actions { position: absolute; inset: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) auto; z-index: 1; display: flex; flex-direction: column; align-items: end; gap: clamp(8px, 1.2vw, 16px); padding: 0; background: transparent; }
+.landing-title-stack { position: absolute; z-index: 1; bottom: clamp(16px, 3vw, 44px); left: clamp(16px, 3vw, 44px); display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+#landing-status-title { display: block; width: min(38vw, 520px); height: auto; }
+#landing-status-landed { display: block; width: min(20vw, 180px); height: auto; }
+.landing-actions { position: absolute; inset: calc(max(12px, env(safe-area-inset-top)) + 72px) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) auto; z-index: 1; display: flex; flex-direction: column; align-items: end; gap: clamp(8px, 1.2vw, 16px); padding: 0; background: transparent; }
 .landing-image-button { appearance: none; width: min(24vw, 230px); min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; cursor: pointer; }
 .landing-image-button img { display: block; width: 100%; height: auto; }
 .landing-image-button:disabled { opacity: .55; }
@@ -387,9 +388,16 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 @media (max-height: 500px) and (orientation: landscape) {
     .landing-visual { padding: 12px; }
     #landing-status-title { width: min(42vw, 370px); }
-    #landing-status-landed { width: min(25vw, 150px); }
+    #landing-status-landed { width: min(18vw, 120px); }
+    .landing-actions { top: calc(max(8px, env(safe-area-inset-top)) + 60px); }
     .landing-image-button { width: min(25vw, 170px); }
     .landing-market-controls { gap: 8px; padding: 8px 12px; }
+}
+
+@media (max-width: 520px) {
+    .landing-time-control { min-height: 38px; min-width: 64px; padding: 5px 8px; }
+    .landing-actions { top: calc(max(8px, env(safe-area-inset-top)) + 112px); }
+    #landing-status-hub > .landing-facilities-header { position: absolute; }
 }
 
 @media (min-width: 600px) {
@@ -399,9 +407,10 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 
 
 #landing-status-facilities-view { position: relative; display: block; background: var(--ui-surface) center / cover; }
-.landing-facilities-header { position: absolute; top: 0; right: 0; left: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: clamp(12px, 2vw, 20px) clamp(16px, 3vw, 32px); background: linear-gradient(to bottom, rgba(7, 17, 27, 0.85), transparent); }
+.landing-facilities-header { position: absolute; top: 0; right: 0; left: 0; z-index: 1; box-sizing: border-box; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: clamp(12px, 2vw, 20px) clamp(16px, 3vw, 32px); background: linear-gradient(to bottom, rgba(7, 17, 27, 0.85), transparent); }
 .landing-facilities-nav-left, .landing-facilities-nav-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .landing-facilities-nav-right { text-align: right; }
+.landing-facilities-header .landing-resource { padding: 8px 10px; border-radius: 0; background: transparent; }
 .landing-facilities-clock { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; white-space: nowrap; }
 .landing-facilities-heading { position: absolute; z-index: 1; top: 19%; left: clamp(16px, 3vw, 32px); margin: 0; }
 .landing-facility-cards { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1.5vw, 16px); min-height: 0; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
@@ -497,3 +506,12 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 #performance-readout thead th:first-child, #performance-readout th[scope="row"] { text-align: left; }
 #performance-readout p { max-width: 34ch; margin: 6px 0 0; white-space: normal; }
 #performance-readout-note { color: #9fd1ff; }
+
+@media (max-width: 520px) {
+    .landing-facilities-header { flex-wrap: wrap; gap: 8px; padding: 8px max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left)); }
+    .landing-facilities-nav-left { flex: 1 1 100%; gap: 8px; }
+    .landing-facilities-nav-right { flex: 1 1 100%; justify-content: flex-end; gap: 6px; }
+    .landing-facilities-header .landing-resource { min-height: 36px; padding: 5px 8px; font-size: 12px; }
+    #landing-status-hub > .landing-facilities-header { position: absolute; }
+    .landing-actions { top: calc(max(8px, env(safe-area-inset-top)) + 128px); }
+}

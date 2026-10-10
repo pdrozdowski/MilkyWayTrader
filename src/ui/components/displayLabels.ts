@@ -37,6 +37,7 @@ export const displayLabels = {
     planetStock: 'Planet stock', planetaryStockOf: 'Planetary stock of', playerStock: 'Ship stock', shipStockOf: 'Ship stock of', supply: 'Supply',
     marketProduction: 'Production', marketConsumption: 'Consumption', marketStockChange: 'Stock change',
     averageBuyPrice: 'Average buy price',
+    timePlay: 'Play', timePause: 'Pause',
     tradeIncome: 'INCOME', expense: 'EXPENSE', profit: 'PROFIT', loss: 'LOSS', clockRunning: 'RUNNING', clockPaused: 'PAUSED',
     facilitiesBackToPlanet: 'Back to Planet', facilityLevel: 'Level', facilityProduces: 'Produces', facilityConsumes: 'Consumes', facilityNoInputs: 'No inputs', facilityPerCycle: 'per second', facilityMissing: '(MISSING)',
     facilityOutputBonus: 'Output bonus', facilityUpgradeDiscount: 'Upgrade discount', facilityPrice: 'Price',

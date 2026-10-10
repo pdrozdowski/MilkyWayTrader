@@ -1,4 +1,4 @@
-# Planet Menu Time Control — Implementation Plan
+﻿# Planet Menu Time Control â€” Implementation Plan
 
 ## Problem and Outcome
 
@@ -37,7 +37,7 @@ Players need a persistent Play/Pause control on the Planet hub, Market, Faciliti
 - Launch clears the planet-only player pause; environmental blockers continue to hold time.
 - While Play is active, all markets' facility cycles and the active simulation continue. The landed ship remains attached to its moving planet, receives no free-flight steering/boost/fire behavior, and is protected from asteroid impacts.
 - The state schema advances to v18. Version 17 is rejected; no migration is added because there is no active save backend and repository lessons favor explicit schema changes over speculative migration.
-- The Planet hub header shows clock, credits, cargo, and the time control; it has no Back control. Service buttons sit below on the right, with an animated LANDED badge at lower left.
+- The Planet hub uses the same full-width shared header structure and presentation as Market, Facilities, and Shipyard, with its Back button hidden. The clock and Play/Pause stay left; credits and cargo stay right with transparent counters. On narrow screens the resources wrap to a second right-aligned row, and service buttons begin below the header. An animated LANDED badge sits above the planet name at lower left.
 
 ## Implementation Approach
 
@@ -45,7 +45,7 @@ Introduce `playerPaused: boolean` in `GameClockState`, defaulting to true on lan
 
 Update the game-state codec and default state to schema v18, with v17 rejected. Revise the PRD to describe the landed running-time capability and run the required `10x-prd-en-capability` deterministic and semantic validations.
 
-Extend clock projections and the landing UI port/adapter with the player's toggle action and effective state. Provide one accessible shared Play/Pause control and resource/clock header to Market, Facilities, Shipyard, and the Planet hub. Preserve the service-menu back navigation and implement the distinct hub header layout described above.
+Extend clock projections and the landing UI port/adapter with the player's toggle action and effective state. Provide one accessible shared Play/Pause control and full-width resource/clock header to Market, Facilities, Shipyard, and the Planet hub. Preserve service-menu Back navigation and hide the Back button in the hub while keeping the clock/control left and transparent credit/cargo counters right.
 
 At the simulation boundary, retain planet-relative attachment and disable flight input/actions while landed. Gate asteroid impact damage to the landed ship while allowing time, facility cycles, and the rest of active simulation to advance. Verify that the landed running clock reaches its active-time budget; timeout outcome handling belongs to a separate story.
 
@@ -60,7 +60,7 @@ At the simulation boundary, retain planet-relative attachment and disable flight
 | Landing/launch lifecycle and `src/game/scenes/gameScene.ts` | Keep flight input and lifecycle safe independently of clock state. | Landing gates flight controls; launch clears the player-only pause; unrelated environmental reasons remain untouched. |
 | `src/game/mechanics/gameSimulation.ts` and collision mechanics | Permit active simulation while protecting a landed ship. | Facility cycles and active simulation continue; landed ship remains planet-relative and cannot be damaged by asteroid impacts while landed. |
 | `src/ui/contracts.ts`, `src/ui/adapters/`, landing clock/header/status components | Expose consistent player control and status. | Play/Pause toggles player intent only; effective paused/running status reflects environmental blockers; all planet menus stay synchronized. |
-| Planet hub menu component(s) | Add the hub time/resource header and service layout. | Header presents clock, credits, cargo, and toggle without Back; services are right-aligned below; LANDED badge appears lower left. |
+| Planet hub menu component(s) | Reuse the shared landing header and add the hub service layout. | Hub uses the full-width shared header with Back hidden; clock/control remain left and transparent credit/cargo counters right; narrow layouts wrap resources right and keep services below; animated LANDED badge appears above the planet name at lower left. |
 | Clock, codec, lifecycle, simulation, adapter, and UI unit/integration suites | Cover the changed contracts at their appropriate level. | Tests cover landing default, toggle, blocker composition and auto-resume, launch, landed movement/safety, economy ticks, countdown-to-budget while landed, and UI action/state projection. |
 
 ## Phase 1: Authoritative Clock and Safe Landed Simulation
@@ -155,27 +155,27 @@ Advance the authoritative game-state schema to v18. Reject v17 instead of migrat
 
 ## Progress
 
-> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands.
+> Convention: `- [ ]` pending, `- [x]` done. Append ` â€” <commit sha>` when a step lands.
 
 ### Phase 1: Authoritative Clock and Safe Landed Simulation
 
 #### Automated
 
-- [x] 1.1 Clock/state tests prove landing starts paused; Play/Pause updates player intent; all-market economy advances only while effectively running; environmental blockers hold time and auto-resume after clearing; Launch clears only the player pause; the landed running clock reaches its active-time budget. Timeout outcome handling is a separate story.
-- [x] 1.2 Codec, lifecycle, and mechanics tests prove schema v18 behavior, landed ship planet-relative movement, disabled flight actions, and asteroid-impact protection while active time advances.
-- [x] 1.3 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass.
+- [x] 1.1 Clock/state tests prove landing starts paused; Play/Pause updates player intent; all-market economy advances only while effectively running; environmental blockers hold time and auto-resume after clearing; Launch clears only the player pause; the landed running clock reaches its active-time budget. Timeout outcome handling is a separate story. â€” 08aa9d4
+- [x] 1.2 Codec, lifecycle, and mechanics tests prove schema v18 behavior, landed ship planet-relative movement, disabled flight actions, and asteroid-impact protection while active time advances. â€” 08aa9d4
+- [x] 1.3 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass. â€” 08aa9d4
 
 #### Manual
 
-- [x] 1.4 The PRD's updated behavior and acceptance criteria pass semantic review against the agreed landed-running and safety behavior.
+- [x] 1.4 The PRD's updated behavior and acceptance criteria pass semantic review against the agreed landed-running and safety behavior. â€” 08aa9d4
 
 ### Phase 2: Shared Landing Controls and Planet Hub Header
 
 #### Automated
 
-- [ ] 2.1 Landing UI/adapter tests verify the shared accessible Play/Pause control, action routing, state rendering under environmental blockers, and component cleanup across Market, Facilities, Shipyard, and the hub.
-- [ ] 2.2 UI projection tests verify clock, credits, cargo, hub navigation/layout contract, and consistent toggle state across menus.
-- [ ] 2.3 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass.
+- [x] 2.1 Landing UI/adapter tests verify the shared accessible Play/Pause control, action routing, state rendering under environmental blockers, and component cleanup across Market, Facilities, Shipyard, and the hub.
+- [x] 2.2 UI projection tests verify clock, credits, cargo, hub navigation/layout contract, and consistent toggle state across menus.
+- [x] 2.3 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass.
 
 #### Manual
 

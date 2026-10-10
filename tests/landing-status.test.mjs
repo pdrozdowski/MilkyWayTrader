@@ -16,7 +16,7 @@ const { formatCredits } = transpileModule('src/ui/components/formatCredits.ts', 
 const { mountLandingStatus } = transpileModule('src/ui/components/landingStatus.ts', {
     './displayLabels': { displayLabels },
     './formatCredits': { formatCredits },
-    './landingMenuHeader': { mountLandingMenuHeader: (backButton, clockElement, credits, cargo, isActive, onBack) => {
+    './landingMenuHeader': { mountLandingMenuHeader: (backButton, clockElement, credits, cargo, timeControl, isActive, onBack, onToggleTime) => {
         const clockImage = new FakeElement();
         const clockValue = new FakeElement();
         const clock = { render: state => {
@@ -25,17 +25,24 @@ const { mountLandingStatus } = transpileModule('src/ui/components/landingStatus.
             clockElement.textContent = clockValue.textContent;
             clockElement.setAttribute('aria-label', clockValue.textContent);
         }, destroy: () => {} };
-        backButton.addEventListener('click', onBack);
+        backButton?.addEventListener('click', onBack);
+        timeControl.addEventListener('click', onToggleTime);
         return {
             backButton,
             render: state => {
-                backButton.textContent = displayLabels.facilitiesBackToPlanet;
-                backButton.setAttribute('aria-label', displayLabels.facilitiesBackToPlanet);
+                if (backButton) {
+                    backButton.textContent = displayLabels.facilitiesBackToPlanet;
+                    backButton.setAttribute('aria-label', displayLabels.facilitiesBackToPlanet);
+                }
                 clock.render(state.clock);
                 credits.textContent = formatCredits(state.credits);
                 cargo.textContent = `${state.cargoUsed} / ${state.cargoCapacity}`;
+                timeControl.textContent = state.clock.playerPaused ? displayLabels.timePlay : displayLabels.timePause;
+                timeControl.setAttribute('aria-label', timeControl.textContent);
+                timeControl.setAttribute('aria-pressed', String(!state.clock.playerPaused));
+                timeControl.dataset.playerPaused = String(state.clock.playerPaused);
             },
-            destroy: () => { backButton.removeEventListener('click', onBack); clock.destroy(); }
+            destroy: () => { backButton?.removeEventListener('click', onBack); timeControl.removeEventListener('click', onToggleTime); clock.destroy(); }
         };
     } }
 });
@@ -119,7 +126,8 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-quantity', '#landing-status-quantity-value', '#landing-status-unit-price',
         '#landing-status-confirm', '#landing-status-launch', '#landing-status-market', '#landing-status-shipyard', '#landing-status-market-back',
         '.market-commodity-icon', '#landing-status-market-heading', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
-        '#landing-status-title', '.landing-visual'
+        '#landing-status-title', '.landing-visual', '#landing-status-hub-back', '#landing-status-hub-clock', '#landing-status-hub-credits', '#landing-status-hub-cargo',
+        '#landing-status-hub-time-control', '#landing-status-market-time-control', '#landing-status-facilities-time-control', '#landing-status-shipyard-time-control'
     ];
     const facilityIdList = ['dairyFarm', 'grainFarm', 'cheeseFactory', 'bakery', 'foodProcessor'];
     const cards = Object.fromEntries(facilityIdList.map(facilityId => [facilityId, new FakeElement({
@@ -175,6 +183,10 @@ test('facilities view renders five cards with levels, states, recipes and action
         }),
         '#landing-status-player-stock-bar': new FakeElement({ '.market-stock-fill': new FakeElement() }),
         '#landing-status-hub': hub,
+        '#landing-status-hub-clock': new FakeElement(),
+        '#landing-status-hub-credits': new FakeElement(),
+        '#landing-status-hub-cargo': new FakeElement(),
+        '#landing-status-hub-time-control': new FakeElement(),
         '#landing-status-market-view': marketView,
         '#landing-status-facilities-view': facilitiesView,
         '#landing-status-facilities-heading': facilitiesHeading,
@@ -207,12 +219,12 @@ test('facilities view renders five cards with levels, states, recipes and action
     const facilitiesSnapshot = credits => ({
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton',
         credits, cargoUsed: 3, cargoCapacity: 20,
-        clock: { remainingSeconds: 754, runState: 'PAUSED' },
+        clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: true },
         facilities: baseFacilities.map(facility => ({ ...facility, action: { ...facility.action, affordable: facility.action.kind === 'max' || facility.action.price <= credits } }))
     });
     const emptyShipyardSnapshot = {
         visible: false, eligible: false, planetId: null, planetName: null, credits: 0, cargoUsed: 0, cargoCapacity: 0,
-        clock: { remainingSeconds: 0, runState: 'RUNNING' },
+        clock: { remainingSeconds: 0, runState: 'RUNNING', playerPaused: true },
         repair: { currentHitPoints: 100, maximumHitPoints: 100, incrementHitPoints: 10, price: 1_000, failure: 'not-landed' },
         services: [],
         booster: { owned: false, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'not-landed' }
@@ -222,36 +234,61 @@ test('facilities view renders five cards with levels, states, recipes and action
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000,
         cargoUsed: 3, cargoCapacity: 20, commodities: [commodity], selectedCommodityId: 'milk', tradeQuantity: 0,
         selectedCommodity: commodity, plannedStockDelta: 0, plannedCargoDelta: 0, supplyLevel: 'Medium',
-        clock: { remainingSeconds: 754, runState: 'PAUSED' },
+        clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: true },
         commodityFlow: { productionPerSecond: 10, consumptionPerSecond: 12, netPerSecond: -2 },
         quote: { quantity: 0, total: 0, failure: null, postTradeStock: 400, nextUnitPrice: 100 }
     };
     let marketListener = null;
     let facilitiesListener = null;
+    let shipyardListener = null;
     let marketUnsubscribes = 0;
     let facilitiesUnsubscribes = 0;
     let portDestroyed = 0;
     const builds = [];
     const upgrades = [];
     const downgrades = [];
+    const toggles = [];
     const port = {
         getSnapshot: () => marketSnapshot,
         subscribe: next => { marketListener = next; next(marketSnapshot); return () => { marketUnsubscribes++; }; },
         getFacilitiesSnapshot: () => facilitiesSnapshot(1_000_000),
         subscribeFacilities: next => { facilitiesListener = next; next(facilitiesSnapshot(1_000_000)); return () => { facilitiesUnsubscribes++; }; },
         getShipyardSnapshot: () => emptyShipyardSnapshot,
-        subscribeShipyard: next => { next(emptyShipyardSnapshot); return () => {}; },
+        subscribeShipyard: next => { shipyardListener = next; next(emptyShipyardSnapshot); return () => {}; },
         selectCommodity: () => {},
         setTradeQuantity: () => {},
         confirmTrade: () => {},
         buildFacility: facilityId => builds.push(facilityId),
         upgradeFacility: facilityId => upgrades.push(facilityId),
         downgradeFacility: facilityId => downgrades.push(facilityId),
+        togglePlayerPause: () => toggles.push('toggle-time'),
         launch: () => {},
         destroy: () => { portDestroyed++; }
     };
     const handle = mountLandingStatus(root, port);
     const element = selector => root.querySelector(selector);
+    const timeControls = ['#landing-status-hub-time-control', '#landing-status-market-time-control', '#landing-status-facilities-time-control', '#landing-status-shipyard-time-control'].map(element);
+    assert(timeControls.every(button => button.textContent === displayLabels.timePlay), 'each planet view starts with the Play action');
+    marketListener({ ...marketSnapshot, clock: { ...marketSnapshot.clock, runState: 'PAUSED', playerPaused: false } });
+    facilitiesListener({ ...facilitiesSnapshot(1_000_000), clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: false } });
+    shipyardListener({ ...emptyShipyardSnapshot, visible: true, clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: false } });
+    assert(timeControls.every(button => button.textContent === displayLabels.timePause && button.attributes['aria-pressed'] === 'true'),
+        'environmental blockers hold the clock while all views retain the player-selected Pause action state');
+    timeControls.forEach(button => button.click());
+    assert.equal(toggles.length, 4, 'each time control routes through the shared player toggle action');
+    assert.equal(element('#landing-status-hub-credits').textContent, '1,000,000');
+    assert.equal(element('#landing-status-hub-cargo').textContent, '3 / 20');
+    assert(element('#landing-status-hub-clock').textContent.startsWith('12:34 '), 'the hub projects the active clock');
+    const landingMarkup = readFileSync('index.html', 'utf8');
+    const hubHeaderMarkup = landingMarkup.match(/<header class="landing-facilities-header">([\s\S]*?)<\/header>/)?.[1] ?? '';
+    assert.match(hubHeaderMarkup, /landing-status-hub-back[^>]*hidden/, 'the hub reuses the shared header with its Back button hidden');
+    assert.match(hubHeaderMarkup, /landing-facilities-nav-left[\s\S]*?landing-status-hub-time-control[\s\S]*?landing-facilities-nav-right[\s\S]*?landing-status-hub-credits[\s\S]*?landing-status-hub-cargo/,
+        'the hub header uses the shared left clock/control and right resource layout');
+    assert.equal((landingMarkup.match(/class="landing-facilities-header"/g) ?? []).length, 4, 'all planet views use the same shared header structure');
+    assert.match(shipyardStylesheet, /\.landing-facilities-header \{[^}]*width: 100%/, 'the shared header fills its menu width');
+    assert.match(shipyardStylesheet, /\.landing-facilities-nav-left \{ flex: 1 1 100%; gap: 8px; \}/, 'narrow layouts keep the clock and control together on the left');
+    assert.match(shipyardStylesheet, /\.landing-facilities-nav-right \{ flex: 1 1 100%; justify-content: flex-end; gap: 6px; \}/, 'narrow layouts wrap resources onto a right-aligned row');
+    assert.match(landingMarkup, /<nav class="landing-actions" aria-label="Planet services">/, 'the hub retains the accessible Planet services navigation');
     assert.equal(element('#landing-status-supply').textContent, `${displayLabels.supply}: Medium`);
     assert.equal(element('#landing-status-supply').dataset.supplyLevel, 'Medium');
     marketListener({ ...marketSnapshot, supplyLevel: 'Low' });
@@ -456,6 +493,7 @@ test('facilities view renders five cards with levels, states, recipes and action
 
     handle.destroy();
     handle.destroy();
+    assert(timeControls.every(button => !button.listeners.has('click')), 'all four time control listeners are removed on teardown');
     assert.equal(marketUnsubscribes, 1, 'teardown unsubscribes the market listener exactly once');
     assert.equal(facilitiesUnsubscribes, 1, 'teardown unsubscribes the facilities listener exactly once');
     assert.equal(portDestroyed, 1, 'teardown destroys the port exactly once');
@@ -502,7 +540,8 @@ test('the shipyard view renders repair, local service cards and the booster row 
         '#landing-status-quantity', '#landing-status-quantity-value', '#landing-status-unit-price',
         '#landing-status-confirm', '#landing-status-launch', '#landing-status-market', '#landing-status-shipyard', '#landing-status-market-back',
         '.market-commodity-icon', '#landing-status-market-heading', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
-        '#landing-status-title', '.landing-visual',
+        '#landing-status-title', '.landing-visual', '#landing-status-hub-back', '#landing-status-hub-clock', '#landing-status-hub-credits', '#landing-status-hub-cargo', '#landing-status-hub-time-control',
+        '#landing-status-market-time-control', '#landing-status-facilities-time-control', '#landing-status-shipyard-time-control',
         '#landing-status-facilities-heading', '#landing-status-facilities-clock', '#landing-status-facilities-credits', '#landing-status-facilities-cargo', '#landing-status-facilities'];
     const modal = new FakeElement();
     const hub = new FakeElement();
@@ -552,7 +591,7 @@ test('the shipyard view renders repair, local service cards and the booster row 
     });
     const shipyardSnapshot = overrides => ({
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000, cargoUsed: 3, cargoCapacity: 40,
-        clock: { remainingSeconds: 754, runState: 'PAUSED' },
+        clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: true },
         repair: repairOf(75),
         services, booster: { owned: false, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'wrong-planet' },
         ...overrides
@@ -562,7 +601,7 @@ test('the shipyard view renders repair, local service cards and the booster row 
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000,
         cargoUsed: 3, cargoCapacity: 40, commodities: [commodity], selectedCommodityId: 'milk', tradeQuantity: 0,
         selectedCommodity: commodity, plannedStockDelta: 0, plannedCargoDelta: 0, supplyLevel: 'Medium',
-        clock: { remainingSeconds: 754, runState: 'PAUSED' },
+        clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: true },
         commodityFlow: { productionPerSecond: 0, consumptionPerSecond: 0, netPerSecond: 0 },
         quote: { quantity: 0, total: 0, failure: null, postTradeStock: 400, nextUnitPrice: 100 }
     };
@@ -589,6 +628,7 @@ test('the shipyard view renders repair, local service cards and the booster row 
         repairShip: () => repairs.push('repair'),
         upgradeShipService: serviceId => upgrades.push(serviceId),
         purchaseBooster: () => boosters.push('booster'),
+        togglePlayerPause: () => {},
         launch: () => {},
         destroy: () => { portDestroyed++; }
     };

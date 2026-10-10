@@ -286,7 +286,7 @@ test('the shipyard projection reports landed context, repair status and one loca
         assert.equal(snapshot.credits, initialGameState.credits);
         assert.equal(snapshot.cargoUsed, 0);
         assert.equal(snapshot.cargoCapacity, 40);
-        assert.deepEqual(snapshot.clock, { remainingSeconds: 1800, runState: 'PAUSED' });
+        assert.deepEqual(snapshot.clock, { remainingSeconds: 1800, runState: 'PAUSED', playerPaused: true });
 
         assert.equal(snapshot.repair.currentHitPoints, 75);
         assert.equal(snapshot.repair.maximumHitPoints, maximumShipHitPoints);
