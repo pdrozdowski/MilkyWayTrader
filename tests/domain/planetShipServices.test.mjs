@@ -28,7 +28,7 @@ const clone = value => JSON.parse(JSON.stringify(value));
 const landedOn = (planetId, credits = initialGameState.credits) => ({
     ...clone(initialGameState),
     credits,
-    clock: { ...clone(initialGameState.clock), pauseReasons: ['landed'] },
+    clock: { ...clone(initialGameState.clock), playerPaused: true, pauseReasons: [] },
     planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
 });
 

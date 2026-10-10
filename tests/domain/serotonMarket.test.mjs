@@ -12,7 +12,7 @@ const cheese = serotonCommodityDefinitionById.cheese;
 const spaceRation = serotonCommodityDefinitionById.spaceRation;
 const landed = () => ({
     ...initialGameState,
-    clock: { ...initialGameState.clock, pauseReasons: ['landed'] },
+    clock: { ...initialGameState.clock, playerPaused: true, pauseReasons: [] },
     planetLifecycle: { capturedPlanetId: 'seroton', landedPlanetId: 'seroton', relandingLockedPlanetId: null }
 });
 

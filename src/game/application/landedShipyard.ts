@@ -99,7 +99,7 @@ export function projectLandedShipyard (state: GameStateSnapshot): LandedShipyard
     const cargoUsed = state.cargo.reduce((total, stack) => total + stack.quantity, 0);
     const clock: LandedShipyardClockSnapshot = {
         remainingSeconds: Math.max(0, Math.ceil((state.clock.budgetMs - state.clock.activeElapsedMs) / 1000)),
-        runState: state.clock.pauseReasons.length > 0 ? 'PAUSED' : 'RUNNING'
+        runState: state.clock.playerPaused || state.clock.pauseReasons.length > 0 ? 'PAUSED' : 'RUNNING'
     };
     const repairQuote = quoteShipRepair(state);
     const repair: LandedShipyardRepairSnapshot = {

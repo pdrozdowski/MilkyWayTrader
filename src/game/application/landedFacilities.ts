@@ -105,7 +105,7 @@ export function projectLandedFacilities (
     const cargoCapacity = cargoCapacityByLevel[state.shipStatus.cargoLevel] ?? 0;
     const clock: LandedFacilitiesClockSnapshot = {
         remainingSeconds: Math.max(0, Math.ceil((state.clock.budgetMs - state.clock.activeElapsedMs) / 1000)),
-        runState: state.clock.pauseReasons.length > 0 ? 'PAUSED' : 'RUNNING'
+        runState: state.clock.playerPaused || state.clock.pauseReasons.length > 0 ? 'PAUSED' : 'RUNNING'
     };
     if (planetId === null || market === null) {
         return Object.freeze({

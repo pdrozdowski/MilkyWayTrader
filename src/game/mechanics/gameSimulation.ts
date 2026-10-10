@@ -89,7 +89,7 @@ export function advanceGameSimulation (
         && clock.activeElapsedMs < state.ship.asteroidControlLockedUntilActiveMs;
     const recovering = asteroidControlLocked || (contact.hasControl && isRecoveringFromMoolaris(state.ship, input.target));
     const hasControl = contact.hasControl && !asteroidControlLocked;
-    const targetDelta = hasControl && !recovering && input.target ? {
+    const targetDelta = !landed && hasControl && !recovering && input.target ? {
         x: input.target.x - state.ship.position.x,
         y: input.target.y - state.ship.position.y
     } : null;
@@ -111,7 +111,7 @@ export function advanceGameSimulation (
         accelerationRate: wantsBoost ? boostAcceleration : normalMaxSpeed / shipTuning.accelerationSeconds,
         decelerationRate: !targetDelta ? coastDeceleration : shipTuning.maxSpeed * (shipBoostTuning.speedMultiplier - 1) / shipBoostTuning.accelerationSeconds
     });
-    const velocity = contact.forcedVelocity ?? flight;
+    const velocity = landed ? { x: 0, y: 0 } : contact.forcedVelocity ?? flight;
     const ship = {
         ...state.ship,
         position: {
@@ -277,7 +277,9 @@ function resolveAsteroidImpacts (
 {
     const sources: readonly (AsteroidImpactSource & { readonly start: Readonly<{ x: number; y: number }>; readonly radius: number })[] = [
         { id: moolarisDefinition.id, kind: 'moolaris', position: moolarisDefinition.position, start: moolarisDefinition.position, radius: moolarisDefinition.radius },
-        { id: 'ship', kind: 'ship', position: ship.position, start: state.ship.position, radius: shipTuning.collisionRadius },
+        ...(state.planetLifecycle.landedPlanetId === null
+            ? [{ id: 'ship', kind: 'ship' as const, position: ship.position, start: state.ship.position, radius: shipTuning.collisionRadius }]
+            : []),
         ...planets.map(planet => ({ id: `planet-${planet.id}`, kind: 'planet' as const, position: planet.position,
             start: state.planets.find(previous => previous.id === planet.id)?.position ?? planet.position, radius: planet.radius }))
     ];

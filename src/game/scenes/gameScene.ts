@@ -454,14 +454,15 @@ export class Game extends Scene
     };
 
     private readonly clearInputForPause = (reason: string): void => {
-        if (reason === 'menu' || reason === 'orientation' || reason === 'landed') this.clearFlightInput();
+        if (reason === 'menu' || reason === 'orientation') this.clearFlightInput();
     };
 
     private hasInputBlockingPause (): boolean
     {
         if (this.deathTransitionStarted) return true;
-        const reasons = this.stateProvider.snapshot().clock.pauseReasons;
-        return reasons.includes('menu') || reasons.includes('orientation') || reasons.includes('landed');
+        const state = this.stateProvider.snapshot();
+        const reasons = state.clock.pauseReasons;
+        return state.planetLifecycle.landedPlanetId !== null || reasons.includes('menu') || reasons.includes('orientation');
     }
 
     private planetsById (states: readonly PlanetState[]): ReadonlyMap<string, PlanetState>

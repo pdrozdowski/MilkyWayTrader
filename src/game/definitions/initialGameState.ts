@@ -17,7 +17,7 @@ export interface InitialGameStateInput
 export function createInitialGameState ({ runId, randomSeed }: InitialGameStateInput): GameStateSnapshot
 {
     return {
-    schemaVersion: 17,
+    schemaVersion: 18,
     runId,
     randomState: randomSeed,
     cargoSchedule: [],
@@ -26,6 +26,7 @@ export function createInitialGameState ({ runId, randomSeed }: InitialGameStateI
     clock: {
         budgetMs: ACTIVE_TIME_BUDGET_MS,
         activeElapsedMs: 0,
+        playerPaused: false,
         pauseReasons: []
     },
     credits: initialCredits,
