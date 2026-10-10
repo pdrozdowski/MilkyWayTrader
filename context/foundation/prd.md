@@ -320,6 +320,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-052: A commodity container's displayed average cost equals total cost divided by quantity when quantity is positive.
 - BR-053: A paid purchase adds its paid total to the receiving ship container.
 - BR-054: A free pickup adds quantity but no cost to the receiving ship container.
+- BR-054a: A loose commodity is collected when the ship is within 30 world units of it and has sufficient cargo capacity.
 - BR-055: A partial transfer or loss removes quantity and proportional cost from its source container.
 - BR-056: A complete transfer or loss removes the source container's exact remaining total cost.
 - BR-057: Destroying orbital cargo spills each remaining unit as an independent loose item, with each stack's cost allocated proportionally and the final unit of each stack receiving any residual.

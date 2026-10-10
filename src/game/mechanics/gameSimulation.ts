@@ -248,7 +248,7 @@ export function advanceGameSimulation (
     const cargoProjectileResult = resolveCargoProjectileHits(salvageState, projectiles, state.projectiles, options);
     salvageState = cargoProjectileResult.state;
     projectiles = cargoProjectileResult.projectiles;
-    const pickup = salvageState.looseItems.find(item => Math.hypot(item.position.x - impactedShip.position.x, item.position.y - impactedShip.position.y) <= asteroidTuning.salvage.looseItemInteractionRadius);
+    const pickup = salvageState.looseItems.find(item => Math.hypot(item.position.x - impactedShip.position.x, item.position.y - impactedShip.position.y) <= asteroidTuning.salvage.looseItemPickupRadius);
     if (pickup) salvageState = collectLooseItem(salvageState, pickup.id);
     const next = tryLandAtCapturedPlanet({ ...salvageState, projectiles }, input.landingRequested === true);
     return resolveTerminalResult(next);

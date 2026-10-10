@@ -515,7 +515,7 @@ export class Game extends Scene
         }));
         this.markPerformanceStep('feedback-and-ship-sync');
         if (before.moolarisDamageArmed && !state.moolarisDamageArmed && state.terminalResult === null) this.playShipCrashFeedback(state.ship.position);
-        const failedPickup = before.looseItems.some(item => Math.hypot(item.position.x - before.ship.position.x, item.position.y - before.ship.position.y) <= asteroidTuning.salvage.looseItemInteractionRadius)
+        const failedPickup = before.looseItems.some(item => Math.hypot(item.position.x - before.ship.position.x, item.position.y - before.ship.position.y) <= asteroidTuning.salvage.looseItemPickupRadius)
             && state.looseItems.length === before.looseItems.length
             && before.cargo.reduce((total, container) => total + container.quantity, 0) >= (cargoCapacityByLevel[before.shipStatus.cargoLevel] ?? 0);
         if (failedPickup) {
