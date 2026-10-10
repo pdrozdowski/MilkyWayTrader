@@ -1,4 +1,4 @@
-﻿# Planet Menu Time Control â€” Implementation Plan
+# Planet Menu Time Control — Implementation Plan
 
 ## Problem and Outcome
 
@@ -155,27 +155,27 @@ Advance the authoritative game-state schema to v18. Reject v17 instead of migrat
 
 ## Progress
 
-> Convention: `- [ ]` pending, `- [x]` done. Append ` â€” <commit sha>` when a step lands.
+> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands.
 
 ### Phase 1: Authoritative Clock and Safe Landed Simulation
 
 #### Automated
 
-- [x] 1.1 Clock/state tests prove landing starts paused; Play/Pause updates player intent; all-market economy advances only while effectively running; environmental blockers hold time and auto-resume after clearing; Launch clears only the player pause; the landed running clock reaches its active-time budget. Timeout outcome handling is a separate story. â€” 08aa9d4
-- [x] 1.2 Codec, lifecycle, and mechanics tests prove schema v18 behavior, landed ship planet-relative movement, disabled flight actions, and asteroid-impact protection while active time advances. â€” 08aa9d4
-- [x] 1.3 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass. â€” 08aa9d4
+- [x] 1.1 Clock/state tests prove landing starts paused; Play/Pause updates player intent; all-market economy advances only while effectively running; environmental blockers hold time and auto-resume after clearing; Launch clears only the player pause; the landed running clock reaches its active-time budget. Timeout outcome handling is a separate story. — 08aa9d4
+- [x] 1.2 Codec, lifecycle, and mechanics tests prove schema v18 behavior, landed ship planet-relative movement, disabled flight actions, and asteroid-impact protection while active time advances. — 08aa9d4
+- [x] 1.3 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass. — 08aa9d4
 
 #### Manual
 
-- [x] 1.4 The PRD's updated behavior and acceptance criteria pass semantic review against the agreed landed-running and safety behavior. â€” 08aa9d4
+- [x] 1.4 The PRD's updated behavior and acceptance criteria pass semantic review against the agreed landed-running and safety behavior. — 08aa9d4
 
 ### Phase 2: Shared Landing Controls and Planet Hub Header
 
 #### Automated
 
-- [x] 2.1 Landing UI/adapter tests verify the shared accessible Play/Pause control, action routing, state rendering under environmental blockers, and component cleanup across Market, Facilities, Shipyard, and the hub.
-- [x] 2.2 UI projection tests verify clock, credits, cargo, hub navigation/layout contract, and consistent toggle state across menus.
-- [x] 2.3 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass.
+- [x] 2.1 Landing UI/adapter tests verify the shared accessible Play/Pause control, action routing, state rendering under environmental blockers, and component cleanup across Market, Facilities, Shipyard, and the hub. — 91a5888
+- [x] 2.2 UI projection tests verify clock, credits, cargo, hub navigation/layout contract, and consistent toggle state across menus. — 91a5888
+- [x] 2.3 `npm.cmd run test:fast` and `npm.cmd run typecheck` pass. — 91a5888
 
 #### Manual
 
