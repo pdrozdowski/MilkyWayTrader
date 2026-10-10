@@ -1,10 +1,10 @@
 ---
 change_id: bug01-state-commit-issue-fix
 title: State commit is JSON-bound: drop the per-frame serialize round-trip
-status: implemented
+status: archived
 created: 2026-10-09
 updated: 2026-10-10
-archived_at: null
+archived_at: 2026-10-10T11:17:25Z
 ---
 
 ## Notes
