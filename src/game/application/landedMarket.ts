@@ -17,6 +17,7 @@ export interface LandedMarketCommoditySnapshot
 {
     readonly commodityId: SerotonCommodityId;
     readonly stock: number;
+    readonly supplyLevel: 'Low' | 'Medium' | 'High';
     readonly carriedQuantity: number;
     readonly unitPrice: number;
     readonly averageBuyPrice: number;
@@ -86,9 +87,13 @@ export function projectLandedMarket (
         const stock = market === null ? undefined : market.commodityStocks.find(candidate => candidate.commodityId === definition.id);
         if (market !== null && !stock) throw new Error(`Missing landed stock for ${definition.id}.`);
         const stockLevel = stock?.stock ?? 0;
+        const supplyLevel = stockLevel < definition.lowerStockThreshold ? 'Low'
+            : stockLevel > definition.upperStockThreshold ? 'High'
+                : 'Medium';
         return Object.freeze({
             commodityId: definition.id,
             stock: stockLevel,
+            supplyLevel,
             carriedQuantity: state.cargo.find(stack => stack.commodityId === definition.id)?.quantity ?? 0,
             unitPrice: commodityUnitPrice(stockLevel, definition),
             averageBuyPrice: containerAverageCost(state.cargo.find(stack => stack.commodityId === definition.id) ?? { commodityId: definition.id, quantity: 0, totalCost: 0 })
@@ -96,9 +101,7 @@ export function projectLandedMarket (
     });
     const selectedCommodity = commodities.find(commodity => commodity.commodityId === selectedCommodityId);
     if (!selectedCommodity) throw new Error(`Missing selected landed commodity ${selectedCommodityId}.`);
-    const supplyLevel = selectedStockLevel < selectedDefinition.lowerStockThreshold ? 'Low'
-        : selectedStockLevel > selectedDefinition.upperStockThreshold ? 'High'
-            : 'Medium';
+    const supplyLevel = selectedCommodity.supplyLevel;
     return Object.freeze({
         visible: planetId !== null,
         eligible: planetId !== null,

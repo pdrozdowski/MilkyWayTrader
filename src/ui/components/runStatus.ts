@@ -53,7 +53,7 @@ export function mountRunStatus (root: HTMLElement, port: RunStatusPort): UiHandl
         toolbar.hidden = !snapshot.visible;
         presentation.update(snapshot.remainingSeconds, snapshot.runState, snapshot.visible);
         renderValue(credits, formatCredits(snapshot.credits));
-        renderValue(cargo, `Cargo ${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`);
+        renderValue(cargo, `${snapshot.cargoUsed} / ${snapshot.cargoCapacity}`);
         renderValue(hp, `HP ${snapshot.currentHitPoints} / ${snapshot.maximumHitPoints}`);
         bar.value = snapshot.currentHitPoints; bar.max = snapshot.maximumHitPoints;
         bar.dataset.healthBand = snapshot.healthBand;
