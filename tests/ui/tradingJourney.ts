@@ -18,7 +18,9 @@ async function trade (page: Page, direction: 'buy' | 'sell', quantityUnits: numb
         await quantity.press(direction === 'buy' ? 'ArrowRight' : 'ArrowLeft');
     }
     await expect(page.getByText(direction === 'buy' ? `+${quantityUnits} BUY` : `${quantityUnits} SELL`, { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'CONFIRM TRADE', exact: true }).click();
+    const confirmTrade = page.getByRole('button', { name: /^CONFIRM TRADE:/ });
+    await expect(confirmTrade, `Expected an affordable ${direction} quote for ${quantityUnits} units`).toBeEnabled();
+    await confirmTrade.click();
 }
 
 async function launch (page: Page): Promise<void>
