@@ -158,6 +158,25 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 
 #game-menu, #debug-menu { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px; background: var(--ui-overlay); }
 #player-account { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; box-sizing: border-box; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: var(--ui-overlay); }
+#personal-best { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; box-sizing: border-box; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: var(--ui-overlay); }
+.personal-best-panel { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(760px, 100%); max-height: 100%; overflow-y: auto; padding: 20px 24px; border: 1px solid var(--ui-border); border-radius: 12px; background: var(--ui-surface); color: #fff; text-align: center; }
+.personal-best-panel header { width: 100%; border-bottom: 1px solid var(--ui-border); padding-bottom: 8px; }
+.personal-best-panel h2 { margin: 0; font-size: clamp(18px, 3vw, 25px); letter-spacing: .08em; }
+#personal-best-high-score { margin: 0; color: #ffd54a; font-size: clamp(22px, 4vw, 32px); font-weight: 800; }
+#personal-best-status { min-height: 1.25em; margin: 0; color: #c8d5e4; }
+.personal-best-table-wrap { width: 100%; overflow-x: auto; }
+#personal-best-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: clamp(11px, 1.8vw, 14px); }
+#personal-best-table th { padding: 5px 3px; color: #c8d5e4; font-size: .85em; letter-spacing: .05em; }
+#personal-best-table td { padding: 5px 3px; border: 0; overflow-wrap: anywhere; }
+#personal-best-table tbody tr:nth-child(odd) { color: #9be7ff; }
+#personal-best-table tbody tr:nth-child(even) { color: #d2a8ff; }
+#personal-best-table tbody tr td:nth-child(4) { color: #ffd54a; font-weight: 800; }
+#personal-best-table button { min-height: 26px; padding: 2px 5px; border: 0; color: #c8d5e4; background: transparent; font: inherit; font-size: .8em; }
+.personal-best-pages { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.personal-best-pages button, #personal-best-sign-in, #personal-best-retry, .personal-best-close { min-height: 36px; padding: 7px 12px; border: 1px solid var(--ui-border); border-radius: 6px; color: #fff; background: var(--ui-action); font: inherit; cursor: pointer; }
+.personal-best-pages button:disabled { opacity: .5; cursor: default; }
+.personal-best-close { align-self: center; min-width: 120px; font-weight: 700; }
+#personal-best button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .player-account-panel { position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 16px; width: min(560px, 100%); max-height: 100%; overflow-y: auto; padding: 24px; border: 1px solid var(--ui-border); border-radius: 12px; background: var(--ui-surface); color: #fff; text-align: center; }
 .player-account-panel header { display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--ui-border); padding-bottom: 12px; text-align: center; }
 .player-account-panel h2, .player-account-panel h3, .player-account-panel p { margin: 0; }

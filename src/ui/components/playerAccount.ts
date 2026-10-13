@@ -137,13 +137,19 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
         modal.hidden = true;
         options.onOpenStateChange(false);
         if (origin === 'game-menu') document.querySelector<HTMLElement>('#game-menu')!.hidden = false;
-        (returnFocus?.isConnected ? returnFocus : trigger).focus();
+        const personalBest = root.querySelector<HTMLElement>('#personal-best');
+        const personalBestClose = root.querySelector<HTMLButtonElement>('#personal-best-close');
+        if (returnFocus && returnFocus.isConnected && !returnFocus.closest('[hidden]') && !(returnFocus instanceof HTMLButtonElement && returnFocus.disabled)) returnFocus.focus();
+        else if (personalBest && !personalBest.hidden && personalBestClose) personalBestClose.focus();
+        else trigger.focus();
     };
     const openMainMenu = (): void => openFrom(gameOverResults.hidden ? 'main-menu' : 'game-over', trigger);
     const openGameMenu = (): void => openFrom('game-menu', gameMenuTrigger);
     const openOnReturn = (event: Event): void => {
-        const requestedOrigin = (event as CustomEvent<AccountOrigin>).detail;
-        openFrom(requestedOrigin, requestedOrigin === 'game-menu' ? gameMenuTrigger : trigger);
+        const detail = (event as CustomEvent<AccountOrigin | { origin: AccountOrigin; returnFocus?: HTMLElement }>).detail;
+        const requestedOrigin = typeof detail === 'string' ? detail : detail.origin;
+        const requestedFocus = typeof detail === 'string' ? null : detail.returnFocus ?? null;
+        openFrom(requestedOrigin, requestedFocus ?? (requestedOrigin === 'game-menu' ? gameMenuTrigger : trigger));
     };
     const onAuthChange = (snapshot: Readonly<AuthSnapshot>): void => {
         const prior = authSnapshot.status;
