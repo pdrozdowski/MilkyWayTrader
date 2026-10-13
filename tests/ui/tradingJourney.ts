@@ -34,7 +34,12 @@ async function launch (page: Page): Promise<void>
 export async function completeSignedInTradeJourney (page: Page): Promise<void>
 {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByLabel('Main menu').getByRole('button', { name: /playwright-/ })).toBeVisible();
+    const mainMenuAccount = page.getByLabel('Main menu').getByRole('button', { name: /playwright-/ });
+    await expect(mainMenuAccount).toBeVisible();
+    await mainMenuAccount.click();
+    const account = page.getByRole('dialog', { name: 'PLAYER ACCOUNT' });
+    await expect(account.getByText(/playwright-/)).toBeVisible();
+    await account.getByRole('button', { name: 'CLOSE', exact: true }).click();
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
     await expect(page.getByLabel('Run status')).toBeVisible();
     const cashBalance = page.getByLabel('Credits', { exact: true });

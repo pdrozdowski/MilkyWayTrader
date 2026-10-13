@@ -25,7 +25,7 @@ test('an in-game account return reload restores the paused run and reopens Playe
     const account = page.getByRole('dialog', { name: 'PLAYER ACCOUNT' });
     await expect(page.getByLabel('Run status')).toBeVisible({ timeout: 60_000 });
     await expect(account).toBeVisible();
-    await expect(account).toContainText('NOT SIGNED IN');
+    await expect(account.getByRole('button', { name: /SIGN IN WITH GOOGLE/ })).toBeVisible();
     await expect(page.getByRole('dialog', { name: 'Game menu' })).toBeHidden();
 
     await page.getByRole('button', { name: 'CLOSE', exact: true }).click();
@@ -42,13 +42,13 @@ test.describe('signed-in Player Account', () => {
 
     test('a player updates a persisted nickname and sees account controls change on sign-out', async ({ page, testSession }) => {
         await page.goto('/', { waitUntil: 'domcontentloaded' });
-        const openAccount = page.getByRole('button', { name: 'ACCOUNT', exact: true });
+        const openAccount = page.getByLabel('Main menu').getByRole('button', { name: /playwright-/ });
         await expect(openAccount).toBeVisible();
         await openAccount.click();
         const account = page.getByRole('dialog', { name: 'PLAYER ACCOUNT' });
         await expect(account).toBeVisible();
         await expect(account.getByText('Signed in', { exact: true })).toBeVisible();
-        await expect(account.getByLabel('Email')).toHaveValue(/@/);
+        await expect(account.getByText(/playwright-/)).toBeVisible();
         const nickname = account.getByLabel('PLAYER NICKNAME');
         await expect(nickname).toHaveValue(/^spaceTrader\d{5}$/);
 
@@ -59,12 +59,11 @@ test.describe('signed-in Player Account', () => {
         await account.getByRole('button', { name: 'CLOSE', exact: true }).click();
 
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.getByRole('button', { name: 'ACCOUNT', exact: true }).click();
+        await page.getByLabel('Main menu').getByRole('button', { name: /playwright-/ }).click();
         await expect(account).toBeVisible();
         await expect(account.getByLabel('PLAYER NICKNAME')).toHaveValue(updatedNickname);
         await account.getByRole('button', { name: 'SIGN OUT', exact: true }).click();
-        await expect(account.getByText('NOT SIGNED IN', { exact: true })).toBeVisible();
-        await expect(account.getByLabel('PLAYER NICKNAME')).toBeHidden();
         await expect(account.getByRole('button', { name: /SIGN IN WITH GOOGLE/ })).toBeVisible();
+        await expect(account.getByLabel('PLAYER NICKNAME')).toBeHidden();
     });
 });
