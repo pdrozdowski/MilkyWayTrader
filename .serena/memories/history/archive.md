@@ -14,5 +14,12 @@
 - `2026-10-02-rework-clock` — compact HUD clock presentation.
 - `2026-10-04-s09-asteroid-salvage` — authoritative asteroid salvage replacement.
 - `2026-10-05-salvage-motion-loot-debug` — smooth salvage motion, deterministic cargo drops, and debug spawning.
+- `2026-09-29-s10-player-sign-in-status` — sign-in state, player identity lifecycle and bounded telemetry foundations.
+- `2026-10-08-s16-planetary-facilities` — planetary facility construction and production cycles.
+- `2026-10-09-bug01-state-commit-issue-fix` — correction to state commit behavior.
+- `2026-10-09-req01-performance-monitor` — debug-controlled update/render performance measurement.
+- `2026-10-09-s05-planet-ship-services` — repairs, planet-specific ship upgrades, booster and weapon volleys.
+- `2026-10-10-req02-planet-time-control` — safe time control while landed, with independent pause reasons and hazard protection.
+- `2026-10-11-s10-player-account-management` — reusable account management, nickname/profile persistence and OAuth run continuity.
 
 Most changes contain `change.md`, framing and/or plan briefs, a detailed `plan.md`, research where needed, and implementation-review records. Consult the specific folder rather than treating this index as a substitute for its detailed requirements or accepted decisions.
