@@ -3,7 +3,7 @@ project: MilkyWayTrader
 version: 1
 status: draft
 created: 2026-09-21
-updated: 2026-10-09
+updated: 2026-10-13
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -51,7 +51,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-07 | s07-environmental-hazards-and-death | User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed. | S-01, S-02 | US-01, US-04, FR-008, FR-038, FR-040 | done |
 | S-08 | s08-asteroid-combat | User can fire the ship weapon and fragment or destroy asteroids. | S-07 | US-04, FR-037, FR-039, FR-040 | done |
 | S-09 | s09-asteroid-salvage | User can recover commodities from asteroid salvage. | S-04, S-08 | US-04, FR-034, FR-041, FR-042, FR-043, FR-044, FR-045 | done |
-| S-10 | s10-player-sign-in-status | User can sign in, sign out, and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-046, FR-047, FR-048 | in-progress |
+| S-10 | s10-player-sign-in-status | User can sign in, sign out, and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-046, FR-047, FR-048 | done |
 | S-11 | s11-automatic-save-and-resume | Signed-in user can see save status, preserve progress, and resume an active run. | S-06, S-09, S-10, S-16 | US-05, FR-006, FR-049, FR-050 | proposed |
 | S-12 | s12-personal-best-result | Signed-in user can view their personal best result across retained outcomes. | S-11 | US-06, FR-052 | proposed |
 | S-13 | s13-global-high-scores | User can view the globally eligible high-score results. | S-11 | US-06, FR-053 | proposed |
@@ -206,7 +206,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** Test identity projects and redirect configuration require user-managed service setup.
 - **Unknowns:** —
 - **Risk:** Identity integration must preserve complete anonymous play and must not expose one player's private state to another account.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-11: Preserve and resume a signed-in run
 
@@ -322,6 +322,8 @@ No open roadmap questions.
 ## Milestone History
 
 ## Done
+
+- **S-10: User can sign in, sign out, and inspect authentication status.** — Archived 2026-10-13 → `context/archive/2026-09-29-s10-player-sign-in-status/`. Lesson: —.
 
 - **S-05: User can repair and upgrade the ship through planet-specific services.** — Archived 2026-10-09 → `context/archive/2026-10-09-s05-planet-ship-services/`. Lesson: —.
 
