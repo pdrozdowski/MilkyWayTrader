@@ -1,10 +1,10 @@
 ---
 change_id: s10-player-account-management
 title: Player account management and OAuth run continuity
-status: impl_reviewed
+status: archived
 created: 2026-10-11
-updated: 2026-10-11
-archived_at: null
+updated: 2026-10-13
+archived_at: 2026-10-13T16:28:46Z
 ---
 
 ## Notes
