@@ -1,0 +1,6 @@
+interface:
+  display_name: "Update Serena"
+  short_description: "Refresh Serena's code index and project memories"
+  default_prompt: "Use $utils-update-serena to rescan this project and reconcile Serena's memories with its foundation and archive documentation."
+policy:
+  allow_implicit_invocation: true
