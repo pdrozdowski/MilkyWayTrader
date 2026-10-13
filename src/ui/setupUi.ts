@@ -6,6 +6,7 @@ import { createRunStatusPort } from './adapters/runStatusAdapter';
 import { createLandingStatusPort } from './adapters/landingStatusAdapter';
 import { createCargoTransferPort } from './adapters/cargoTransferAdapter';
 import { createPerformanceReadoutPort } from './adapters/performanceReadoutAdapter';
+import { createBrowserResultHistoryStore } from './adapters/browserResultHistoryStore';
 import { mountAudioControls } from './components/audioControls';
 import { mountDisplayControls } from './components/displayControls';
 import { mountGameMenu } from './components/gameMenu';
@@ -15,6 +16,7 @@ import { mountCargoTransfer } from './components/cargoTransfer';
 import { mountPerformanceReadout } from './components/performanceReadout';
 import { formatCredits } from './components/formatCredits';
 import { mountPlayerAccount } from './components/playerAccount';
+import { mountPersonalBest } from './components/personalBest';
 import type { AuthReturnPort, AccountOrigin } from '../game/application/auth/authReturn';
 import type { AuthPort } from '../game/application/auth/auth';
 import type { TelemetryPort } from '../game/application/telemetry/telemetry';
@@ -48,11 +50,12 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const gameOverSurvivalTime = root.querySelector<HTMLElement>('#game-over-survival-time');
     const gameOverFinalCashLabel = root.querySelector<HTMLElement>('#game-over-final-cash-label');
     const gameOverFinalCash = root.querySelector<HTMLElement>('#game-over-final-cash');
+    const gameOverPersonalBest = root.querySelector<HTMLButtonElement>('#game-over-personal-best');
     const gameOverStatus = root.querySelector<HTMLElement>('#game-over-status');
     const gameOverMessage = root.querySelector<HTMLElement>('#game-over-status-message');
     const gameOverRetry = root.querySelector<HTMLButtonElement>('#game-over-status-retry');
     const stateProvider = game.registry.get('gameStateProvider') as GameStateProvider;
-    if (!gameOverResults || !gameOverResultsTitle || !gameOverSurvivalTimeLabel || !gameOverSurvivalTime || !gameOverFinalCashLabel || !gameOverFinalCash || !gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
+    if (!gameOverResults || !gameOverResultsTitle || !gameOverSurvivalTimeLabel || !gameOverSurvivalTime || !gameOverFinalCashLabel || !gameOverFinalCash || !gameOverPersonalBest || !gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
     const renderGameOverPersistence = (result: { status: 'pending' | 'saved' | 'failed' | 'unsigned'; message: string | null } | null): void => {
         gameOverStatus.hidden = result === null;
         if (!result) return;
@@ -93,6 +96,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         },
         clearSignInContext: () => authReturn?.clear()
     });
+    const personalBest = mountPersonalBest(root, { store: createBrowserResultHistoryStore(), auth, openAccount: (origin, returnFocus) => root.dispatchEvent(new CustomEvent('player-account-open', { detail: { origin, returnFocus } })) });
     const openReturnedAccount = (origin: AccountOrigin): void => { root.dispatchEvent(new CustomEvent<AccountOrigin>('player-account-open', { detail: origin })); };
     const showAuthReturnError = (message: string): void => {
         const returnStatus = root.querySelector<HTMLElement>('#main-menu-return-status');
@@ -235,6 +239,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             cargoTransfer.destroy();
             performanceReadout.destroy();
             playerAccount.destroy();
+            personalBest.destroy();
             auth.destroy();
             telemetry.destroy();
             unsubscribeOrientation();

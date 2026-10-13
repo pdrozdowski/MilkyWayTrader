@@ -11,6 +11,8 @@ export type { AuthPort, AuthSnapshot } from '../game/application/auth/auth';
 export type { PlayerProfile, PlayerProfilePort } from '../game/application/playerProfile';
 export type { AccountOrigin } from '../game/application/auth/authReturn';
 export type { PerformanceDurationSummary, PerformanceStepId, PerformanceStepSummary, PerformanceSnapshot } from '../game/application/performanceMonitor';
+export type { ResultHistoryRecord, ResultHistoryStorePort } from '../game/application/results/resultHistoryStore';
+export { resultHistoryPageSize } from '../game/application/results/resultHistoryStore';
 import type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
 import type { LandedFacilitiesSnapshot } from '../game/application/landedFacilities';
 import type { LandedShipyardSnapshot } from '../game/application/landedShipyard';

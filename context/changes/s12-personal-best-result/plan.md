@@ -172,15 +172,15 @@ S-12 introduces no database migration. S-06 must first expand terminal-result pr
 
 #### Automated
 
-- [x] 1.1 Adapter tests cover mapping, count, page boundaries and ordering, best-score tie resolution, and failures.
-- [x] 1.2 Type checking passes for the read contract and adapter.
+- [x] 1.1 Adapter tests cover mapping, count, page boundaries and ordering, best-score tie resolution, and failures. — cb9736d
+- [x] 1.2 Type checking passes for the read contract and adapter. — cb9736d
 
 ### Phase 2: Personal Best Dialog and Entry Points
 
 #### Automated
 
-- [ ] 2.1 Fast component tests cover states, pagination, BEST selection, labels, inert DELETE, retry, and sign-out behavior.
-- [ ] 2.2 UI wiring tests cover both entry points and focus restoration.
+- [x] 2.1 Fast component tests cover states, pagination, BEST selection, labels, inert DELETE, retry, and sign-out behavior.
+- [x] 2.2 UI wiring tests cover both entry points and focus restoration.
 
 #### Manual
 
