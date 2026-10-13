@@ -17,7 +17,7 @@ Code boundaries and dependency direction: `mem:architecture`. Test levels and po
 - `src/game/objects/<id>/` — Phaser object (`<id>.ts`) + `definition.ts`; shared contracts in `objects/_shared/`; artwork in `public/assets/objects/<id>/`.
 - `src/game/scenes/` — `bootScene.ts`, `preloaderScene.ts`, `mainMenuScene.ts`, `gameScene.ts` (demo world placement in `gameObjects.ts`), `gameOverScene.ts`; modules end with `Scene.ts`.
 - `src/game/effects/` scene-wide effects, `src/game/visual/` shared rendering/depths/active time, `src/game/audio/` definitions + game-owned service + `audioScope.ts`.
-- `src/ui/` — `contracts.ts`, `setupUi.ts`, `components/` (semantic HTML + typed ports), `adapters/` (browser/Phaser wiring only).
+- `src/ui/` — `contracts.ts`, `setupUi.ts`, `components/` (semantic HTML + typed ports, including `playerAccount.ts`), `adapters/` (browser/Phaser wiring only; includes browser auth/profile adapters). Player profile operations use the application port in `src/game/application/playerProfile.ts`; auth lifecycle lives under `src/game/application/auth/`.
 - `tests/` — Node test-runner suites (`domain/**`, `game-mechanics`, `object-scaffold`, `game-audio`, `run-status-clock`, `architecture`) and Playwright specs in `tests/ui/`.
 - `scripts/` — npm audit, Pages asset-size check, local Supabase session/database helpers, demo audio generator. `supabase/migrations/` — local schema. `vite/` — dev/prod build configs. `.agents/skills/` — project workflows.
 
