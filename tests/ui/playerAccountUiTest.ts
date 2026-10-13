@@ -25,6 +25,7 @@ test('an in-game account return reload restores the paused run and reopens Playe
     const account = page.getByRole('dialog', { name: 'PLAYER ACCOUNT' });
     await expect(page.getByLabel('Run status')).toBeVisible({ timeout: 60_000 });
     await expect(account).toBeVisible();
+    await expect(account.getByText('NOT SIGNED IN', { exact: true })).toBeHidden();
     await expect(account.getByRole('button', { name: /SIGN IN WITH GOOGLE/ })).toBeVisible();
     await expect(page.getByRole('dialog', { name: 'Game menu' })).toBeHidden();
 
@@ -63,6 +64,7 @@ test.describe('signed-in Player Account', () => {
         await expect(account).toBeVisible();
         await expect(account.getByLabel('PLAYER NICKNAME')).toHaveValue(updatedNickname);
         await account.getByRole('button', { name: 'SIGN OUT', exact: true }).click();
+        await expect(account.getByText('NOT SIGNED IN', { exact: true })).toBeHidden();
         await expect(account.getByRole('button', { name: /SIGN IN WITH GOOGLE/ })).toBeVisible();
         await expect(account.getByLabel('PLAYER NICKNAME')).toBeHidden();
     });
