@@ -172,8 +172,8 @@ S-12 introduces no database migration. S-06 must first expand terminal-result pr
 
 #### Automated
 
-- [ ] 1.1 Adapter tests cover mapping, count, page boundaries and ordering, best-score tie resolution, and failures.
-- [ ] 1.2 Type checking passes for the read contract and adapter.
+- [x] 1.1 Adapter tests cover mapping, count, page boundaries and ordering, best-score tie resolution, and failures.
+- [x] 1.2 Type checking passes for the read contract and adapter.
 
 ### Phase 2: Personal Best Dialog and Entry Points
 
