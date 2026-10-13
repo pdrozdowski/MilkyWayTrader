@@ -1,0 +1,4 @@
+interface:
+  display_name: "Supabase Dev Deploy"
+  short_description: "Deploy migrations to the configured Supabase test project"
+  default_prompt: "Deploy pending Supabase migrations to the configured test project."
