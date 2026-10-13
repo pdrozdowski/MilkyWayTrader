@@ -9,6 +9,8 @@ import { GameStateProvider } from './application/gameStateProvider';
 import { createPerformanceMonitor } from './application/performanceMonitor';
 import type { ResultStorePort } from './application/results/resultStore';
 import type { GameOverReturnPort } from './application/results/gameOverReturn';
+import type { AuthReturnPort } from './application/auth/authReturn';
+import type { TelemetryPort } from './application/telemetry/telemetry';
 import { initialGameState } from './definitions/initialGameState';
 
 export interface GameBootstrapHooks
@@ -16,6 +18,8 @@ export interface GameBootstrapHooks
     onReady?(game: Game): void;
     resultStore?: ResultStorePort;
     gameOverReturn?: GameOverReturnPort;
+    authReturn?: AuthReturnPort;
+    telemetry?: TelemetryPort;
 }
 
 //  Find out more information about the Game Config at:
@@ -58,6 +62,19 @@ const StartGame = (parent: string, hooks: GameBootstrapHooks = {}) => {
                 game.registry.set('performanceMonitor', createPerformanceMonitor({ now: () => performance.now(), windowMs: 5000 }));
                 game.registry.set('resultStore', hooks.resultStore);
                 game.registry.set('gameOverReturn', hooks.gameOverReturn);
+                game.registry.set('telemetry', hooks.telemetry);
+                let authReturnContext = hooks.authReturn?.take() ?? null;
+                let authReturnError = hooks.authReturn?.getError() ?? null;
+                if (authReturnContext?.snapshot) {
+                    try { (game.registry.get('gameStateProvider') as GameStateProvider).restore(authReturnContext.snapshot); }
+                    catch {
+                        authReturnContext = null;
+                        authReturnError = 'The previous run could not be restored. Start a new run from the Main Menu.';
+                    }
+                }
+                if (authReturnContext?.telemetryContext) hooks.telemetry?.restoreSessionContext(authReturnContext.telemetryContext);
+                game.registry.set('authReturnError', authReturnError);
+                game.registry.set('authReturnContext', authReturnContext);
                 hooks.onReady?.(game);
             }
         }

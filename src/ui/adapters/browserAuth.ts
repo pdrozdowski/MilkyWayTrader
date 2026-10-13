@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { AuthPort, AuthSnapshot } from '../../game/application/auth/auth';
 import { browserAuthConfiguration, type PublicAuthConfiguration } from '../../game/application/auth/configuration';
+import { createBrowserPlayerProfilePort } from './browserPlayerProfile';
 
 const authOptions = {
     persistSession: true,
@@ -76,6 +77,7 @@ export function createBrowserAuthPort (configuration = browserAuthConfiguration(
             const { data, error } = await client.auth.getSession();
             return error ? null : data.session?.access_token ?? null;
         },
+        createPlayerProfilePort: () => createBrowserPlayerProfilePort(client),
         destroy: () => {
             if (destroyed) return;
             destroyed = true;
@@ -87,5 +89,5 @@ export function createBrowserAuthPort (configuration = browserAuthConfiguration(
 
 function createUnavailableAuthPort (): AuthPort
 {
-    return { getSnapshot: () => unavailableSnapshot, subscribe: () => () => {}, signInWithGoogle: async () => {}, signOut: async () => {}, destroy: () => {} };
+    return { getSnapshot: () => unavailableSnapshot, subscribe: () => () => {}, signInWithGoogle: async () => {}, signOut: async () => {}, createPlayerProfilePort: () => null, destroy: () => {} };
 }

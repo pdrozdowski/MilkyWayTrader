@@ -17,6 +17,8 @@ export interface TelemetryPort
 {
     startSession(startingCredits: number): void;
     endSession(finalCredits: number): void;
+    getSessionContext(): Readonly<{ sessionId: string; sessionStartedAt: number }> | null;
+    restoreSessionContext(context: Readonly<{ sessionId: string; sessionStartedAt: number }>): void;
     emit(eventName: Exclude<TelemetryEventName, 'session_started' | 'session_ended'>, eventData: Readonly<Record<string, unknown>>): void;
     destroy(): void;
 }
@@ -86,6 +88,12 @@ export function createTelemetryPort (dependencies: TelemetryDependencies): Telem
             enqueue('session_ended', { duration_ms: Math.max(0, dependencies.now() - sessionStartedAt), final_credits: finalCredits });
             sessionId = null;
             sessionStartedAt = null;
+        },
+        getSessionContext: () => sessionId && sessionStartedAt !== null ? Object.freeze({ sessionId, sessionStartedAt }) : null,
+        restoreSessionContext: context => {
+            if (destroyed || !context.sessionId || !Number.isFinite(context.sessionStartedAt) || context.sessionStartedAt < 0) return;
+            sessionId = context.sessionId;
+            sessionStartedAt = context.sessionStartedAt;
         },
         emit: (eventName, eventData) => enqueue(eventName, eventData),
         destroy: () => { destroyed = true; queue.length = 0; }

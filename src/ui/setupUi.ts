@@ -14,9 +14,11 @@ import { mountLandingStatus } from './components/landingStatus';
 import { mountCargoTransfer } from './components/cargoTransfer';
 import { mountPerformanceReadout } from './components/performanceReadout';
 import { formatCredits } from './components/formatCredits';
-import { mountAuthControls } from './components/authControls';
+import { mountPlayerAccount } from './components/playerAccount';
+import type { AuthReturnPort, AccountOrigin } from '../game/application/auth/authReturn';
 import type { AuthPort } from '../game/application/auth/auth';
 import type { TelemetryPort } from '../game/application/telemetry/telemetry';
+import { generateDefaultPlayerNickname } from '../game/application/playerProfile';
 import type { GameOverReturnPort } from '../game/application/results/gameOverReturn';
 import type { TerminalResultState } from '../game/state/terminalResultState';
 import type { UiHandle } from './contracts';
@@ -27,7 +29,7 @@ import { shipServiceDefinitions, shipServiceLevelOf } from '../game/application/
 import type { ShipServiceId } from '../game/application/planetShipServices';
 import type { GameStateProvider } from '../game/application/gameStateProvider';
 
-export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort, telemetry: TelemetryPort, gameOverReturn: GameOverReturnPort): UiHandle
+export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort, telemetry: TelemetryPort, gameOverReturn: GameOverReturnPort, authReturn?: AuthReturnPort): UiHandle
 {
     const container = root.querySelector<HTMLElement>('#game-container');
     if (!container) throw new Error('Missing game container.');
@@ -49,6 +51,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const gameOverStatus = root.querySelector<HTMLElement>('#game-over-status');
     const gameOverMessage = root.querySelector<HTMLElement>('#game-over-status-message');
     const gameOverRetry = root.querySelector<HTMLButtonElement>('#game-over-status-retry');
+    const stateProvider = game.registry.get('gameStateProvider') as GameStateProvider;
     if (!gameOverResults || !gameOverResultsTitle || !gameOverSurvivalTimeLabel || !gameOverSurvivalTime || !gameOverFinalCashLabel || !gameOverFinalCash || !gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
     const renderGameOverPersistence = (result: { status: 'pending' | 'saved' | 'failed' | 'unsigned'; message: string | null } | null): void => {
         gameOverStatus.hidden = result === null;
@@ -75,7 +78,30 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const cargoTransfer = mountCargoTransfer(root, createCargoTransferPort(game));
     const performanceReadout = mountPerformanceReadout(root, createPerformanceReadoutPort(game));
     let currentGameOverResult: TerminalResultState | null = null;
-    const authControls = mountAuthControls(root, auth, () => { if (currentGameOverResult) gameOverReturn.save(currentGameOverResult); });
+    const playerAccount = mountPlayerAccount(root, {
+        auth,
+        profilePort: auth.createPlayerProfilePort?.() ?? null,
+        generateDefaultNickname: generateDefaultPlayerNickname,
+        prepareSignIn: origin => {
+            const snapshot = origin === 'main-menu' ? null : stateProvider.snapshot();
+            const terminalResult = currentGameOverResult ?? snapshot?.terminalResult ?? null;
+            const saved = authReturn?.save({ snapshot, telemetryContext: telemetry.getSessionContext(), origin, terminalResult }) ?? false;
+            return origin === 'main-menu' || saved;
+        },
+        onOpenStateChange: open => {
+            if (open && currentGameOverResult) gameOverReturn.save(currentGameOverResult);
+        },
+        clearSignInContext: () => authReturn?.clear()
+    });
+    const openReturnedAccount = (origin: AccountOrigin): void => { root.dispatchEvent(new CustomEvent<AccountOrigin>('player-account-open', { detail: origin })); };
+    const showAuthReturnError = (message: string): void => {
+        const returnStatus = root.querySelector<HTMLElement>('#main-menu-return-status');
+        if (!returnStatus) return;
+        returnStatus.textContent = message;
+        returnStatus.hidden = false;
+    };
+    game.events.on('auth-return-account-open', openReturnedAccount);
+    game.events.on('auth-return-error', showAuthReturnError);
     const mainMenu = root.querySelector<HTMLElement>('#main-menu');
     const mainMenuNewGame = root.querySelector<HTMLButtonElement>('#main-menu-new-game');
     const mainMenuSignIn = root.querySelector<HTMLButtonElement>('#main-menu-sign-in-preview');
@@ -94,7 +120,6 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const upgradeEngineLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-engine');
     const upgradeWeaponaryLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-weaponary');
     if (!mainMenu || !mainMenuNewGame || !mainMenuSignIn || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !performanceToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime || !teleportAsteroid || !spawnCargo || !upgradeCargoLevel || !upgradeEngineLevel || !upgradeWeaponaryLevel) throw new Error('Missing game menu controls.');
-    const stateProvider = game.registry.get('gameStateProvider') as GameStateProvider;
     const upgradeButtons: Readonly<Record<ShipServiceId, HTMLButtonElement>> = {
         cargo: upgradeCargoLevel,
         engine: upgradeEngineLevel,
@@ -209,7 +234,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             landingStatus.destroy();
             cargoTransfer.destroy();
             performanceReadout.destroy();
-            authControls.destroy();
+            playerAccount.destroy();
             auth.destroy();
             telemetry.destroy();
             unsubscribeOrientation();
@@ -218,6 +243,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             game.events.off('main-menu-close', hideMainMenu);
             game.events.off('game-over-open', showGameOverSignIn);
             game.events.off('game-over-close', hideGameOverSignIn);
+            game.events.off('auth-return-account-open', openReturnedAccount);
+            game.events.off('auth-return-error', showAuthReturnError);
             hideGameOverSignIn();
             debugClose.removeEventListener('click', closeDebugMenu);
             touchControlsToggle.removeEventListener('click', toggleTouchControls);

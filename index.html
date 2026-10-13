@@ -14,6 +14,7 @@
         <p id="cargo-transfer-warning" role="alert" hidden></p>
         <section id="main-menu" data-game-input="ignore" aria-label="Main menu" hidden>
             <button id="main-menu-sign-in-preview" type="button"><svg class="main-menu-sign-in-preview-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5.33 0-10 2.67-10 6v2h20v-2c0-3.33-4.67-6-10-6Z" /></svg><span class="main-menu-sign-in-preview-label">Sign In</span></button>
+            <p id="main-menu-return-status" role="status" aria-live="polite" hidden></p>
             <div id="main-menu-controls">
                 <button id="main-menu-new-game" class="action-button" type="button" aria-label="New Game"></button>
                 <button id="main-menu-continue" class="action-button" type="button" aria-label="Continue Game" disabled></button>
@@ -37,22 +38,48 @@
         <section id="game-over-status" data-game-input="ignore" aria-live="polite" aria-label="Result delivery status" hidden><p id="game-over-status-message"></p><button id="game-over-status-retry" type="button" hidden></button></section>
         <section id="game-menu" data-game-input="ignore" aria-label="Game menu" aria-modal="true" role="dialog" hidden>
             <div class="game-menu-panel">
-                <button id="game-menu-close" type="button" aria-label="Close menu">X</button>
-                <h2>Menu</h2>
                 <div class="game-menu-actions">
-                <button id="game-menu-resume" class="action-button" type="button">Resume</button>
-                <div id="audio-controls" role="group" aria-label="Game audio">
+                <button id="game-menu-account" class="action-button" type="button"><span>ACCOUNT</span><span id="game-menu-account-identity"></span></button>
+                <div id="audio-controls" role="group" aria-label="Audio">
+                    <h2>AUDIO</h2>
+                    <div id="audio-control-options">
                     <button id="audio-mute" type="button" aria-pressed="false">Mute</button>
                     <label for="audio-volume">Volume</label>
                     <input id="audio-volume" type="range" min="0" max="100" step="1" value="50" />
                     <output id="audio-volume-value" for="audio-volume">50%</output>
+                    </div>
                 </div>
                 <div id="menu-display-controls" hidden>
                     <button id="menu-fullscreen-toggle" type="button" aria-pressed="false">Fullscreen</button>
                     <p id="menu-display-status" role="status" aria-live="polite"></p>
                 </div>
+                <button id="game-menu-resume" class="action-button" type="button">Resume</button>
                 <button id="return-to-menu" class="action-button" type="button">Return to Main Menu</button>
                 </div>
+            </div>
+        </section>
+        <section id="player-account" data-game-input="ignore" aria-labelledby="player-account-title" aria-modal="true" role="dialog" hidden>
+            <div class="player-account-panel">
+                <header><h2 id="player-account-title">PLAYER ACCOUNT</h2></header>
+                <p id="player-account-status" role="status" aria-live="polite"></p>
+                <div data-player-account-signed-out>
+                    <p id="player-account-benefits-intro"></p>
+                    <ul><li id="player-account-save-benefit"></li><li id="player-account-score-benefit"></li></ul>
+                    <button id="player-account-sign-in" class="player-account-primary" type="button" aria-label="Sign in with Google"><svg class="google-sign-in-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.7c3.9-3.6 6-8.8 6-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.7-5.1c-1.8 1.2-4 1.9-6.8 1.9-5.2 0-9.6-3.5-11.2-8.2H5.9v5.3A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.8 27.8a12 12 0 0 1 0-7.6v-5.3H5.9a20 20 0 0 0 0 18.2l6.9-5.3Z"/><path fill="#EA4335" d="M24 12c3 0 5.7 1 7.8 3.1l5.9-5.9C34.1 5.8 29.5 4 24 4A20 20 0 0 0 5.9 14.9l6.9 5.3C14.4 15.5 18.8 12 24 12Z"/></svg><span id="player-account-sign-in-label"></span></button>
+                </div>
+                <div data-player-account-signed-in hidden>
+                    <p class="player-account-inline-row"><span id="player-account-status-title"></span><span id="player-account-signed-in-status"></span></p>
+                    <p class="player-account-inline-row"><span id="player-account-email-label"></span><span id="player-account-email" dir="auto"></span></p>
+                    <hr />
+                    <label id="player-account-nickname-title" for="player-account-nickname"></label>
+                    <p id="player-account-nickname-help"></p>
+                    <input id="player-account-nickname" type="text" maxlength="20" autocomplete="nickname" aria-describedby="player-account-nickname-help player-account-update-reason" />
+                    <button id="player-account-retry" type="button" hidden>Retry profile load</button>
+                    <button id="player-account-update" class="player-account-primary" type="button"></button>
+                    <p id="player-account-update-reason" aria-live="polite"></p>
+                </div>
+                <p id="player-account-feedback" role="status" aria-live="polite"></p>
+                <div class="player-account-actions"><button id="player-account-sign-out" type="button"></button><button id="player-account-close" type="button"></button></div>
             </div>
         </section>
         <section id="performance-readout" data-game-input="ignore" aria-live="off" aria-label="Performance monitor" hidden>

@@ -54,6 +54,22 @@ The initial scope was broader than the product goal now confirmed by the owner. 
 
 Plan a focused scope-alignment change: retain OAuth and `session_started`/`session_ended`; remove deferred gameplay event names, validation, emitters, and related tests; revise S-10 success criteria and manual verification accordingly. A later change can introduce gameplay milestones as its own catalog.
 
+## Additional Product Direction (owner update)
+
+S-10's authentication UI also needs a reusable **Player Account** modal for managing sign-in state and the player's public nickname. This adds an account-management flow to the existing authentication foundation; it does not change the narrowed telemetry event scope above.
+
+- Open the same modal from the Sign In / Account action in the Main Menu and Game Over screen, and from a new Sign In / Account action in the in-game menu.
+- Signed out: explain that saving/resuming a game and submitting scores to the high scores board require sign-in; show Google sign-in and Close; hide profile controls.
+- Signed in: show signed-in status, read-only email, editable high-score nickname, Update Nickname, Sign Out, and Close.
+- Initialize a missing nickname as `spaceTrader` plus a random five-digit number and persist it with the player's profile.
+- Validate nickname edits, disable unchanged/invalid/in-progress updates, prevent duplicate submissions, and show operation feedback.
+- Keep game progress intact while the modal is open; closing returns to the originating screen. Authentication changes update the modal and every entry-point button.
+- Use the existing visual theme and support game screen sizes and orientations. Authenticated entry points may say `ACCOUNT`.
+
+### Updated Problem Statement for the Account UI
+
+> **The account UI must provide one consistent, state-aware place to sign in, sign out, and manage the public player nickname from the Main Menu, Game Over screen, or in-game menu without interrupting the current run.**
+
 ## References
 
 - `context/changes/s10-player-sign-in-status/plan.md:29,120-126`

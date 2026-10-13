@@ -4,6 +4,7 @@ import { createBrowserAuthPort } from './ui/adapters/browserAuth';
 import { createBrowserTelemetryPort } from './ui/adapters/browserTelemetry';
 import { createBrowserResultStore } from './ui/adapters/browserResultStore';
 import { createBrowserGameOverReturnPort } from './ui/adapters/browserGameOverReturn';
+import { createBrowserAuthReturnPort } from './ui/adapters/browserAuthReturn';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const telemetry = createBrowserTelemetryPort(auth);
     const resultStore = createBrowserResultStore();
     const gameOverReturn = createBrowserGameOverReturnPort();
-    StartGame('game-container', { resultStore, gameOverReturn, onReady: game => setupApplicationUi(root, game, auth, telemetry, gameOverReturn) });
+    const authReturn = createBrowserAuthReturnPort();
+    StartGame('game-container', { resultStore, gameOverReturn, authReturn, telemetry, onReady: game => setupApplicationUi(root, game, auth, telemetry, gameOverReturn, authReturn) });
 
 });

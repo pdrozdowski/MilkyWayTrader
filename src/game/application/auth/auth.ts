@@ -14,5 +14,6 @@ export interface AuthPort
     signInWithGoogle(): Promise<void>;
     signOut(): Promise<void>;
     getAccessToken?(): Promise<string | null>;
+    createPlayerProfilePort?(): import('../playerProfile').PlayerProfilePort | null;
     destroy(): void;
 }

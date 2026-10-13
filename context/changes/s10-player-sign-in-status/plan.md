@@ -12,6 +12,8 @@ The static Phaser/Vite app has no Supabase SDK integration, telemetry client, Ed
 
 Every new gameplay run gets a UUID `session_id`; every event also contains a persistent browser `anonymous_id`; authenticated events additionally receive a server-derived `user_id`. A controlled Supabase Edge Function validates low-frequency event batches and writes them to the single `game_events` table. The database generates event IDs and timestamps, and deletes raw events after 90 days.
 
+Player authentication and profile management use one reusable **Player Account** modal. The same modal opens from the Main Menu, Game Over screen, and in-game menu; it reflects the current auth state, supports Google sign-in and sign-out, and lets signed-in players manage their public high-score nickname without interrupting the current game session.
+
 ## What We're NOT Doing
 
 - Snapshot persistence, save/resume, personal results, or score submission.
@@ -46,15 +48,18 @@ The anonymous-capable Edge Function must not rely on JWT-only platform gating. I
 
 **Files**: `index.html`, `public/style.css`, `src/ui/setupUi.ts`, `src/ui/contracts.ts`, auth UI component/adapter, `src/ui/components/gameMenu.ts`.
 
-**Intent**: Make sign-in/status/sign-out available without restricting anonymous play.
+**Intent**: Make sign-in, account status, profile management, and sign-out available without restricting anonymous play.
 
-**Contract**: Main menu offers Google sign-in; header shows `Unsigned` or email; game menu offers sign-out only when signed in. Missing configuration disables the action with clear guidance. Unsigned state allows gameplay and future public score viewing but gates future save/resume, personal history/best, and score submission. Controls use `data-game-input="ignore"`; all handles unsubscribe on destruction.
+**Contract**: Main Menu and Game Over Sign In / Account buttons and a new in-game menu Sign In / Account button open the same Player Account modal. When signed out, show the authentication benefits (save/resume and high-score submission), Google sign-in, and Close; hide profile controls. When signed in, show read-only session email, editable public nickname, Update Nickname, Sign Out, and Close. A missing nickname is initialized as `spaceTrader` plus a randomly generated five-digit number and persisted as part of the player's profile. Disable nickname updates when unchanged, invalid, or saving; prevent duplicate auth/profile submissions and provide success/failure feedback. The modal must not interrupt or reset game progress, and closing returns to its originating screen. Auth changes update the modal and all entry-point buttons. Missing configuration disables sign-in with clear guidance. Unsigned state allows gameplay and future public score viewing but gates future save/resume, personal history/best, and score submission. Controls use `data-game-input="ignore"`; all handles unsubscribe on destruction.
+
+The modal uses the existing game visual theme, a `PLAYER ACCOUNT` header with X close control, and a Close button. The signed-out variant explains that saving progress and submitting scores to the high scores board require sign-in. The signed-in variant identifies the account as signed in, displays the email read-only, and explains that the nickname appears on the high scores board. Both variants fit supported screen sizes and orientations. Entry-point buttons may display `ACCOUNT` for signed-in users.
 
 ### Success Criteria:
 
 #### Automated Verification:
 
 - Auth and UI tests cover unavailable, unsigned, signed-in, action-error, local sign-out, accessibility, and teardown states.
+- Account-modal tests cover both auth-state variants, all entry points, generated/persisted default nickname, nickname validation and updates, action feedback, duplicate-submission prevention, and returning to the originating screen without losing the run.
 - `npm.cmd run typecheck` passes with public environment declarations and SDK types.
 
 #### Manual Verification:

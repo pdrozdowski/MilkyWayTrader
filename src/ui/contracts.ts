@@ -8,6 +8,8 @@ export type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/appl
 export type { LandedFacilitiesSnapshot } from '../game/application/landedFacilities';
 export type { LandedShipyardSnapshot } from '../game/application/landedShipyard';
 export type { AuthPort, AuthSnapshot } from '../game/application/auth/auth';
+export type { PlayerProfile, PlayerProfilePort } from '../game/application/playerProfile';
+export type { AccountOrigin } from '../game/application/auth/authReturn';
 export type { PerformanceDurationSummary, PerformanceStepId, PerformanceStepSummary, PerformanceSnapshot } from '../game/application/performanceMonitor';
 import type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
 import type { LandedFacilitiesSnapshot } from '../game/application/landedFacilities';
