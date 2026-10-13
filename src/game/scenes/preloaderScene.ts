@@ -2,6 +2,7 @@ import { GameObjects, Scene } from 'phaser';
 import { loadObjectAssets, registerObjectAnimations } from '../objects/_shared/registry';
 import { loadSoundAssets } from '../audio/registry';
 import type { GameOverReturnPort } from '../application/results/gameOverReturn';
+import type { AuthReturnContext } from '../application/auth/authReturn';
 import { mainMenuBackgroundTransform } from './mainMenuBackground';
 
 const preloaderInspectionFlag = 'inspect-preloader';
@@ -66,8 +67,20 @@ export class Preloader extends Scene
         //  For example, you can define global animations here, so we can use them in other scenes.
 
         const terminalResult = (this.registry.get('gameOverReturn') as GameOverReturnPort | undefined)?.take() ?? null;
-        if (terminalResult) this.scene.start('GameOver', { terminalResult });
-        else this.scene.start('MainMenu');
+        const authReturn = this.registry.get('authReturnContext') as Readonly<AuthReturnContext> | null;
+        if (authReturn?.origin === 'game-menu') {
+            this.scene.start('Game');
+            this.game.events.emit('auth-return-account-open', 'game-menu');
+        } else if (authReturn?.origin === 'game-over' && authReturn.terminalResult) {
+            this.scene.start('GameOver', { terminalResult: authReturn.terminalResult });
+            this.game.events.emit('auth-return-account-open', 'game-over');
+        } else if (terminalResult) this.scene.start('GameOver', { terminalResult });
+        else {
+            this.scene.start('MainMenu');
+            if (authReturn?.origin === 'main-menu') this.game.events.emit('auth-return-account-open', 'main-menu');
+        }
+        const authReturnError = this.registry.get('authReturnError') as string | null;
+        if (authReturnError) this.game.events.emit('auth-return-error', authReturnError);
     }
 
     private readonly layout = (): void =>

@@ -7,7 +7,7 @@ import type { GameControlsPort } from '../contracts';
 export function createGameControlsPort (game: Game): GameControlsPort
 {
     const provider = game.registry.get('gameStateProvider') as GameStateProvider;
-    let menuOpen = false;
+    let menuOpen = provider.snapshot().clock.pauseReasons.includes('menu');
     let destroyed = false;
     const setPauseReason = (reason: GamePauseReason, paused: boolean): void => {
         if (destroyed) return;

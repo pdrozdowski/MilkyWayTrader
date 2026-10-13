@@ -11,7 +11,6 @@ export function mountGameMenu (root: HTMLElement, port: GameControlsPort): UiHan
 {
     const menu = required<HTMLElement>(root, '#game-menu');
     const toggle = required<HTMLButtonElement>(root, '#game-menu-toggle');
-    const close = required<HTMLButtonElement>(root, '#game-menu-close');
     const resume = required<HTMLButtonElement>(root, '#game-menu-resume');
     const exit = required<HTMLButtonElement>(root, '#return-to-menu');
     let returnFocus: HTMLElement | null = null;
@@ -22,7 +21,7 @@ export function mountGameMenu (root: HTMLElement, port: GameControlsPort): UiHan
         menu.hidden = false;
         toggle.setAttribute('aria-expanded', 'true');
         port.openMenu();
-        close.focus();
+        resume.focus();
     };
     const closeMenu = (): void => {
         if (!port.isMenuOpen()) return;
@@ -33,7 +32,8 @@ export function mountGameMenu (root: HTMLElement, port: GameControlsPort): UiHan
         returnFocus = null;
     };
     const keydown = (event: KeyboardEvent): void => {
-        if (event.key === 'Escape') { event.preventDefault(); port.isMenuOpen() ? closeMenu() : open(); return; }
+        if (menu.hidden) return;
+        if (event.key === 'Escape' && port.isMenuOpen()) { event.preventDefault(); return; }
         if (event.key !== 'Tab' || !port.isMenuOpen()) return;
         const controls = focusable();
         const first = controls[0]; const last = controls[controls.length - 1];
@@ -42,7 +42,7 @@ export function mountGameMenu (root: HTMLElement, port: GameControlsPort): UiHan
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     };
     const exitToMainMenu = (): void => { menu.hidden = true; toggle.setAttribute('aria-expanded', 'false'); port.exitToMainMenu(); };
-    toggle.addEventListener('click', open); close.addEventListener('click', closeMenu); resume.addEventListener('click', closeMenu); exit.addEventListener('click', exitToMainMenu); window.addEventListener('keydown', keydown);
+    toggle.addEventListener('click', open); resume.addEventListener('click', closeMenu); exit.addEventListener('click', exitToMainMenu); window.addEventListener('keydown', keydown);
     let destroyed = false;
-    return { destroy: () => { if (destroyed) return; destroyed = true; toggle.removeEventListener('click', open); close.removeEventListener('click', closeMenu); resume.removeEventListener('click', closeMenu); exit.removeEventListener('click', exitToMainMenu); window.removeEventListener('keydown', keydown); port.destroy(); } };
+    return { destroy: () => { if (destroyed) return; destroyed = true; toggle.removeEventListener('click', open); resume.removeEventListener('click', closeMenu); exit.removeEventListener('click', exitToMainMenu); window.removeEventListener('keydown', keydown); port.destroy(); } };
 }
