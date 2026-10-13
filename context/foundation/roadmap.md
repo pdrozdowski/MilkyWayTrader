@@ -53,7 +53,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-09 | s09-asteroid-salvage | User can recover commodities from asteroid salvage. | S-04, S-08 | US-04, FR-034, FR-041, FR-042, FR-043, FR-044, FR-045 | done |
 | S-10 | s10-player-sign-in-status | User can sign in, sign out, and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-046, FR-047, FR-048 | done |
 | S-11 | s11-automatic-save-and-resume | Signed-in user can see save status, preserve progress, and resume an active run. | S-06, S-09, S-10, S-16 | US-05, FR-006, FR-049, FR-050 | proposed |
-| S-12 | s12-personal-best-result | Signed-in user can view their personal best result across retained outcomes. | S-11 | US-06, FR-052 | proposed |
+| S-12 | s12-personal-best-result | Signed-in user can view their personal best and paginated private run history. | S-06 | US-06, FR-052 | planning |
 | S-13 | s13-global-high-scores | User can view the globally eligible high-score results. | S-11 | US-06, FR-053 | proposed |
 | S-14 | s14-delete-terminal-active-save | Signed-in user retains a terminal result while its active save is removed. | S-06, S-11 | US-05, FR-051 | proposed |
 | S-15 | s15-clear-personal-best | Signed-in user can clear their personal best without changing global results. | S-12 | US-06, FR-054 | proposed |
@@ -222,15 +222,15 @@ No standalone foundations are required. Deployment is already present, the autho
 
 ### S-12: View a personal best
 
-- **Outcome:** Signed-in user can view their personal best result across retained outcomes.
+- **Outcome:** Signed-in user can view their personal best and paginated private run history across retained outcomes.
 - **Change ID:** s12-personal-best-result
 - **PRD refs:** US-06, FR-052
-- **Prerequisites:** S-11
+- **Prerequisites:** S-06
 - **Parallel with:** S-13
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Personal ranking includes every terminal outcome and must remain private to its owner.
-- **Status:** proposed
+- **Status:** planning
 
 ### S-13: View global high scores
 
@@ -296,7 +296,7 @@ No standalone foundations are required. Deployment is already present, the autho
 | S-09 | s09-asteroid-salvage | Deliver collectible asteroid salvage | no | Requires S-04 and S-08 |
 | S-10 | s10-player-sign-in-status | Deliver player sign-in, sign-out, and authentication status | no | Complete external setup |
 | S-11 | s11-automatic-save-and-resume | Deliver automatic save and run resume | no | Requires S-06, S-09, S-10, and S-16 |
-| S-12 | s12-personal-best-result | Deliver the signed-in player's personal best | no | Requires S-11 |
+| S-12 | s12-personal-best-result | Deliver the signed-in player's personal best and private run history | no | Requires S-06 |
 | S-13 | s13-global-high-scores | Deliver public eligible high scores | no | Requires S-11 |
 | S-14 | s14-delete-terminal-active-save | Remove the terminal active save after retaining its result | no | Requires S-06 and S-11 |
 | S-15 | s15-clear-personal-best | Allow the owner to clear their personal best | no | Requires S-12 |
