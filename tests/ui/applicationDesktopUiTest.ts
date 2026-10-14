@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { displayLabels } from '../../src/ui/components/displayLabels';
 import { resultLabels } from '../../src/game/application/results/resultLabels';
+import type { GameStateFixtureOptions } from './gameStateFixture';
 import { test } from './testSessionFixture';
 
 const clockName = (state: typeof displayLabels.clockRunning | typeof displayLabels.clockPaused): RegExp => new RegExp(`^\\d{2}:\\d{2} · ${state}$`);
@@ -99,7 +100,7 @@ test.describe('authenticated trading journey', () => {
     // Player-visible risk: a signed-in player must trade at each planet and see matching cargo, credits, and market stock.
     // Lower-level tests cannot prove authentication bootstrap, Phaser landing, DOM market controls, and HUD projection share the real UI trade result.
     // Each case uniquely verifies one accessible Buy or Sell operation on its real planetary market.
-    const tradingCases = [
+    const tradingCases: readonly (GameStateFixtureOptions & { readonly planet: 'seroton' | 'lactozis-7c' | 'maslo-prime'; readonly name: string; readonly direction: 'buy' | 'sell'; readonly initialQuantity: number })[] = [
         { planet: 'seroton', name: 'Seroton', direction: 'buy', initialQuantity: 0 },
         { planet: 'lactozis-7c', name: 'Lactozis-7C', direction: 'buy', initialQuantity: 0 },
         { planet: 'maslo-prime', name: 'Maslo-Prime', direction: 'buy', initialQuantity: 0 },
