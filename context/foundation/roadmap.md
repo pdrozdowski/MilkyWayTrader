@@ -1,4 +1,4 @@
----
+﻿---
 project: MilkyWayTrader
 version: 1
 status: draft
@@ -20,12 +20,12 @@ milestone_status: open
 
 ## Milestone
 
-**M-1: Playable and persistent debt run** — Status: open
+**M-1: Playable and persistent debt run** â€” Status: open
 
 - **Intent:** Deliver the complete browser-game outcome described by the PRD: an anonymous player can finish the debt run through trading, planetary facility investment, flight, hazards, and salvage, while a signed-in player can preserve progress and compare eligible results.
 - **Source materials:** `context/foundation/prd.md` (v1)
 - **Done when:** every S-NN below is `done` and the complete PRD-defined run is usable end to end.
-- **Scope anchors:** US-01–US-08 and FR-001–FR-055.
+- **Scope anchors:** US-01â€“US-08 and FR-001â€“FR-055.
 
 ## Vision recap
 
@@ -35,13 +35,13 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 
 > Here, the north star means the smallest end-to-end slice whose successful delivery proves the central product idea.
 
-**S-04: Player completes the first Seroton trade** — it is the earliest slice that connects direct flight, landing, paused time, local market information, cargo, credits, and economic progress.
+**S-04: Player completes the first Seroton trade** â€” it is the earliest slice that connects direct flight, landing, paused time, local market information, cargo, credits, and economic progress.
 
 ## At a glance
 
-| ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
+| ID | Change ID | Outcome (user can â€¦) | Prerequisites | PRD refs | Status |
 | --- | --- | --- | --- | --- | --- |
-| S-01 | s01-anonymous-run-status | User can start an anonymous run and read its essential state. | — | US-01, FR-001, FR-002, FR-003, FR-004, FR-033, FR-034, FR-035, FR-036 | done |
+| S-01 | s01-anonymous-run-status | User can start an anonymous run and read its essential state. | â€” | US-01, FR-001, FR-002, FR-003, FR-004, FR-033, FR-034, FR-035, FR-036 | done |
 | S-02 | s02-direct-moving-system-flight | User can fly directly through a moving, identifiable solar system. | S-01 | US-02, FR-010, FR-012, FR-014 | done |
 | S-03 | s03-guided-orbit-and-landing | User can follow route guidance, enter and leave orbit, land, and launch. | S-02 | US-02, FR-011, FR-015, FR-016, FR-017, FR-018 | done |
 | S-04 | s04-first-planetary-trade | User can inspect Seroton's landed market and complete a commodity trade. | S-03 | US-03, FR-019, FR-020, FR-021, FR-022, FR-023 | done |
@@ -56,19 +56,19 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-12 | s12-personal-best-result | Signed-in user can view their personal best and paginated private run history. | S-06 | US-06, FR-052 | done |
 | S-13 | s13-global-high-scores | User can view the globally eligible high-score results. | S-11 | US-06, FR-053 | proposed |
 | S-14 | s14-delete-terminal-active-save | Signed-in user retains a terminal result while its active save is removed. | S-06, S-11 | US-05, FR-051 | proposed |
-| S-15 | s15-clear-personal-best | Signed-in user can clear their personal best without changing global results. | S-12 | US-06, FR-054 | proposed |
+| S-15 | s15-clear-personal-best | Signed-in user can delete any personal result or clear their history without changing global results. | S-12, S-13 | US-06, FR-054, FR-057 | planning |
 | S-17 | s17-gameplay-audio-feedback | User can hear gameplay audio feedback without interrupting a run. | S-02, S-07, S-08 | US-07, FR-055 | proposed |
 
 ## Baseline
 
 What is already in place in the codebase as of `2026-10-07` (auto-researched). The roadmap does not re-scaffold present capabilities.
 
-- **Frontend:** partial — the browser game already has scene flow, direct flight, boost, weapon fire, a thirty-minute display, three planets, landing, a Seroton market, and small DOM controls; facility interactions are absent.
-- **Backend / API:** absent — the deployed application is static and contains no routes, request handlers, or server runtime.
-- **Data:** partial — a versioned in-memory game-state aggregate supports validation, serialization, and restoration; terminal results persist for signed-in players, while facility state and persistent run snapshots are absent.
-- **Auth:** partial — a browser Google sign-in adapter and authenticated-result access control exist, but the current sign-in slice remains in progress.
-- **Deploy / infra:** present — production and preview deployment, validation, and continuous delivery are configured and verified.
-- **Observability:** partial — deployment logs and test artifacts exist, while browser-runtime diagnosis remains manual and no runtime error or metric service is integrated.
+- **Frontend:** partial â€” the browser game already has scene flow, direct flight, boost, weapon fire, a thirty-minute display, three planets, landing, a Seroton market, and small DOM controls; facility interactions are absent.
+- **Backend / API:** absent â€” the deployed application is static and contains no routes, request handlers, or server runtime.
+- **Data:** partial â€” a versioned in-memory game-state aggregate supports validation, serialization, and restoration; terminal results persist for signed-in players, while facility state and persistent run snapshots are absent.
+- **Auth:** partial â€” a browser Google sign-in adapter and authenticated-result access control exist, but the current sign-in slice remains in progress.
+- **Deploy / infra:** present â€” production and preview deployment, validation, and continuous delivery are configured and verified.
+- **Observability:** partial â€” deployment logs and test artifacts exist, while browser-runtime diagnosis remains manual and no runtime error or metric service is integrated.
 
 ## Foundations
 
@@ -81,10 +81,10 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Outcome:** User can start an anonymous run and read its essential state.
 - **Change ID:** s01-anonymous-run-status
 - **PRD refs:** US-01, FR-001, FR-002, FR-003, FR-004, FR-033, FR-034, FR-035, FR-036
-- **Prerequisites:** —
+- **Prerequisites:** â€”
 - **Parallel with:** S-10
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** The existing demo exposes parts of this state, but treating the full run state as one coherent user contract is necessary before later slices extend it.
 - **Status:** done
 
@@ -95,8 +95,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-02, FR-010, FR-012, FR-014
 - **Prerequisites:** S-01
 - **Parallel with:** S-10
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Existing direct control is a useful baseline, but moving-world behavior must not detach the ship camera or compromise control clarity.
 - **Status:** done
 
@@ -107,8 +107,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-02, FR-011, FR-015, FR-016, FR-017, FR-018
 - **Prerequisites:** S-02
 - **Parallel with:** S-07, S-10
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Guidance, capture, and manual escape must remain advisory and never take direct control away from the player.
 - **Status:** done
 
@@ -119,8 +119,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-03, FR-019, FR-020, FR-021, FR-022, FR-023
 - **Prerequisites:** S-03
 - **Parallel with:** S-07, S-10
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Marginal-price previews and atomic state updates must agree exactly while the shared active-time clock remains paused during trading.
 - **Status:** done
 
@@ -131,8 +131,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-08, FR-027, FR-028, FR-029, FR-030, FR-031, FR-032
 - **Prerequisites:** S-04
 - **Parallel with:** S-05, S-06, S-07, S-10
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Facility construction and improvements must change only the landed planet's local economy, while resource availability and planet characteristics produce understandable operating outcomes and prices.
 - **Status:** done
 
@@ -143,8 +143,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-03, FR-013, FR-024, FR-025, FR-026, FR-036
 - **Prerequisites:** S-04
 - **Parallel with:** S-06, S-07, S-10
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Service limits and planet-specific availability must remain consistent with credits, missing HP, and the visible ship-system state.
 - **Status:** done
 
@@ -155,8 +155,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-01, FR-005, FR-007, FR-009
 - **Prerequisites:** S-01, S-04
 - **Parallel with:** S-05, S-07, S-10
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Every terminal path must freeze the same authoritative score and time state so early success, abandonment, and timeout cannot disagree.
 - **Status:** proposed
 
@@ -167,8 +167,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-01, US-04, FR-008, FR-038, FR-040
 - **Prerequisites:** S-01, S-02
 - **Parallel with:** S-03, S-04, S-05, S-06, S-10
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Collision outcomes must be deterministic enough to preserve readable damage feedback without destabilizing movement or object populations.
 - **Status:** done
 
@@ -179,8 +179,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-04, FR-037, FR-039, FR-040
 - **Prerequisites:** S-07
 - **Parallel with:** S-04, S-05, S-06, S-10
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Fragmentation and replenishment must preserve stable hazard populations while making each weapon impact understandable.
 - **Status:** done
 
@@ -191,8 +191,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-04, FR-034, FR-041, FR-042, FR-043, FR-044, FR-045
 - **Prerequisites:** S-04, S-08
 - **Parallel with:** S-05, S-06, S-10
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Independent container costs, mutually exclusive seeded drops, and paused transfer interaction must stay authoritative and deterministic across state, mechanics, and projections.
 - **Status:** done
 
@@ -204,7 +204,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Prerequisites:** Selected identity-provider test projects configured
 - **Parallel with:** S-01, S-02, S-03, S-04, S-05, S-06, S-07, S-08, S-09
 - **Blockers:** Test identity projects and redirect configuration require user-managed service setup.
-- **Unknowns:** —
+- **Unknowns:** â€”
 - **Risk:** Identity integration must preserve complete anonymous play and must not expose one player's private state to another account.
 - **Status:** done
 
@@ -214,9 +214,9 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Change ID:** s11-automatic-save-and-resume
 - **PRD refs:** US-05, FR-006, FR-049, FR-050
 - **Prerequisites:** S-06, S-09, S-10, S-16
-- **Parallel with:** —
-- **Blockers:** —
-- **Unknowns:** —
+- **Parallel with:** â€”
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Save boundaries, retry behavior, and restoration must preserve the full active-time world state, including facility changes, without blocking visible gameplay.
 - **Status:** proposed
 
@@ -227,8 +227,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-06, FR-052
 - **Prerequisites:** S-06
 - **Parallel with:** S-13
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Personal ranking includes every terminal outcome and must remain private to its owner.
 - **Status:** done
 
@@ -239,8 +239,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-06, FR-053
 - **Prerequisites:** S-11
 - **Parallel with:** S-12
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Public results must enforce the PRD's eligibility rule without exposing private run history or accepting ineligible outcomes.
 - **Status:** proposed
 
@@ -251,22 +251,22 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-05, FR-051
 - **Prerequisites:** S-06, S-11
 - **Parallel with:** S-12, S-13
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** A terminal result must be durably retained before its active save is removed, so a failed deletion cannot erase the score or leave a resumable terminal run.
 - **Status:** proposed
 
-### S-15: Clear a personal best
+### S-15: Delete personal results and clear history
 
-- **Outcome:** Signed-in user can clear their personal best without changing global results.
+- **Outcome:** Signed-in user can delete any personal result or clear their history without changing global results.
 - **Change ID:** s15-clear-personal-best
-- **PRD refs:** US-06, FR-054
-- **Prerequisites:** S-12
-- **Parallel with:** S-13, S-14
-- **Blockers:** —
-- **Unknowns:** —
+- **PRD refs:** US-06, FR-054, FR-057
+- **Prerequisites:** S-12, S-13
+- **Parallel with:** S-14
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Clearing a personal result must affect only its owner; the next retained result must become the personal best without changing public eligible scores.
-- **Status:** proposed
+- **Status:** planning
 
 ### S-17: Hear gameplay audio feedback
 
@@ -275,8 +275,8 @@ No standalone foundations are required. Deployment is already present, the autho
 - **PRD refs:** US-07, FR-055
 - **Prerequisites:** S-02, S-07, S-08
 - **Parallel with:** S-04, S-05, S-06, S-10, S-16
-- **Blockers:** —
-- **Unknowns:** —
+- **Blockers:** â€”
+- **Unknowns:** â€”
 - **Risk:** Audio feedback must remain optional and never interfere with direct control, timing, or a playable run when audio is unavailable or muted.
 - **Status:** proposed
 
@@ -299,7 +299,7 @@ No standalone foundations are required. Deployment is already present, the autho
 | S-12 | s12-personal-best-result | Deliver the signed-in player's personal best and private run history | no | Requires S-06 |
 | S-13 | s13-global-high-scores | Deliver public eligible high scores | no | Requires S-11 |
 | S-14 | s14-delete-terminal-active-save | Remove the terminal active save after retaining its result | no | Requires S-06 and S-11 |
-| S-15 | s15-clear-personal-best | Allow the owner to clear their personal best | no | Requires S-12 |
+| S-15 | s15-clear-personal-best | Allow the owner to delete any personal result or clear their history | no | Requires S-12 and S-13 |
 | S-17 | s17-gameplay-audio-feedback | Deliver optional gameplay audio feedback | no | Requires S-02, S-07, and S-08 |
 
 ## Open Roadmap Questions
@@ -308,38 +308,40 @@ No open roadmap questions.
 
 ## Parked
 
-- **Turn-based travel, turn counters, selected destinations, and automated travel animations** — Why parked: navigation uses direct ship control and active time (`PRD §Non-Goals`).
-- **Multiplayer and a shared market** — Why parked: every run has an independent economy and world state (`PRD §Non-Goals`).
-- **Endless mode** — Why parked: the debt outcome depends on the active-time limit (`PRD §Non-Goals`).
-- **Planetary locations beyond markets, shipyards, and facilities** — Why parked: they are outside the MVP service loop (`PRD §Non-Goals`).
-- **Remote live prices, stock, and shipyard services** — Why parked: local services become available only after landing (`PRD §Non-Goals`).
-- **Hull-capacity upgrades, ammunition resources, booster fuel, and automated steering** — Why parked: they are excluded from the MVP ship model (`PRD §Non-Goals`).
-- **Credits awarded directly from salvage** — Why parked: salvaged commodities must be sold through a market (`PRD §Non-Goals`).
-- **Damaging or chain-reacting crate explosions** — Why parked: crate explosions are presentation-only (`PRD §Non-Goals`).
-- **Cargo or ship value in final score** — Why parked: only liquid cash contributes to the final score (`PRD §Non-Goals`).
-- **Deferring personal or global high scores** — Why parked: both are required PRD capabilities and therefore remain in this milestone (`PRD §Non-Goals`).
+- **Turn-based travel, turn counters, selected destinations, and automated travel animations** â€” Why parked: navigation uses direct ship control and active time (`PRD Â§Non-Goals`).
+- **Multiplayer and a shared market** â€” Why parked: every run has an independent economy and world state (`PRD Â§Non-Goals`).
+- **Endless mode** â€” Why parked: the debt outcome depends on the active-time limit (`PRD Â§Non-Goals`).
+- **Planetary locations beyond markets, shipyards, and facilities** â€” Why parked: they are outside the MVP service loop (`PRD Â§Non-Goals`).
+- **Remote live prices, stock, and shipyard services** â€” Why parked: local services become available only after landing (`PRD Â§Non-Goals`).
+- **Hull-capacity upgrades, ammunition resources, booster fuel, and automated steering** â€” Why parked: they are excluded from the MVP ship model (`PRD Â§Non-Goals`).
+- **Credits awarded directly from salvage** â€” Why parked: salvaged commodities must be sold through a market (`PRD Â§Non-Goals`).
+- **Damaging or chain-reacting crate explosions** â€” Why parked: crate explosions are presentation-only (`PRD Â§Non-Goals`).
+- **Cargo or ship value in final score** â€” Why parked: only liquid cash contributes to the final score (`PRD Â§Non-Goals`).
+- **Deferring personal or global high scores** â€” Why parked: both are required PRD capabilities and therefore remain in this milestone (`PRD Â§Non-Goals`).
 
 ## Milestone History
 
 ## Done
 
-- **S-12: Signed-in user can view their personal best and paginated private run history across retained outcomes.** — Archived 2026-10-14 → `context/archive/2026-10-13-s12-personal-best-result/`. Lesson: —.
+- **S-12: Signed-in user can view their personal best and paginated private run history across retained outcomes.** â€” Archived 2026-10-14 â†’ `context/archive/2026-10-13-s12-personal-best-result/`. Lesson: â€”.
 
-- **S-10: User can sign in, sign out, and inspect authentication status.** — Archived 2026-10-13 → `context/archive/2026-09-29-s10-player-sign-in-status/`. Lesson: —.
+- **S-10: User can sign in, sign out, and inspect authentication status.** â€” Archived 2026-10-13 â†’ `context/archive/2026-09-29-s10-player-sign-in-status/`. Lesson: â€”.
 
-- **S-05: User can repair and upgrade the ship through planet-specific services.** — Archived 2026-10-09 → `context/archive/2026-10-09-s05-planet-ship-services/`. Lesson: —.
+- **S-05: User can repair and upgrade the ship through planet-specific services.** â€” Archived 2026-10-09 â†’ `context/archive/2026-10-09-s05-planet-ship-services/`. Lesson: â€”.
 
-- **S-16: User can invest resources in local facilities and see new trading opportunities.** — Archived 2026-10-09 → `context/archive/2026-10-08-s16-planetary-facilities/`. Lesson: —.
+- **S-16: User can invest resources in local facilities and see new trading opportunities.** â€” Archived 2026-10-09 â†’ `context/archive/2026-10-08-s16-planetary-facilities/`. Lesson: â€”.
 
-- **S-04: User can inspect Seroton's landed market and complete a commodity trade.** — Archived 2026-10-07 → `context/archive/2026-09-26-s04-first-planetary-trade/`. Lesson: —.
+- **S-04: User can inspect Seroton's landed market and complete a commodity trade.** â€” Archived 2026-10-07 â†’ `context/archive/2026-09-26-s04-first-planetary-trade/`. Lesson: â€”.
 
-- **S-09: User can recover commodities from salvage released by weapon-destroyed asteroids.** — Archived 2026-10-06 → `context/archive/2026-10-04-s09-asteroid-salvage/`. Lesson: —.
+- **S-09: User can recover commodities from salvage released by weapon-destroyed asteroids.** â€” Archived 2026-10-06 â†’ `context/archive/2026-10-04-s09-asteroid-salvage/`. Lesson: â€”.
 
-- **S-07: User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed.** — Archived 2026-10-03 → `context/archive/2026-10-01-s07-environmental-hazards-and-death/`. Lesson: —.
+- **S-07: User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed.** â€” Archived 2026-10-03 â†’ `context/archive/2026-10-01-s07-environmental-hazards-and-death/`. Lesson: â€”.
 
-- **S-08: User can fire the ship weapon and fragment or destroy asteroids.** — Archived 2026-10-02 → `context/archive/2026-10-01-s08-asteroid-combat/`. Lesson: —.
+- **S-08: User can fire the ship weapon and fragment or destroy asteroids.** â€” Archived 2026-10-02 â†’ `context/archive/2026-10-01-s08-asteroid-combat/`. Lesson: â€”.
 
-- **S-03: User can follow route guidance, enter and leave orbit, land, and launch.** — Archived 2026-09-28 → `context/archive/2026-09-25-s03-guided-orbit-and-landing/`. Lesson: —.
+- **S-03: User can follow route guidance, enter and leave orbit, land, and launch.** â€” Archived 2026-09-28 â†’ `context/archive/2026-09-25-s03-guided-orbit-and-landing/`. Lesson: â€”.
 
-- **S-01: User can start an anonymous run and read its essential state.** — Archived 2026-09-25 → `context/archive/2026-09-21-s01-anonymous-run-status/`. Lesson: —.
-- **S-02: User can fly directly through a moving, identifiable solar system.** — Archived 2026-09-25 → `context/archive/2026-09-23-s02-direct-moving-system-flight/`. Lesson: —.
+- **S-01: User can start an anonymous run and read its essential state.** â€” Archived 2026-09-25 â†’ `context/archive/2026-09-21-s01-anonymous-run-status/`. Lesson: â€”.
+- **S-02: User can fly directly through a moving, identifiable solar system.** â€” Archived 2026-09-25 â†’ `context/archive/2026-09-23-s02-direct-moving-system-flight/`. Lesson: â€”.
+
+
