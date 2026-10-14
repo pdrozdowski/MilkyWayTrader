@@ -31,6 +31,8 @@ export const displayLabels = {
     closeAccount: 'CLOSE',
     personalBest: 'PERSONAL BEST',
     personalBestTitle: '★ PERSONAL BEST ★',
+    personalBestTitlePrefix: '★ ',
+    personalBestTitleSuffix: ' - PERSONAL BEST ★',
     personalBestDate: 'DATE',
     personalBestScore: 'SCORE',
     personalBestOutcome: 'OUTCOME',

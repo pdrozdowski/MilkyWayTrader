@@ -1,4 +1,4 @@
-import { resultHistoryPageSize, type AuthPort, type AuthSnapshot, type ResultHistoryRecord, type ResultHistoryStorePort, type UiHandle } from '../contracts';
+import { resultHistoryPageSize, type AuthPort, type AuthSnapshot, type PlayerProfilePort, type ResultHistoryRecord, type ResultHistoryStorePort, type UiHandle } from '../contracts';
 import { displayLabels } from './displayLabels';
 import { formatCredits } from './formatCredits';
 
@@ -6,6 +6,7 @@ interface PersonalBestOptions
 {
     readonly store: ResultHistoryStorePort;
     readonly auth: AuthPort;
+    readonly profilePort: PlayerProfilePort | null;
     readonly openAccount: (origin: 'game-menu' | 'game-over', returnFocus: HTMLElement) => void;
 }
 
@@ -54,17 +55,19 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
     let page = 0;
     let records: readonly ResultHistoryRecord[] = [];
     let best: ResultHistoryRecord | null = null;
+    let nickname: string | null = null;
     let totalCount = 0;
     let loading = false;
     let error: string | null = null;
     let returnFocus: HTMLElement | null = null;
     let accountOrigin: 'game-menu' | 'game-over' = 'game-menu';
     let request = 0;
+    let profileRequest = 0;
     let destroyed = false;
 
     const clearData = (): void => { records = []; best = null; totalCount = 0; page = 0; };
     const render = (): void => {
-        title.textContent = displayLabels.personalBestTitle;
+        title.textContent = nickname ? `${displayLabels.personalBestTitlePrefix}${nickname}${displayLabels.personalBestTitleSuffix}` : displayLabels.personalBestTitle;
         highScore.textContent = best ? formatCredits(best.finalCredits) : '';
         highScore.hidden = !best;
         headings.forEach((heading, index) => { heading.textContent = [displayLabels.personalBestDate, displayLabels.personalBestScore, displayLabels.personalBestOutcome, displayLabels.personalBestBest, displayLabels.personalBestDelete][index]; });
@@ -111,17 +114,31 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
         }
         render();
     };
+    const loadNickname = async (): Promise<void> => {
+        const operation = ++profileRequest;
+        if (authSnapshot.status !== 'signed-in' || !options.profilePort) { nickname = null; render(); return; }
+        try {
+            const loaded = await options.profilePort.load();
+            if (destroyed || operation !== profileRequest || authSnapshot.status !== 'signed-in') return;
+            nickname = loaded?.nickname ?? null;
+        } catch {
+            if (destroyed || operation !== profileRequest) return;
+            nickname = null;
+        }
+        render();
+    };
     const open = (trigger: HTMLButtonElement, origin: 'game-menu' | 'game-over'): void => {
         if (destroyed) return;
         returnFocus = trigger; accountOrigin = origin;
         if (origin === 'game-menu') required<HTMLElement>(root, '#game-menu').hidden = true;
         dialog.hidden = false;
         clearData(); error = null; page = 0; render(); close.focus();
+        void loadNickname();
         void load();
     };
     const closeDialog = (): void => {
         if (dialog.hidden) return;
-        request++; loading = false; clearData(); error = null; dialog.hidden = true; render();
+        request++; profileRequest++; loading = false; nickname = null; clearData(); error = null; dialog.hidden = true; render();
         if (accountOrigin === 'game-menu') required<HTMLElement>(root, '#game-menu').hidden = false;
         (returnFocus?.isConnected ? returnFocus : menuTrigger).focus();
     };
@@ -136,9 +153,9 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
         const wasSignedIn = authSnapshot.status === 'signed-in';
         const identityChanged = wasSignedIn && snapshot.status === 'signed-in' && authSnapshot.email !== snapshot.email;
         authSnapshot = snapshot;
-        if (wasSignedIn && snapshot.status !== 'signed-in') { request++; loading = false; clearData(); error = null; if (!dialog.hidden) closeDialog(); }
-        else if (identityChanged) { request++; loading = false; clearData(); error = null; page = 0; render(); if (!dialog.hidden) void load(); }
-        else if (!dialog.hidden && snapshot.status === 'signed-in') void load();
+        if (wasSignedIn && snapshot.status !== 'signed-in') { request++; profileRequest++; loading = false; nickname = null; clearData(); error = null; if (!dialog.hidden) closeDialog(); }
+        else if (identityChanged) { request++; profileRequest++; loading = false; nickname = null; clearData(); error = null; page = 0; render(); if (!dialog.hidden) { void loadNickname(); void load(); } }
+        else if (!dialog.hidden && snapshot.status === 'signed-in') { void loadNickname(); void load(); }
         render();
     };
     const keydown = (event: KeyboardEvent): void => {
@@ -156,5 +173,5 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
     previous.addEventListener('click', previousClick); next.addEventListener('click', nextClick); retry.addEventListener('click', retryClick); signIn.addEventListener('click', signInClick); window.addEventListener('keydown', keydown);
     const unsubscribe = options.auth.subscribe(authChange);
     render();
-    return { destroy: () => { if (destroyed) return; destroyed = true; request++; unsubscribe(); menuTrigger.removeEventListener('click', openMenu); gameOverTrigger.removeEventListener('click', openGameOver); close.removeEventListener('click', closeDialog); previous.removeEventListener('click', previousClick); next.removeEventListener('click', nextClick); retry.removeEventListener('click', retryClick); signIn.removeEventListener('click', signInClick); window.removeEventListener('keydown', keydown); } };
+    return { destroy: () => { if (destroyed) return; destroyed = true; request++; profileRequest++; unsubscribe(); menuTrigger.removeEventListener('click', openMenu); gameOverTrigger.removeEventListener('click', openGameOver); close.removeEventListener('click', closeDialog); previous.removeEventListener('click', previousClick); next.removeEventListener('click', nextClick); retry.removeEventListener('click', retryClick); signIn.removeEventListener('click', signInClick); window.removeEventListener('keydown', keydown); } };
 }
