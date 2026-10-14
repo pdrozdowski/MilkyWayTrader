@@ -109,9 +109,13 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 #game-over-results { position: absolute; top: 70%; left: 50%; z-index: 3; padding: 20px 24px; border-radius: 12px; background: rgb(7 17 27 / 50%); transform: translate(-50%, -50%); }
 #game-over-results h1 { margin: 0 0 14px; font-size: clamp(24px, 4vw, 32px); }
 #game-over-results dl { display: grid; gap: 10px; margin: 0; }
-#game-over-results dl > div { display: flex; justify-content: center; gap: 8px; }
+#game-over-results dl > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 8px; }
 #game-over-results dt, #game-over-results dd { margin: 0; }
+#game-over-results dt { font-size: 1.1rem; font-weight: 600; }
 #game-over-results dd { font-weight: 700; }
+#game-over-survival-time, #game-over-final-cash { font-size: clamp(1.4rem, 3vw, 1.8rem); line-height: 1.1; }
+#game-over-personal-best { min-height: 52px; margin-top: 16px; padding: 12px 22px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-action); font-size: clamp(1rem, 2.6vw, 1.25rem); font-weight: 700; cursor: pointer; }
+#game-over-personal-best:focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
 #game-over-status { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; z-index: 4; display: grid; justify-items: center; gap: 10px; padding: 12px; transform: translateX(-50%); }
 #game-over-status p { margin: 0; }
 #game-over-status button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-action); font: inherit; cursor: pointer; }
@@ -170,7 +174,7 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 #personal-best-table td { padding: 5px 3px; border: 0; overflow-wrap: anywhere; }
 #personal-best-table tbody tr:nth-child(odd) { color: #9be7ff; }
 #personal-best-table tbody tr:nth-child(even) { color: #d2a8ff; }
-#personal-best-table tbody tr td:nth-child(4) { color: #ffd54a; font-weight: 800; }
+#personal-best-table tbody tr td:nth-child(5) { color: #ffd54a; font-weight: 800; }
 #personal-best-table button { min-height: 26px; padding: 2px 5px; border: 0; color: #c8d5e4; background: transparent; font: inherit; font-size: .8em; }
 .personal-best-pages { display: flex; align-items: center; justify-content: center; gap: 16px; }
 .personal-best-pages button, #personal-best-sign-in, #personal-best-retry, .personal-best-close { min-height: 36px; padding: 7px 12px; border: 1px solid var(--ui-border); border-radius: 6px; color: #fff; background: var(--ui-action); font: inherit; cursor: pointer; }

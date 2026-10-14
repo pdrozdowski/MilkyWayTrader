@@ -30,7 +30,7 @@ class Element {
     setAttribute () {}
 }
 
-const ids = ['#personal-best', '#personal-best-title', '#personal-best-high-score', '#personal-best-status', '#personal-best-sign-in', '#personal-best-retry', '#personal-best-table', '#personal-best-rows', '#personal-best-date-heading', '#personal-best-score-heading', '#personal-best-outcome-heading', '#personal-best-best-heading', '#personal-best-delete-heading', '#personal-best-previous', '#personal-best-next', '#personal-best-page-indicator', '#personal-best-close', '#game-menu-personal-best', '#game-over-personal-best', '#game-menu'];
+const ids = ['#personal-best', '#personal-best-title', '#personal-best-high-score', '#personal-best-status', '#personal-best-sign-in', '#personal-best-retry', '#personal-best-table', '#personal-best-rows', '#personal-best-date-heading', '#personal-best-elapsed-heading', '#personal-best-score-heading', '#personal-best-outcome-heading', '#personal-best-best-heading', '#personal-best-delete-heading', '#personal-best-previous', '#personal-best-next', '#personal-best-page-indicator', '#personal-best-close', '#game-menu-personal-best', '#game-over-personal-best', '#game-menu'];
 function setup (status = 'signed-in', pages = [], options = {}) {
     const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
     elements['#personal-best'].focusControls = [elements['#personal-best-sign-in'], elements['#personal-best-retry'], elements['#personal-best-previous'], elements['#personal-best-next'], elements['#personal-best-close']];
@@ -44,11 +44,11 @@ function setup (status = 'signed-in', pages = [], options = {}) {
     const windowListeners = new Map();
     globalThis.document = { activeElement: null, createElement: () => new Element() };
     globalThis.window = { addEventListener (name, fn) { windowListeners.set(name, fn); }, removeEventListener (name) { windowListeners.delete(name); } };
-    const component = mountPersonalBest(root, { auth, store, profilePort: options.profilePort ?? { load: async () => ({ nickname: 'Pilot_7' }) }, openAccount: (...args) => opened.push(args) });
+    const component = mountPersonalBest(root, { auth, store, openAccount: (...args) => opened.push(args) });
     return { elements, component, authChange: value => { snapshot = value; listener(value); }, opened, calls: () => calls, keydown: event => windowListeners.get('keydown')?.(event), root };
 }
 
-const records = Array.from({ length: 11 }, (_, index) => ({ runId: `run-${index}`, finalCredits: 100 - index, outcome: ['freedom', 'imprisonment', 'death', 'abandoned'][index % 4], savedAt: `2026-10-${String(index + 1).padStart(2, '0')}T12:00:00Z` }));
+const records = Array.from({ length: 11 }, (_, index) => ({ runId: `run-${index}`, activeElapsedMs: (index + 1) * 61_000, finalCredits: 100 - index, outcome: ['freedom', 'imprisonment', 'death', 'abandoned'][index % 4], savedAt: `2026-10-${String(index + 1).padStart(2, '0')}T12:00:00Z` }));
 records[0] = { ...records[0], runId: 'tie-z', finalCredits: 1000, savedAt: '2026-10-01T12:00:00Z' };
 records[10] = { ...records[10], runId: 'tie-a', finalCredits: 1000, savedAt: '2026-10-01T12:00:00Z' };
 
@@ -64,11 +64,12 @@ test('signed-out prompt reuses account flow, populated rows mark one best and de
     view.authChange({ status: 'signed-in', email: 'pilot@example.test' });
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(view.elements['#personal-best-rows'].childrenList.length, 5);
-    const bestMarkers = view.elements['#personal-best-rows'].childrenList.map(row => row.childrenList[3].textContent).filter(Boolean);
+    const bestMarkers = view.elements['#personal-best-rows'].childrenList.map(row => row.childrenList[4].textContent).filter(Boolean);
     assert.deepEqual(bestMarkers, []);
-    assert.deepEqual(view.elements['#personal-best-rows'].childrenList.map(row => row.childrenList[2].textContent), [displayLabels.personalBestFreedom, displayLabels.personalBestPrison, displayLabels.personalBestDeath, displayLabels.personalBestAbandoned, displayLabels.personalBestFreedom]);
-    assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[4].childrenList[0].disabled, true);
-    const deleteButton = view.elements['#personal-best-rows'].childrenList[0].childrenList[4].childrenList[0];
+    assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[1].textContent, '1m 01s');
+    assert.deepEqual(view.elements['#personal-best-rows'].childrenList.map(row => row.childrenList[3].textContent), [displayLabels.personalBestFreedom, displayLabels.personalBestPrison, displayLabels.personalBestDeath, displayLabels.personalBestAbandoned, displayLabels.personalBestFreedom]);
+    assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[5].childrenList[0].disabled, true);
+    const deleteButton = view.elements['#personal-best-rows'].childrenList[0].childrenList[5].childrenList[0];
     const requestsBeforeDelete = view.calls();
     deleteButton.click();
     assert.equal(deleteButton.listeners.has('click'), false);
@@ -86,7 +87,7 @@ test('signed-out prompt reuses account flow, populated rows mark one best and de
     view.elements['#personal-best-next'].click();
     assert.equal(view.elements['#personal-best-page-indicator'].textContent, '3 / 3');
     assert.equal(view.calls(), requestsAtLastPage);
-    assert.deepEqual(view.elements['#personal-best-rows'].childrenList.map(row => row.childrenList[3].textContent).filter(Boolean), [displayLabels.personalBestBest]);
+    assert.deepEqual(view.elements['#personal-best-rows'].childrenList.map(row => row.childrenList[4].textContent).filter(Boolean), [displayLabels.personalBestBest]);
     view.elements['#personal-best-previous'].click();
     await new Promise(resolve => setImmediate(resolve));
     view.elements['#personal-best-previous'].click();
@@ -194,42 +195,12 @@ test('identity change clears private rows and ignores a stale page response', as
     assert.equal(view.elements['#personal-best-rows'].childrenList.length, 0);
     assert.equal(view.elements['#personal-best-high-score'].textContent, '');
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[1].textContent, '700');
+    assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[2].textContent, '700');
     finishStalePage({ data: { records: [records[5]], totalCount: records.length }, error: null });
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[0].textContent, '03 OCT 2026');
-    assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[1].textContent, '700');
+    assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[2].textContent, '700');
     view.component.destroy();
-});
-
-test('the title adds the signed-in player nickname and degrades to the plain title otherwise', async () => {
-    const signedIn = setup('signed-in', records);
-    signedIn.elements['#game-menu-personal-best'].click();
-    await new Promise(resolve => setImmediate(resolve));
-    assert.equal(signedIn.elements['#personal-best-title'].textContent, '★ Pilot_7 - PERSONAL BEST ★');
-    signedIn.elements['#personal-best-close'].click();
-    assert.equal(signedIn.elements['#personal-best-title'].textContent, displayLabels.personalBestTitle);
-    signedIn.component.destroy();
-
-    const signedOut = setup('unsigned', records);
-    signedOut.elements['#game-menu-personal-best'].click();
-    await new Promise(resolve => setImmediate(resolve));
-    assert.equal(signedOut.elements['#personal-best-title'].textContent, displayLabels.personalBestTitle);
-    signedOut.component.destroy();
-
-    const noProfile = setup('signed-in', records, { profilePort: { load: async () => null } });
-    noProfile.elements['#game-menu-personal-best'].click();
-    await new Promise(resolve => setImmediate(resolve));
-    assert.equal(noProfile.elements['#personal-best-title'].textContent, displayLabels.personalBestTitle);
-    noProfile.component.destroy();
-
-    const failedProfile = setup('signed-in', records, { profilePort: { load: async () => { throw new Error('offline'); } } });
-    failedProfile.elements['#game-menu-personal-best'].click();
-    assert.equal(failedProfile.elements['#personal-best-title'].textContent, displayLabels.personalBestTitle);
-    await new Promise(resolve => setImmediate(resolve));
-    assert.equal(failedProfile.elements['#personal-best-title'].textContent, displayLabels.personalBestTitle);
-    assert.equal(failedProfile.elements['#personal-best-rows'].childrenList.length, 5);
-    failedProfile.component.destroy();
 });
 
 test('application UI setup mounts Personal Best with the authenticated history adapter and both entry controls', () => {
@@ -237,7 +208,6 @@ test('application UI setup mounts Personal Best with the authenticated history a
     const componentSource = readFileSync('src/ui/components/personalBest.ts', 'utf8');
     assert.match(setupSource, /createBrowserResultHistoryStore/);
     assert.match(setupSource, /mountPersonalBest\(root, \{ store: createBrowserResultHistoryStore\(\), auth,/);
-    assert.match(setupSource, /profilePort: auth\.createPlayerProfilePort/);
     assert.match(componentSource, /#game-over-personal-best/);
     assert.match(componentSource, /#game-menu-personal-best/);
 });

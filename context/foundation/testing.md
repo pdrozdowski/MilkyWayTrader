@@ -22,13 +22,19 @@ When a task explicitly requests architecture artifacts, refresh `code-graph.json
 
 ## UI behavior
 
+Detailed Playwright design rules and the definition of done are in [`context/testing/playwright-principles.md`](../testing/playwright-principles.md); follow them when creating or refactoring browser tests.
+
 Prefer roles, labels and visible text as Playwright selectors. Use IDs only for stable component-owned elements and `data-*` attributes for cross-layer contracts such as ignored gameplay input. Fast component tests verify rendering, actions, subscriptions and idempotent cleanup. Before adding Playwright coverage, record the player-visible failure scenario, why lower-level tests are insufficient, and the unique browser behavior under test.
+
+Keep Playwright focused on critical player journeys and browser behavior that lower test layers cannot prove. Move authorization policy checks and domain logic to integration or unit tests at the layer that owns that behavior. Replace real-time gameplay waits with deterministic test fixtures or controlled simulation inputs so journey tests do not depend on elapsed gameplay time. Preserve meaningful risk coverage when consolidating or moving tests; test count is not a coverage goal.
 
 Playwright has one Chromium project. A dedicated journey may opt into a touch viewport when the risk specifically concerns touch/browser layout. Fullscreen success is tested through a fake port because headless browser fullscreen support varies; the application smoke suite only verifies real wiring. Store reports, traces and screenshots under ignored `.cache/` paths.
 
 ## Local Supabase Playwright lifecycle
 
-`npm.cmd run test:ui` is the only local-Supabase test entry point. It starts Vite using `npm.cmd run dev:test-nolog`, which selects Vite's ignored `.env.test`; normal `npm.cmd run dev-nolog` uses `.env.local` and remains connected to the real development Supabase project and Google OAuth.
+`npm.cmd run test:ui` is the only local-Supabase test entry point. It starts test-mode Vite on port 8081 using `npm.cmd run dev:test-nolog`, which selects Vite's ignored `.env.test`; normal `npm.cmd run dev-nolog` uses `.env.local`, stays on port 8080 and remains connected to the real development Supabase project and Google OAuth.
+
+Before starting local Supabase for UI tests, run `npx supabase start --exclude vector`.
 
 Before tests, `tests/ui/globalSetup.ts` runs `node scripts/prepare-test-database.mjs`. It rejects any `.env.test` URL other than loopback HTTP, verifies Docker Supabase is available, and resets the local database with all repository migrations. This deliberately deletes local test data only. Never run this lifecycle against remote Supabase.
 

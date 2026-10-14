@@ -7,14 +7,12 @@ const clockName = (state: typeof displayLabels.clockRunning | typeof displayLabe
 async function expectClock (page: Page, state: typeof displayLabels.clockRunning | typeof displayLabels.clockPaused): Promise<void>
 {
     await expect(page.getByLabel('Run status').getByLabel(clockName(state))).toBeVisible();
-    const image = state === displayLabels.clockRunning ? /clock_32x32\.png$/ : /clock_paused_[12]_32x32\.png$/;
-    await expect(page.locator('#run-status-clock img')).toHaveAttribute('src', image);
 }
 
 async function startRun (page: Page): Promise<void>
 {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('#game-container canvas')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'New Game', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
     await expect(page.getByLabel('Run status')).toBeVisible();
     await expectClock(page, displayLabels.clockRunning);

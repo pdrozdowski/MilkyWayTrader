@@ -3,6 +3,9 @@ import type { GameStateProvider } from '../application/gameStateProvider';
 import { createInitialGameState } from '../definitions/initialGameState';
 import type { TelemetryPort } from '../application/telemetry/telemetry';
 import { mainMenuBackgroundTransform } from './mainMenuBackground';
+import type { GameStateSnapshot } from '../state/gameStateSnapshot';
+
+const testGameStateStorageKey = 'milky-way-trader:playwright-game-state';
 
 export class MainMenu extends Scene
 {
@@ -32,7 +35,28 @@ export class MainMenu extends Scene
             const stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
             const seedBytes = new Uint32Array(1);
             crypto.getRandomValues(seedBytes);
-            const initialGameState = createInitialGameState({ runId: crypto.randomUUID(), randomSeed: seedBytes[0] });
+            let initialGameState = createInitialGameState({ runId: crypto.randomUUID(), randomSeed: seedBytes[0] });
+            if (import.meta.env.MODE === 'test') {
+                const fixture = localStorage.getItem(testGameStateStorageKey);
+                if (fixture !== null) {
+                    localStorage.removeItem(testGameStateStorageKey);
+                    try {
+                        const candidate = JSON.parse(fixture) as Partial<GameStateSnapshot>;
+                        initialGameState = {
+                            ...initialGameState,
+                            ...(typeof candidate.runId === 'string' ? { runId: candidate.runId } : {}),
+                            ...(typeof candidate.credits === 'number' ? { credits: candidate.credits } : {}),
+                            ...(Array.isArray(candidate.cargo) ? { cargo: candidate.cargo } : {}),
+                            ...(candidate.clock && typeof candidate.clock === 'object' ? { clock: candidate.clock } : {}),
+                            ...(Array.isArray(candidate.markets) ? { markets: candidate.markets } : {}),
+                            ...(candidate.ship && typeof candidate.ship === 'object' ? { ship: { ...initialGameState.ship, ...candidate.ship } } : {}),
+                            ...(candidate.planetLifecycle && typeof candidate.planetLifecycle === 'object' ? { planetLifecycle: candidate.planetLifecycle } : {})
+                        };
+                    } catch {
+                        throw new Error('Invalid Playwright game-state fixture.');
+                    }
+                }
+            }
             stateProvider.reset(initialGameState);
             (this.registry.get('telemetry') as TelemetryPort).startSession(initialGameState.credits);
             this.scene.start('Game');

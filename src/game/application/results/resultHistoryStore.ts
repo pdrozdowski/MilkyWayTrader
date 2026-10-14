@@ -3,6 +3,7 @@ export type ResultHistoryOutcome = 'freedom' | 'imprisonment' | 'death' | 'aband
 export interface ResultHistoryRecord
 {
     readonly runId: string;
+    readonly activeElapsedMs: number;
     readonly finalCredits: number;
     readonly outcome: ResultHistoryOutcome;
     readonly savedAt: string;

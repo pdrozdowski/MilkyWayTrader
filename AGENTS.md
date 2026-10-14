@@ -25,6 +25,7 @@ Command rules: [.codex/rules/project.rules](.codex/rules/project.rules).
 - Bootstrap zachowuje `context/`.
 - Zarchiwizowane zmiany są niezmienne. Przy docelowej ścieżce w `context/archive/` przerwij: „This change is archived. Open a new change with `/10x-new` instead.”
 - Architektura i kierunek zależności: @context/foundation/architecture.md. Zasady testów: @context/foundation/testing.md. Ekonomia pozostaje czystym TypeScript i jest niezależna od Phaser/DOM.
+- Detailed Playwright test design, fixtures, scope and acceptance criteria: @context/testing/playwright-principles.md.
 - Po utworzeniu nowego skilla projektu uruchom @.agents/skills/utils-refine-skill/SKILL.md; zaakceptuj skill dopiero po ponownej walidacji i braku ustaleń HIGH/MEDIUM.
 - Tokeny: tylko potrzebne operacje/projekt; bez administracji/rozliczeń. Sekrety: zmienne środowiskowe, nigdy repozytorium, commitowany `.mcp.json` ani rozmowa.
 - Produkcję zmieniaj po zatwierdzeniu planu. Produkcyjne bazy/projekty usuwa i główny sekret rotuje użytkownik ręcznie.
@@ -65,7 +66,8 @@ This section takes precedence over the generic post-change validation sentence a
 - `npm.cmd run test:unit` for all product Node suites; `npm.cmd run test:fast` adds architecture checks for cross-cutting local changes.
 - `npm.cmd run typecheck` for TypeScript/configuration changes.
 - `npm.cmd run test:ui` only when the changed risk requires real browser behavior. It does not install Chromium; use `npm.cmd run playwright:install` (or `test:ui:install`) as an explicit one-time local setup step.
-- `npm.cmd run test:ui` is test-only: it runs Vite in `test` mode, resets/migrates local Docker Supabase, and provisions isolated local sessions. Start Docker Supabase first; it deletes local Supabase data, never a remote project.
+- Start local Supabase with `npx supabase start --exclude vector`.
+- `npm.cmd run test:ui` is test-only: it runs Vite in `test` mode on port 8081, resets/migrates local Docker Supabase, and provisions isolated local sessions. Start Docker Supabase first; it deletes local Supabase data, never a remote project.
 - `npm.cmd run dev-nolog` is normal development only: it loads `.env.local` and must retain the real Supabase/Google OAuth configuration. Never use `--mode test` for ordinary development or release checks.
 - `npm.cmd run test:project` is the complete local automated test pipeline: fast tests, typecheck, then Playwright. It assumes dependencies and Chromium already exist.
 - `npm.cmd run test:ci` / `validate:deployment` adds the dependency audit, production build and Pages checks. GitHub Actions always performs `npm ci`, then `npm run playwright:install:ci`, then this full pipeline.
@@ -107,6 +109,7 @@ After adding, removing, renaming, or changing a Playwright E2E test, invoke
 
 ## Local Supabase Playwright setup
 
+- Start local Supabase with `npx supabase start --exclude vector` before running UI tests.
 - `.env.test` is ignored and reserved for `test:ui`; it supplies only local Docker Supabase public settings plus `TEST_USER_EMAIL` and `TEST_USER_PASSWORD`. Test scripts reject a non-loopback URL. `.env.local` remains the normal-development/release-like environment.
 - `playwrightConfig.ts` invokes `tests/ui/globalSetup.ts`, which runs `node scripts/prepare-test-database.mjs` and therefore resets local Supabase from `supabase/migrations/`. Its global teardown sweeps abandoned session artifacts.
 - New UI specs import `test` from `tests/ui/testSessionFixture.ts`, not `@playwright/test`. The default is an isolated anonymous session. Opt into a local programmatic authenticated session with `test.use({ testSessionMode: 'authenticated' })`; never automate Google OAuth.

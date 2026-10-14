@@ -179,13 +179,13 @@ S-12 introduces no database migration. S-06 must first expand terminal-result pr
 
 #### Automated
 
-- [x] 2.1 Fast component tests cover states, pagination, BEST selection, labels, inert DELETE, retry, and sign-out behavior.
-- [x] 2.2 UI wiring tests cover both entry points and focus restoration.
+- [x] 2.1 Fast component tests cover states, pagination, BEST selection, labels, inert DELETE, retry, and sign-out behavior. — e13d156
+- [x] 2.2 UI wiring tests cover both entry points and focus restoration. — e13d156
 
 #### Manual
 
-- [ ] 2.3 The populated five-row table is readable in landscape with no clipping.
-- [ ] 2.4 Verify the signed-out prompt reuses the existing account flow and returns to Personal Best.
+- [x] 2.3 The populated five-row table is readable in landscape with no clipping.
+- [x] 2.4 Verify the signed-out prompt reuses the existing account flow and returns to Personal Best.
 
 ### Phase 3: Roadmap Alignment and Browser Verification
 
@@ -199,4 +199,4 @@ S-12 introduces no database migration. S-06 must first expand terminal-result pr
 
 #### Manual
 
-- [ ] 3.6 Both entry points, close behavior, focus return, and sign-out clearing are verified in the running UI.
+- [x] 3.6 Both entry points, close behavior, focus return, and sign-out clearing are verified in the running UI.

@@ -1,55 +1,79 @@
-import { execFile } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { promisify } from 'node:util';
+import { randomUUID } from 'node:crypto';
 import { test as base, type Page } from '@playwright/test';
-
-const execute = promisify(execFile);
-const sessionDirectory = resolve(process.cwd(), '.cache', 'playwright', 'sessions');
-
-type SessionMode = 'anonymous' | 'authenticated';
-
-interface SessionArtifact
-{
-    readonly id: string;
-    readonly mode: SessionMode;
-    readonly anonymousId: string;
-    readonly userId: string | null;
-    readonly authStorageKey: string | null;
-    readonly authSession: unknown;
-}
+import { prepareGameState, type GameStateFixtureOptions } from './gameStateFixture';
+import type { PlanetId } from '../../src/game/state/planetState';
+import { createTestSession, removeTestSessionArtifact, type SessionArtifact, type TestSessionMode } from '../testSessionSupport';
 
 export interface TestSession
 {
     readonly id: string;
-    readonly mode: SessionMode;
+    readonly testRunId: string;
+    readonly mode: TestSessionMode;
     readonly anonymousId: string;
     readonly userId: string | null;
+    readonly recordTiming: (name: string, durationMs: number) => void;
 }
 
 type Fixtures = {
-    readonly testSessionMode: SessionMode;
+    readonly fixtureSetupStartedAt: number;
+    readonly testSessionMode: TestSessionMode;
+    readonly testRunId: string;
+    readonly initialGameState: (GameStateFixtureOptions & { readonly planet: PlanetId }) | null;
     readonly testSession: TestSession;
+    readonly gameStateSetup: void;
     readonly secondaryAuthenticatedPage: Page;
     readonly anonymousPage: Page;
 };
 
 export const test = base.extend<Fixtures>({
+    fixtureSetupStartedAt: [async ({}, use) => { await use(performance.now()); }, { auto: true }],
     testSessionMode: ['anonymous', { option: true }],
-    testSession: async ({ page, testSessionMode }, use) => {
-        const artifact = await createSession(testSessionMode);
+    initialGameState: [null, { option: true }],
+    testRunId: async ({}, use) => { await use(randomUUID()); },
+    page: async ({ context, fixtureSetupStartedAt }, use, testInfo) => {
+        const contextReadyAt = performance.now();
+        const contextSetupMs = contextReadyAt - fixtureSetupStartedAt;
+        const pageStartedAt = performance.now();
+        const page = await context.newPage();
+        const pageCreationMs = performance.now() - pageStartedAt;
+        testInfo.annotations.push({
+            type: 'fixture-timing',
+            description: JSON.stringify([
+                { name: 'Context fixture initialization (per-test)', durationMs: contextSetupMs },
+                { name: 'Page creation (per-test)', durationMs: pageCreationMs },
+                { name: 'Context + page initialization', durationMs: contextSetupMs + pageCreationMs }
+            ])
+        });
+        await use(page);
+    },
+    testSession: async ({ page, testSessionMode, testRunId }, use, testInfo) => {
+        const timings = testInfo.annotations.filter(annotation => annotation.type === 'fixture-timing')
+            .flatMap(annotation => JSON.parse(annotation.description ?? '[]') as { name: string; durationMs: number }[]);
+        const recordTiming = (name: string, durationMs: number): void => { timings.push({ name, durationMs }); };
+        const sessionStartedAt = performance.now();
+        const artifact = await createTestSession(testSessionMode, testRunId, recordTiming);
+        recordTiming('Session setup total', performance.now() - sessionStartedAt);
+        const injectStartedAt = performance.now();
         await page.addInitScript(session => {
             window.localStorage.setItem('milky-way-trader:anonymous_id', session.anonymousId);
             if (session.authStorageKey && session.authSession) window.localStorage.setItem(session.authStorageKey, JSON.stringify(session.authSession));
         }, artifact);
+        recordTiming('Register authentication/session init script', performance.now() - injectStartedAt);
         try {
-            await use({ id: artifact.id, mode: artifact.mode, anonymousId: artifact.anonymousId, userId: artifact.userId });
+            await use({ id: artifact.id, testRunId, mode: artifact.mode, anonymousId: artifact.anonymousId, userId: artifact.userId, recordTiming });
         } finally {
-            await cleanupSession(artifact);
+            const cleanupStartedAt = performance.now();
+            await removeTestSessionArtifact(artifact.id);
+            recordTiming('Remove temporary session artifact', performance.now() - cleanupStartedAt);
+            console.log(`FIXTURE_TIMINGS ${testInfo.title}: ${JSON.stringify(timings)}`);
         }
     },
+    gameStateSetup: [async ({ page, initialGameState, testSession }, use) => {
+        if (initialGameState) await prepareGameState(page, initialGameState.planet, initialGameState, testSession.recordTiming, testSession.testRunId);
+        await use();
+    }, { auto: true }],
     secondaryAuthenticatedPage: async ({ browser }, use) => {
-        const artifact = await createSession('authenticated');
+        const artifact = await createTestSession('authenticated', randomUUID());
         const context = await browser.newContext();
         const page = await context.newPage();
         await page.addInitScript(initializeSession, artifact);
@@ -57,7 +81,7 @@ export const test = base.extend<Fixtures>({
             await use(page);
         } finally {
             await context.close();
-            await cleanupSession(artifact);
+            await removeTestSessionArtifact(artifact.id);
         }
     },
     anonymousPage: async ({ browser }, use) => {
@@ -77,21 +101,3 @@ function initializeSession (session: SessionArtifact): void
     if (session.authStorageKey && session.authSession) window.localStorage.setItem(session.authStorageKey, JSON.stringify(session.authSession));
 }
 
-async function createSession (mode: SessionMode): Promise<SessionArtifact>
-{
-    const result = await execute(process.execPath, ['scripts/create-test-session.mjs', mode], {
-        cwd: process.cwd(),
-        env: process.env
-    });
-    const output = JSON.parse(result.stdout) as { sessionFile?: unknown };
-    if (typeof output.sessionFile !== 'string' || !/^[0-9a-f-]+\.json$/u.test(output.sessionFile)) throw new Error('Test session setup returned an invalid artifact name.');
-    return JSON.parse(await readFile(resolve(sessionDirectory, output.sessionFile), 'utf8')) as SessionArtifact;
-}
-
-async function cleanupSession (artifact: SessionArtifact): Promise<void>
-{
-    await execute(process.execPath, ['scripts/cleanup-test-session.mjs'], {
-        cwd: process.cwd(),
-        env: { ...process.env, PLAYWRIGHT_TEST_SESSION_FILE: `${artifact.id}.json` }
-    });
-}
