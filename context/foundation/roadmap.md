@@ -54,7 +54,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-10 | s10-player-sign-in-status | User can sign in, sign out, and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-046, FR-047, FR-048 | done |
 | S-11 | s11-automatic-save-and-resume | Signed-in user can see save status, preserve progress, and resume an active run. | S-06, S-09, S-10, S-16 | US-05, FR-006, FR-049, FR-050 | proposed |
 | S-12 | s12-personal-best-result | Signed-in user can view their personal best and paginated private run history. | S-06 | US-06, FR-052 | done |
-| S-13 | s13-global-high-scores | User can view the globally eligible high-score results. | S-11 | US-06, FR-053 | proposed |
+| S-13 | s13-global-high-scores | User can view the top global high scores and their personal best's global rank. | S-12 | US-06, FR-053 | planning |
 | S-14 | s14-delete-terminal-active-save | Signed-in user retains a terminal result while its active save is removed. | S-06, S-11 | US-05, FR-051 | proposed |
 | S-15 | s15-clear-personal-best | Signed-in user can delete any personal result or clear their history without changing global results. | S-12, S-13 | US-06, FR-054, FR-057 | planning |
 | S-17 | s17-gameplay-audio-feedback | User can hear gameplay audio feedback without interrupting a run. | S-02, S-07, S-08 | US-07, FR-055 | proposed |
@@ -232,17 +232,17 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Risk:** Personal ranking includes every terminal outcome and must remain private to its owner.
 - **Status:** done
 
-### S-13: View global high scores
+### S-13: Score terminal runs and view global high scores
 
-- **Outcome:** User can view the globally eligible high-score results.
+- **Outcome:** User can view the top global high scores and their personal best's global rank.
 - **Change ID:** s13-global-high-scores
 - **PRD refs:** US-06, FR-053
-- **Prerequisites:** S-11
-- **Parallel with:** S-12
+- **Prerequisites:** S-12
+- **Parallel with:** S-11
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Public results must enforce the PRD's eligibility rule without exposing private run history or accepting ineligible outcomes.
-- **Status:** proposed
+- **Status:** planning
 
 ### S-14: Remove the terminal active save
 
@@ -297,7 +297,7 @@ No standalone foundations are required. Deployment is already present, the autho
 | S-10 | s10-player-sign-in-status | Deliver player sign-in, sign-out, and authentication status | no | Complete external setup |
 | S-11 | s11-automatic-save-and-resume | Deliver automatic save and run resume | no | Requires S-06, S-09, S-10, and S-16 |
 | S-12 | s12-personal-best-result | Deliver the signed-in player's personal best and private run history | no | Requires S-06 |
-| S-13 | s13-global-high-scores | Deliver public eligible high scores | no | Requires S-11 |
+| S-13 | s13-global-high-scores | Deliver composite-score global high scores and personal best rank | no | Requires S-12 |
 | S-14 | s14-delete-terminal-active-save | Remove the terminal active save after retaining its result | no | Requires S-06 and S-11 |
 | S-15 | s15-clear-personal-best | Allow the owner to delete any personal result or clear their history | no | Requires S-12 and S-13 |
 | S-17 | s17-gameplay-audio-feedback | Deliver optional gameplay audio feedback | no | Requires S-02, S-07, and S-08 |
