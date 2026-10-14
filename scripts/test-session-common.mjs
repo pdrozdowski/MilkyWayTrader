@@ -35,7 +35,7 @@ export function assertLocalSupabaseUrl (value)
     }
 }
 
-export function localSupabaseStatus ()
+export function localSupabaseStatus (expectedApiUrl)
 {
     let output;
     try {
@@ -45,12 +45,25 @@ export function localSupabaseStatus ()
             stdio: ['ignore', 'pipe', 'pipe']
         });
     } catch {
-        throw new Error('Local Supabase is not available. Start the Docker stack with `npx supabase start` and retry.');
+        throw new Error('Local Supabase is not available. Start it with `npx supabase start --exclude vector` and retry.');
     }
     const jsonStart = output.indexOf('{');
     if (jsonStart < 0) throw new Error('Local Supabase returned an unreadable status response.');
     const values = JSON.parse(output.slice(jsonStart));
+    if (expectedApiUrl) {
+        const actual = new URL(required(values, 'API_URL'));
+        const expected = new URL(expectedApiUrl);
+        if (actual.protocol !== expected.protocol || actual.port !== expected.port || !['localhost', '127.0.0.1', '::1'].includes(actual.hostname)) {
+            throw new Error('.env.test VITE_SUPABASE_URL does not match the active local Supabase API endpoint.');
+        }
+    }
     return Object.freeze({ serviceRoleKey: required(values, 'SERVICE_ROLE_KEY') });
+}
+
+export function startLocalSupabase ()
+{
+    // The start command is idempotent for an already running local stack.
+    runSupabase(['start', '--exclude', 'vector']);
 }
 
 export async function ensureSessionDirectory ()
@@ -63,7 +76,8 @@ export function runSupabase (argumentsList)
     try {
         executeSupabase(argumentsList, {
             cwd: repositoryRoot,
-            stdio: 'inherit'
+            stdio: 'inherit',
+            timeout: 180_000
         });
     } catch {
         throw new Error(`Supabase command failed: supabase ${argumentsList.join(' ')}`);

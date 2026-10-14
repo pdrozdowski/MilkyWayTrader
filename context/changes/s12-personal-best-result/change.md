@@ -1,7 +1,7 @@
 ---
 change_id: s12-personal-best-result
 title: Personal best result across retained outcomes for signed-in user
-status: impl_reviewed
+status: implementing
 created: 2026-10-13
 updated: 2026-10-13
 archived_at: null

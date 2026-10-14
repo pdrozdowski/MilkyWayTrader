@@ -6,21 +6,23 @@ import { ensureSessionDirectory, loadTestEnvironment, localSupabaseStatus, sessi
 
 const mode = process.argv[2];
 if (mode !== 'anonymous' && mode !== 'authenticated') throw new Error('Usage: node scripts/create-test-session.mjs <anonymous|authenticated>');
+const testRunId = process.argv[3];
+if (!testRunId || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(testRunId)) throw new Error('A UUID testRunId is required.');
 
 const environment = await loadTestEnvironment();
 const id = randomUUID();
 const anonymousId = randomUUID();
-const artifact = { id, mode, anonymousId, userId: null, authStorageKey: null, authSession: null };
+const artifact = { id, testRunId, mode, anonymousId, userId: null, authStorageKey: null, authSession: null };
 
 if (mode === 'authenticated') {
-    const { serviceRoleKey } = localSupabaseStatus();
+    const { serviceRoleKey } = localSupabaseStatus(environment.url);
     const admin = createClient(environment.url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const email = testEmail(environment.testUserEmail, id);
     const created = await admin.auth.admin.createUser({
         email,
         password: environment.testUserPassword,
         email_confirm: true,
-        user_metadata: { playwright_test_session_id: id }
+        user_metadata: { playwright_test_session_id: id, playwright_test_run_id: testRunId }
     });
     if (created.error || !created.data.user) throw new Error(`Unable to create local test user: ${created.error?.message ?? 'no user returned'}`);
     const client = createClient(environment.url, environment.publishableKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });

@@ -33,11 +33,6 @@ export function createBrowserPlayerProfilePort (client: SupabaseClient): PlayerP
 {
     const profileClient = client as unknown as PlayerProfileClient;
     return {
-        load: async () => {
-            const existing = await profileClient.from('player_profiles').select('nickname').maybeSingle();
-            if (existing.error) throw new Error(existing.error.message);
-            return existing.data ? profileFrom(existing.data, 'Player profile is unavailable.') : null;
-        },
         loadOrCreate: async (suggestedNickname?: string) => {
             const existing = await profileClient.from('player_profiles').select('nickname').maybeSingle();
             if (existing.error) throw new Error(existing.error.message);

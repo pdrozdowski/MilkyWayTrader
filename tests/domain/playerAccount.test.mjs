@@ -50,15 +50,11 @@ test('profile load creates a persisted default and concurrent creation returns t
         }
     };
     const port = createBrowserPlayerProfilePort(client);
-    assert.equal(await port.load(), null);
     const [first, raced] = await Promise.all([port.loadOrCreate(), port.loadOrCreate()]);
     assert.match(first.nickname, /^spaceTrader\d{5}$/);
     assert.deepEqual(raced, first);
     assert.equal(inserts, 2);
-    assert.deepEqual(await port.load(), first);
     assert.deepEqual(await port.updateNickname('  Pilot_7 '), { nickname: 'Pilot_7' });
-    assert.deepEqual(await port.load(), { nickname: 'Pilot_7' });
-    assert.equal(inserts, 2);
 });
 
 test('OAuth return storage round trips a validated run and consumes it once', () => {

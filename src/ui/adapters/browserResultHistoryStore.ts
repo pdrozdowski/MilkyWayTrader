@@ -6,6 +6,7 @@ import { browserAuthConfiguration, type PublicAuthConfiguration } from '../../ga
 interface HistoryRow
 {
     readonly run_id: string;
+    readonly active_elapsed_ms: number;
     readonly final_credits: number;
     readonly outcome: ResultHistoryOutcome;
     readonly created_at: string;
@@ -42,7 +43,7 @@ function validConfiguration (configuration: PublicAuthConfiguration): configurat
 
 function mapRecord (row: HistoryRow): ResultHistoryRecord
 {
-    return Object.freeze({ runId: row.run_id, finalCredits: row.final_credits, outcome: row.outcome, savedAt: row.created_at });
+    return Object.freeze({ runId: row.run_id, activeElapsedMs: row.active_elapsed_ms, finalCredits: row.final_credits, outcome: row.outcome, savedAt: row.created_at });
 }
 
 function failed<T> (message: string): ResultHistoryResult<T>
@@ -60,7 +61,7 @@ export function createBrowserResultHistoryStore (configuration = browserAuthConf
             try {
                 const from = page * resultHistoryPageSize;
                 const { data, count, error } = await client.from('run_results')
-                    .select('run_id, final_credits, outcome, created_at', { count: 'exact' })
+                    .select('run_id, active_elapsed_ms, final_credits, outcome, created_at', { count: 'exact' })
                     .order('final_credits', { ascending: false })
                     .order('created_at', { ascending: false })
                     .order('run_id', { ascending: true })
@@ -75,7 +76,7 @@ export function createBrowserResultHistoryStore (configuration = browserAuthConf
         getBest: async () => {
             try {
                 const { data, error } = await client.from('run_results')
-                    .select('run_id, final_credits, outcome, created_at', { count: 'exact' })
+                    .select('run_id, active_elapsed_ms, final_credits, outcome, created_at', { count: 'exact' })
                     .order('final_credits', { ascending: false })
                     .order('created_at', { ascending: true })
                     .order('run_id', { ascending: true })
