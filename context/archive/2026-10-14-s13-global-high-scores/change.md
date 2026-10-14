@@ -1,10 +1,10 @@
 ---
 change_id: s13-global-high-scores
 title: Score terminal runs and rank each player's best result
-status: implemented
+status: archived
 created: 2026-10-14
 updated: 2026-10-14
-archived_at: null
+archived_at: 2026-10-14T21:00:55Z
 ---
 
 ## Notes

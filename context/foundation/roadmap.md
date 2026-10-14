@@ -54,7 +54,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-10 | s10-player-sign-in-status | User can sign in, sign out, and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-046, FR-047, FR-048 | done |
 | S-11 | s11-automatic-save-and-resume | Signed-in user can see save status, preserve progress, and resume an active run. | S-06, S-09, S-10, S-16 | US-05, FR-006, FR-049, FR-050 | proposed |
 | S-12 | s12-personal-best-result | Signed-in user can view their personal best and paginated private run history. | S-06 | US-06, FR-052 | done |
-| S-13 | s13-global-high-scores | User can view the top global high scores and their personal best's global rank. | S-12 | US-06, FR-053 | in-progress |
+| S-13 | s13-global-high-scores | User can view the top global high scores and their personal best's global rank. | S-12 | US-06, FR-053 | done |
 | S-14 | s14-delete-terminal-active-save | Signed-in user retains a terminal result while its active save is removed. | S-06, S-11 | US-05, FR-051 | proposed |
 | S-15 | s15-clear-personal-best | Signed-in user can delete any personal result or clear their history without changing global results. | S-12, S-13 | US-06, FR-054, FR-057 | planning |
 | S-17 | s17-gameplay-audio-feedback | User can hear gameplay audio feedback without interrupting a run. | S-02, S-07, S-08 | US-07, FR-055 | proposed |
@@ -242,7 +242,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Public results must enforce the PRD's eligibility rule without exposing private run history or accepting ineligible outcomes.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-14: Remove the terminal active save
 
@@ -322,6 +322,8 @@ No open roadmap questions.
 ## Milestone History
 
 ## Done
+
+- **S-13: User can view the top global high scores and their personal best's global rank.** — Archived 2026-10-14 → `context/archive/2026-10-14-s13-global-high-scores/`. Lesson: —.
 
 - **S-12: Signed-in user can view their personal best and paginated private run history across retained outcomes.** â€” Archived 2026-10-14 â†’ `context/archive/2026-10-13-s12-personal-best-result/`. Lesson: â€”.
 
