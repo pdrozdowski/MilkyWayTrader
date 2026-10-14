@@ -96,7 +96,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         },
         clearSignInContext: () => authReturn?.clear()
     });
-    const personalBest = mountPersonalBest(root, { store: createBrowserResultHistoryStore(), auth, openAccount: (origin, returnFocus) => root.dispatchEvent(new CustomEvent('player-account-open', { detail: { origin, returnFocus } })) });
+    const personalBest = mountPersonalBest(root, { store: createBrowserResultHistoryStore(), auth, profilePort: auth.createPlayerProfilePort?.() ?? null, openAccount: (origin, returnFocus) => root.dispatchEvent(new CustomEvent('player-account-open', { detail: { origin, returnFocus } })) });
     const openReturnedAccount = (origin: AccountOrigin): void => { root.dispatchEvent(new CustomEvent<AccountOrigin>('player-account-open', { detail: origin })); };
     const showAuthReturnError = (message: string): void => {
         const returnStatus = root.querySelector<HTMLElement>('#main-menu-return-status');

@@ -44,7 +44,7 @@ function setup (status = 'signed-in', pages = [], options = {}) {
     const windowListeners = new Map();
     globalThis.document = { activeElement: null, createElement: () => new Element() };
     globalThis.window = { addEventListener (name, fn) { windowListeners.set(name, fn); }, removeEventListener (name) { windowListeners.delete(name); } };
-    const component = mountPersonalBest(root, { auth, store, openAccount: (...args) => opened.push(args) });
+    const component = mountPersonalBest(root, { auth, store, profilePort: options.profilePort ?? { load: async () => ({ nickname: 'Pilot_7' }) }, openAccount: (...args) => opened.push(args) });
     return { elements, component, authChange: value => { snapshot = value; listener(value); }, opened, calls: () => calls, keydown: event => windowListeners.get('keydown')?.(event), root };
 }
 
@@ -202,11 +202,42 @@ test('identity change clears private rows and ignores a stale page response', as
     view.component.destroy();
 });
 
+test('the title adds the signed-in player nickname and degrades to the plain title otherwise', async () => {
+    const signedIn = setup('signed-in', records);
+    signedIn.elements['#game-menu-personal-best'].click();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(signedIn.elements['#personal-best-title'].textContent, '★ Pilot_7 - PERSONAL BEST ★');
+    signedIn.elements['#personal-best-close'].click();
+    assert.equal(signedIn.elements['#personal-best-title'].textContent, displayLabels.personalBestTitle);
+    signedIn.component.destroy();
+
+    const signedOut = setup('unsigned', records);
+    signedOut.elements['#game-menu-personal-best'].click();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(signedOut.elements['#personal-best-title'].textContent, displayLabels.personalBestTitle);
+    signedOut.component.destroy();
+
+    const noProfile = setup('signed-in', records, { profilePort: { load: async () => null } });
+    noProfile.elements['#game-menu-personal-best'].click();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(noProfile.elements['#personal-best-title'].textContent, displayLabels.personalBestTitle);
+    noProfile.component.destroy();
+
+    const failedProfile = setup('signed-in', records, { profilePort: { load: async () => { throw new Error('offline'); } } });
+    failedProfile.elements['#game-menu-personal-best'].click();
+    assert.equal(failedProfile.elements['#personal-best-title'].textContent, displayLabels.personalBestTitle);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(failedProfile.elements['#personal-best-title'].textContent, displayLabels.personalBestTitle);
+    assert.equal(failedProfile.elements['#personal-best-rows'].childrenList.length, 5);
+    failedProfile.component.destroy();
+});
+
 test('application UI setup mounts Personal Best with the authenticated history adapter and both entry controls', () => {
     const setupSource = readFileSync('src/ui/setupUi.ts', 'utf8');
     const componentSource = readFileSync('src/ui/components/personalBest.ts', 'utf8');
     assert.match(setupSource, /createBrowserResultHistoryStore/);
     assert.match(setupSource, /mountPersonalBest\(root, \{ store: createBrowserResultHistoryStore\(\), auth,/);
+    assert.match(setupSource, /profilePort: auth\.createPlayerProfilePort/);
     assert.match(componentSource, /#game-over-personal-best/);
     assert.match(componentSource, /#game-menu-personal-best/);
 });
