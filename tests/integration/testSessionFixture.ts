@@ -1,6 +1,12 @@
 import { randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { test as base } from '@playwright/test';
 import { createTestSession, loadPublicTestEnvironment, removeTestSessionArtifact, type PublicTestEnvironment, type SessionArtifact } from '../testSessionSupport';
+
+const require = createRequire(`${process.cwd()}/package.json`);
+const { createRank100CutoffSeed } = require('./tests/integration/globalScoreRank100FixtureLoader.cjs') as {
+    createRank100CutoffSeed(): Promise<{ readonly cutoffNicknames: readonly string[]; cleanup(): Promise<void> }>;
+};
 
 export interface AuthenticatedTestIdentity
 {
@@ -14,6 +20,7 @@ type Fixtures = {
     readonly supabaseTestEnvironment: PublicTestEnvironment;
     readonly authenticatedIdentity: AuthenticatedTestIdentity;
     readonly secondaryAuthenticatedIdentity: AuthenticatedTestIdentity;
+    readonly rank100CutoffSeed: { readonly cutoffNicknames: readonly string[] };
 };
 
 export const test = base.extend<Fixtures>({
@@ -27,6 +34,12 @@ export const test = base.extend<Fixtures>({
     secondaryAuthenticatedIdentity: async ({}, use) => {
         const artifact = await createTestSession('authenticated', randomUUID());
         try { await use(identityFrom(artifact)); } finally { await removeTestSessionArtifact(artifact.id); }
+    },
+    rank100CutoffSeed: async ({}, use, testInfo) => {
+        testInfo.setTimeout(210_000);
+        const seed = await createRank100CutoffSeed();
+        try { await use({ cutoffNicknames: seed.cutoffNicknames }); }
+        finally { await seed.cleanup(); }
     }
 });
 

@@ -79,7 +79,7 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
     const clearData = (): void => { records = []; best = null; totalCount = 0; page = 0; };
     const render = (): void => {
         title.textContent = displayLabels.personalBestTitle.replace('{nickname}', profile?.nickname ?? displayLabels.personalBestNicknameFallback);
-        highScore.textContent = best ? formatCredits(best.finalCredits) : '';
+        highScore.textContent = best?.finalScore !== null && best ? formatCredits(best.finalScore) : '';
         highScore.hidden = !best;
         headings.forEach((heading, index) => { heading.textContent = [displayLabels.personalBestDate, displayLabels.personalBestElapsed, displayLabels.personalBestScore, displayLabels.personalBestOutcome, displayLabels.personalBestBest, displayLabels.personalBestDelete][index]; });
         const signedIn = authSnapshot.status === 'signed-in';
@@ -101,7 +101,7 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
         rows.replaceChildren();
         records.forEach(record => {
             const row = document.createElement('tr');
-            const values = [dateLabel(record.savedAt), elapsedTimeLabel(record.activeElapsedMs), formatCredits(record.finalCredits), outcomeLabel(record), best?.runId === record.runId ? displayLabels.personalBestBest : ''];
+            const values = [dateLabel(record.savedAt), elapsedTimeLabel(record.activeElapsedMs), formatCredits(record.finalScore ?? record.finalCredits), outcomeLabel(record), best?.runId === record.runId ? displayLabels.personalBestBest : ''];
             values.forEach(value => { const cell = document.createElement('td'); cell.textContent = value; row.append(cell); });
             const deleteCell = document.createElement('td');
             const deleteButton = document.createElement('button');

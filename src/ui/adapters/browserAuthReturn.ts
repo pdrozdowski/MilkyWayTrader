@@ -1,7 +1,8 @@
 import type { AuthReturnContext, AuthReturnPort, AccountOrigin } from '../../game/application/auth/authReturn';
 import { decodeGameState, encodeGameState } from '../../game/application/gameStateCodec.ts';
 import type { GameStateSnapshot } from '../../game/state/gameStateSnapshot';
-import type { TerminalResultState } from '../../game/state/terminalResultState';
+import type { TerminalScoreResult } from '../../game/application/results/terminalScoreResult.ts';
+import { createTerminalScoreResult } from '../../game/application/results/terminalScoreResult.ts';
 
 const storageKey = 'milky-way-trader.auth-return';
 interface SessionStoragePort { getItem(key: string): string | null; setItem(key: string, value: string): void; removeItem(key: string): void; }
@@ -17,11 +18,11 @@ function isRecord (value: unknown): value is Record<string, unknown>
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function terminalResult (value: unknown): TerminalResultState | null
+function terminalResult (value: unknown): TerminalScoreResult | null
 {
     if (value === null) return null;
-    if (!isRecord(value) || typeof value.runId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.runId) || value.outcome !== 'death' || !Number.isSafeInteger(value.activeElapsedMs) || (value.activeElapsedMs as number) < 0 || !Number.isSafeInteger(value.finalCredits) || (value.finalCredits as number) < 0) throw new Error('Invalid terminal result.');
-    return value as unknown as TerminalResultState;
+    if (!isRecord(value) || typeof value.runId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.runId) || value.outcome !== 'death' || !Number.isSafeInteger(value.activeElapsedMs) || (value.activeElapsedMs as number) < 0 || !Number.isSafeInteger(value.finalCredits) || (value.finalCredits as number) < 0 || typeof value.cargoValue !== 'number' || !Number.isFinite(value.cargoValue) || value.cargoValue < 0 || !Number.isSafeInteger(value.shipUpgradeSpend) || (value.shipUpgradeSpend as number) < 0 || !Number.isSafeInteger(value.facilityUpgradeSpend) || (value.facilityUpgradeSpend as number) < 0 || !Number.isSafeInteger(value.finalScore) || (value.finalScore as number) < 0) throw new Error('Invalid terminal result.');
+    return value as unknown as TerminalScoreResult;
 }
 
 function decodeContext (candidate: unknown): Readonly<AuthReturnContext>
@@ -38,7 +39,8 @@ function decodeContext (candidate: unknown): Readonly<AuthReturnContext>
     const result = terminalResult(candidate.terminalResult);
     if (origin === 'main-menu' && (snapshot !== null || result !== null)) throw new Error('Invalid Main Menu account return context.');
     if (origin === 'game-menu' && (snapshot === null || snapshot.terminalResult !== null || result !== null)) throw new Error('Invalid in-game account return context.');
-    if (origin === 'game-over' && (!snapshot || !result || !snapshot.terminalResult || snapshot.terminalResult.runId !== result.runId || snapshot.terminalResult.outcome !== result.outcome || snapshot.terminalResult.activeElapsedMs !== result.activeElapsedMs || snapshot.terminalResult.finalCredits !== result.finalCredits)) throw new Error('Invalid Game Over account return context.');
+    const expectedResult = snapshot?.terminalResult === null || snapshot === null ? null : createTerminalScoreResult(snapshot);
+    if (origin === 'game-over' && (!result || !expectedResult || expectedResult.runId !== result.runId || expectedResult.outcome !== result.outcome || expectedResult.activeElapsedMs !== result.activeElapsedMs || expectedResult.finalCredits !== result.finalCredits || expectedResult.cargoValue !== result.cargoValue || expectedResult.shipUpgradeSpend !== result.shipUpgradeSpend || expectedResult.facilityUpgradeSpend !== result.facilityUpgradeSpend || expectedResult.finalScore !== result.finalScore)) throw new Error('Invalid Game Over account return context.');
     return Object.freeze({ snapshot, telemetryContext, origin, terminalResult: result });
 }
 

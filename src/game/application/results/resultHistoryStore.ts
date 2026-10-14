@@ -5,6 +5,7 @@ export interface ResultHistoryRecord
     readonly runId: string;
     readonly activeElapsedMs: number;
     readonly finalCredits: number;
+    readonly finalScore: number | null;
     readonly outcome: ResultHistoryOutcome;
     readonly savedAt: string;
 }

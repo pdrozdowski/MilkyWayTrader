@@ -1,4 +1,4 @@
-import type { TerminalResultState } from '../../state/terminalResultState';
+import type { TerminalScoreResult } from './terminalScoreResult';
 
 export type ResultStorePersistStatus = 'saved' | 'failed' | 'unsigned';
 
@@ -10,5 +10,5 @@ export interface ResultStorePersistResult
 
 export interface ResultStorePort
 {
-    persist(terminalResult: TerminalResultState): Promise<ResultStorePersistResult>;
+    persist(terminalResult: TerminalScoreResult): Promise<ResultStorePersistResult>;
 }

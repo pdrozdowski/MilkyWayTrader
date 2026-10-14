@@ -48,9 +48,9 @@ function setup (status = 'signed-in', pages = [], options = {}) {
     return { elements, component, authChange: value => { snapshot = value; listener(value); }, opened, calls: () => calls, keydown: event => windowListeners.get('keydown')?.(event), root };
 }
 
-const records = Array.from({ length: 11 }, (_, index) => ({ runId: `run-${index}`, activeElapsedMs: (index + 1) * 61_000, finalCredits: 100 - index, outcome: ['freedom', 'imprisonment', 'death', 'abandoned'][index % 4], savedAt: `2026-10-${String(index + 1).padStart(2, '0')}T12:00:00Z` }));
-records[0] = { ...records[0], runId: 'tie-z', finalCredits: 1000, savedAt: '2026-10-01T12:00:00Z' };
-records[10] = { ...records[10], runId: 'tie-a', finalCredits: 1000, savedAt: '2026-10-01T12:00:00Z' };
+const records = Array.from({ length: 11 }, (_, index) => ({ runId: `run-${index}`, activeElapsedMs: (index + 1) * 61_000, finalCredits: 100 - index, finalScore: 200 - index, outcome: ['freedom', 'imprisonment', 'death', 'abandoned'][index % 4], savedAt: `2026-10-${String(index + 1).padStart(2, '0')}T12:00:00Z` }));
+records[0] = { ...records[0], runId: 'tie-z', finalCredits: 1000, finalScore: 1500, savedAt: '2026-10-01T12:00:00Z' };
+records[10] = { ...records[10], runId: 'tie-a', finalCredits: 1000, finalScore: 1500, savedAt: '2026-10-01T12:00:00Z' };
 
 test('signed-out prompt reuses account flow, populated rows mark one best and deletion is inert', async () => {
     // The read port has already resolved the equal score/timestamp tie to the smaller runId;
@@ -64,6 +64,7 @@ test('signed-out prompt reuses account flow, populated rows mark one best and de
     view.authChange({ status: 'signed-in', email: 'pilot@example.test' });
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(view.elements['#personal-best-rows'].childrenList.length, 5);
+    assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[2].textContent, '1500');
     const bestMarkers = view.elements['#personal-best-rows'].childrenList.map(row => row.childrenList[4].textContent).filter(Boolean);
     assert.deepEqual(bestMarkers, []);
     assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[1].textContent, '1m 01s');
@@ -176,7 +177,7 @@ test('loading state, both keyboard focus boundaries, Escape, and close are handl
 test('identity change clears private rows and ignores a stale page response', async () => {
     let finishStalePage;
     let calls = 0;
-    const replacementRecord = { ...records[2], runId: 'new-player-run', finalCredits: 700 };
+    const replacementRecord = { ...records[2], runId: 'new-player-run', finalCredits: 700, finalScore: 700 };
     const store = {
         getPage: page => {
             calls++;
@@ -189,7 +190,7 @@ test('identity change clears private rows and ignores a stale page response', as
     const view = setup('signed-in', [], { store });
     view.elements['#game-menu-personal-best'].click();
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(view.elements['#personal-best-high-score'].textContent, '1000');
+    assert.equal(view.elements['#personal-best-high-score'].textContent, '1500');
     view.elements['#personal-best-next'].click();
     view.authChange({ status: 'signed-in', email: 'different@example.test' });
     assert.equal(view.elements['#personal-best-rows'].childrenList.length, 0);
@@ -207,7 +208,7 @@ test('application UI setup mounts Personal Best with the authenticated history a
     const setupSource = readFileSync('src/ui/setupUi.ts', 'utf8');
     const componentSource = readFileSync('src/ui/components/personalBest.ts', 'utf8');
     assert.match(setupSource, /createBrowserResultHistoryStore/);
-    assert.match(setupSource, /mountPersonalBest\(root, \{ store: createBrowserResultHistoryStore\(\), auth,/);
+    assert.match(setupSource, /const resultHistoryStore = createBrowserResultHistoryStore\(\);[\s\S]*mountPersonalBest\(root, \{ store: resultHistoryStore, auth,/);
     assert.match(componentSource, /#game-over-personal-best/);
     assert.match(componentSource, /#game-menu-personal-best/);
 });

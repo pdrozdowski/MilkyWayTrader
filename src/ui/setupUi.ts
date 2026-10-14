@@ -7,6 +7,7 @@ import { createLandingStatusPort } from './adapters/landingStatusAdapter';
 import { createCargoTransferPort } from './adapters/cargoTransferAdapter';
 import { createPerformanceReadoutPort } from './adapters/performanceReadoutAdapter';
 import { createBrowserResultHistoryStore } from './adapters/browserResultHistoryStore';
+import { createBrowserGlobalScoreStore } from './adapters/browserGlobalScoreStore';
 import { mountAudioControls } from './components/audioControls';
 import { mountDisplayControls } from './components/displayControls';
 import { mountGameMenu } from './components/gameMenu';
@@ -17,12 +18,14 @@ import { mountPerformanceReadout } from './components/performanceReadout';
 import { formatCredits } from './components/formatCredits';
 import { mountPlayerAccount } from './components/playerAccount';
 import { mountPersonalBest } from './components/personalBest';
+import { mountGlobalHighScores } from './components/globalHighScores';
 import type { AuthReturnPort, AccountOrigin } from '../game/application/auth/authReturn';
 import type { AuthPort } from '../game/application/auth/auth';
 import type { TelemetryPort } from '../game/application/telemetry/telemetry';
 import { generateDefaultPlayerNickname } from '../game/application/playerProfile';
 import type { GameOverReturnPort } from '../game/application/results/gameOverReturn';
-import type { TerminalResultState } from '../game/state/terminalResultState';
+import type { TerminalScoreResult } from '../game/application/results/terminalScoreResult';
+import { createTerminalScoreResult } from '../game/application/results/terminalScoreResult';
 import type { UiHandle } from './contracts';
 import { resultLabels } from '../game/application/results/resultLabels';
 import { displayLabels } from './components/displayLabels';
@@ -50,12 +53,20 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const gameOverSurvivalTime = root.querySelector<HTMLElement>('#game-over-survival-time');
     const gameOverFinalCashLabel = root.querySelector<HTMLElement>('#game-over-final-cash-label');
     const gameOverFinalCash = root.querySelector<HTMLElement>('#game-over-final-cash');
+    const gameOverCargoValueLabel = root.querySelector<HTMLElement>('#game-over-cargo-value-label');
+    const gameOverCargoValue = root.querySelector<HTMLElement>('#game-over-cargo-value');
+    const gameOverShipUpgradeSpendLabel = root.querySelector<HTMLElement>('#game-over-ship-upgrade-spend-label');
+    const gameOverShipUpgradeSpend = root.querySelector<HTMLElement>('#game-over-ship-upgrade-spend');
+    const gameOverFacilityUpgradeSpendLabel = root.querySelector<HTMLElement>('#game-over-facility-upgrade-spend-label');
+    const gameOverFacilityUpgradeSpend = root.querySelector<HTMLElement>('#game-over-facility-upgrade-spend');
+    const gameOverFinalScoreLabel = root.querySelector<HTMLElement>('#game-over-final-score-label');
+    const gameOverFinalScore = root.querySelector<HTMLElement>('#game-over-final-score');
     const gameOverPersonalBest = root.querySelector<HTMLButtonElement>('#game-over-personal-best');
     const gameOverStatus = root.querySelector<HTMLElement>('#game-over-status');
     const gameOverMessage = root.querySelector<HTMLElement>('#game-over-status-message');
     const gameOverRetry = root.querySelector<HTMLButtonElement>('#game-over-status-retry');
     const stateProvider = game.registry.get('gameStateProvider') as GameStateProvider;
-    if (!gameOverResults || !gameOverResultsTitle || !gameOverSurvivalTimeLabel || !gameOverSurvivalTime || !gameOverFinalCashLabel || !gameOverFinalCash || !gameOverPersonalBest || !gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
+    if (!gameOverResults || !gameOverResultsTitle || !gameOverSurvivalTimeLabel || !gameOverSurvivalTime || !gameOverFinalCashLabel || !gameOverFinalCash || !gameOverCargoValueLabel || !gameOverCargoValue || !gameOverShipUpgradeSpendLabel || !gameOverShipUpgradeSpend || !gameOverFacilityUpgradeSpendLabel || !gameOverFacilityUpgradeSpend || !gameOverFinalScoreLabel || !gameOverFinalScore || !gameOverPersonalBest || !gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
     const renderGameOverPersistence = (result: { status: 'pending' | 'saved' | 'failed' | 'unsigned'; message: string | null } | null): void => {
         gameOverStatus.hidden = result === null;
         if (!result) return;
@@ -65,12 +76,20 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         gameOverRetry.textContent = resultLabels.retry;
     };
     const retryGameOverPersistence = (): void => { game.events.emit('game-over-retry'); };
-    const showGameOverResults = (terminalResult: TerminalResultState): void => {
+    const showGameOverResults = (terminalResult: TerminalScoreResult): void => {
         gameOverResultsTitle.textContent = resultLabels.title;
         gameOverSurvivalTimeLabel.textContent = resultLabels.survived;
         gameOverSurvivalTime.textContent = `${(terminalResult.activeElapsedMs / 1000).toFixed(1)} seconds`;
         gameOverFinalCashLabel.textContent = resultLabels.finalCash;
         gameOverFinalCash.textContent = formatCredits(terminalResult.finalCredits);
+        gameOverCargoValueLabel.textContent = resultLabels.cargoValue;
+        gameOverCargoValue.textContent = formatCredits(terminalResult.cargoValue);
+        gameOverShipUpgradeSpendLabel.textContent = resultLabels.shipUpgradeSpend;
+        gameOverShipUpgradeSpend.textContent = formatCredits(terminalResult.shipUpgradeSpend);
+        gameOverFacilityUpgradeSpendLabel.textContent = resultLabels.facilityUpgradeSpend;
+        gameOverFacilityUpgradeSpend.textContent = formatCredits(terminalResult.facilityUpgradeSpend);
+        gameOverFinalScoreLabel.textContent = resultLabels.finalScore;
+        gameOverFinalScore.textContent = formatCredits(terminalResult.finalScore);
         gameOverResults.hidden = false;
     };
     const hideGameOverResults = (): void => { gameOverResults.hidden = true; };
@@ -80,14 +99,14 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const landingStatus = mountLandingStatus(root, createLandingStatusPort(game));
     const cargoTransfer = mountCargoTransfer(root, createCargoTransferPort(game));
     const performanceReadout = mountPerformanceReadout(root, createPerformanceReadoutPort(game));
-    let currentGameOverResult: TerminalResultState | null = null;
+    let currentGameOverResult: TerminalScoreResult | null = null;
     const playerAccount = mountPlayerAccount(root, {
         auth,
         profilePort: auth.createPlayerProfilePort?.() ?? null,
         generateDefaultNickname: generateDefaultPlayerNickname,
         prepareSignIn: origin => {
             const snapshot = origin === 'main-menu' ? null : stateProvider.snapshot();
-            const terminalResult = currentGameOverResult ?? snapshot?.terminalResult ?? null;
+            const terminalResult = currentGameOverResult ?? (snapshot?.terminalResult ? createTerminalScoreResult(snapshot) : null);
             const saved = authReturn?.save({ snapshot, telemetryContext: telemetry.getSessionContext(), origin, terminalResult }) ?? false;
             return origin === 'main-menu' || saved;
         },
@@ -96,7 +115,9 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         },
         clearSignInContext: () => authReturn?.clear()
     });
-    const personalBest = mountPersonalBest(root, { store: createBrowserResultHistoryStore(), auth, profilePort: auth.createPlayerProfilePort?.() ?? null, openAccount: (origin, returnFocus) => root.dispatchEvent(new CustomEvent('player-account-open', { detail: { origin, returnFocus } })) });
+    const resultHistoryStore = createBrowserResultHistoryStore();
+    const personalBest = mountPersonalBest(root, { store: resultHistoryStore, auth, profilePort: auth.createPlayerProfilePort?.() ?? null, openAccount: (origin, returnFocus) => root.dispatchEvent(new CustomEvent('player-account-open', { detail: { origin, returnFocus } })) });
+    const globalHighScores = mountGlobalHighScores(root, { store: createBrowserGlobalScoreStore(), history: resultHistoryStore, auth, profilePort: auth.createPlayerProfilePort?.() ?? null });
     const openReturnedAccount = (origin: AccountOrigin): void => { root.dispatchEvent(new CustomEvent<AccountOrigin>('player-account-open', { detail: origin })); };
     const showAuthReturnError = (message: string): void => {
         const returnStatus = root.querySelector<HTMLElement>('#main-menu-return-status');
@@ -151,7 +172,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const upgradeWeaponary = (): void => upgradeShipService('weaponary');
     const showMainMenu = (): void => { mainMenu.hidden = false; };
     const hideMainMenu = (): void => { mainMenu.hidden = true; };
-    const showGameOverSignIn = (terminalResult: TerminalResultState): void => { currentGameOverResult = terminalResult; showGameOverResults(terminalResult); root.append(mainMenuSignIn); };
+    const showGameOverSignIn = (terminalResult: TerminalScoreResult): void => { currentGameOverResult = terminalResult; showGameOverResults(terminalResult); root.append(mainMenuSignIn); };
     const hideGameOverSignIn = (): void => { currentGameOverResult = null; hideGameOverResults(); mainMenu.prepend(mainMenuSignIn); };
     const startNewGame = (): void => { game.events.emit('start-new-game'); };
     mainMenuNewGame.addEventListener('click', startNewGame);
@@ -240,6 +261,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             performanceReadout.destroy();
             playerAccount.destroy();
             personalBest.destroy();
+            globalHighScores.destroy();
             auth.destroy();
             telemetry.destroy();
             unsubscribeOrientation();

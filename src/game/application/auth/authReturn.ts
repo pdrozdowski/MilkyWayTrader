@@ -1,5 +1,5 @@
 import type { GameStateSnapshot } from '../../state/gameStateSnapshot';
-import type { TerminalResultState } from '../../state/terminalResultState';
+import type { TerminalScoreResult } from '../results/terminalScoreResult';
 import type { TelemetryPort } from '../telemetry/telemetry';
 
 export type AccountOrigin = 'main-menu' | 'game-over' | 'game-menu';
@@ -9,7 +9,7 @@ export interface AuthReturnContext
     readonly snapshot: GameStateSnapshot | null;
     readonly telemetryContext: Readonly<{ sessionId: string; sessionStartedAt: number }> | null;
     readonly origin: AccountOrigin;
-    readonly terminalResult: TerminalResultState | null;
+    readonly terminalResult: TerminalScoreResult | null;
 }
 
 export interface AuthReturnPort

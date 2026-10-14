@@ -13,6 +13,21 @@ export type { AccountOrigin } from '../game/application/auth/authReturn';
 export type { PerformanceDurationSummary, PerformanceStepId, PerformanceStepSummary, PerformanceSnapshot } from '../game/application/performanceMonitor';
 export type { ResultHistoryRecord, ResultHistoryStorePort } from '../game/application/results/resultHistoryStore';
 export { resultHistoryPageSize } from '../game/application/results/resultHistoryStore';
+
+export interface GlobalScoreRecord
+{
+    readonly rank: number;
+    readonly nickname: string;
+    readonly achievedAt: string;
+    readonly score: number;
+}
+
+export interface GlobalScoreStorePort
+{
+    submit(score: number): Promise<{ readonly error: string | null }>;
+    getTop(): Promise<{ readonly data: readonly GlobalScoreRecord[] | null; readonly error: string | null }>;
+    getPersonalBestRank(score: number): Promise<{ readonly data: number | null; readonly error: string | null }>;
+}
 import type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
 import type { LandedFacilitiesSnapshot } from '../game/application/landedFacilities';
 import type { LandedShipyardSnapshot } from '../game/application/landedShipyard';

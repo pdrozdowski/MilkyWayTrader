@@ -37,12 +37,25 @@ export function assertLocalSupabaseUrl (value)
 
 export function localSupabaseStatus (expectedApiUrl)
 {
+    const runtimeServiceRoleKey = process.env.MWT_PLAYWRIGHT_LOCAL_SERVICE_ROLE_KEY;
+    const runtimeApiUrl = process.env.MWT_PLAYWRIGHT_LOCAL_API_URL;
+    if (runtimeServiceRoleKey && runtimeApiUrl) {
+        const actual = new URL(runtimeApiUrl);
+        const expected = expectedApiUrl ? new URL(expectedApiUrl) : actual;
+        if (actual.protocol !== 'http:' || !['localhost', '127.0.0.1', '::1'].includes(actual.hostname)
+            || actual.protocol !== expected.protocol || actual.port !== expected.port
+            || !['localhost', '127.0.0.1', '::1'].includes(expected.hostname)) {
+            throw new Error('The in-memory test admin credential is not bound to the expected local Supabase endpoint.');
+        }
+        return Object.freeze({ serviceRoleKey: runtimeServiceRoleKey, apiUrl: runtimeApiUrl });
+    }
     let output;
     try {
         output = executeSupabase(['status', '--output', 'json'], {
             cwd: repositoryRoot,
             encoding: 'utf8',
-            stdio: ['ignore', 'pipe', 'pipe']
+            stdio: ['ignore', 'pipe', 'pipe'],
+            timeout: 10_000
         });
     } catch {
         throw new Error('Local Supabase is not available. Start it with `npx supabase start --exclude vector` and retry.');
@@ -57,7 +70,7 @@ export function localSupabaseStatus (expectedApiUrl)
             throw new Error('.env.test VITE_SUPABASE_URL does not match the active local Supabase API endpoint.');
         }
     }
-    return Object.freeze({ serviceRoleKey: required(values, 'SERVICE_ROLE_KEY') });
+    return Object.freeze({ serviceRoleKey: required(values, 'SERVICE_ROLE_KEY'), apiUrl: required(values, 'API_URL') });
 }
 
 export function startLocalSupabase ()

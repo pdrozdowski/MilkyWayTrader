@@ -22,7 +22,7 @@ test.describe('authenticated Personal Best journey', () => {
         const personalBestButton = gameMenu.getByRole('button', { name: displayLabels.personalBest, exact: true });
         await personalBestButton.click();
 
-        const personalBest = page.getByRole('dialog', { name: displayLabels.personalBestTitle, exact: true });
+        const personalBest = page.getByRole('dialog', { name: /PERSONAL BEST/ });
         await expect(personalBest).toBeVisible();
         await expect(personalBest.getByText(displayLabels.personalBestNoScores, { exact: true })).toBeVisible();
         await expect(gameMenu).toBeHidden();

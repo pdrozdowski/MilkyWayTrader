@@ -76,6 +76,7 @@ test('building and upgrading deduct only credits and touch only the landed facil
 
     const after = provider.update(state => applyFacilityUpgrade(state, planetFacilityCatalogue, 'dairyFarm'));
     assert.equal(after.credits, before.credits - 20_000);
+    assert.equal(after.facilityUpgradeSpend, before.facilityUpgradeSpend + 20_000);
     assert.deepEqual(facilityOf(after, 'maslo-prime', 'dairyFarm'), { facilityId: 'dairyFarm', level: 2, status: 'working' });
     assert.deepEqual(after.cargo, before.cargo);
     assert.deepEqual(after.orbitalCargo, before.orbitalCargo);
@@ -94,10 +95,12 @@ test('building a level-zero facility pays the first price and marks it working',
     const before = provider.snapshot();
     const bakery = provider.update(state => applyFacilityBuild(state, planetFacilityCatalogue, 'bakery'));
     assert.equal(bakery.credits, before.credits - 35_000);
+    assert.equal(bakery.facilityUpgradeSpend, before.facilityUpgradeSpend + 35_000);
     assert.deepEqual(facilityOf(bakery, 'seroton', 'bakery'), { facilityId: 'bakery', level: 1, status: 'working' });
 
     const processed = provider.update(state => applyFacilityBuild(state, planetFacilityCatalogue, 'foodProcessor'));
     assert.equal(processed.credits, before.credits - 35_000 - 50_000);
+    assert.equal(processed.facilityUpgradeSpend, before.facilityUpgradeSpend + 35_000 + 50_000);
     assert.deepEqual(facilityOf(processed, 'seroton', 'foodProcessor'), { facilityId: 'foodProcessor', level: 1, status: 'working' });
     assert.deepEqual(facilityOf(processed, 'lactozis-7c', 'bakery'), { facilityId: 'bakery', level: 0, status: 'notBuilt' });
 });
@@ -123,13 +126,15 @@ test('downgrades refund 75 percent of the most recent planet-adjusted upgrade an
     assert.equal(cannotDowngrade.failure, 'minimum-level');
     assert.equal(applyFacilityDowngrade(initial, planetFacilityCatalogue, 'dairyFarm'), initial);
 
-    const upgraded = withFacilityLevel(initial, 'maslo-prime', 'dairyFarm', 2);
+    const upgraded = applyFacilityUpgrade(initial, planetFacilityCatalogue, 'dairyFarm');
     const quote = quoteFacilityDowngrade(upgraded, planetFacilityCatalogue, 'dairyFarm');
     assert.equal(quote.failure, null);
     assert.equal(quote.targetLevel, 1);
     assert.equal(quote.refund, 15_000, '75% of the 20,000 discounted upgrade price is refunded');
     const downgraded = applyFacilityDowngrade(upgraded, planetFacilityCatalogue, 'dairyFarm');
     assert.equal(downgraded.credits, upgraded.credits + 15_000);
+    assert.equal(downgraded.facilityUpgradeSpend, upgraded.facilityUpgradeSpend, 'the historical amount paid remains in the score after refund');
+    assert.equal(downgraded.facilityUpgradeSpend, upgraded.facilityUpgradeSpend, 'refunds do not alter cumulative paid spending');
     assert.equal(facilityOf(downgraded, 'maslo-prime', 'dairyFarm').level, 1);
     assert.equal(quoteFacilityDowngrade(withFacilityLevel(initial, 'maslo-prime', 'dairyFarm', 3), planetFacilityCatalogue, 'dairyFarm').refund, 45_000);
 });
@@ -145,6 +150,7 @@ test('rejected investment commands return the unchanged aggregate', () => {
     assert.equal(applyFacilityBuild(seroton, planetFacilityCatalogue, 'unknownFacility'), seroton);
     const broke = { ...seroton, credits: 0 };
     assert.equal(applyFacilityBuild(broke, planetFacilityCatalogue, 'bakery'), broke);
+    assert.equal(applyFacilityBuild(broke, planetFacilityCatalogue, 'bakery').facilityUpgradeSpend, broke.facilityUpgradeSpend);
     const maxed = withFacilityLevel(seroton, 'seroton', 'bakery', 3);
     assert.equal(applyFacilityUpgrade(maxed, planetFacilityCatalogue, 'bakery'), maxed);
 });

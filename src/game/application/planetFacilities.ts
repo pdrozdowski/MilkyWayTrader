@@ -91,6 +91,7 @@ function applyFacilityInvestment (
     return {
         ...state,
         credits: state.credits - quote.price,
+        facilityUpgradeSpend: state.facilityUpgradeSpend + quote.price,
         markets: state.markets.map(candidate => candidate.planetId === market.planetId ? {
             ...candidate,
             facilities: candidate.facilities.map(facility => facility.facilityId === facilityId
