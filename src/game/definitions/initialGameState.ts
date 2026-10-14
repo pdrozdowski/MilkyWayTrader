@@ -17,7 +17,7 @@ export interface InitialGameStateInput
 export function createInitialGameState ({ runId, randomSeed }: InitialGameStateInput): GameStateSnapshot
 {
     return {
-    schemaVersion: 18,
+    schemaVersion: 19,
     runId,
     randomState: randomSeed,
     cargoSchedule: [],
@@ -30,6 +30,8 @@ export function createInitialGameState ({ runId, randomSeed }: InitialGameStateI
         pauseReasons: []
     },
     credits: initialCredits,
+    shipUpgradeSpend: 0,
+    facilityUpgradeSpend: 0,
     cargo: [],
     orbitalCargo: [],
     looseItems: [],

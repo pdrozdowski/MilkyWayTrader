@@ -38,7 +38,7 @@ test('terminal state hides the run-status projection during the death sequence',
     const terminal = {
         ...initialGameState,
         shipStatus: { ...initialGameState.shipStatus, currentHitPoints: 0 },
-        terminalResult: { runId: initialGameState.runId, outcome: 'death', activeElapsedMs: 0, finalCredits: initialGameState.credits }
+        terminalResult: { runId: initialGameState.runId, outcome: 'death', activeElapsedMs: 0, finalCredits: initialGameState.credits, cargoValue: 0, shipUpgradeSpend: 0, facilityUpgradeSpend: 0, finalScore: initialGameState.credits }
     };
     assert.equal(runStatusIsVisible(true, terminal.terminalResult !== null), false);
     assert.equal(runStatusIsVisible(false, false), false);
@@ -53,14 +53,14 @@ test('an OAuth return restores an end-game result exactly once', () => {
         removeItem: key => { values.delete(key); }
     };
     const returnPort = createBrowserGameOverReturnPort(storage);
-    const terminalResult = { runId: initialGameState.runId, outcome: 'death', activeElapsedMs: 5_300, finalCredits: 456 };
+    const terminalResult = { runId: initialGameState.runId, outcome: 'death', activeElapsedMs: 5_300, finalCredits: 456, cargoValue: 0, shipUpgradeSpend: 0, facilityUpgradeSpend: 0, finalScore: 456 };
     returnPort.save(terminalResult);
     assert.deepEqual(returnPort.take(), terminalResult);
     assert.equal(returnPort.take(), null, 'the restored result must not reopen Game Over on a later reload');
 });
 
 test('result delivery persists once, then retries the same immutable terminal result only after failure', async () => {
-    const terminalResult = Object.freeze({ runId: initialGameState.runId, outcome: 'death', activeElapsedMs: 123, finalCredits: 456 });
+    const terminalResult = Object.freeze({ runId: initialGameState.runId, outcome: 'death', activeElapsedMs: 123, finalCredits: 456, cargoValue: 0, shipUpgradeSpend: 0, facilityUpgradeSpend: 0, finalScore: 456 });
     const calls = [];
     const statuses = [];
     const store = { persist: async result => {
@@ -87,7 +87,7 @@ test('result delivery persists once, then retries the same immutable terminal re
 test('a rejected result-store promise becomes a retryable failed delivery', async () => {
     const statuses = [];
     const delivery = createResultDelivery({ persist: async () => { throw new Error('network unavailable'); } }, Object.freeze({
-        runId: initialGameState.runId, outcome: 'death', activeElapsedMs: 123, finalCredits: 456
+        runId: initialGameState.runId, outcome: 'death', activeElapsedMs: 123, finalCredits: 456, cargoValue: 0, shipUpgradeSpend: 0, facilityUpgradeSpend: 0, finalScore: 456
     }), status => statuses.push(status));
     delivery.start();
     await Promise.resolve();

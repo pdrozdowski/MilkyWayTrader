@@ -1,7 +1,7 @@
 import { Scene } from 'phaser';
 import type { ResultStorePort } from '../application/results/resultStore';
 import { createResultDelivery } from '../application/results/resultDelivery';
-import type { TerminalResultState } from '../state/terminalResultState';
+import type { TerminalScoreResult } from '../application/results/terminalScoreResult';
 import { mainMenuBackgroundTransform } from './mainMenuBackground';
 
 export class GameOver extends Scene
@@ -14,7 +14,7 @@ export class GameOver extends Scene
         super('GameOver');
     }
 
-    create (data: { terminalResult?: TerminalResultState })
+    create (data: { terminalResult?: TerminalScoreResult })
     {
         const terminalResult = data.terminalResult;
         if (!terminalResult) throw new Error('GameOver requires a terminal result.');

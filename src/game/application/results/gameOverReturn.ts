@@ -1,8 +1,8 @@
-import type { TerminalResultState } from '../../state/terminalResultState';
+import type { TerminalScoreResult } from './terminalScoreResult';
 
 /** Tab-scoped handoff for returning from OAuth to an already completed run. */
 export interface GameOverReturnPort
 {
-    save(terminalResult: TerminalResultState): void;
-    take(): TerminalResultState | null;
+    save(terminalResult: TerminalScoreResult): void;
+    take(): TerminalScoreResult | null;
 }

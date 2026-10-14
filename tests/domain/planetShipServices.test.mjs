@@ -114,6 +114,7 @@ test('repair restores 10% of maximum HP and deducts the fixed price atomically',
     const repaired = provider.update(state => applyShipRepair(state));
     assert.equal(repaired.shipStatus.currentHitPoints, 85);
     assert.equal(repaired.credits, before.credits - shipRepairCost);
+    assert.equal(repaired.shipUpgradeSpend, before.shipUpgradeSpend, 'repairs do not count as score spending');
     assert.equal(repaired.shipStatus.cargoLevel, before.shipStatus.cargoLevel);
     assert.equal(repaired.shipStatus.engineLevel, before.shipStatus.engineLevel);
     assert.equal(repaired.shipStatus.weaponLevel, before.shipStatus.weaponLevel);
@@ -188,6 +189,7 @@ test('an upgrade touches only its own path, the credits and the landed planet re
     const after = provider.update(state => applyShipUpgrade(state, 'weaponary'));
     assert.equal(after.shipStatus.weaponLevel, 2);
     assert.equal(after.credits, before.credits - 20_000);
+    assert.equal(after.shipUpgradeSpend, before.shipUpgradeSpend + 20_000);
     assert.equal(after.shipStatus.cargoLevel, before.shipStatus.cargoLevel);
     assert.equal(after.shipStatus.engineLevel, before.shipStatus.engineLevel);
     assert.equal(after.shipStatus.currentHitPoints, before.shipStatus.currentHitPoints);
@@ -220,6 +222,7 @@ test('the booster is a one-time Lactozis-7C purchase independent of the engine l
     assert.equal(unlocked.shipStatus.boosterUnlocked, true);
     assert.equal(unlocked.shipStatus.engineLevel, 1, 'the booster does not require an engine upgrade');
     assert.equal(unlocked.credits, before.credits - shipBoosterCost);
+    assert.equal(unlocked.shipUpgradeSpend, before.shipUpgradeSpend + shipBoosterCost);
 
     const again = quoteShipBooster(unlocked);
     assert.equal(again.failure, 'already-owned');
@@ -231,6 +234,7 @@ test('rejected ship-service commands return the identical aggregate through the 
     const before = provider.snapshot();
     const attempted = provider.update(state => applyShipUpgrade(state, 'engine'));
     assert.deepEqual(attempted, before, 'a foreign-planet upgrade publishes the untouched aggregate');
+    assert.equal(attempted.shipUpgradeSpend, before.shipUpgradeSpend);
     assert.equal(attempted.shipStatus.engineLevel, 1);
     assert.equal(attempted.credits, before.credits);
 });

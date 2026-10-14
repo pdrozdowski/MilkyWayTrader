@@ -137,7 +137,11 @@ export function applyShipUpgrade (state: GameStateSnapshot, serviceId: ShipServi
 {
     const quote = quoteShipUpgrade(state, serviceId);
     if (quote.failure !== null) return state;
-    return { ...withShipLevel(state, serviceId, quote.targetLevel), credits: state.credits - quote.price };
+    return {
+        ...withShipLevel(state, serviceId, quote.targetLevel),
+        credits: state.credits - quote.price,
+        shipUpgradeSpend: state.shipUpgradeSpend + quote.price
+    };
 }
 
 export function quoteShipBooster (state: GameStateSnapshot): ShipServiceQuote
@@ -163,6 +167,7 @@ export function applyShipBooster (state: GameStateSnapshot): GameStateSnapshot
     return {
         ...state,
         credits: state.credits - quote.price,
+        shipUpgradeSpend: state.shipUpgradeSpend + quote.price,
         shipStatus: { ...state.shipStatus, boosterUnlocked: true }
     };
 }

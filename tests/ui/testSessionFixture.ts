@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { test as base, type Page } from '@playwright/test';
 import { prepareGameState, type GameStateFixtureOptions } from './gameStateFixture';
 import type { PlanetId } from '../../src/game/state/planetState';
-import { createTestSession, removeTestSessionArtifact, type SessionArtifact, type TestSessionMode } from '../testSessionSupport';
+import { cleanupTestSession, createTestSession, seedGlobalScore, type SessionArtifact, type TestSessionMode } from '../testSessionSupport';
 
 export interface TestSession
 {
@@ -12,6 +12,7 @@ export interface TestSession
     readonly anonymousId: string;
     readonly userId: string | null;
     readonly recordTiming: (name: string, durationMs: number) => void;
+    readonly seedGlobalScore: (score: number) => Promise<string>;
 }
 
 type Fixtures = {
@@ -60,10 +61,21 @@ export const test = base.extend<Fixtures>({
         }, artifact);
         recordTiming('Register authentication/session init script', performance.now() - injectStartedAt);
         try {
-            await use({ id: artifact.id, testRunId, mode: artifact.mode, anonymousId: artifact.anonymousId, userId: artifact.userId, recordTiming });
+            await use({
+                id: artifact.id,
+                testRunId,
+                mode: artifact.mode,
+                anonymousId: artifact.anonymousId,
+                userId: artifact.userId,
+                recordTiming,
+                seedGlobalScore: score => {
+                    if (artifact.mode !== 'authenticated' || !artifact.userId) throw new Error('Global-score fixture requires an authenticated test session.');
+                    return seedGlobalScore(artifact.id, score);
+                }
+            });
         } finally {
             const cleanupStartedAt = performance.now();
-            await removeTestSessionArtifact(artifact.id);
+            await cleanupTestSession(artifact.id);
             recordTiming('Remove temporary session artifact', performance.now() - cleanupStartedAt);
             console.log(`FIXTURE_TIMINGS ${testInfo.title}: ${JSON.stringify(timings)}`);
         }
@@ -81,7 +93,7 @@ export const test = base.extend<Fixtures>({
             await use(page);
         } finally {
             await context.close();
-            await removeTestSessionArtifact(artifact.id);
+            await cleanupTestSession(artifact.id);
         }
     },
     anonymousPage: async ({ browser }, use) => {
@@ -100,4 +112,5 @@ function initializeSession (session: SessionArtifact): void
     window.localStorage.setItem('milky-way-trader:anonymous_id', session.anonymousId);
     if (session.authStorageKey && session.authSession) window.localStorage.setItem(session.authStorageKey, JSON.stringify(session.authSession));
 }
+
 

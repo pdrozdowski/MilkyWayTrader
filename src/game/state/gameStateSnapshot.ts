@@ -14,7 +14,7 @@ import type { TerminalResultState } from './terminalResultState';
 
 export interface GameStateSnapshot
 {
-    readonly schemaVersion: 18;
+    readonly schemaVersion: 19;
     readonly runId: string;
     readonly randomState: number;
     /** Unconsumed entries in a lazily seeded five-kill cargo schedule. */
@@ -24,6 +24,8 @@ export interface GameStateSnapshot
     readonly terminalResult: TerminalResultState | null;
     readonly clock: GameClockState;
     readonly credits: number;
+    readonly shipUpgradeSpend: number;
+    readonly facilityUpgradeSpend: number;
     readonly cargo: readonly CommodityContainerState[];
     readonly orbitalCargo: readonly OrbitalCargoState[];
     readonly looseItems: readonly LooseItemState[];

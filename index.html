@@ -18,6 +18,7 @@
             <div id="main-menu-controls">
                 <button id="main-menu-new-game" class="action-button" type="button" aria-label="New Game"></button>
                 <button id="main-menu-continue" class="action-button" type="button" aria-label="Continue Game" disabled></button>
+                <button id="main-menu-global-scores" class="action-button" type="button" aria-label="GLOBAL HI-SCORE"></button>
             </div>
         </section>
         <section id="run-status" data-game-input="ignore" aria-label="Run status" hidden>
@@ -33,8 +34,24 @@
             <dl>
                 <div><dt id="game-over-survival-time-label"></dt><dd id="game-over-survival-time"></dd></div>
                 <div><dt id="game-over-final-cash-label"></dt><dd id="game-over-final-cash"></dd></div>
+                <div><dt id="game-over-cargo-value-label"></dt><dd id="game-over-cargo-value"></dd></div>
+                <div><dt id="game-over-ship-upgrade-spend-label"></dt><dd id="game-over-ship-upgrade-spend"></dd></div>
+                <div><dt id="game-over-facility-upgrade-spend-label"></dt><dd id="game-over-facility-upgrade-spend"></dd></div>
+                <div class="game-over-final-score"><dt id="game-over-final-score-label"></dt><dd id="game-over-final-score"></dd></div>
             </dl>
             <button id="game-over-personal-best" type="button"></button>
+            <button id="game-over-global-scores" type="button"></button>
+        </section>
+        <section id="global-high-scores" data-game-input="ignore" aria-labelledby="global-high-scores-title" aria-modal="true" role="dialog" hidden>
+            <div class="global-high-scores-panel">
+                <header><h2 id="global-high-scores-title"></h2></header>
+                <p id="global-high-scores-nickname" hidden></p>
+                <p id="global-high-scores-rank" role="status" aria-live="polite" hidden></p>
+                <p id="global-high-scores-status" role="status" aria-live="polite"></p>
+                <button id="global-high-scores-retry" type="button" hidden></button>
+                <div class="global-high-scores-table-wrap"><table id="global-high-scores-table" aria-label="Global high scores"><thead><tr><th scope="col" id="global-high-scores-rank-heading"></th><th scope="col" id="global-high-scores-nickname-heading"></th><th scope="col" id="global-high-scores-date-heading"></th><th scope="col" id="global-high-scores-score-heading"></th></tr></thead><tbody id="global-high-scores-rows"></tbody></table></div>
+                <button id="global-high-scores-close" class="global-high-scores-close" type="button"></button>
+            </div>
         </section>
         <section id="personal-best" data-game-input="ignore" aria-labelledby="personal-best-title" aria-modal="true" role="dialog" hidden>
             <div class="personal-best-panel">
@@ -53,6 +70,7 @@
                 <div class="game-menu-actions">
                 <button id="game-menu-account" class="action-button" type="button"><span>ACCOUNT</span><span id="game-menu-account-identity"></span></button>
                 <button id="game-menu-personal-best" class="action-button" type="button"></button>
+                <button id="game-menu-global-scores" class="action-button" type="button"></button>
                 <div id="audio-controls" role="group" aria-label="Audio">
                     <h2>AUDIO</h2>
                     <div id="audio-control-options">

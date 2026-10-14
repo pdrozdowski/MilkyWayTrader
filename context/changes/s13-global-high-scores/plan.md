@@ -221,34 +221,34 @@ Apply the additive database migration before clients that write `final_score` or
 
 #### Automated
 
-- [ ] 1.1 Pure score calculation tests cover cargo cost, each component, rounding, and terminal reasons.
-- [ ] 1.2 Spending-counter and v19 snapshot codec tests pass.
-- [ ] 1.3 PRD capability validation and semantic review pass.
+- [x] 1.1 Pure score calculation tests cover cargo cost, each component, rounding, and terminal reasons.
+- [x] 1.2 Spending-counter and v19 snapshot codec tests pass.
+- [x] 1.3 PRD capability validation and semantic review pass.
 
 #### Manual
 
-- [ ] 1.4 End-game component breakdown and final score are correct.
+- [x] 1.4 End-game component breakdown and final score are correct.
 
 ### Phase 2: Persist Personal Scores and Maintain the Global Best
 
 #### Automated
 
-- [ ] 2.1 Private score selection and strict-better global replacement tests pass.
-- [ ] 2.2 Joint persistence retry, idempotency, and partial-failure tests pass.
-- [ ] 2.3 Database access, privacy, PB rank, tie, and cutoff integration tests pass.
+- [x] 2.1 Private score selection and strict-better global replacement tests pass.
+- [x] 2.2 Joint persistence retry, idempotency, and partial-failure tests pass.
+- [x] 2.3 Database access, privacy, PB rank, tie, and cutoff integration tests pass.
 
 #### Manual
 
-- [ ] 2.4 Local sessions confirm public fields and strict-better replacement.
+- [x] 2.4 Local sessions confirm public fields and strict-better replacement.
 
 ### Phase 3: Deliver the Leaderboard UI and Validate the Full Flow
 
 #### Automated
 
-- [ ] 3.1 Component and menu integration tests cover the required UI states.
-- [ ] 3.2 The admitted menu-to-board Playwright journey passes with local Supabase.
-- [ ] 3.3 Focused domain, fast, typecheck, and UI validation commands pass.
+- [x] 3.1 Component and menu integration tests cover the required UI states.
+- [x] 3.2 The admitted menu-to-board Playwright journey passes with local Supabase.
+- [x] 3.3 Focused domain, fast, typecheck, and UI validation commands pass.
 
 #### Manual
 
-- [ ] 3.4 Both entry points, score formatting, PB rank, and rank-100 tie display are verified.
+- [x] 3.4 Both entry points, score formatting, PB rank, and rank-100 tie display are verified.

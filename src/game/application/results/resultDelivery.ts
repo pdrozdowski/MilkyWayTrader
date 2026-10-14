@@ -1,9 +1,9 @@
-import type { TerminalResultState } from '../../state/terminalResultState';
+import type { TerminalScoreResult } from './terminalScoreResult';
 import type { ResultStorePersistResult, ResultStorePort } from './resultStore';
 
 export type ResultDeliveryStatus = 'pending' | ResultStorePersistResult['status'];
 
-export function createResultDelivery (store: ResultStorePort | undefined, terminalResult: TerminalResultState, publish: (result: { status: ResultDeliveryStatus; message: string | null }) => void): { start(): void; retry(): void }
+export function createResultDelivery (store: ResultStorePort | undefined, terminalResult: TerminalScoreResult, publish: (result: { status: ResultDeliveryStatus; message: string | null }) => void): { start(): void; retry(): void }
 {
     let attempted = false;
     let retryAvailable = false;

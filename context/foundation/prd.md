@@ -62,8 +62,9 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - The run starts at 30:00 with the clock marked as running.
 - Remaining time and running or paused state remain visible throughout the open run.
 - Reaching 20,000,000 credits early does not end the run.
-- Final score equals liquid credits immediately before debt repayment.
-- Cargo and ship value do not contribute to final score.
+- Freedom or imprisonment is determined by liquid credits immediately before debt repayment; the final score is calculated separately from ending cash, cargo acquisition cost, and qualifying upgrade spending.
+- The end-game result explains the ending cash, cargo acquisition cost, ship upgrade and booster spending, facility construction and upgrade spending, and final score.
+- Final score rounds the combined amount once to the nearest whole credit. Cargo value is the sum of each carried stack's total acquisition cost.
 - Zero HP ends the run immediately with a death outcome.
 - Confirmed abandonment ends the run immediately with an abandonment outcome.
 
@@ -131,14 +132,17 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - **Given** completed signed-in results exist
 - **When** a signed-in player views their personal best or any player views global high scores
-- **Then** personal and global results follow their distinct eligibility rules
+- **Then** the player can compare personal and global results using the same final-score measure
 
 #### Acceptance Criteria
 
-- Personal history retains every outcome but exposes the highest final-cash result as personal best.
+- Personal history retains every outcome but exposes the highest final-score result as personal best.
 - A personal best may come from freedom, imprisonment, death, or abandonment.
-- The global table contains only authenticated runs that survived the full active-time limit and achieved freedom.
-- Global results are ranked by final cash before debt repayment.
+- Every authenticated terminal result is compared with that player's global best regardless of outcome; a missing row is created and an existing row changes only when the new final score is higher.
+- Each player has at most one global high-score row. Equal and lower scores preserve the existing score and achieved date.
+- Global results are ranked by final score. The table shows rank, current nickname, achieved date, and score, including every player tied at rank 100.
+- The signed-in player's global rank callout uses their private Personal Best score, even when it differs from their global row.
+- The end-game result lists ending cash, cargo acquisition cost, ship upgrade and booster spending, facility construction and upgrade spending, and `YOUR FINAL SCORE IS: xxx,xxx`.
 - Anonymous players can view global results but cannot submit a result or access a personal best.
 - A signed-in player can clear their personal best result; the next highest retained result becomes the new personal best.
 
@@ -250,6 +254,10 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - FR-056: A landed player can choose whether active game time progresses. Priority: must-have
 
+### Global scores
+
+- FR-057: A signed-in player can maintain one global best score across their completed runs. Priority: must-have
+
 ## Non-Functional Requirements
 
 - The game remains usable in currently supported desktop and mobile browser releases.
@@ -284,7 +292,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-012: Reaching the debt target before timeout does not end the run.
 - BR-013: A surviving player at or above the debt target when time expires receives freedom.
 - BR-014: A surviving player below the debt target when time expires receives life imprisonment.
-- BR-015: Final score equals liquid credits immediately before debt repayment; cargo and ship value are excluded.
+- BR-015: Freedom or imprisonment is determined by liquid credits immediately before debt repayment; run score is calculated separately.
 - BR-016: Reaching zero HP ends the run immediately with a death outcome.
 - BR-017: Confirmed abandonment ends the run immediately with an abandonment outcome.
 
@@ -385,11 +393,13 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-108: A completed run cannot be resumed as active gameplay.
 - BR-109: After a signed-in run reaches a terminal outcome and its result is retained, its active save is removed.
 - BR-110: Personal history retains every signed-in result across all outcomes except results the player explicitly clears.
-- BR-111: Personal best is the retained result with the highest final liquid-cash score regardless of outcome.
+- BR-111: Personal best is the retained result with the highest final score regardless of outcome.
 - BR-112: Clearing a personal best removes that result from the signed-in player's personal history; the highest remaining retained result becomes the personal best, or no personal best is shown when none remains.
-- BR-113: A global result is eligible only when an authenticated player survives the complete active-time limit and receives freedom.
-- BR-114: Global results are ranked by final liquid cash before debt repayment.
-- BR-115: Anonymous and signed-in players can view the global high-score table, but only signed-in players can submit eligible results or view or clear a personal best.
+- BR-113: Every authenticated terminal result is compared with the player's global best regardless of outcome; a row is inserted if absent or updated only for a strictly higher final score.
+- BR-114: Global results are ranked by final score, with competition ranking; one row is retained per player and ties at rank 100 are included.
+- BR-115: Final score is ending cash plus carried cargo total acquisition cost plus cumulative amounts paid for ship upgrades and the booster and facility construction and upgrades. Repairs, trades, and refunds do not change cumulative spending; round the combined score once to the nearest whole credit.
+- BR-116: The end-game result presents each final-score component and the label `YOUR FINAL SCORE IS:` followed by the rounded score.
+- BR-117: Anonymous and signed-in players can view the global high-score table, but only signed-in players can submit results or view or clear a personal best.
 
 ## Access Control
 
@@ -399,7 +409,7 @@ Google OAuth is the only sign-in method. Sign-in may occur before a run or durin
 
 A signed-in player can sign out from the main menu without deleting their saved data. A signed-in player can clear only their own personal-best result; this operation cannot change another player's records or global results.
 
-Global high scores are publicly readable. Only authenticated, eligible freedom outcomes can be submitted. All signed-in players have the same permissions; the MVP has no administrative or multiplayer roles.
+Global high scores are publicly readable. Only authenticated players can submit terminal results. Each player's submission can insert or improve only their own global result; public rows expose rank, current nickname, achieved date, and score. All signed-in players have the same permissions; the MVP has no administrative or multiplayer roles.
 
 ## Non-Goals
 
@@ -411,7 +421,8 @@ Global high scores are publicly readable. Only authenticated, eligible freedom o
 - The MVP does not include hull-capacity upgrades, ammunition resources, booster fuel, or automated ship steering.
 - The MVP does not award credits directly from salvage crates; salvaged commodities must be sold through a market.
 - The MVP does not include damaging or chain-reacting crate explosions.
-- The MVP does not include cargo value or ship value in final score.
+- The MVP does not include estimated cargo market value or repair spending in final score because cargo uses acquisition cost and repairs are not investment spending.
+- The global high-score table does not expose personal history, outcome columns, or score deletion controls; it presents each player's current best result.
 - The MVP does not defer personal or global high scores; both are required capabilities.
 
 ## Open Questions

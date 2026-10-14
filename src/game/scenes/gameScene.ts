@@ -30,7 +30,8 @@ import type { AsteroidState } from '../state/asteroidState';
 import { ObjectDepth } from '../visual/layers';
 import { gameObjectLayout, gameWorldBounds } from './gameObjects';
 import type { TelemetryPort } from '../application/telemetry/telemetry';
-import type { TerminalResultState } from '../state/terminalResultState';
+import { createTerminalScoreResult } from '../application/results/terminalScoreResult';
+import type { TerminalScoreResult } from '../application/results/terminalScoreResult';
 import { cargoCapacityByLevel } from '../domain/runBalance';
 
 export class Game extends Scene
@@ -527,7 +528,7 @@ export class Game extends Scene
             }
         }
         if (before.terminalResult === null && state.terminalResult !== null) {
-            this.beginDeathTransition(state.terminalResult, state.ship.position);
+            this.beginDeathTransition(createTerminalScoreResult(state), state.ship.position);
             this.endPerformanceStep();
             return;
         }
@@ -633,7 +634,7 @@ export class Game extends Scene
         this.audio.play('sun-asteroid-low-slurp-loud-no-noise');
     }
 
-    private beginDeathTransition (terminalResult: TerminalResultState, position: Readonly<{ x: number; y: number }>): void
+    private beginDeathTransition (terminalResult: TerminalScoreResult, position: Readonly<{ x: number; y: number }>): void
     {
         if (this.deathTransitionStarted) return;
         this.deathTransitionStarted = true;

@@ -8,6 +8,7 @@ interface HistoryRow
     readonly run_id: string;
     readonly active_elapsed_ms: number;
     readonly final_credits: number;
+    readonly final_score: number | null;
     readonly outcome: ResultHistoryOutcome;
     readonly created_at: string;
 }
@@ -18,6 +19,7 @@ interface HistoryQuery extends PromiseLike<{ data: HistoryRow[] | null; count?: 
     order(column: string, options: { ascending: boolean }): HistoryQuery;
     range(from: number, to: number): HistoryQuery;
     limit(count: number): HistoryQuery;
+    not(column: string, operator: string, value: unknown): HistoryQuery;
 }
 
 interface HistoryClient
@@ -43,7 +45,7 @@ function validConfiguration (configuration: PublicAuthConfiguration): configurat
 
 function mapRecord (row: HistoryRow): ResultHistoryRecord
 {
-    return Object.freeze({ runId: row.run_id, activeElapsedMs: row.active_elapsed_ms, finalCredits: row.final_credits, outcome: row.outcome, savedAt: row.created_at });
+    return Object.freeze({ runId: row.run_id, activeElapsedMs: row.active_elapsed_ms, finalCredits: row.final_credits, finalScore: row.final_score, outcome: row.outcome, savedAt: row.created_at });
 }
 
 function failed<T> (message: string): ResultHistoryResult<T>
@@ -61,7 +63,7 @@ export function createBrowserResultHistoryStore (configuration = browserAuthConf
             try {
                 const from = page * resultHistoryPageSize;
                 const { data, count, error } = await client.from('run_results')
-                    .select('run_id, active_elapsed_ms, final_credits, outcome, created_at', { count: 'exact' })
+                    .select('run_id, active_elapsed_ms, final_credits, final_score, outcome, created_at', { count: 'exact' })
                     .order('final_credits', { ascending: false })
                     .order('created_at', { ascending: false })
                     .order('run_id', { ascending: true })
@@ -76,8 +78,9 @@ export function createBrowserResultHistoryStore (configuration = browserAuthConf
         getBest: async () => {
             try {
                 const { data, error } = await client.from('run_results')
-                    .select('run_id, active_elapsed_ms, final_credits, outcome, created_at', { count: 'exact' })
-                    .order('final_credits', { ascending: false })
+                    .select('run_id, active_elapsed_ms, final_credits, final_score, outcome, created_at', { count: 'exact' })
+                    .not('final_score', 'is', null)
+                    .order('final_score', { ascending: false })
                     .order('created_at', { ascending: true })
                     .order('run_id', { ascending: true })
                     .limit(1);

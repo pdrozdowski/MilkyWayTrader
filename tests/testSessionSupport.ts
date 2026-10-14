@@ -1,10 +1,21 @@
 import { execFile } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { readFile, unlink } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
 
 const execute = promisify(execFile);
 const sessionDirectory = resolve(process.cwd(), '.cache', 'playwright', 'sessions');
+const require = createRequire(`${process.cwd()}/package.json`);
+const { loadTestSessionRuntime } = require('./scripts/test-session-runtime-loader.cjs') as {
+    loadTestSessionRuntime(): Promise<{
+        createClient(url: string, key: string, options: unknown): {
+            auth: { admin: { deleteUser(userId: string): Promise<{ error: { readonly message: string } | null }> } };
+        };
+        loadTestEnvironment(): Promise<{ readonly url: string }>;
+        localSupabaseStatus(expectedApiUrl: string): { readonly serviceRoleKey: string };
+    }>;
+};
 
 export type TestSessionMode = 'anonymous' | 'authenticated';
 
@@ -52,6 +63,38 @@ export async function removeTestSessionArtifact (id: string): Promise<void>
     try { await unlink(resolve(sessionDirectory, `${id}.json`)); } catch (error) {
         if (!error || typeof error !== 'object' || !('code' in error) || error.code !== 'ENOENT') throw error;
     }
+}
+
+export async function cleanupTestSession (id: string): Promise<void>
+{
+    const artifactPath = resolve(sessionDirectory, `${id}.json`);
+    let artifact: SessionArtifact;
+    try { artifact = JSON.parse(await readFile(artifactPath, 'utf8')) as SessionArtifact; }
+    catch (error) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') return;
+        throw error;
+    }
+    const runtime = await loadTestSessionRuntime();
+    const environment = await runtime.loadTestEnvironment();
+    const { serviceRoleKey } = runtime.localSupabaseStatus(environment.url);
+    if (artifact.userId) {
+        const admin = runtime.createClient(environment.url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+        const { error } = await admin.auth.admin.deleteUser(artifact.userId);
+        if (error && error.message !== 'User not found') throw new Error(`Unable to remove local test user: ${error.message}`);
+    }
+    await unlink(artifactPath);
+}
+
+export async function seedGlobalScore (sessionId: string, score: number): Promise<string>
+{
+    const result = await execute(process.execPath, ['scripts/seed-test-global-score.mjs', sessionId, String(score)], {
+        cwd: process.cwd(),
+        env: process.env,
+        timeout: 30_000
+    });
+    const output = JSON.parse(result.stdout) as { nickname?: unknown };
+    if (typeof output.nickname !== 'string') throw new Error('Local global-score setup returned an invalid nickname.');
+    return output.nickname;
 }
 
 export async function loadPublicTestEnvironment (): Promise<PublicTestEnvironment>

@@ -121,8 +121,8 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         try { source = JSON.parse(source) as unknown; }
         catch { throw new Error('Game state is not valid JSON.'); }
     }
-    const root = requireRecord(source, 'state', ['schemaVersion', 'runId', 'randomState', 'cargoSchedule', 'moolarisDamageArmed', 'terminalResult', 'clock', 'credits', 'cargo', 'orbitalCargo', 'looseItems', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
-    if (root.schemaVersion !== 18) throw new Error('Unsupported game-state schema version.');
+    const root = requireRecord(source, 'state', ['schemaVersion', 'runId', 'randomState', 'cargoSchedule', 'moolarisDamageArmed', 'terminalResult', 'clock', 'credits', 'shipUpgradeSpend', 'facilityUpgradeSpend', 'cargo', 'orbitalCargo', 'looseItems', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
+    if (root.schemaVersion !== 19) throw new Error('Unsupported game-state schema version.');
     const decodedRunId = runId(root.runId, 'state.runId');
     const randomState = uint32(root.randomState, 'state.randomState');
     if (!Array.isArray(root.cargoSchedule) || root.cargoSchedule.length > 5) {
@@ -139,6 +139,8 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     if (typeof root.moolarisDamageArmed !== 'boolean') throw new Error('state.moolarisDamageArmed must be boolean.');
 
     const credits = nonNegativeSafeInteger(root.credits, 'state.credits');
+    const shipUpgradeSpend = nonNegativeSafeInteger(root.shipUpgradeSpend, 'state.shipUpgradeSpend');
+    const facilityUpgradeSpend = nonNegativeSafeInteger(root.facilityUpgradeSpend, 'state.facilityUpgradeSpend');
     if (!Array.isArray(root.cargo)) throw new Error('state.cargo must be an array.');
     const commodityIds = new Set<string>();
     const decodeContainer = (candidateContainer: unknown, path: string) => {
@@ -403,7 +405,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 18,
+        schemaVersion: 19,
         runId: decodedRunId,
         randomState,
         cargoSchedule,
@@ -416,6 +418,8 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         },
         clock: { budgetMs, activeElapsedMs, playerPaused: clock.playerPaused, pauseReasons },
         credits,
+        shipUpgradeSpend,
+        facilityUpgradeSpend,
         cargo,
         orbitalCargo,
         looseItems,

@@ -1,7 +1,11 @@
 export const resultLabels = {
-    title: 'Ship destroyed',
+    title: '',
     survived: 'Survived',
-    finalCash: 'Final cash',
+    finalCash: 'Ending cash',
+    cargoValue: 'Cargo acquisition cost',
+    shipUpgradeSpend: 'Ship upgrades and booster',
+    facilityUpgradeSpend: 'Facility construction and upgrades',
+    finalScore: 'YOUR FINAL SCORE IS:',
     saved: 'Result saved.',
     unsigned: 'Sign in to save this result.',
     saving: 'Saving result…',
