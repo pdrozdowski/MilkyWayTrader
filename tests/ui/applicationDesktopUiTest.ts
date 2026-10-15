@@ -175,11 +175,13 @@ test.describe('authenticated trading journey', () => {
         await expect(healthBar).toBeVisible();
 
         const resultStatus = page.getByLabel('Result delivery status');
+        const finishIfTerminal = async (): Promise<boolean> => {
+            if (!await resultStatus.isVisible() && await runStatus.isVisible()) return false;
+            await expectSavedDeathResult(runStatus, resultStatus);
+            return true;
+        };
         for (let attempt = 1; attempt <= 7; attempt += 1) {
-            if (await resultStatus.isVisible() || !await runStatus.isVisible()) {
-                await expectSavedDeathResult(runStatus, resultStatus);
-                return;
-            }
+            if (await finishIfTerminal()) return;
             await expect(runStatus).toBeVisible();
             const hitPointsBefore = await hitPoints(healthBar);
             if (hitPointsBefore === 0) {
@@ -188,8 +190,19 @@ test.describe('authenticated trading journey', () => {
             }
 
             await page.keyboard.press('d');
-            await expect(page.getByRole('dialog', { name: 'Debug menu' })).toBeVisible();
-            await page.getByRole('button', { name: displayLabels.teleportToAsteroid, exact: true }).click();
+            const debugMenu = page.getByRole('dialog', { name: 'Debug menu' });
+            try {
+                await expect(debugMenu).toBeVisible({ timeout: 2_000 });
+            } catch (error) {
+                if (await finishIfTerminal()) return;
+                throw error;
+            }
+            try {
+                await page.getByRole('button', { name: displayLabels.teleportToAsteroid, exact: true }).click({ timeout: 2_000 });
+            } catch (error) {
+                if (await finishIfTerminal()) return;
+                throw error;
+            }
 
             if (await waitForAsteroidCollisionOutcome(runStatus, resultStatus, healthBar, hitPointsBefore, attempt) === 'terminal') {
                 await expectSavedDeathResult(runStatus, resultStatus);
