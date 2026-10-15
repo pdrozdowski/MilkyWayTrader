@@ -73,6 +73,12 @@ class FakeElement {
         return children ? (Array.isArray(children) ? children : [children]) : [];
     }
 
+    getBoundingClientRect () {
+        return { left: 0, width: 0 };
+    }
+
+    scrollTo () {}
+
     addEventListener (type, listener) {
         this.listeners.set(type, listener);
     }
@@ -87,6 +93,7 @@ class FakeElement {
 
     replaceChildren (...nodes) {
         this.replacedChildren = nodes;
+        this.textContent = nodes.map(node => typeof node === 'string' ? node : node.textContent).join('');
     }
 
     focus () {
@@ -127,7 +134,8 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-confirm', '#landing-status-launch', '#landing-status-market', '#landing-status-shipyard', '#landing-status-market-back',
         '.market-commodity-icon', '#landing-status-market-heading', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
         '#landing-status-title', '.landing-visual', '#landing-status-hub-back', '#landing-status-hub-clock', '#landing-status-hub-credits', '#landing-status-hub-cargo',
-        '#landing-status-hub-time-control', '#landing-status-market-time-control', '#landing-status-facilities-time-control', '#landing-status-shipyard-time-control'
+        '#landing-status-hub-time-control', '#landing-status-market-time-control', '#landing-status-facilities-time-control', '#landing-status-shipyard-time-control',
+        '.landing-facility-position', '.landing-facility-previous', '.landing-facility-next', '.shipyard-position', '.shipyard-previous', '.shipyard-next'
     ];
     const facilityIdList = ['dairyFarm', 'grainFarm', 'cheeseFactory', 'bakery', 'foodProcessor'];
     const cards = Object.fromEntries(facilityIdList.map(facilityId => [facilityId, new FakeElement({
@@ -169,6 +177,8 @@ test('facilities view renders five cards with levels, states, recipes and action
     const facilitiesCredits = new FakeElement();
     const facilitiesCargo = new FakeElement();
     const facilitiesButton = new FakeElement();
+    const facilityCardsRail = new FakeElement({ '.facility-card': Object.values(cards) });
+    const shipyardCardsRail = new FakeElement({ '.shipyard-card': [] });
     const catalogueName = new FakeElement();
     const catalogueButton = new FakeElement({ '.catalogue-commodity-name': catalogueName });
     catalogueButton.dataset.commodityId = 'milk';
@@ -195,6 +205,8 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-facilities-credits': facilitiesCredits,
         '#landing-status-facilities-cargo': facilitiesCargo,
         '#landing-status-facilities': facilitiesButton,
+        '#landing-status-facility-cards': facilityCardsRail,
+        '#landing-status-shipyard-cards': shipyardCardsRail,
         '#landing-status-shipyard-view': shipyardView,
         '#landing-status-shipyard-heading': new FakeElement(),
         '#landing-status-shipyard-planet': new FakeElement(),
@@ -296,8 +308,15 @@ test('facilities view renders five cards with levels, states, recipes and action
     marketListener({ ...marketSnapshot, supplyLevel: 'High' });
     assert.equal(element('#landing-status-supply').dataset.supplyLevel, 'High');
     marketListener(marketSnapshot);
-    assert.equal(element('#landing-status-production').textContent, `${displayLabels.marketProduction}: +10/s`);
-    assert.equal(element('#landing-status-consumption').textContent, `${displayLabels.marketConsumption}: -12/s`);
+    const productionFlow = element('#landing-status-production').replacedChildren;
+    assert.equal(productionFlow[0].textContent, `${displayLabels.marketProduction}:`);
+    assert.equal(productionFlow[1].dataset.commodityId, 'milk');
+    assert.equal(productionFlow[2].textContent, '+10/s');
+    const consumptionFlow = element('#landing-status-consumption').replacedChildren;
+    assert.equal(consumptionFlow[0].textContent, `${displayLabels.marketConsumption}:`);
+    assert.equal(consumptionFlow[1].dataset.commodityId, 'milk');
+    assert.match(consumptionFlow[1].className, /market-flow-icon--consumption/);
+    assert.equal(consumptionFlow[2].textContent, '-12/s');
     assert.equal(element('#landing-status-stock-change').replacedChildren[0].textContent, `${displayLabels.marketStockChange}:`);
     assert.equal(element('#landing-status-stock-change').replacedChildren[1].textContent, '-2/s');
     const planetBar = element('#landing-status-planet-stock-bar');
@@ -544,6 +563,7 @@ test('the shipyard view renders repair, local service cards and the booster row 
         '.market-commodity-icon', '#landing-status-market-heading', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
         '#landing-status-title', '.landing-visual', '#landing-status-hub-back', '#landing-status-hub-clock', '#landing-status-hub-credits', '#landing-status-hub-cargo', '#landing-status-hub-time-control',
         '#landing-status-market-time-control', '#landing-status-facilities-time-control', '#landing-status-shipyard-time-control',
+        '.landing-facility-position', '.landing-facility-previous', '.landing-facility-next', '.shipyard-position', '.shipyard-previous', '.shipyard-next',
         '#landing-status-facilities-heading', '#landing-status-facilities-clock', '#landing-status-facilities-credits', '#landing-status-facilities-cargo', '#landing-status-facilities'];
     const modal = new FakeElement();
     const hub = new FakeElement();
@@ -553,6 +573,8 @@ test('the shipyard view renders repair, local service cards and the booster row 
     const shipyardBack = new FakeElement();
     const shipyardRepairButton = new FakeElement({ '.shipyard-card-action-label': new FakeElement(), '.shipyard-card-action-price': new FakeElement() });
     const shipyardButton = new FakeElement();
+    const facilityCardsRail = new FakeElement({ '.facility-card': Array.from({ length: 5 }, () => new FakeElement()) });
+    const shipyardCardsRail = new FakeElement({ '.shipyard-card': [repairCard, ...serviceIds.map(serviceId => serviceCards[serviceId]), boosterCard] });
     const root = new FakeElement({
         ...Object.fromEntries(clickable.map(selector => [selector, new FakeElement()])),
         '#landing-status': modal,
@@ -567,7 +589,9 @@ test('the shipyard view renders repair, local service cards and the booster row 
         '#landing-status-market-view': marketView,
         '#landing-status-facilities-view': facilitiesView,
         '#landing-status-facilities-back': facilitiesBack,
+        '#landing-status-facility-cards': facilityCardsRail,
         '#landing-status-shipyard-view': shipyardView,
+        '#landing-status-shipyard-cards': shipyardCardsRail,
         '#landing-status-shipyard-heading': new FakeElement(),
         '#landing-status-shipyard-planet': new FakeElement(),
         '#landing-status-shipyard-clock': new FakeElement(),
