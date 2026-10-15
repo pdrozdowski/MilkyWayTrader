@@ -51,6 +51,10 @@ function setup (status = 'signed-in', pages = [], options = {}) {
     return { elements, component, authChange: value => { snapshot = value; listener(value); }, opened, calls: () => calls, keydown: event => windowListeners.get('keydown')?.(event), root };
 }
 
+function recordRows (view) {
+    return view.elements['#personal-best-rows'].childrenList.filter(row => row.attributes.class !== 'personal-best-empty-row');
+}
+
 const records = Array.from({ length: 11 }, (_, index) => ({ runId: `run-${index}`, activeElapsedMs: (index + 1) * 61_000, finalCredits: 100 - index, finalScore: 200 - index, outcome: ['freedom', 'imprisonment', 'death', 'abandoned'][index % 4], savedAt: `2026-10-${String(index + 1).padStart(2, '0')}T12:00:00Z` }));
 records[0] = { ...records[0], runId: 'tie-z', finalCredits: 1000, finalScore: 1500, savedAt: '2026-10-01T12:00:00Z' };
 records[10] = { ...records[10], runId: 'tie-a', finalCredits: 1000, finalScore: 1500, savedAt: '2026-10-01T12:00:00Z' };
@@ -87,7 +91,8 @@ test('signed-out prompt reuses account flow, populated rows mark one best and ro
     view.elements['#personal-best-next'].click();
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(view.elements['#personal-best-page-indicator'].textContent, '3 / 3');
-    assert.equal(view.elements['#personal-best-rows'].childrenList.length, 1);
+    assert.equal(view.elements['#personal-best-rows'].childrenList.length, 5);
+    assert.equal(recordRows(view).length, 1);
     assert.equal(view.elements['#personal-best-next'].disabled, true);
     const requestsAtLastPage = view.calls();
     view.elements['#personal-best-next'].click();
@@ -128,7 +133,8 @@ test('empty and error views offer the expected states and retry', async () => {
     failed.elements['#personal-best-retry'].click();
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(retries, 2);
-    assert.equal(failed.elements['#personal-best-rows'].childrenList.length, 1);
+    assert.equal(failed.elements['#personal-best-rows'].childrenList.length, 5);
+    assert.equal(recordRows(failed).length, 1);
     assert.equal(failed.elements['#personal-best-status'].textContent, '');
     failed.component.destroy();
 });
@@ -143,7 +149,8 @@ test('Game Over entry returns focus and sign-out clears rows and closes the dial
     await new Promise(resolve => setImmediate(resolve));
     view.authChange({ status: 'unsigned', email: null });
     assert.equal(view.elements['#personal-best'].hidden, true);
-    assert.equal(view.elements['#personal-best-rows'].childrenList.length, 0);
+    assert.equal(view.elements['#personal-best-table'].hidden, true);
+    assert.equal(recordRows(view).length, 0);
     view.component.destroy();
 });
 
@@ -253,7 +260,8 @@ test('clear history confirms the count, disables empty/loading states, and shows
     finishPage({ data: { records: [], totalCount: 0 }, error: null });
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(mutationCount, 1);
-    assert.equal(view.elements['#personal-best-rows'].childrenList.length, 0);
+    assert.equal(view.elements['#personal-best-table'].hidden, true);
+    assert.equal(recordRows(view).length, 0);
     assert.equal(view.elements['#personal-best-status'].textContent, displayLabels.personalBestNoScores);
     assert.equal(view.elements['#personal-best-clear-history'].disabled, true);
     assert.equal(globalThis.document.activeElement, view.elements['#personal-best-close']);
@@ -279,7 +287,8 @@ test('mutation failure leaves rows and confirmation available and identity chang
     finishMutation({ success: false, error: 'old identity failure' });
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(view.elements['#personal-best-confirmation-error'].textContent, '');
-    assert.equal(view.elements['#personal-best-rows'].childrenList.length, 2);
+    assert.equal(view.elements['#personal-best-rows'].childrenList.length, 5);
+    assert.equal(recordRows(view).length, 2);
     view.component.destroy();
 
     const failed = setup('signed-in', records.slice(0, 2), { store: {
@@ -295,7 +304,8 @@ test('mutation failure leaves rows and confirmation available and identity chang
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(failed.elements['#personal-best-confirmation'].hidden, false);
     assert.equal(failed.elements['#personal-best-confirmation-error'].textContent, 'offline');
-    assert.equal(failed.elements['#personal-best-rows'].childrenList.length, 2);
+    assert.equal(failed.elements['#personal-best-rows'].childrenList.length, 5);
+    assert.equal(recordRows(failed).length, 2);
     failed.component.destroy();
 });
 
@@ -318,7 +328,8 @@ test('identity change clears private rows and ignores a stale page response', as
     assert.equal(view.elements['#personal-best-high-score'].textContent, '1500');
     view.elements['#personal-best-next'].click();
     view.authChange({ status: 'signed-in', email: 'different@example.test' });
-    assert.equal(view.elements['#personal-best-rows'].childrenList.length, 0);
+    assert.equal(view.elements['#personal-best-rows'].childrenList.length, 5);
+    assert.equal(recordRows(view).length, 0);
     assert.equal(view.elements['#personal-best-high-score'].textContent, '');
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(view.elements['#personal-best-rows'].childrenList[0].childrenList[2].textContent, '700');
