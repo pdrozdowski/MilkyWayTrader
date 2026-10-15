@@ -97,6 +97,33 @@ export async function seedGlobalScore (sessionId: string, score: number): Promis
     return output.nickname;
 }
 
+export async function seedRunResult (artifact: SessionArtifact, runId: string, score: number): Promise<void>
+{
+    if (!artifact.userId || artifact.mode !== 'authenticated') throw new Error('Run-result setup requires an authenticated test session.');
+    const authSession = artifact.authSession as { readonly access_token?: unknown } | null;
+    const accessToken = authSession?.access_token;
+    if (typeof accessToken !== 'string' || !accessToken) throw new Error('Authenticated test session did not contain an access token.');
+    const environment = await loadPublicTestEnvironment();
+    const response = await fetch(new URL('/rest/v1/run_results', environment.url), {
+        method: 'POST',
+        headers: {
+            apikey: environment.publishableKey,
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
+            prefer: 'return=minimal'
+        },
+        body: JSON.stringify({
+            run_id: runId,
+            user_id: artifact.userId,
+            outcome: 'death',
+            active_elapsed_ms: 1_000,
+            final_credits: score,
+            final_score: score
+        })
+    });
+    if (response.status !== 201) throw new Error(`Local run-result setup failed with HTTP ${response.status}.`);
+}
+
 export async function loadPublicTestEnvironment (): Promise<PublicTestEnvironment>
 {
     const source = await readFile(resolve(process.cwd(), '.env.test'), 'utf8');

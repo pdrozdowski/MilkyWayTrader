@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { test as base, type Page } from '@playwright/test';
 import { prepareGameState, type GameStateFixtureOptions } from './gameStateFixture';
 import type { PlanetId } from '../../src/game/state/planetState';
-import { cleanupTestSession, createTestSession, seedGlobalScore, type SessionArtifact, type TestSessionMode } from '../testSessionSupport';
+import { cleanupTestSession, createTestSession, seedGlobalScore, seedRunResult, type SessionArtifact, type TestSessionMode } from '../testSessionSupport';
 
 export interface TestSession
 {
@@ -13,6 +13,7 @@ export interface TestSession
     readonly userId: string | null;
     readonly recordTiming: (name: string, durationMs: number) => void;
     readonly seedGlobalScore: (score: number) => Promise<string>;
+    readonly seedHistoryResult: (score: number) => Promise<void>;
 }
 
 type Fixtures = {
@@ -71,7 +72,8 @@ export const test = base.extend<Fixtures>({
                 seedGlobalScore: score => {
                     if (artifact.mode !== 'authenticated' || !artifact.userId) throw new Error('Global-score fixture requires an authenticated test session.');
                     return seedGlobalScore(artifact.id, score);
-                }
+                },
+                seedHistoryResult: score => seedRunResult(artifact, randomUUID(), score)
             });
         } finally {
             const cleanupStartedAt = performance.now();

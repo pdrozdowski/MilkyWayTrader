@@ -38,6 +38,9 @@ export function mountGlobalHighScores (root: HTMLElement, options: GlobalHighSco
     const nicknameHeading = required<HTMLElement>(root, '#global-high-scores-nickname-heading');
     const dateHeading = required<HTMLElement>(root, '#global-high-scores-date-heading');
     const scoreHeading = required<HTMLElement>(root, '#global-high-scores-score-heading');
+    const previous = required<HTMLButtonElement>(root, '#global-high-scores-previous');
+    const next = required<HTMLButtonElement>(root, '#global-high-scores-next');
+    const pageIndicator = required<HTMLElement>(root, '#global-high-scores-page-indicator');
     const close = required<HTMLButtonElement>(root, '#global-high-scores-close');
     const mainMenuTrigger = required<HTMLButtonElement>(root, '#main-menu-global-scores');
     const gameMenuTrigger = required<HTMLButtonElement>(root, '#game-menu-global-scores');
@@ -46,10 +49,12 @@ export function mountGlobalHighScores (root: HTMLElement, options: GlobalHighSco
     const gameMenu = required<HTMLElement>(root, '#game-menu');
     let authSnapshot: Readonly<AuthSnapshot> = options.auth.getSnapshot();
     let records: readonly GlobalScoreRecord[] = [];
+    let page = 0;
     let profileNickname: string | null = null;
     let personalBestRank: number | null = null;
     let personalBestExists = false;
     let personalBestRankError = false;
+    let personalBestRankLoading = false;
     let loading = false;
     let error: string | null = null;
     let returnFocus: HTMLElement | null = null;
@@ -57,9 +62,10 @@ export function mountGlobalHighScores (root: HTMLElement, options: GlobalHighSco
     let request = 0;
     let destroyed = false;
 
-    const clearPrivateData = (): void => { profileNickname = null; personalBestRank = null; personalBestExists = false; personalBestRankError = false; };
+    const clearPrivateData = (): void => { profileNickname = null; personalBestRank = null; personalBestExists = false; personalBestRankError = false; personalBestRankLoading = false; };
     const render = (): void => {
-        title.textContent = displayLabels.globalHighScoresTitle;
+        title.textContent = `\u{1F3C6} ${displayLabels.globalHighScoresTitle} \u{1F3C6}`;
+        title.setAttribute('aria-label', displayLabels.globalHighScoresTitle);
         rankHeading.textContent = displayLabels.globalHighScoresRank;
         nicknameHeading.textContent = displayLabels.globalHighScoresNicknameHeading;
         dateHeading.textContent = displayLabels.globalHighScoresDate;
@@ -67,25 +73,49 @@ export function mountGlobalHighScores (root: HTMLElement, options: GlobalHighSco
         const signedIn = authSnapshot.status === 'signed-in';
         nickname.hidden = !signedIn || !profileNickname;
         nickname.textContent = profileNickname ? displayLabels.globalHighScoresNickname.replace('{nickname}', profileNickname) : '';
-        rankCallout.hidden = !signedIn || (!personalBestExists && !personalBestRankError);
-        rankCallout.textContent = personalBestRankError
+        const normalizedNickname = profileNickname?.trim().toLocaleLowerCase();
+        const leaderboardRank = normalizedNickname
+            ? records.find(record => record.nickname.trim().toLocaleLowerCase() === normalizedNickname)?.rank ?? null
+            : null;
+        const displayedRank = personalBestRank ?? leaderboardRank;
+        rankCallout.hidden = !signedIn || (!personalBestExists && !personalBestRankError && !personalBestRankLoading && leaderboardRank === null);
+        rankCallout.textContent = displayedRank !== null
+            ? displayLabels.globalHighScoresRankCallout.replace('{rank}', String(displayedRank))
+            : personalBestRankLoading
+            ? displayLabels.globalHighScoresRankLoading
+            : personalBestRankError
             ? displayLabels.globalHighScoresRankUnavailable
-            : personalBestRank
-                ? displayLabels.globalHighScoresRankCallout.replace('{rank}', String(personalBestRank))
-                : '';
-        const populated = !loading && !error && records.length > 0;
+                : personalBestExists ? displayLabels.globalHighScoresNotRanked : '';
+        const populated = !loading && !error;
         table.hidden = !populated;
         status.textContent = loading ? displayLabels.globalHighScoresLoading : error ? `${displayLabels.globalHighScoresLoadFailed} ${error}` : records.length === 0 ? displayLabels.globalHighScoresNoScores : '';
         retry.hidden = !error;
         retry.textContent = displayLabels.globalHighScoresRetry;
         close.textContent = displayLabels.globalHighScoresClose;
+        const pageCount = Math.max(1, Math.ceil(records.length / 5));
+        page = Math.min(page, pageCount - 1);
+        pageIndicator.textContent = `${page + 1} / ${pageCount}`;
+        previous.textContent = displayLabels.globalHighScoresPrevious;
+        next.textContent = displayLabels.globalHighScoresNext;
+        previous.disabled = !populated || page === 0;
+        next.disabled = !populated || page >= pageCount - 1;
         rows.replaceChildren();
-        records.forEach(record => {
+        const pageRecords = records.slice(page * 5, page * 5 + 5);
+        for (let index = 0; index < 5; index++) {
+            const record = pageRecords[index];
             const row = document.createElement('tr');
+            if (!record) {
+                row.setAttribute('class', 'global-high-scores-empty-row');
+                for (let cellIndex = 0; cellIndex < 4; cellIndex++) row.append(document.createElement('td'));
+                rows.append(row);
+                continue;
+            }
+            row.setAttribute('data-rank', String(record.rank));
+            if (profileNickname && record.nickname.trim().toLocaleLowerCase() === profileNickname.trim().toLocaleLowerCase()) row.setAttribute('data-current-player', 'true');
             const values = [String(record.rank), record.nickname, dateLabel(record.achievedAt), formatCredits(record.score)];
             values.forEach(value => { const cell = document.createElement('td'); cell.textContent = value; row.append(cell); });
             rows.append(row);
-        });
+        }
     };
     const loadProfileAndRank = async (operation: number): Promise<void> => {
         clearPrivateData();
@@ -101,18 +131,22 @@ export function mountGlobalHighScores (root: HTMLElement, options: GlobalHighSco
             const best = bestResult.data;
             if (!best || best.finalScore === null) return;
             personalBestExists = true;
+            personalBestRankLoading = true;
+            render();
             const rankResult = await options.store.getPersonalBestRank(best.finalScore);
             if (destroyed || operation !== request || authSnapshot.status !== 'signed-in') return;
+            personalBestRankLoading = false;
             if (rankResult.error) { personalBestRankError = true; }
             else personalBestRank = rankResult.data;
         } catch (loadError) {
             if (destroyed || operation !== request) return;
+            personalBestRankLoading = false;
             personalBestRankError = true;
         }
     };
     const load = async (): Promise<void> => {
         const operation = ++request;
-        loading = true; error = null; records = []; clearPrivateData(); render();
+        loading = true; error = null; records = []; page = 0; clearPrivateData(); render();
         try {
             const topPromise = options.store.getTop();
             const privatePromise = loadProfileAndRank(operation);
@@ -153,6 +187,8 @@ export function mountGlobalHighScores (root: HTMLElement, options: GlobalHighSco
     const openGameMenu = (): void => open(gameMenuTrigger, 'game');
     const openGameOver = (): void => open(gameOverTrigger, null);
     const retryLoad = (): void => { void load(); };
+    const previousPage = (): void => { if (page > 0) { page--; render(); } };
+    const nextPage = (): void => { if ((page + 1) * 5 < records.length) { page++; render(); } };
     const keydown = (event: KeyboardEvent): void => {
         if (dialog.hidden) return;
         if (event.key === 'Escape') { event.preventDefault(); closeDialog(); return; }
@@ -171,6 +207,8 @@ export function mountGlobalHighScores (root: HTMLElement, options: GlobalHighSco
     gameMenuTrigger.addEventListener('click', openGameMenu);
     gameOverTrigger.addEventListener('click', openGameOver);
     retry.addEventListener('click', retryLoad);
+    previous.addEventListener('click', previousPage);
+    next.addEventListener('click', nextPage);
     close.addEventListener('click', closeDialog);
     window.addEventListener('keydown', keydown);
     const unsubscribe = options.auth.subscribe(snapshot => {
@@ -191,7 +229,7 @@ export function mountGlobalHighScores (root: HTMLElement, options: GlobalHighSco
         mainMenuTrigger.removeEventListener('click', openMainMenu);
         gameMenuTrigger.removeEventListener('click', openGameMenu);
         gameOverTrigger.removeEventListener('click', openGameOver);
-        retry.removeEventListener('click', retryLoad); close.removeEventListener('click', closeDialog);
+        retry.removeEventListener('click', retryLoad); previous.removeEventListener('click', previousPage); next.removeEventListener('click', nextPage); close.removeEventListener('click', closeDialog);
         window.removeEventListener('keydown', keydown);
     } };
 }

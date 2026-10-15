@@ -20,6 +20,16 @@ interface RestResult
     readonly body: unknown;
 }
 
+interface RunResultSeed
+{
+    readonly run_id: string;
+    readonly user_id: string;
+    readonly outcome: 'death';
+    readonly active_elapsed_ms: number;
+    readonly final_credits: number;
+    readonly final_score: number;
+}
+
 // Database integration risk: run-result RLS could allow anonymous writes or cross-user reads.
 // A real local Supabase JWT and public PostgREST endpoint exercise the PostgreSQL policy without booting the UI.
 test('an owner can save a result while another user and anonymous clients cannot access it', async ({ request, testRunId, supabaseTestEnvironment, authenticatedIdentity, secondaryAuthenticatedIdentity }) => {
@@ -46,6 +56,55 @@ test('an owner can save a result while another user and anonymous clients cannot
     expect(anonymousInsert.status).toBe(401);
     const anonymousRows = await runResultsRequest(request, supabaseTestEnvironment, null, `/run_results?run_id=eq.${runId}&select=run_id`);
     expect(anonymousRows.status).toBe(401);
+});
+
+test('owners can delete one result and clear their history without changing global scores', async ({ request, testRunId, supabaseTestEnvironment, authenticatedIdentity, secondaryAuthenticatedIdentity }) => {
+    test.setTimeout(30_000);
+    const firstRunId = randomUUID();
+    const remainingRunId = randomUUID();
+    const nickname = `Delete${testRunId.replace(/-/gu, '').slice(0, 8)}`;
+    // Keep the fixture below the ranking assertions in the following test, since global scores
+    // intentionally survive this history-deletion scenario for the rest of the suite.
+    const score = 7;
+    await profileRequest(request, supabaseTestEnvironment, authenticatedIdentity, nickname);
+    expect((await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'submit_global_score', { submitted_score: score })).status).toBe(204);
+    const globalBefore = (await globalRows(request, supabaseTestEnvironment, null)).find(row => row.nickname === nickname);
+    expect(globalBefore?.score).toBe(score);
+
+    for (const [index, runId] of [firstRunId, remainingRunId].entries()) {
+        const row: RunResultSeed = {
+            run_id: runId,
+            user_id: authenticatedIdentity.userId,
+            outcome: 'death',
+            active_elapsed_ms: 1_000 + index,
+            final_credits: 2_000 + index,
+            final_score: 3_000 + index
+        };
+        expect((await runResultsRequest(request, supabaseTestEnvironment, authenticatedIdentity, '/run_results', { method: 'POST', body: row })).status).toBe(201);
+    }
+
+    const ownerFilter = `?run_id=in.(${firstRunId},${remainingRunId})&select=run_id`;
+    const otherUserDelete = await runResultsRequest(request, supabaseTestEnvironment, secondaryAuthenticatedIdentity, `/run_results?run_id=eq.${firstRunId}&select=run_id`, { method: 'DELETE' });
+    expect(otherUserDelete.status).toBe(200);
+    expect(otherUserDelete.body).toEqual([]);
+    const anonymousDelete = await runResultsRequest(request, supabaseTestEnvironment, null, `/run_results?run_id=eq.${remainingRunId}&select=run_id`, { method: 'DELETE' });
+    expect(anonymousDelete.status).toBe(401);
+
+    const afterDeniedDeletes = await runResultsRequest(request, supabaseTestEnvironment, authenticatedIdentity, `/run_results${ownerFilter}`);
+    expect((afterDeniedDeletes.body as { run_id: string }[]).map(row => row.run_id).sort()).toEqual([firstRunId, remainingRunId].sort());
+
+    const ownerDelete = await runResultsRequest(request, supabaseTestEnvironment, authenticatedIdentity, `/run_results?run_id=eq.${firstRunId}&select=run_id`, { method: 'DELETE' });
+    expect(ownerDelete.status).toBe(200);
+    expect(ownerDelete.body).toEqual([{ run_id: firstRunId }]);
+    const clearHistory = await runResultsRequest(request, supabaseTestEnvironment, authenticatedIdentity, `/run_results?user_id=eq.${authenticatedIdentity.userId}&select=run_id`, { method: 'DELETE' });
+    expect(clearHistory.status).toBe(200);
+    expect(clearHistory.body).toEqual([{ run_id: remainingRunId }]);
+
+    const remainingHistory = await runResultsRequest(request, supabaseTestEnvironment, authenticatedIdentity, `/run_results${ownerFilter}`);
+    expect(remainingHistory.body).toEqual([]);
+    const globalEntry = (await globalRows(request, supabaseTestEnvironment, null)).find(row => row.nickname === nickname);
+    expect(globalEntry?.score).toBe(score);
+    expect(globalEntry?.achieved_at).toBe(globalBefore?.achieved_at);
 });
 
 test('global score RPC keeps the strict best, exposes a safe ranked projection, and ranks private PB scores', async ({ request, testRunId, supabaseTestEnvironment, authenticatedIdentity, secondaryAuthenticatedIdentity }) => {
@@ -102,7 +161,7 @@ async function runResultsRequest (
     environment: PublicTestEnvironment,
     identity: AuthenticatedTestIdentity | null,
     path: string,
-    operation: { readonly method?: 'POST'; readonly body?: Omit<RunResultRow, never> } = {}
+    operation: { readonly method?: 'POST' | 'DELETE'; readonly body?: Omit<RunResultRow, never> } = {}
 ): Promise<RestResult>
 {
     const response = await request.fetch(new URL(`/rest/v1${path}`, environment.url).toString(), {
@@ -111,11 +170,11 @@ async function runResultsRequest (
         headers: {
             apikey: environment.publishableKey,
             ...(identity ? { authorization: `Bearer ${identity.accessToken}` } : {}),
-            ...(operation.body ? { 'content-type': 'application/json', prefer: 'return=representation' } : {})
+            ...(operation.body ? { 'content-type': 'application/json', prefer: 'return=representation' } : operation.method === 'DELETE' ? { prefer: 'return=representation' } : {})
         },
         ...(operation.body ? { data: operation.body } : {})
     });
-    return { status: response.status(), body: await response.json() };
+    return { status: response.status(), body: response.status() === 204 ? null : await response.json() };
 }
 
 interface GlobalRow { readonly rank: number; readonly nickname: string; readonly achieved_at: string; readonly score: number }

@@ -144,7 +144,8 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - The signed-in player's global rank callout uses their private Personal Best score, even when it differs from their global row.
 - The end-game result lists ending cash, cargo acquisition cost, ship upgrade and booster spending, facility construction and upgrade spending, and `YOUR FINAL SCORE IS: xxx,xxx`.
 - Anonymous players can view global results but cannot submit a result or access a personal best.
-- A signed-in player can clear their personal best result; the next highest retained result becomes the new personal best.
+- A signed-in player can delete any individual result from their personal history or clear all personal history after confirming the selected action.
+- Deleting or clearing private result history does not change global results, active saves, profile data, or nickname data.
 
 ### US-07: Player receives gameplay audio feedback
 
@@ -244,7 +245,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - FR-052: A signed-in player can view their personal best result. Priority: must-have
 - FR-053: A player can view the global high-score table. Priority: must-have
-- FR-054: A signed-in player can clear their personal best result. Priority: must-have
+- FR-054: A signed-in player can delete an individual result from their personal history. Priority: must-have
 
 ### Gameplay audio
 
@@ -254,9 +255,10 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - FR-056: A landed player can choose whether active game time progresses. Priority: must-have
 
-### Global scores
+### Result history and global scores
 
-- FR-057: A signed-in player can maintain one global best score across their completed runs. Priority: must-have
+- FR-057: A signed-in player can clear their personal result history. Priority: must-have
+- FR-058: A signed-in player can maintain one global best score across their completed runs. Priority: must-have
 
 ## Non-Functional Requirements
 
@@ -392,14 +394,15 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-107: A resumed run restores the saved remaining active time and all state required to continue consistently.
 - BR-108: A completed run cannot be resumed as active gameplay.
 - BR-109: After a signed-in run reaches a terminal outcome and its result is retained, its active save is removed.
-- BR-110: Personal history retains every signed-in result across all outcomes except results the player explicitly clears.
+- BR-110: Personal history retains every signed-in result across all outcomes except results the player explicitly deletes or clears.
 - BR-111: Personal best is the retained result with the highest final score regardless of outcome.
-- BR-112: Clearing a personal best removes that result from the signed-in player's personal history; the highest remaining retained result becomes the personal best, or no personal best is shown when none remains.
+- BR-112: Deleting an individual result removes only that result from the signed-in player's personal history; the highest remaining retained result becomes the personal best, or no personal best is shown when none remains.
 - BR-113: Every authenticated terminal result is compared with the player's global best regardless of outcome; a row is inserted if absent or updated only for a strictly higher final score.
 - BR-114: Global results are ranked by final score, with competition ranking; one row is retained per player and ties at rank 100 are included.
 - BR-115: Final score is ending cash plus carried cargo total acquisition cost plus cumulative amounts paid for ship upgrades and the booster and facility construction and upgrades. Repairs, trades, and refunds do not change cumulative spending; round the combined score once to the nearest whole credit.
-- BR-116: The end-game result presents each final-score component and the label `YOUR FINAL SCORE IS:` followed by the rounded score.
-- BR-117: Anonymous and signed-in players can view the global high-score table, but only signed-in players can submit results or view or clear a personal best.
+- BR-116: Clearing personal history removes every result from the signed-in player's private history and requires the player to confirm the action; global results and unrelated player data remain unchanged.
+- BR-117: The end-game result presents each final-score component and the label `YOUR FINAL SCORE IS:` followed by the rounded score.
+- BR-118: Anonymous and signed-in players can view the global high-score table, but only signed-in players can submit results or access or change their personal result history.
 
 ## Access Control
 
@@ -407,7 +410,7 @@ The game is available anonymously without creating an account. Anonymous players
 
 Google OAuth is the only sign-in method. Sign-in may occur before a run or during an anonymous active run. A successful mid-run sign-in attaches and saves the current run immediately. Signed-in players can access only their own active save, result history, and personal best. They cannot read or modify another player's private data.
 
-A signed-in player can sign out from the main menu without deleting their saved data. A signed-in player can clear only their own personal-best result; this operation cannot change another player's records or global results.
+A signed-in player can sign out from the main menu without deleting their saved data. A signed-in player can delete any individual result in, or clear all of, only their own private result history. Both actions require confirmation and cannot change another player's records, global results, active saves, profile data, or nickname data.
 
 Global high scores are publicly readable. Only authenticated players can submit terminal results. Each player's submission can insert or improve only their own global result; public rows expose rank, current nickname, achieved date, and score. All signed-in players have the same permissions; the MVP has no administrative or multiplayer roles.
 

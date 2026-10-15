@@ -14,6 +14,7 @@ dist-ssr
 
 # Local tooling and credentials
 .cache/
+.playwright-cli/
 .wrangler/
 .env
 .env.*

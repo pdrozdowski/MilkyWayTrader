@@ -25,7 +25,7 @@ milestone_status: open
 - **Intent:** Deliver the complete browser-game outcome described by the PRD: an anonymous player can finish the debt run through trading, planetary facility investment, flight, hazards, and salvage, while a signed-in player can preserve progress and compare eligible results.
 - **Source materials:** `context/foundation/prd.md` (v1)
 - **Done when:** every S-NN below is `done` and the complete PRD-defined run is usable end to end.
-- **Scope anchors:** US-01â€“US-08 and FR-001â€“FR-057.
+- **Scope anchors:** US-01â€“US-08 and FR-001â€“FR-058.
 
 ## Vision recap
 
@@ -56,7 +56,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-12 | s12-personal-best-result | Signed-in user can view their personal best and paginated private run history. | S-06 | US-06, FR-052 | done |
 | S-13 | s13-global-high-scores | User can view the top global high scores and their personal best's global rank. | S-12 | US-06, FR-053 | done |
 | S-14 | s14-delete-terminal-active-save | Signed-in user retains a terminal result while its active save is removed. | S-06, S-11 | US-05, FR-051 | proposed |
-| S-15 | s15-clear-personal-best | Signed-in user can delete any personal result or clear their history without changing global results. | S-12, S-13 | US-06, FR-054, FR-057 | planning |
+| S-15 | s15-clear-personal-best | Signed-in user can delete any personal result or clear all personal history after confirmation without changing global results. | S-12, S-13 | US-06, FR-054, FR-057 | in-progress |
 | S-17 | s17-gameplay-audio-feedback | User can hear gameplay audio feedback without interrupting a run. | S-02, S-07, S-08 | US-07, FR-055 | proposed |
 
 ## Baseline
@@ -258,7 +258,7 @@ No standalone foundations are required. Deployment is already present, the autho
 
 ### S-15: Delete personal results and clear history
 
-- **Outcome:** Signed-in user can delete any personal result or clear their history without changing global results.
+- **Outcome:** Signed-in user can delete any personal result or clear all personal history after confirmation without changing global results or unrelated player data.
 - **Change ID:** s15-clear-personal-best
 - **PRD refs:** US-06, FR-054, FR-057
 - **Prerequisites:** S-12, S-13
@@ -266,7 +266,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Clearing a personal result must affect only its owner; the next retained result must become the personal best without changing public eligible scores.
-- **Status:** planning
+- **Status:** in-progress
 
 ### S-17: Hear gameplay audio feedback
 
@@ -299,7 +299,7 @@ No standalone foundations are required. Deployment is already present, the autho
 | S-12 | s12-personal-best-result | Deliver the signed-in player's personal best and private run history | no | Requires S-06 |
 | S-13 | s13-global-high-scores | Deliver composite-score global high scores and personal best rank | no | Requires S-12 |
 | S-14 | s14-delete-terminal-active-save | Remove the terminal active save after retaining its result | no | Requires S-06 and S-11 |
-| S-15 | s15-clear-personal-best | Allow the owner to delete any personal result or clear their history | no | Requires S-12 and S-13 |
+| S-15 | s15-clear-personal-best | Allow the owner to delete any personal result or clear all personal history after confirmation | no | Requires S-12 and S-13 |
 | S-17 | s17-gameplay-audio-feedback | Deliver optional gameplay audio feedback | no | Requires S-02, S-07, and S-08 |
 
 ## Open Roadmap Questions

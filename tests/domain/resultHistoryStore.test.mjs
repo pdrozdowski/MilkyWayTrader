@@ -12,7 +12,7 @@ const rows = Array.from({ length: 12 }, (_, index) => ({
     created_at: `2026-01-${String(index + 1).padStart(2, '0')}T00:00:00.000Z`
 }));
 
-function clientFor ({ result = { data: rows, count: rows.length, error: null }, thrown = null } = {})
+function clientFor ({ result = { data: rows, count: rows.length, error: null }, thrown = null, session = { user: { id: 'owner-1' } }, sessionError = null } = {})
 {
     const operations = [];
     const query = {
@@ -21,9 +21,11 @@ function clientFor ({ result = { data: rows, count: rows.length, error: null }, 
         order (column, options) { operations.push(['order', column, options]); return query; },
         range (from, to) { operations.push(['range', from, to]); return query; },
         limit (count) { operations.push(['limit', count]); return query; },
-        not (column, operator, value) { operations.push(['not', column, operator, value]); return query; }
+        not (column, operator, value) { operations.push(['not', column, operator, value]); return query; },
+        delete () { operations.push(['delete']); return query; },
+        eq (column, value) { operations.push(['eq', column, value]); return query; }
     };
-    return { operations, client: { from: table => { assert.equal(table, 'run_results'); return query; } } };
+    return { operations, client: { auth: { getSession: async () => ({ data: { session }, error: sessionError }) }, from: table => { assert.equal(table, 'run_results'); return query; } } };
 }
 
 test('history page maps rows, requests exact count and the requested five-row range in order', async () => {
@@ -80,4 +82,40 @@ test('history reads return database and thrown failures and reject invalid pages
 
     const thrown = createBrowserResultHistoryStore(configuration, () => clientFor({ thrown: new Error('Connection lost') }).client);
     assert.deepEqual(await thrown.getBest(), { data: null, error: 'Connection lost' });
+});
+
+test('single-result deletion requires the active session and constrains the request to that owner', async () => {
+    const fixture = clientFor({ result: { error: null } });
+    const store = createBrowserResultHistoryStore(configuration, () => fixture.client);
+
+    assert.deepEqual(await store.deleteResult('run-1'), { success: true, error: null });
+    assert.deepEqual(fixture.operations, [['delete'], ['eq', 'run_id', 'run-1'], ['eq', 'user_id', 'owner-1']]);
+});
+
+test('single-result deletion reports missing-session, database and thrown errors', async () => {
+    const unsigned = clientFor({ session: null });
+    assert.deepEqual(await createBrowserResultHistoryStore(configuration, () => unsigned.client).deleteResult('run-1'), { success: false, error: 'Sign in to manage result history.' });
+    assert.deepEqual(unsigned.operations, []);
+
+    const denied = clientFor({ result: { error: { message: 'Delete denied' } } });
+    assert.deepEqual(await createBrowserResultHistoryStore(configuration, () => denied.client).deleteResult('run-1'), { success: false, error: 'Delete denied' });
+
+    const thrown = clientFor({ thrown: new Error('Connection lost') });
+    assert.deepEqual(await createBrowserResultHistoryStore(configuration, () => thrown.client).deleteResult('run-1'), { success: false, error: 'Connection lost' });
+});
+
+test('bulk deletion uses the active owner and reports missing-session, database and thrown errors', async () => {
+    const fixture = clientFor({ result: { error: null } });
+    assert.deepEqual(await createBrowserResultHistoryStore(configuration, () => fixture.client).clearHistory(), { success: true, error: null });
+    assert.deepEqual(fixture.operations, [['delete'], ['eq', 'user_id', 'owner-1']]);
+
+    const unsigned = clientFor({ session: null });
+    assert.deepEqual(await createBrowserResultHistoryStore(configuration, () => unsigned.client).clearHistory(), { success: false, error: 'Sign in to manage result history.' });
+    assert.deepEqual(unsigned.operations, []);
+
+    const denied = clientFor({ result: { error: { message: 'Delete denied' } } });
+    assert.deepEqual(await createBrowserResultHistoryStore(configuration, () => denied.client).clearHistory(), { success: false, error: 'Delete denied' });
+
+    const thrown = clientFor({ thrown: new Error('Connection lost') });
+    assert.deepEqual(await createBrowserResultHistoryStore(configuration, () => thrown.client).clearHistory(), { success: false, error: 'Connection lost' });
 });

@@ -45,23 +45,32 @@
         <section id="global-high-scores" data-game-input="ignore" aria-labelledby="global-high-scores-title" aria-modal="true" role="dialog" hidden>
             <div class="global-high-scores-panel">
                 <header><h2 id="global-high-scores-title"></h2></header>
-                <p id="global-high-scores-nickname" hidden></p>
-                <p id="global-high-scores-rank" role="status" aria-live="polite" hidden></p>
+                <div class="global-high-scores-player-summary"><p id="global-high-scores-nickname" hidden></p><p id="global-high-scores-rank" role="status" aria-live="polite" hidden></p></div>
                 <p id="global-high-scores-status" role="status" aria-live="polite"></p>
                 <button id="global-high-scores-retry" type="button" hidden></button>
                 <div class="global-high-scores-table-wrap"><table id="global-high-scores-table" aria-label="Global high scores"><thead><tr><th scope="col" id="global-high-scores-rank-heading"></th><th scope="col" id="global-high-scores-nickname-heading"></th><th scope="col" id="global-high-scores-date-heading"></th><th scope="col" id="global-high-scores-score-heading"></th></tr></thead><tbody id="global-high-scores-rows"></tbody></table></div>
+                <nav class="global-high-scores-pages" aria-label="Leaderboard pages"><button id="global-high-scores-previous" type="button"></button><span id="global-high-scores-page-indicator"></span><button id="global-high-scores-next" type="button"></button></nav>
                 <button id="global-high-scores-close" class="global-high-scores-close" type="button"></button>
             </div>
         </section>
         <section id="personal-best" data-game-input="ignore" aria-labelledby="personal-best-title" aria-modal="true" role="dialog" hidden>
             <div class="personal-best-panel">
                 <header><h2 id="personal-best-title"></h2></header>
-                <p id="personal-best-high-score"></p>
+                <section class="personal-best-best-card" aria-label="All-time best"><span class="personal-best-best-label">YOUR ALL-TIME BEST</span><p id="personal-best-high-score"></p><time id="personal-best-best-date"></time></section>
                 <p id="personal-best-status" role="status" aria-live="polite"></p>
                 <button id="personal-best-sign-in" type="button" hidden></button><button id="personal-best-retry" type="button" hidden></button>
-                <div class="personal-best-table-wrap"><table id="personal-best-table" aria-label="Personal best history"><thead><tr><th scope="col" id="personal-best-date-heading"></th><th scope="col" id="personal-best-elapsed-heading"></th><th scope="col" id="personal-best-score-heading"></th><th scope="col" id="personal-best-outcome-heading"></th><th scope="col" id="personal-best-best-heading"></th><th scope="col" id="personal-best-delete-heading"></th></tr></thead><tbody id="personal-best-rows"></tbody></table></div>
+                <div class="personal-best-history-heading"><h3>Run history</h3><span id="personal-best-run-count">0 runs</span></div>
+                <div class="personal-best-table-wrap"><table id="personal-best-table" aria-label="Personal best history"><colgroup><col class="personal-best-date-col" /><col class="personal-best-time-col" /><col class="personal-best-score-col" /><col class="personal-best-outcome-col" /><col class="personal-best-marker-col" /><col class="personal-best-delete-col" /></colgroup><thead><tr><th scope="col" id="personal-best-date-heading"></th><th scope="col" id="personal-best-elapsed-heading"></th><th scope="col" id="personal-best-score-heading"></th><th scope="col" id="personal-best-outcome-heading"></th><th scope="col" id="personal-best-best-heading" aria-label="Best score"></th><th scope="col" id="personal-best-delete-heading" aria-label="Delete result"></th></tr></thead><tbody id="personal-best-rows"></tbody></table></div>
                 <nav class="personal-best-pages" aria-label="History pages"><button id="personal-best-previous" type="button"></button><span id="personal-best-page-indicator"></span><button id="personal-best-next" type="button"></button></nav>
-                <button id="personal-best-close" class="personal-best-close" type="button"></button>
+                <footer class="personal-best-footer"><button id="personal-best-clear-history" type="button" hidden></button><button id="personal-best-close" class="personal-best-close" type="button"></button></footer>
+            </div>
+        </section>
+        <section id="personal-best-confirmation" class="personal-best-confirmation" role="alertdialog" aria-modal="true" aria-labelledby="personal-best-confirmation-title" aria-describedby="personal-best-confirmation-message" hidden>
+            <div class="personal-best-confirmation-panel">
+                <h2 id="personal-best-confirmation-title"></h2>
+                <p id="personal-best-confirmation-message"></p>
+                <p id="personal-best-confirmation-error" role="alert" aria-live="assertive"></p>
+                <div><button id="personal-best-confirmation-no" type="button"></button><button id="personal-best-confirmation-yes" type="button"></button></div>
             </div>
         </section>
         <section id="game-over-status" data-game-input="ignore" aria-live="polite" aria-label="Result delivery status" hidden><p id="game-over-status-message"></p><button id="game-over-status-retry" type="button" hidden></button></section>

@@ -54,6 +54,13 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
     const status = required<HTMLElement>(root, '#personal-best-status');
     const signIn = required<HTMLButtonElement>(root, '#personal-best-sign-in');
     const retry = required<HTMLButtonElement>(root, '#personal-best-retry');
+    const clearHistory = required<HTMLButtonElement>(root, '#personal-best-clear-history');
+    const confirmation = required<HTMLElement>(root, '#personal-best-confirmation');
+    const confirmationTitle = required<HTMLElement>(root, '#personal-best-confirmation-title');
+    const confirmationMessage = required<HTMLElement>(root, '#personal-best-confirmation-message');
+    const confirmationError = required<HTMLElement>(root, '#personal-best-confirmation-error');
+    const confirmationNo = required<HTMLButtonElement>(root, '#personal-best-confirmation-no');
+    const confirmationYes = required<HTMLButtonElement>(root, '#personal-best-confirmation-yes');
     const table = required<HTMLTableElement>(root, '#personal-best-table');
     const rows = required<HTMLTableSectionElement>(root, '#personal-best-rows');
     const headings = [required<HTMLElement>(root, '#personal-best-date-heading'), required<HTMLElement>(root, '#personal-best-elapsed-heading'), required<HTMLElement>(root, '#personal-best-score-heading'), required<HTMLElement>(root, '#personal-best-outcome-heading'), required<HTMLElement>(root, '#personal-best-best-heading'), required<HTMLElement>(root, '#personal-best-delete-heading')];
@@ -75,13 +82,21 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
     let accountOrigin: 'game-menu' | 'game-over' = 'game-menu';
     let request = 0;
     let destroyed = false;
+    let mutationPending = false;
+    let mutationError: string | null = null;
+    let confirmationRecord: ResultHistoryRecord | null = null;
+    let confirmationTrigger: HTMLElement | null = null;
 
     const clearData = (): void => { records = []; best = null; totalCount = 0; page = 0; };
     const render = (): void => {
-        title.textContent = displayLabels.personalBestTitle.replace('{nickname}', profile?.nickname ?? displayLabels.personalBestNicknameFallback);
+        title.textContent = `\u{1F3C6} ${profile?.nickname ?? displayLabels.personalBestNicknameFallback} \u2014 ${displayLabels.personalBest} \u{1F3C6}`;
         highScore.textContent = best?.finalScore !== null && best ? formatCredits(best.finalScore) : '';
         highScore.hidden = !best;
-        headings.forEach((heading, index) => { heading.textContent = [displayLabels.personalBestDate, displayLabels.personalBestElapsed, displayLabels.personalBestScore, displayLabels.personalBestOutcome, displayLabels.personalBestBest, displayLabels.personalBestDelete][index]; });
+        const bestDate = root.querySelector<HTMLElement>('#personal-best-best-date');
+        if (bestDate) bestDate.textContent = best ? dateLabel(best.savedAt) : '';
+        const runCount = root.querySelector<HTMLElement>('#personal-best-run-count');
+        if (runCount) runCount.textContent = `${totalCount} runs`;
+        headings.forEach((heading, index) => { heading.textContent = [displayLabels.personalBestDate, displayLabels.personalBestElapsed, displayLabels.personalBestScore, displayLabels.personalBestOutcome, '', ''][index]; });
         const signedIn = authSnapshot.status === 'signed-in';
         const populated = signedIn && !loading && !error && totalCount > 0;
         table.hidden = !populated;
@@ -91,6 +106,9 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
         signIn.disabled = authSnapshot.status === 'unavailable';
         retry.hidden = !signedIn || !error;
         retry.textContent = displayLabels.personalBestRetry;
+        clearHistory.textContent = displayLabels.personalBestClearHistory;
+        clearHistory.hidden = !signedIn;
+        clearHistory.disabled = loading || totalCount === 0 || mutationPending;
         const pageCount = Math.max(1, Math.ceil(totalCount / resultHistoryPageSize));
         indicator.textContent = `${page + 1} / ${pageCount}`;
         previous.textContent = displayLabels.personalBestPrevious;
@@ -98,16 +116,98 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
         previous.disabled = !populated || page <= 0 || loading;
         next.disabled = !populated || page >= pageCount - 1 || loading;
         close.textContent = displayLabels.personalBestClose;
+        confirmation.hidden = !confirmationTrigger;
+        confirmationTitle.textContent = confirmationRecord ? displayLabels.personalBestConfirmDeleteTitle : displayLabels.personalBestConfirmClearTitle;
+        confirmationMessage.textContent = confirmationRecord
+            ? displayLabels.personalBestConfirmDeleteMessage.replace('{score}', formatCredits(confirmationRecord.finalScore ?? confirmationRecord.finalCredits)).replace('{date}', dateLabel(confirmationRecord.savedAt)).replace('{outcome}', outcomeLabel(confirmationRecord))
+            : displayLabels.personalBestConfirmClearMessage.replace('{count}', String(totalCount));
+        confirmationError.textContent = mutationError ?? '';
+        confirmationNo.textContent = displayLabels.personalBestConfirmNo;
+        confirmationYes.textContent = displayLabels.personalBestConfirmYes;
+        confirmationNo.disabled = mutationPending;
+        confirmationYes.disabled = mutationPending;
         rows.replaceChildren();
-        records.forEach(record => {
+        for (let index = 0; index < resultHistoryPageSize; index++) {
+            const record = records[index];
             const row = document.createElement('tr');
+            if (!record) {
+                row.setAttribute('class', 'personal-best-empty-row');
+                for (let cellIndex = 0; cellIndex < 6; cellIndex++) row.append(document.createElement('td'));
+                rows.append(row);
+                continue;
+            }
             const values = [dateLabel(record.savedAt), elapsedTimeLabel(record.activeElapsedMs), formatCredits(record.finalScore ?? record.finalCredits), outcomeLabel(record), best?.runId === record.runId ? displayLabels.personalBestBest : ''];
             values.forEach(value => { const cell = document.createElement('td'); cell.textContent = value; row.append(cell); });
+            if (best?.runId === record.runId) row.setAttribute('data-personal-best', 'true');
             const deleteCell = document.createElement('td');
             const deleteButton = document.createElement('button');
-            deleteButton.type = 'button'; deleteButton.textContent = displayLabels.personalBestDeletePlaceholder; deleteButton.disabled = true; deleteButton.tabIndex = -1;
+            deleteButton.type = 'button'; deleteButton.textContent = ''; deleteButton.className = 'personal-best-delete'; deleteButton.setAttribute('aria-label', `${displayLabels.personalBestDelete} ${formatCredits(record.finalScore ?? record.finalCredits)} ${dateLabel(record.savedAt)}`);
+            deleteButton.disabled = loading || mutationPending;
+            deleteButton.addEventListener('click', () => openConfirmation(record, deleteButton));
             deleteCell.append(deleteButton); row.append(deleteCell); rows.append(row);
-        });
+        }
+    };
+    const openConfirmation = (record: ResultHistoryRecord | null, trigger: HTMLElement): void => {
+        if (authSnapshot.status !== 'signed-in' || loading || mutationPending) return;
+        confirmationRecord = record;
+        confirmationTrigger = trigger;
+        mutationError = null;
+        render();
+        confirmationYes.focus();
+    };
+    const closeConfirmation = (restoreFocus: boolean): void => {
+        if (!confirmationTrigger || mutationPending) return;
+        const trigger = confirmationTrigger;
+        const record = confirmationRecord;
+        const rowIndex = record ? records.findIndex(item => item.runId === record.runId) : -1;
+        confirmationTrigger = null;
+        confirmationRecord = null;
+        mutationError = null;
+        render();
+        if (restoreFocus) {
+            const currentRowButton = record ? rows.querySelectorAll<HTMLButtonElement>('button')[rowIndex] : null;
+            (currentRowButton ?? (trigger.isConnected ? trigger : clearHistory)).focus();
+        }
+    };
+    const confirmMutation = async (): Promise<void> => {
+        if (!confirmationTrigger || mutationPending || authSnapshot.status !== 'signed-in') return;
+        const record = confirmationRecord;
+        const identity = authSnapshot.email;
+        const operation = ++request;
+        const index = record ? records.findIndex(item => item.runId === record.runId) : -1;
+        mutationPending = true;
+        mutationError = null;
+        render();
+        try {
+            const result = record ? await options.store.deleteResult(record.runId) : await options.store.clearHistory();
+            if (destroyed || operation !== request || authSnapshot.status !== 'signed-in' || authSnapshot.email !== identity) return;
+            if (!result.success) {
+                mutationPending = false;
+                mutationError = result.error || displayLabels.personalBestMutationFailed;
+                render();
+                return;
+            }
+            const nextCount = record ? Math.max(0, totalCount - 1) : 0;
+            page = record ? Math.min(page, Math.max(0, Math.ceil(nextCount / resultHistoryPageSize) - 1)) : 0;
+            mutationPending = false;
+            mutationError = null;
+            confirmationTrigger = null;
+            confirmationRecord = null;
+            await load();
+            if (destroyed || authSnapshot.status !== 'signed-in' || authSnapshot.email !== identity) return;
+            if (!record || records.length === 0) close.focus();
+            else {
+                const buttons = rows.querySelectorAll<HTMLButtonElement>('button');
+                const target = buttons[Math.min(Math.max(index, 0), buttons.length - 1)];
+                (target ?? close).focus();
+            }
+        } catch (mutationFailure) {
+            if (destroyed || operation !== request || authSnapshot.status !== 'signed-in' || authSnapshot.email !== identity) return;
+            mutationPending = false;
+            mutationError = mutationFailure instanceof Error ? mutationFailure.message : displayLabels.personalBestMutationFailed;
+            if (!mutationError) mutationError = displayLabels.personalBestMutationFailed;
+            render();
+        }
     };
     const load = async (): Promise<void> => {
         if (authSnapshot.status !== 'signed-in') { clearData(); loading = false; error = null; render(); return; }
@@ -144,7 +244,7 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
     };
     const closeDialog = (): void => {
         if (dialog.hidden) return;
-        request++; loading = false; clearData(); error = null; dialog.hidden = true; render();
+        request++; loading = false; mutationPending = false; confirmationTrigger = null; confirmationRecord = null; mutationError = null; clearData(); error = null; dialog.hidden = true; render();
         if (accountOrigin === 'game-menu') required<HTMLElement>(root, '#game-menu').hidden = false;
         (returnFocus?.isConnected ? returnFocus : menuTrigger).focus();
     };
@@ -153,19 +253,33 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
     const move = (delta: number): void => { const pageCount = Math.ceil(totalCount / resultHistoryPageSize); const target = page + delta; if (target < 0 || target >= pageCount) return; page = target; void load(); };
     const signInClick = (): void => options.openAccount(accountOrigin, signIn);
     const retryClick = (): void => { void load(); };
+    const clearHistoryClick = (): void => openConfirmation(null, clearHistory);
+    const confirmationNoClick = (): void => closeConfirmation(true);
+    const confirmationYesClick = (): void => { void confirmMutation(); };
     const previousClick = (): void => move(-1);
     const nextClick = (): void => move(1);
     const authChange = (snapshot: Readonly<AuthSnapshot>): void => {
         const wasSignedIn = authSnapshot.status === 'signed-in';
         const identityChanged = wasSignedIn && snapshot.status === 'signed-in' && authSnapshot.email !== snapshot.email;
         authSnapshot = snapshot;
-        if (wasSignedIn && snapshot.status !== 'signed-in') { request++; loading = false; clearData(); profile = null; error = null; if (!dialog.hidden) closeDialog(); }
-        else if (identityChanged) { request++; loading = false; clearData(); profile = null; error = null; page = 0; render(); if (!dialog.hidden) { void loadProfile(); void load(); } }
+        if (wasSignedIn && snapshot.status !== 'signed-in') { request++; loading = false; mutationPending = false; clearData(); profile = null; error = null; if (!dialog.hidden) closeDialog(); }
+        else if (identityChanged) { request++; loading = false; mutationPending = false; confirmationTrigger = null; confirmationRecord = null; mutationError = null; clearData(); profile = null; error = null; page = 0; render(); if (!dialog.hidden) { void loadProfile(); void load(); } }
+        else if (mutationPending) { render(); return; }
         else if (!dialog.hidden && snapshot.status === 'signed-in') void load();
         render();
     };
     const keydown = (event: KeyboardEvent): void => {
         if (dialog.hidden) return;
+        if (confirmationTrigger) {
+            if (event.key === 'Escape') { event.preventDefault(); closeConfirmation(true); return; }
+            if (event.key === 'Tab') {
+                const controls = [confirmationNo, confirmationYes].filter(control => !control.disabled);
+                const first = controls[0]; const last = controls[controls.length - 1];
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+            }
+            return;
+        }
         if (event.key === 'Escape') { event.preventDefault(); closeDialog(); return; }
         if (event.key !== 'Tab') return;
         const controls = Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]):not([hidden])'));
@@ -176,8 +290,8 @@ export function mountPersonalBest (root: HTMLElement, options: PersonalBestOptio
     };
     menuTrigger.textContent = displayLabels.personalBest; gameOverTrigger.textContent = displayLabels.personalBest;
     menuTrigger.addEventListener('click', openMenu); gameOverTrigger.addEventListener('click', openGameOver); close.addEventListener('click', closeDialog);
-    previous.addEventListener('click', previousClick); next.addEventListener('click', nextClick); retry.addEventListener('click', retryClick); signIn.addEventListener('click', signInClick); window.addEventListener('keydown', keydown);
+    previous.addEventListener('click', previousClick); next.addEventListener('click', nextClick); retry.addEventListener('click', retryClick); signIn.addEventListener('click', signInClick); clearHistory.addEventListener('click', clearHistoryClick); confirmationNo.addEventListener('click', confirmationNoClick); confirmationYes.addEventListener('click', confirmationYesClick); window.addEventListener('keydown', keydown);
     const unsubscribe = options.auth.subscribe(authChange);
     render();
-    return { destroy: () => { if (destroyed) return; destroyed = true; request++; unsubscribe(); menuTrigger.removeEventListener('click', openMenu); gameOverTrigger.removeEventListener('click', openGameOver); close.removeEventListener('click', closeDialog); previous.removeEventListener('click', previousClick); next.removeEventListener('click', nextClick); retry.removeEventListener('click', retryClick); signIn.removeEventListener('click', signInClick); window.removeEventListener('keydown', keydown); } };
+    return { destroy: () => { if (destroyed) return; destroyed = true; request++; unsubscribe(); menuTrigger.removeEventListener('click', openMenu); gameOverTrigger.removeEventListener('click', openGameOver); close.removeEventListener('click', closeDialog); previous.removeEventListener('click', previousClick); next.removeEventListener('click', nextClick); retry.removeEventListener('click', retryClick); signIn.removeEventListener('click', signInClick); clearHistory.removeEventListener('click', clearHistoryClick); confirmationNo.removeEventListener('click', confirmationNoClick); confirmationYes.removeEventListener('click', confirmationYesClick); window.removeEventListener('keydown', keydown); } };
 }
