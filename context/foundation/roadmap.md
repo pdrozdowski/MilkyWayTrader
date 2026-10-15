@@ -3,7 +3,7 @@ project: MilkyWayTrader
 version: 1
 status: draft
 created: 2026-09-21
-updated: 2026-10-14
+updated: 2026-10-15
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -56,7 +56,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-12 | s12-personal-best-result | Signed-in user can view their personal best and paginated private run history. | S-06 | US-06, FR-052 | done |
 | S-13 | s13-global-high-scores | User can view the top global high scores and their personal best's global rank. | S-12 | US-06, FR-053 | done |
 | S-14 | s14-delete-terminal-active-save | Signed-in user retains a terminal result while its active save is removed. | S-06, S-11 | US-05, FR-051 | proposed |
-| S-15 | s15-clear-personal-best | Signed-in user can delete any personal result or clear all personal history after confirmation without changing global results. | S-12, S-13 | US-06, FR-054, FR-057 | in-progress |
+| S-15 | s15-clear-personal-best | Signed-in user can delete any personal result or clear all personal history after confirmation without changing global results. | S-12, S-13 | US-06, FR-054, FR-057 | done |
 | S-17 | s17-gameplay-audio-feedback | User can hear gameplay audio feedback without interrupting a run. | S-02, S-07, S-08 | US-07, FR-055 | proposed |
 
 ## Baseline
@@ -266,7 +266,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Clearing a personal result must affect only its owner; the next retained result must become the personal best without changing public eligible scores.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-17: Hear gameplay audio feedback
 
@@ -322,6 +322,8 @@ No open roadmap questions.
 ## Milestone History
 
 ## Done
+
+- **S-15: Signed-in user can delete any personal result or clear all personal history after confirmation without changing global results or unrelated player data.** — Archived 2026-10-15 → `context/archive/2026-10-14-s15-clear-personal-best/`. Lesson: —.
 
 - **S-13: User can view the top global high scores and their personal best's global rank.** — Archived 2026-10-14 → `context/archive/2026-10-14-s13-global-high-scores/`. Lesson: —.
 
