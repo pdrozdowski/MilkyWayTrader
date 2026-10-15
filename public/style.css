@@ -124,7 +124,17 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 #game-over-results dl > .game-over-final-score dd { font-size: clamp(1.2rem, 3.1vw, 1.5rem); }
 #game-over-personal-best, #game-over-global-scores { min-height: 52px; margin: 16px 6px 0; padding: 12px 22px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-action); font-size: clamp(1rem, 2.6vw, 1.25rem); font-weight: 700; cursor: pointer; }
 #game-over-personal-best:focus-visible, #game-over-global-scores:focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
+
+@media (orientation: landscape) and (max-height: 599px) {
+    #game-over-results { top: 50%; }
+}
+
 #game-over-status { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; z-index: 4; display: grid; justify-items: center; gap: 10px; padding: 12px; transform: translateX(-50%); }
+
+@media (orientation: landscape) and (max-height: 599px) {
+    #main-menu-sign-in-preview { z-index: 5; }
+}
+
 #game-over-status p { margin: 0; }
 #game-over-status button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-action); font: inherit; cursor: pointer; }
 #game-over-status button:focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
@@ -306,7 +316,7 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .landing-status-panel button:disabled, .landing-status-panel input:disabled { opacity: 0.55; cursor: default; }
 .landing-status-panel :focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
 #landing-status-catalogue { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-#landing-status-catalogue button { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; padding: 10px; font-size: clamp(13px, 2vw, 16px); }
+#landing-status-catalogue button { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; padding: 10px; border: 1px solid #526681; border-radius: 9px; font-size: clamp(13px, 2vw, 16px); }
 .catalogue-commodity-icon { width: 48px; height: 48px; min-width: 48px; flex: 0 0 48px; }
 .catalogue-commodity-name { font-size: clamp(13px, 1.9vw, 18px); line-height: 1.15; text-align: center; overflow-wrap: anywhere; }
 #landing-status-catalogue button:not([aria-pressed="true"]) { box-shadow: 0 2px 4px rgb(0 0 0 / 35%); }
@@ -319,13 +329,11 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 #landing-status-catalogue button[data-supply-level="Low"] *,
 #landing-status-catalogue button[data-supply-level="Medium"] *,
 #landing-status-catalogue button[data-supply-level="High"] * { color: #17212b; }
-#landing-status-catalogue button[aria-pressed="true"][data-supply-level="Low"],
-#landing-status-catalogue button[aria-pressed="true"][data-supply-level="Medium"],
-#landing-status-catalogue button[aria-pressed="true"][data-supply-level="High"] { box-sizing: border-box; border: 3px solid #fff; background-color: color-mix(in srgb, currentColor 82%, #17212b); box-shadow: inset 0 2px 6px rgb(0 0 0 / 45%); }
-#landing-status-catalogue button[aria-pressed="true"] > * { transform: translateY(2px); }
+#landing-status-catalogue button[aria-pressed="true"] { box-sizing: border-box; border: 3px solid #172B4D; box-shadow: inset 0 0 0 2px #FFD166; }
 #landing-status-quantity-label { font-size: 1.4em; }
 #landing-status-trade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr); gap: 8px; padding: 12px; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }
 .landing-market-controls { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: flex; flex-direction: column; gap: clamp(8px, 1.5vw, 16px); min-height: 0; overflow-y: auto; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
+@media (min-width: 901px) { .landing-market-controls { justify-content: flex-end; background: transparent; } }
 .market-inventory-panel > #landing-status-planet-stock, .market-inventory-panel > #landing-status-player-stock, #landing-status-unit-price { font-size: 2em; font-weight: 700; }
 .market-inventory-panel > #landing-status-planet-stock, .market-inventory-panel > #landing-status-player-stock { display: flex; align-items: center; gap: 0.3em; }
 .market-inventory-panel > #landing-status-planet-stock::before, .market-inventory-panel > #landing-status-player-stock::before { content: ''; display: inline-block; width: 32px; height: 32px; flex: 0 0 32px; background: url('/assets/icons/cargo2_32x32.png') center / contain no-repeat; }
@@ -409,8 +417,9 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 @media (max-width: 520px) { .cargo-transfer-panel { --cargo-transfer-icon-size: 22px; --cargo-transfer-controls-width: 66px; gap: 8px; padding: 12px; } .cargo-transfer-header, .cargo-transfer-usage, .cargo-transfer-row { grid-template-columns: minmax(0, 1fr) minmax(40px, .3fr) minmax(0, 1fr); gap: 4px; } .cargo-transfer-row-side { gap: 2px; } .cargo-transfer-row-controls { gap: 2px; } .cargo-transfer-row-cargo-quantity, .cargo-transfer-row-ship-quantity { min-width: 16px; font-size: .9em; } }
 .market-inventory-panel, .market-trade-control { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 10px; border: 1px solid #406587; border-radius: 6px; }
 .market-trade-control { display: flex; flex-direction: column; }
-.market-trade-control .market-confirm-action { margin-top: auto; }
+.market-trade-control .market-confirm-action { margin-top: 0; }
 .market-trade-header { display: grid; grid-template-columns: minmax(0, 1fr) 80px; align-items: center; gap: 8px; }
+.market-quantity-hint { display: block; margin: 0; color: #b8cde1; font-size: .9em; font-weight: 700; line-height: 1; text-align: center; }
 .market-trade-header .market-commodity-icon { justify-self: end; background-size: 100% 100%; }
 .market-inventory-panel > span { font-weight: 700; text-align: center; }
 .market-inventory-panel p, .market-trade-control p { overflow-wrap: anywhere; }
@@ -421,19 +430,21 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .market-commodity-icon[data-commodity-id="bun"] { background-color: #dc2626; }
 .market-commodity-icon[data-commodity-id="spaceRation"] { background-color: #7c3aed; }
 .commodity-icon { box-sizing: border-box; background-repeat: no-repeat; background-position: center; background-size: contain; }
+.market-flow-icon { display: inline-block; flex: 0 0 1em; width: 1em; height: 1em; }
+.market-flow-icon--consumption { filter: grayscale(1) brightness(0) saturate(100%) invert(25%) sepia(86%) saturate(4000%) hue-rotate(337deg) brightness(98%) contrast(98%); }
 .commodity-icon[data-commodity-id="milk"] { background-image: url('/assets/icons/commodity-milk-48x48.png'); }
 .commodity-icon[data-commodity-id="grain"] { background-image: url('/assets/icons/commodity-grain_48x48.png'); }
 .commodity-icon[data-commodity-id="cheese"] { background-image: url('/assets/icons/commodity-cheese-48x48.png'); }
 .commodity-icon[data-commodity-id="bun"] { background-image: url('/assets/icons/commodity-bun_48x48.png'); }
 .commodity-icon[data-commodity-id="spaceRation"] { background-image: url('/assets/icons/commodity-spaceRation-48x48.png'); }
-.market-trade-result { min-height: 1.2em; font-size: 2em; font-weight: 700; }
+.market-trade-result { min-height: 2.4em; font-size: 2em; font-weight: 700; }
 .market-trade-result-label { display: block; }
 .market-trade-result-value { display: flex; align-items: center; gap: 0.12em; white-space: nowrap; }
 .market-trade-result-value::before { content: ''; display: block; width: 0.8em; min-width: 0.8em; height: 0.8em; flex: 0 0 0.8em; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
 .market-trade-result--profit { color: #86efac; }
 .market-trade-result--loss { color: #fca5a5; }
 .market-trade-result--loss .market-trade-result-value::before { background-image: url('/assets/icons/coins_red_32x32.png'); }
-.market-trade-income { min-height: 1.2em; font-size: 2em; font-weight: 700; color: #fff; }
+.market-trade-income { min-height: 2.4em; font-size: 2em; font-weight: 700; color: #fff; }
 .market-trade-income-label { display: block; }
 .market-trade-income-value { display: flex; align-items: center; gap: 0.12em; white-space: nowrap; }
 .market-trade-income-value::before { content: ''; display: block; width: 0.8em; min-width: 0.8em; height: 0.8em; flex: 0 0 0.8em; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
@@ -455,6 +466,8 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .landing-actions .landing-launch { margin-top: auto; }
 .landing-actions button:disabled { color: var(--ui-disabled); }
 #landing-status-market-view { position: relative; display: block; background: var(--ui-surface) center / cover; }
+#landing-status-market-view::after, #landing-status-facilities-view::after, #landing-status-shipyard-view::after { position: absolute; right: 0; bottom: 0; left: 0; z-index: 0; height: 25%; content: ''; background: linear-gradient(to bottom, transparent, #07111b); pointer-events: none; }
+.landing-market-controls, .landing-facility-cards, .shipyard-cards { z-index: 1; }
 #debug-menu-close { position: absolute; top: 8px; right: 8px; }
 .game-menu-panel button { min-width: 180px; min-height: 44px; padding: 10px 14px; border: 1px solid var(--ui-border); border-radius: 6px; color: var(--ui-focus); background: var(--ui-surface-raised); font: inherit; cursor: pointer; }
 .game-menu-panel #debug-menu-close { min-width: 72px; padding: 10px 14px; font-size: 24px; font-weight: 700; }
@@ -531,6 +544,12 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
+    #game-menu { padding: 10px; }
+    #game-menu .game-menu-panel:not(.debug-menu-panel) { gap: 6px; padding: 8px 16px; }
+    #game-menu .game-menu-panel:not(.debug-menu-panel) h2 { margin-bottom: 0; }
+    #game-menu .game-menu-actions { gap: 6px; }
+    #game-menu .game-menu-actions #game-menu-account { min-height: 52px; }
+    #game-menu .game-menu-actions #audio-controls { gap: 6px; padding: 6px; }
     .landing-visual { padding: 12px; }
     #landing-status-title { width: min(42vw, 370px); }
     #landing-status-landed { width: min(18vw, 120px); }
@@ -551,6 +570,8 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 
 
 #landing-status-facilities-view { position: relative; display: block; background: var(--ui-surface) center / cover; }
+.landing-facilities-toolbar { display: contents; }
+.landing-facility-pager { display: none; }
 .landing-facilities-header { position: absolute; top: 0; right: 0; left: 0; z-index: 1; box-sizing: border-box; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: clamp(12px, 2vw, 20px) clamp(16px, 3vw, 32px); background: linear-gradient(to bottom, rgba(7, 17, 27, 0.85), transparent); }
 .landing-facilities-nav-left, .landing-facilities-nav-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .landing-facilities-nav-right { text-align: right; }
@@ -558,7 +579,12 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .landing-facilities-clock { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; white-space: nowrap; }
 .landing-facilities-heading { position: absolute; z-index: 1; top: 19%; left: clamp(16px, 3vw, 32px); margin: 0; }
 .landing-facility-cards { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1.5vw, 16px); min-height: 0; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
+.landing-facilities-header { height: 14%; }
+.landing-facility-cards { inset-block-start: 24%; }
+.landing-facility-cards { grid-template-rows: max-content; align-content: end; align-items: stretch; background: none; }
 .facility-card { box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: auto; padding: 12px; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }
+.facility-card-actions { display: flex; flex-direction: column; margin-top: auto; }
+.facility-card-actions > button { width: 100%; }
 .facility-card h3, .facility-card p { margin: 0; overflow-wrap: anywhere; }
 .facility-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .facility-card-name { font-size: 1.1em; }
@@ -579,7 +605,8 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .facility-card[data-facility-id] .facility-card-status[data-status="notBuilt"] ~ .facility-card-inputs { color: var(--ui-disabled); }
 .facility-card .facility-card-status[data-status="insufficientResources"] ~ .facility-card-output { color: var(--ui-health-critical); }
 .facility-card-commodity-icon { width: 20px; height: 20px; flex: 0 0 auto; }
-.facility-card-recipe-lead, .facility-card-recipe-separator, .facility-card-recipe-suffix, .facility-card-commodity-amount { flex: 0 0 auto; }
+.facility-card-recipe-lead, .facility-card-recipe-separator, .facility-card-commodity-rate { flex: 0 0 auto; }
+.facility-card-commodity-rate { white-space: nowrap; }
 .facility-card-modifier { color: #ffca8b; }
 .facility-card-action { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; min-height: 64px; padding: 8px 10px; font-size: 1.15em; margin-top: auto; }
 .facility-card-action-label { font-weight: 700; }
@@ -594,11 +621,242 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .facility-card-downgrade-coin { display: inline-block; width: 0.85em; height: 0.85em; flex: 0 0 0.85em; background: url('/assets/icons/coins_32x32.png') center / contain no-repeat; }
 .facility-card-downgrade-coin[hidden] { display: none; }
 #landing-status-facilities-view .facility-card-downgrade:disabled { color: #a1a1aa; border-color: #52525b; background: #3f3f46; cursor: not-allowed; }
-@media (max-width: 420px) {
-    #landing-status-facilities-view { display: flex; flex-direction: column; overflow-y: auto; }
-    .landing-facilities-header { position: static; }
-    .landing-facilities-heading { position: static; padding: 0 14px 10px; }
-    .landing-facility-cards { position: static; inset: auto; grid-template-columns: 1fr; }
+@media (max-width: 900px) {
+    #landing-status-facilities-view .landing-facilities-header { height: auto; }
+    #landing-status-facilities-view .landing-facility-cards { inset-block-start: 30%; }
+    #landing-status-facilities-view .landing-facility-cards { background: none; }
+    #landing-status-facilities-view { display: block; overflow: hidden; }
+    #landing-status-facilities-view .landing-facilities-header { position: absolute; }
+    #landing-status-facilities-view .landing-facilities-toolbar { position: absolute; z-index: 2; top: 18%; right: 16px; left: clamp(16px, 3vw, 32px); display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
+    #landing-status-facilities-view .landing-facilities-heading { position: static; padding: 0; }
+    #landing-status-facilities-view .landing-facility-pager { position: static; display: flex; align-items: center; gap: 8px; }
+    .landing-facility-pager button { display: grid; place-items: center; width: 40px; min-width: 40px; height: 40px; padding: 0; border: 1px solid #406587; border-radius: 6px; color: #fff; background: #122541; font: inherit; font-size: 1.5em; line-height: 1; }
+    .landing-facility-pager button:disabled { opacity: .45; }
+    .landing-facility-position { min-width: 4ch; font-weight: 700; text-align: center; white-space: nowrap; }
+    #landing-status-facilities-view .landing-facility-cards { position: absolute; inset: 30% 12px auto; height: 220px; display: flex; align-items: flex-start; gap: 0; overflow-x: auto; overflow-y: hidden; padding: 10px 0; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; touch-action: pan-x pan-y; }
+    #landing-status-facilities-view .landing-facility-cards::-webkit-scrollbar { display: none; }
+    #landing-status-facilities-view .facility-card { display: grid; flex: 0 0 100%; height: 200px; grid-template-columns: minmax(0, 1fr) minmax(112px, 20%); grid-template-rows: auto auto auto auto auto auto; grid-template-areas: 'header actions' 'level actions' 'status actions' 'output actions' 'inputs actions' 'modifier actions'; align-content: start; gap: 5px 12px; min-width: 0; overflow: hidden; padding: 10px; scroll-snap-align: start; }
+    #landing-status-facilities-view .facility-card-actions { grid-area: actions; display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; margin-top: 0; }
+    #landing-status-facilities-view .facility-card-header { grid-area: header; }
+    #landing-status-facilities-view .facility-card-level { grid-area: level; }
+    #landing-status-facilities-view .facility-card-status { grid-area: status; }
+    #landing-status-facilities-view .facility-card-output { grid-area: output; }
+    #landing-status-facilities-view .facility-card-inputs { grid-area: inputs; }
+    #landing-status-facilities-view .facility-card-modifier { grid-area: modifier; }
+    #landing-status-facilities-view .facility-card-action { align-self: auto; margin: 0; }
+    #landing-status-facilities-view .facility-card-downgrade { align-self: auto; margin: 0; }
+    #landing-status-facilities-view .facility-card-name, #landing-status-facilities-view .facility-card p { overflow-wrap: normal; }
+}
+
+/* Market is a single-viewport trading terminal on mobile landscape. */
+@media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+    #landing-status-market-view {
+        display: block;
+        overflow: visible;
+    }
+
+    #landing-status-market-view .landing-facilities-heading {
+        top: 18%;
+        font-size: 1.15em;
+    }
+
+    #landing-status-market-controls {
+        position: absolute;
+        inset: 24.25% 0 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 6px;
+        overflow: visible;
+        padding: 6px 10px 8px;
+    }
+
+    #landing-status-catalogue {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    #landing-status-catalogue button {
+        box-sizing: border-box;
+        min-height: 64px;
+        gap: 3px;
+        padding: 4px;
+        font-size: 14px;
+        line-height: 1.1;
+    }
+
+    .catalogue-commodity-icon {
+        width: 22px;
+        height: 22px;
+        min-width: 22px;
+        flex-basis: 22px;
+    }
+
+    .catalogue-commodity-name {
+        font-size: 14px;
+        line-height: 1.05;
+        overflow-wrap: normal;
+        text-wrap: balance;
+    }
+
+    #landing-status-catalogue button {
+        min-height: 60px;
+        gap: 2px;
+        padding: 2px;
+    }
+
+    #landing-status-catalogue button[aria-pressed="true"] {
+        padding: 0;
+    }
+
+    #landing-status-trade {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
+        align-items: stretch;
+        gap: 6px;
+        min-height: 0;
+        padding: 6px;
+    }
+
+    .market-inventory-panel,
+    .market-trade-control {
+        gap: 4px;
+        padding: 6px;
+        font-size: 14px;
+        line-height: 1.1;
+    }
+
+    .market-inventory-panel {
+        gap: 2px;
+    }
+
+    .market-inventory-panel > #landing-status-planet-stock,
+    .market-inventory-panel > #landing-status-player-stock,
+    #landing-status-supply,
+    #landing-status-unit-price {
+        font-size: 1.15em;
+        line-height: 1.1;
+    }
+
+    .market-inventory-panel > #landing-status-planet-stock::before,
+    .market-inventory-panel > #landing-status-player-stock::before {
+        width: 18px;
+        height: 18px;
+        flex-basis: 18px;
+    }
+
+    .market-inventory-panel p,
+    .market-trade-control p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.1;
+        overflow-wrap: normal;
+    }
+
+    #landing-status-production,
+    #landing-status-consumption {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .market-flow-icon {
+        flex-basis: 16px;
+        width: 16px;
+        height: 16px;
+    }
+
+    #landing-status-stock-change {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        column-gap: 6px;
+    }
+
+    .market-stock-change-label,
+    .market-stock-change-rate {
+        font-size: 14px;
+        line-height: 1.1;
+    }
+
+    .market-stock-change-rate::before {
+        width: 18px;
+        height: 18px;
+        flex-basis: 18px;
+    }
+
+    .market-stock-track {
+        height: 9px;
+    }
+
+    .market-trade-header {
+        grid-template-columns: minmax(0, 1fr) 40px;
+        gap: 4px;
+    }
+
+    .market-trade-header > div,
+    .market-trade-header strong {
+        min-width: 0;
+        font-size: 14px;
+        line-height: 1.1;
+    }
+
+    .market-trade-header .market-commodity-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    #landing-status-quantity-label {
+        font-size: 14px;
+    }
+
+    .market-quantity-hint {
+        display: block;
+        color: #b8cde1;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+    }
+
+    .market-trade-control {
+        align-content: start;
+    }
+
+    #landing-status-quantity {
+        min-height: 36px;
+    }
+
+    #landing-status-quantity-value {
+        min-height: 1.1em;
+        font-size: 1em;
+        line-height: 1.1;
+        text-align: left;
+    }
+
+    #landing-status-quantity-value:has(+ .market-confirm-action) {
+        color: #d3e5f5;
+    }
+
+    .market-confirm-action {
+        min-height: 46px;
+        font-size: 14px;
+    }
+
+    .market-confirm-price {
+        font-size: 14px;
+    }
+
+    .market-trade-result,
+    .market-trade-income {
+        min-height: 2.2em;
+        font-size: 1.15em;
+        line-height: 1.1;
+    }
+
+    .market-trade-result-label,
+    .market-trade-income-label {
+        display: inline;
+    }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
@@ -607,9 +865,13 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 }
 
 #landing-status-shipyard-view { position: relative; display: block; background: var(--ui-surface) center / cover; }
+.shipyard-toolbar { display: contents; }
+.shipyard-pager { display: none; }
 .shipyard-planet { position: absolute; z-index: 1; top: 24%; left: clamp(16px, 3vw, 32px); margin: 0; font-size: 1.25em; font-weight: 700; }
 .shipyard-cards { position: absolute; inset: 30% 0 0; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1.5vw, 16px); min-height: 0; padding: clamp(12px, 2vw, 24px); background: var(--ui-surface); }
+.shipyard-cards { grid-template-rows: max-content; align-content: end; align-items: stretch; background: none; }
 .shipyard-card { box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; min-width: 0; overflow: auto; padding: 14px; font-size: 1.05em; border: 1px solid #406587; border-radius: 8px; background: var(--ui-surface-raised); }
+.shipyard-card-actions { display: contents; }
 .shipyard-card h3, .shipyard-card p { margin: 0; overflow-wrap: anywhere; }
 .shipyard-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .shipyard-card-name { font-size: 1.35em; }
@@ -633,10 +895,27 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .shipyard-repair-bar { width: 100%; }
 .shipyard-repair-hp { font-size: 1.15em; font-weight: 700; }
 
-@media (max-width: 420px) {
-    #landing-status-shipyard-view { display: flex; flex-direction: column; overflow-y: auto; }
-    .shipyard-planet { position: static; padding: 0 14px 6px; }
-    .shipyard-cards { position: static; inset: auto; grid-template-columns: 1fr; }
+@media (max-width: 900px) {
+    #landing-status-shipyard-view { display: block; overflow: hidden; }
+    #landing-status-shipyard-view .shipyard-toolbar { position: absolute; z-index: 2; top: 18%; right: 16px; left: clamp(16px, 3vw, 32px); display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
+    #landing-status-shipyard-view .landing-facilities-heading { position: static; }
+    #landing-status-shipyard-view .shipyard-pager { display: flex; align-items: center; gap: 8px; }
+    .shipyard-pager button { display: grid; place-items: center; width: 40px; min-width: 40px; height: 40px; padding: 0; border: 1px solid #406587; border-radius: 6px; color: #fff; background: #122541; font: inherit; font-size: 1.5em; line-height: 1; }
+    .shipyard-pager button:disabled { opacity: .45; }
+    .shipyard-position { min-width: 4ch; font-weight: 700; text-align: center; white-space: nowrap; }
+    #landing-status-shipyard-view .shipyard-planet { top: 29%; left: 16px; font-size: 1em; }
+    #landing-status-shipyard-view .shipyard-cards { position: absolute; inset: 34% 12px auto; height: 220px; display: flex; align-items: flex-start; gap: 0; overflow-x: auto; overflow-y: hidden; padding: 10px 0; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; touch-action: pan-x pan-y; }
+    #landing-status-shipyard-view .shipyard-cards::-webkit-scrollbar { display: none; }
+    #landing-status-shipyard-view .shipyard-card { display: grid; flex: 0 0 100%; height: 200px; grid-template-columns: minmax(0, 1fr) minmax(120px, 20%); grid-template-rows: auto auto auto auto auto auto; grid-template-areas: 'header action' 'level action' 'capability action' 'note action' 'availability action' 'effect action'; align-content: start; gap: 5px 10px; min-width: 0; overflow: hidden; padding: 10px; scroll-snap-align: start; }
+    #landing-status-shipyard-view .shipyard-card-header { grid-area: header; }
+    #landing-status-shipyard-view .shipyard-card-level, #landing-status-shipyard-view .shipyard-repair-hp { grid-area: level; }
+    #landing-status-shipyard-view .shipyard-card-capability, #landing-status-shipyard-view .shipyard-repair-bar { grid-area: capability; }
+    #landing-status-shipyard-view .shipyard-card-note { grid-area: note; }
+    #landing-status-shipyard-view .shipyard-card-availability { grid-area: availability; align-items: flex-start; font-size: 1em; text-align: left; }
+    #landing-status-shipyard-view .shipyard-card-effect { grid-area: effect; }
+    #landing-status-shipyard-view .shipyard-card-actions { grid-area: action; display: flex; align-items: center; min-width: 0; }
+    #landing-status-shipyard-view .shipyard-card-action { width: 100%; margin: 0; }
+    #landing-status-shipyard-view .shipyard-card-name, #landing-status-shipyard-view .shipyard-card p { overflow-wrap: normal; }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {

@@ -296,8 +296,8 @@ test('facilities view renders five cards with levels, states, recipes and action
     marketListener({ ...marketSnapshot, supplyLevel: 'High' });
     assert.equal(element('#landing-status-supply').dataset.supplyLevel, 'High');
     marketListener(marketSnapshot);
-    assert.equal(element('#landing-status-production').textContent, `${displayLabels.marketProduction}: 10 ${displayLabels.commodityLabels.milk} ${displayLabels.facilityPerCycle}`);
-    assert.equal(element('#landing-status-consumption').textContent, `${displayLabels.marketConsumption}: 12 ${displayLabels.commodityLabels.milk} ${displayLabels.facilityPerCycle}`);
+    assert.equal(element('#landing-status-production').textContent, `${displayLabels.marketProduction}: +10/s`);
+    assert.equal(element('#landing-status-consumption').textContent, `${displayLabels.marketConsumption}: -12/s`);
     assert.equal(element('#landing-status-stock-change').replacedChildren[0].textContent, `${displayLabels.marketStockChange}:`);
     assert.equal(element('#landing-status-stock-change').replacedChildren[1].textContent, '-2/s');
     const planetBar = element('#landing-status-planet-stock-bar');
@@ -405,18 +405,20 @@ test('facilities view renders five cards with levels, states, recipes and action
     }
     assert.equal(status('dairyFarm').textContent, displayLabels.facilityStatusLabels.working);
     assert.equal(status('grainFarm').textContent, displayLabels.facilityStatusLabels.insufficientResources);
-    assert.equal(textOf(output('grainFarm')), `${displayLabels.facilityProduces}: 10 ${displayLabels.commodityLabels.grain} ${displayLabels.facilityPerCycle} ${displayLabels.facilityMissing}`);
+    assert.equal(textOf(output('grainFarm')), `${displayLabels.marketProduction}: +10/s ${displayLabels.facilityMissing}`);
     assert.ok((output('grainFarm').replacedChildren ?? []).some(child => child.className === 'facility-card-missing'), 'missing resources add a visible missing marker to production');
     assert.equal(status('bakery').textContent, displayLabels.facilityStatusLabels.notBuilt);
-    assert.equal(textOf(output('bakery')), `${displayLabels.facilityProduces}: 5 ${displayLabels.commodityLabels.bun} ${displayLabels.facilityPerCycle}`);
-    assert.equal(textOf(inputs('bakery')), `${displayLabels.facilityConsumes}: 10 ${displayLabels.commodityLabels.grain} ${displayLabels.facilityPerCycle}`);
-    assert.equal(textOf(output('dairyFarm')), `${displayLabels.facilityProduces}: 10 ${displayLabels.commodityLabels.milk} ${displayLabels.facilityPerCycle}`);
+    assert.equal(textOf(output('bakery')), `${displayLabels.marketProduction}: +5/s`);
+    assert.equal(textOf(inputs('bakery')), `${displayLabels.marketConsumption}: -10/s`);
+    assert.equal(textOf(output('dairyFarm')), `${displayLabels.marketProduction}: +10/s`);
     assert.equal(inputs('dairyFarm').textContent, displayLabels.facilityNoInputs);
     assert(inputs('dairyFarm').classList.values.has('facility-card-recipe-empty'), 'the No inputs message is gray');
     const iconIds = element => (element.replacedChildren ?? []).filter(child => child.className.includes('facility-card-commodity-icon')).map(child => child.dataset.commodityId);
     assert.deepEqual(iconIds(output('dairyFarm')), ['milk'], 'the produced commodity renders a small commodity icon');
     assert.deepEqual(iconIds(inputs('cheeseFactory')), ['milk'], 'the consumed commodity renders a small commodity icon');
-    assert.equal(textOf(inputs('cheeseFactory')), `${displayLabels.facilityConsumes}: 12 ${displayLabels.commodityLabels.milk} ${displayLabels.facilityPerCycle}`);
+    assert.ok(inputs('cheeseFactory').replacedChildren.some(child => child.className.includes('market-flow-icon--consumption')), 'facility input icons use the same red tint as Market consumption icons');
+    assert.ok(output('dairyFarm').replacedChildren.some(child => child.className.includes('market-flow-icon')), 'facility output icons use the same commodity flow icon style as Market production');
+    assert.equal(textOf(inputs('cheeseFactory')), `${displayLabels.marketConsumption}: -12/s`);
     assert.equal(modifier('dairyFarm').textContent, '');
     assert.equal(modifier('dairyFarm').hidden, true);
     assert.equal(modifier('cheeseFactory').textContent, `${displayLabels.facilityOutputBonus} +20% · ${displayLabels.facilityUpgradeDiscount} 20%`);
@@ -452,8 +454,8 @@ test('facilities view renders five cards with levels, states, recipes and action
         { commodityId: 'milk', quantity: 5 }
     ];
     facilitiesListener({ ...facilitiesSnapshot(1_000_000), facilities: unbuiltProcessor });
-    assert.equal(textOf(output('foodProcessor')), `${displayLabels.facilityProduces}: 5 ${displayLabels.commodityLabels.spaceRation} ${displayLabels.facilityPerCycle}`);
-    assert.equal(textOf(inputs('foodProcessor')), `${displayLabels.facilityConsumes}: 10 ${displayLabels.commodityLabels.cheese} + 5 ${displayLabels.commodityLabels.bun} + 5 ${displayLabels.commodityLabels.milk} ${displayLabels.facilityPerCycle}`);
+    assert.equal(textOf(output('foodProcessor')), `${displayLabels.marketProduction}: +5/s`);
+    assert.equal(textOf(inputs('foodProcessor')), `${displayLabels.marketConsumption}: -10/s · -5/s · -5/s`);
     facilitiesListener(facilitiesSnapshot(1_000_000));
     assert.equal(facilitiesBack.textContent, displayLabels.facilitiesBackToPlanet);
     assert.equal(facilitiesBack.attributes['aria-label'], displayLabels.facilitiesBackToPlanet);
