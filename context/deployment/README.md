@@ -87,8 +87,11 @@ W repozytorium [pdrozdowski/MilkyWayTrader](https://github.com/pdrozdowski/Milky
 | --- | --- | --- |
 | Secrets | `CLOUDFLARE_API_TOKEN` | Token Pages Edit |
 | Variables | `CLOUDFLARE_ACCOUNT_ID` | ID wybranego konta Cloudflare |
+| Variables | `VITE_SUPABASE_URL` | Public URL projektu Supabase produkcji (z lokalnego `.env.local`) |
+| Variables | `VITE_SUPABASE_PUBLISHABLE_KEY` | Klucz publishable tego samego projektu (z lokalnego `.env.local`) |
 
 Sekret Google pozostaje w Supabase. W CI nie są potrzebne hasła PostgreSQL ani klucze secret Supabase.
+Nie kopiuj wartości `.env.test` do zmiennych wdrożeniowych: wskazują lokalny Supabase. Workflow przekazuje produkcyjne zmienne wyłącznie do buildu produkcyjnego; walidacja Playwright nadal używa lokalnej konfiguracji z `.env.test`. Preview PR i staging nie otrzymują produkcyjnej konfiguracji auth.
 
 Workflow `.github/workflows/deploy.yml`:
 
