@@ -47,7 +47,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-04 | s04-first-planetary-trade | User can inspect Seroton's landed market and complete a commodity trade. | S-03 | US-03, FR-019, FR-020, FR-021, FR-022, FR-023 | done |
 | S-16 | s16-planetary-facilities | User can invest resources in local facilities and see new trading opportunities. | S-04 | US-08, FR-027, FR-028, FR-029, FR-030, FR-031, FR-032 | done |
 | S-05 | s05-planet-ship-services | User can repair and upgrade the ship through planet-specific services. | S-04 | US-03, FR-013, FR-024, FR-025, FR-026, FR-036 | done |
-| S-06 | s06-timed-debt-outcome | User can abandon a run or reach timeout and see the debt outcome and final cash score. | S-01, S-04 | US-01, FR-005, FR-007, FR-009 | proposed |
+| S-06 | s06-timed-debt-outcome | User can abandon a run or reach timeout and see the debt outcome and final cash score. | S-01, S-04 | US-01, FR-005, FR-007, FR-009 | planning |
 | S-07 | s07-environmental-hazards-and-death | User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed. | S-01, S-02 | US-01, US-04, FR-008, FR-038, FR-040 | done |
 | S-08 | s08-asteroid-combat | User can fire the ship weapon and fragment or destroy asteroids. | S-07 | US-04, FR-037, FR-039, FR-040 | done |
 | S-09 | s09-asteroid-salvage | User can recover commodities from asteroid salvage. | S-04, S-08 | US-04, FR-034, FR-041, FR-042, FR-043, FR-044, FR-045 | done |
@@ -158,7 +158,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Every terminal path must freeze the same authoritative score and time state so early success, abandonment, and timeout cannot disagree.
-- **Status:** proposed
+- **Status:** planning
 
 ### S-07: Survive environmental hazards
 
@@ -290,7 +290,7 @@ No standalone foundations are required. Deployment is already present, the autho
 | S-04 | s04-first-planetary-trade | Deliver the first Seroton market transaction | no | Requires S-03 acceptance |
 | S-16 | s16-planetary-facilities | Deliver local facility investment and its market effects | no | Requires S-04 |
 | S-05 | s05-planet-ship-services | Deliver planet-specific repairs and upgrades | no | Requires S-04 |
-| S-06 | s06-timed-debt-outcome | Resolve abandonment and timed debt outcomes | no | Requires S-01 and S-04 |
+| S-06 | s06-timed-debt-outcome | Resolve abandonment and timed debt outcomes | no | planning |
 | S-07 | s07-environmental-hazards-and-death | Deliver environmental damage and death | no | Requires S-01 and S-02 |
 | S-08 | s08-asteroid-combat | Deliver asteroid weapon combat and fragmentation | no | Requires S-07 |
 | S-09 | s09-asteroid-salvage | Deliver collectible asteroid salvage | no | Requires S-04 and S-08 |

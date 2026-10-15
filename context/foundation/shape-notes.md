@@ -11,13 +11,13 @@ timeline_budget:
   hard_deadline: 2026-11-04
   after_hours_only: true
 created: 2026-09-16
-updated: 2026-09-20
+updated: 2026-10-15
 checkpoint:
   current_phase: 8
   phases_completed: [1, 2, 3, 4, 5, 6, 7]
   gray_areas_resolved:
     - topic: run objective
-      decision: "A run provides 30 minutes of active game time; at timeout, at least 20,000,000 liquid credits grants freedom and less results in life imprisonment."
+      decision: "A run provides 30 minutes of active game time; at timeout, at least 1,000,000 liquid credits grants freedom and less results in life imprisonment."
     - topic: clock behavior
       decision: "The clock and world simulation run during flight and pause while landed, backgrounded, or closed; remaining time and clock state stay visible."
     - topic: navigation
@@ -40,7 +40,7 @@ checkpoint:
 
 ## Vision & Problem Statement
 
-A casual browser player wants a focused space-trading challenge without installing a game or learning a large ruleset. The player has a thirty-minute active-time run to repay a debt of 20,000,000 credits by navigating a moving solar system, trading commodities, upgrading and repairing a ship, surviving hazards, and salvaging occasional asteroid loot.
+A casual browser player wants a focused space-trading challenge without installing a game or learning a large ruleset. The player has a thirty-minute active-time run to repay a debt of 1,000,000 credits by navigating a moving solar system, trading commodities, upgrading and repairing a ship, surviving hazards, and salvaging occasional asteroid loot.
 
 MilkyWayTrader combines a readable economic simulation with direct ship control and the humor of a cow astronaut trying to avoid life imprisonment. Trading decisions, piloting skill, route choice, ship condition, combat, and time pressure contribute to the outcome while landing provides a safe, paused planning state.
 
@@ -53,7 +53,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 ### Primary
 
 - A player can complete a full run from the initial orbit through flight, landing, trading, ship services, hazards, and the final freedom-or-imprisonment outcome.
-- The game consistently resolves freedom when the surviving player has at least 20,000,000 liquid credits after thirty minutes of active game time, and life imprisonment otherwise.
+- The game consistently resolves freedom when the surviving player has at least 1,000,000 liquid credits after thirty minutes of active game time, and life imprisonment otherwise.
 - The remaining active time and whether the clock is running or paused remain continuously visible throughout every open active run.
 
 ### Secondary
@@ -76,13 +76,13 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - **Given** a new run has started in orbit around Seroton with thirty minutes of active time remaining
 - **When** the player flies, lands, trades, upgrades, repairs, and survives until the countdown reaches zero
-- **Then** the game grants freedom when final liquid credits are at least 20,000,000 and imposes life imprisonment otherwise
+- **Then** the game grants freedom when final liquid credits are at least 1,000,000 and imposes life imprisonment otherwise
 
 #### Acceptance Criteria
 
 - The run starts at 30:00 with the clock marked as running.
 - Remaining time and running or paused state remain visible throughout the open run.
-- Reaching 20,000,000 credits early does not end the run.
+- Reaching 1,000,000 credits early does not end the run.
 - Final score equals liquid credits immediately before debt repayment.
 - Cargo and ship value do not contribute to final score.
 - Zero HP ends the run immediately with a death outcome.
@@ -256,7 +256,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-008: Launching resumes all time-based systems, resumes decrementing the visible countdown, and changes the visible clock state to running.
 - BR-009: Backgrounding or closing the game pauses active-time progression.
 - BR-010: The countdown and every time-based simulation use the same authoritative clock state.
-- BR-011: The debt target is 20,000,000 liquid credits at the instant the countdown reaches zero.
+- BR-011: The debt target is 1,000,000 liquid credits at the instant the countdown reaches zero.
 - BR-012: Reaching the debt target before timeout does not end the run.
 - BR-013: A surviving player at or above the debt target when time expires receives freedom.
 - BR-014: A surviving player below the debt target when time expires receives life imprisonment.

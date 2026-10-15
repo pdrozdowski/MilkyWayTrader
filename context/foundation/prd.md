@@ -19,7 +19,7 @@ timeline_budget:
 
 ## Vision & Problem Statement
 
-A casual browser player wants a focused space-trading challenge without installing a game or learning a large ruleset. The player has a thirty-minute active-time run to repay a debt of 20,000,000 credits by navigating a moving solar system, trading commodities, upgrading and repairing a ship, surviving hazards, and salvaging occasional asteroid loot.
+A casual browser player wants a focused space-trading challenge without installing a game or learning a large ruleset. The player has a thirty-minute active-time run to repay a debt of 1,000,000 credits by navigating a moving solar system, trading commodities, upgrading and repairing a ship, surviving hazards, and salvaging occasional asteroid loot.
 
 MilkyWayTrader combines a readable economic simulation with direct ship control and the humor of a cow astronaut trying to avoid life imprisonment. Trading decisions, planetary facility investment, piloting skill, route choice, ship condition, combat, and time pressure contribute to the outcome while landing provides a safe place to plan or let active time progress by player choice.
 
@@ -32,7 +32,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 ### Primary
 
 - A player can complete a full run from the initial orbit through flight, landing, trading, ship services, hazards, and the final freedom-or-imprisonment outcome.
-- The game consistently resolves freedom when the surviving player has at least 20,000,000 liquid credits after thirty minutes of active game time, and life imprisonment otherwise.
+- The game resolves the debt outcome after thirty minutes of active game time: a final composite score of at least 1,000,000 points grants freedom, and a lower score results in life imprisonment.
 - The remaining active time and whether the clock is running or paused remain continuously visible throughout every open active run.
 
 ### Secondary
@@ -53,17 +53,21 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 ### US-01: Player resolves the debt run
 
-- **Given** a new run has started in orbit around Seroton with thirty minutes of active time remaining
+- **Given** the player has completed the new-game introduction and started a run in orbit around Seroton with thirty minutes of active time remaining
 - **When** the player flies, lands, trades, upgrades, repairs, and survives until the countdown reaches zero
-- **Then** the game grants freedom when final liquid credits are at least 20,000,000 and imposes life imprisonment otherwise
+- **Then** the game determines freedom or life imprisonment from the final composite score and presents the completed run on the existing end-game screen
 
 #### Acceptance Criteria
 
-- The run starts at 30:00 with the clock marked as running.
+- Selecting New Game opens four full-screen illustrated story screens in sequence. Each screen advances when the player clicks anywhere on it or the Next button.
+- After the fourth story screen, a separate popup states the debt amount as 1,000,000 credits; the amount is not embedded in the story artwork.
+- Closing the debt popup starts a new run at 30:00 with the clock marked as running. The introduction and popup do not consume run time.
 - Remaining time and running or paused state remain visible throughout the open run.
-- Reaching 20,000,000 credits early does not end the run.
-- Freedom or imprisonment is determined by liquid credits immediately before debt repayment; the final score is calculated separately from ending cash, cargo acquisition cost, and qualifying upgrade spending.
+- Reaching 1,000,000 credits early does not end the run.
+- Freedom or imprisonment is determined by the final composite score at timeout. The score combines ending cash, cargo acquisition cost, and qualifying upgrade spending.
 - The end-game result explains the ending cash, cargo acquisition cost, ship upgrade and booster spending, facility construction and upgrade spending, and final score.
+- Every run uses the same end-game screen with one of three backgrounds: the winning background for a final score at or above 1,000,000 points, the failure background for a lower final score, or the destroyed-ship background when the run ends because the ship is destroyed.
+- The end-game screen provides a button that returns the player to the main menu.
 - Final score rounds the combined amount once to the nearest whole credit. Cargo value is the sum of each carried stack's total acquisition cost.
 - Zero HP ends the run immediately with a death outcome.
 - Confirmed abandonment ends the run immediately with an abandonment outcome.
@@ -259,6 +263,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - FR-057: A signed-in player can clear their personal result history. Priority: must-have
 - FR-058: A signed-in player can maintain one global best score across their completed runs. Priority: must-have
+- FR-059: A player can learn the game objective through a new-game introduction. Priority: must-have
 
 ## Non-Functional Requirements
 
@@ -275,11 +280,12 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 ## Business Logic
 
-Each run combines a shared active-time clock, independently evolving planetary markets, direct navigation through a moving hazard field, and a liquid-cash debt outcome.
+Each run combines a shared active-time clock, independently evolving planetary markets, direct navigation through a moving hazard field, and a final-score debt outcome.
 
 ### Clock and outcomes
 
 - BR-001: A new run starts in orbit around Seroton with full HP, cargo capacity of 40 units, a level-one engine at 100% base speed, a level-one weapon that fires one projectile per shot, and a locked booster.
+- BR-001a: Selecting New Game opens four full-screen illustrated story screens in sequence. Clicking anywhere on a story screen or its Next button advances to the next screen. After the fourth screen, a separate popup states that the debt is 1,000,000 credits; the amount is not included in the artwork. Closing the popup starts the run. No run or active-time clock starts during the introduction or popup.
 - BR-002: A new run begins with 30:00 of active game time remaining and the clock state set to running.
 - BR-003: Remaining active time is continuously visible whenever an active run is open.
 - BR-004: The clock's running or paused state is continuously visible whenever an active run is open.
@@ -290,11 +296,13 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-009: Backgrounding or closing the game pauses active-time progression.
 - BR-009a: Landing remains safe while active time advances: the ship follows its planet's movement, cannot be steered, boosted, or fired, and is protected from asteroid impact damage.
 - BR-010: The countdown and every time-based simulation use the same authoritative clock state.
-- BR-011: The debt target is 20,000,000 liquid credits at the instant the countdown reaches zero.
+- BR-011: The debt target is 1,000,000 points in final composite score at the instant the countdown reaches zero.
 - BR-012: Reaching the debt target before timeout does not end the run.
-- BR-013: A surviving player at or above the debt target when time expires receives freedom.
-- BR-014: A surviving player below the debt target when time expires receives life imprisonment.
-- BR-015: Freedom or imprisonment is determined by liquid credits immediately before debt repayment; run score is calculated separately.
+- BR-013: A surviving player with a final composite score at or above 1,000,000 points when time expires receives the freedom outcome.
+- BR-014: A surviving player with a final composite score below 1,000,000 points when time expires receives the life-imprisonment outcome.
+- BR-015: The final composite score is calculated from ending cash, cargo acquisition cost, and qualifying upgrade spending; it is compared with the debt target only when the countdown reaches zero.
+- BR-015a: All terminal outcomes use the same end-game screen, with the background image selected by outcome: freedom uses the winning image, imprisonment uses the failure image, and death uses the destroyed-ship image.
+- BR-015b: The end-game screen provides a control that returns the player to the main menu.
 - BR-016: Reaching zero HP ends the run immediately with a death outcome.
 - BR-017: Confirmed abandonment ends the run immediately with an abandonment outcome.
 
