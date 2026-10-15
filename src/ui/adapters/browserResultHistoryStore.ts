@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { ResultHistoryOutcome, ResultHistoryPage, ResultHistoryRecord, ResultHistoryResult, ResultHistoryStorePort } from '../../game/application/results/resultHistoryStore.ts';
+import type { ResultHistoryMutationResult, ResultHistoryOutcome, ResultHistoryPage, ResultHistoryRecord, ResultHistoryResult, ResultHistoryStorePort } from '../../game/application/results/resultHistoryStore.ts';
 import { resultHistoryPageSize } from '../../game/application/results/resultHistoryStore.ts';
 import { browserAuthConfiguration, type PublicAuthConfiguration } from '../../game/application/auth/configuration.ts';
 
@@ -22,10 +22,17 @@ interface HistoryQuery extends PromiseLike<{ data: HistoryRow[] | null; count?: 
     not(column: string, operator: string, value: unknown): HistoryQuery;
 }
 
+interface DeleteQuery extends PromiseLike<{ error: { message: string } | null }>
+{
+    eq(column: string, value: string): DeleteQuery;
+}
+
 interface HistoryClient
 {
+    readonly auth: { getSession(): PromiseLike<{ data: { session: { user: { id: string } } | null }; error: { message: string } | null }> };
     from(table: 'run_results'): {
         select(columns: string, options: { count: 'exact' }): HistoryQuery;
+        delete(): DeleteQuery;
     };
 }
 
@@ -51,6 +58,23 @@ function mapRecord (row: HistoryRow): ResultHistoryRecord
 function failed<T> (message: string): ResultHistoryResult<T>
 {
     return Object.freeze({ data: null, error: message });
+}
+
+function mutationFailed (message: string): ResultHistoryMutationResult
+{
+    return Object.freeze({ success: false, error: message });
+}
+
+async function authenticatedUserId (client: HistoryClient): Promise<{ userId: string | null; error: string | null }>
+{
+    try {
+        const { data, error } = await client.auth.getSession();
+        if (error) return { userId: null, error: error.message };
+        if (!data.session) return { userId: null, error: 'Sign in to manage result history.' };
+        return { userId: data.session.user.id, error: null };
+    } catch (error) {
+        return { userId: null, error: error instanceof Error ? error.message : 'Unable to verify the active session.' };
+    }
 }
 
 export function createBrowserResultHistoryStore (configuration = browserAuthConfiguration(), clientFactory: ClientFactory = createHistoryClient): ResultHistoryStorePort
@@ -90,11 +114,36 @@ export function createBrowserResultHistoryStore (configuration = browserAuthConf
             } catch (error) {
                 return failed(error instanceof Error ? error.message : 'Unable to load best result.');
             }
+        },
+        deleteResult: async runId => {
+            if (!runId) return mutationFailed('Invalid result id.');
+            try {
+                const session = await authenticatedUserId(client);
+                if (session.error || !session.userId) return mutationFailed(session.error ?? 'Sign in to manage result history.');
+                const { error } = await client.from('run_results').delete().eq('run_id', runId).eq('user_id', session.userId);
+                if (error) return mutationFailed(error.message);
+                return Object.freeze({ success: true, error: null });
+            } catch (error) {
+                return mutationFailed(error instanceof Error ? error.message : 'Unable to delete result.');
+            }
+        },
+        clearHistory: async () => {
+            try {
+                const session = await authenticatedUserId(client);
+                if (session.error || !session.userId) return mutationFailed(session.error ?? 'Sign in to manage result history.');
+                const { error } = await client.from('run_results').delete().eq('user_id', session.userId);
+                if (error) return mutationFailed(error.message);
+                return Object.freeze({ success: true, error: null });
+            } catch (error) {
+                return mutationFailed(error instanceof Error ? error.message : 'Unable to clear result history.');
+            }
         }
     };
 }
 
 const unavailableResultHistoryStore: ResultHistoryStorePort = Object.freeze({
     getPage: async () => failed<ResultHistoryPage>('Result history is unavailable.'),
-    getBest: async () => failed<ResultHistoryRecord>('Result history is unavailable.')
+    getBest: async () => failed<ResultHistoryRecord>('Result history is unavailable.'),
+    deleteResult: async () => mutationFailed('Result history is unavailable.'),
+    clearHistory: async () => mutationFailed('Result history is unavailable.')
 });

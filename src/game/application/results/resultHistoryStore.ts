@@ -22,10 +22,16 @@ export interface ResultHistoryResult<T>
     readonly error: string | null;
 }
 
+export type ResultHistoryMutationResult =
+    | { readonly success: true; readonly error: null }
+    | { readonly success: false; readonly error: string };
+
 export interface ResultHistoryStorePort
 {
     getPage(page: number): Promise<ResultHistoryResult<ResultHistoryPage>>;
     getBest(): Promise<ResultHistoryResult<ResultHistoryRecord>>;
+    deleteResult(runId: string): Promise<ResultHistoryMutationResult>;
+    clearHistory(): Promise<ResultHistoryMutationResult>;
 }
 
 export const resultHistoryPageSize = 5;

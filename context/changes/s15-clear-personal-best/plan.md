@@ -264,7 +264,7 @@ Use a new forward-only Supabase migration to add the deletion grant and RLS poli
 
 #### Automated
 
-- [ ] 1.1 PRD capability validator passes.
+- [x] 1.1 PRD capability validator passes.
 
 #### Manual
 
@@ -274,8 +274,8 @@ Use a new forward-only Supabase migration to add the deletion grant and RLS poli
 
 #### Automated
 
-- [ ] 2.1 Migration applies locally and result-history adapter deletion tests pass.
-- [ ] 2.2 TypeScript typecheck passes.
+- [x] 2.1 Migration applies locally and result-history adapter deletion tests pass.
+- [x] 2.2 TypeScript typecheck passes.
 
 #### Manual
 
@@ -285,8 +285,8 @@ Use a new forward-only Supabase migration to add the deletion grant and RLS poli
 
 #### Automated
 
-- [ ] 3.1 Personal Best presentation tests pass.
-- [ ] 3.2 TypeScript typecheck passes.
+- [x] 3.1 Personal Best presentation tests pass.
+- [x] 3.2 TypeScript typecheck passes.
 
 #### Manual
 
@@ -296,8 +296,8 @@ Use a new forward-only Supabase migration to add the deletion grant and RLS poli
 
 #### Automated
 
-- [ ] 4.1 Local Supabase RLS integration checks pass.
-- [ ] 4.2 Authenticated browser confirmation journey passes.
+- [x] 4.1 Local Supabase RLS integration checks pass.
+- [x] 4.2 Authenticated browser confirmation journey passes.
 
 #### Manual
 
