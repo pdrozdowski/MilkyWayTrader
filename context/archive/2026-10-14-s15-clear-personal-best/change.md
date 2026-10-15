@@ -1,10 +1,10 @@
 ---
 change_id: s15-clear-personal-best
 title: Delete individual results and clear personal history
-status: implemented
+status: archived
 created: 2026-10-14
 updated: 2026-10-15
-archived_at: null
+archived_at: 2026-10-15T09:59:28+02:00
 ---
 
 ## Notes
