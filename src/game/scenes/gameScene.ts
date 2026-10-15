@@ -381,8 +381,11 @@ export class Game extends Scene
 
     private drawJoystick (): void
     {
-        this.joystickBase.clear().fillStyle(0x173c5d, 0.55).fillCircle(this.joystickOrigin.x, this.joystickOrigin.y, 72).lineStyle(2, 0x8bdfff, 0.8).strokeCircle(this.joystickOrigin.x, this.joystickOrigin.y, 72);
-        this.joystickStick.clear().fillStyle(0x8bdfff, 0.8).fillCircle(this.joystickPosition.x, this.joystickPosition.y, 28);
+        const compactTouchLayout = this.sys.game.device.input.touch;
+        const baseRadius = compactTouchLayout ? 56 : 72;
+        const stickRadius = compactTouchLayout ? 24 : 28;
+        this.joystickBase.clear().fillStyle(0x173c5d, 0.55).fillCircle(this.joystickOrigin.x, this.joystickOrigin.y, baseRadius).lineStyle(2, 0x8bdfff, 0.8).strokeCircle(this.joystickOrigin.x, this.joystickOrigin.y, baseRadius);
+        this.joystickStick.clear().fillStyle(0x8bdfff, 0.8).fillCircle(this.joystickPosition.x, this.joystickPosition.y, stickRadius);
     }
 
     private layoutScreenSpace (): void
@@ -399,9 +402,20 @@ export class Game extends Scene
         const touchLayoutVisible = !this.deathTransitionStarted && (this.sys.game.device.input.touch || this.touchControlsVisible);
         this.joystickBase.setVisible(touchLayoutVisible);
         this.joystickStick.setVisible(touchLayoutVisible);
-        this.joystickZone.setActive(touchLayoutVisible).setPosition(visibleLeft + 108, visibleBottom - 108);
-        this.fireButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 74, visibleBottom - 74);
-        this.boostButton.setVisible(touchLayoutVisible).setPosition(visibleRight - 186, visibleBottom - 74);
+        const compactTouchLayout = this.sys.game.device.input.touch;
+        this.joystickZone.setActive(touchLayoutVisible).setPosition(
+            visibleLeft + (compactTouchLayout ? 82 : 108),
+            visibleBottom - (compactTouchLayout ? 82 : 108)
+        );
+        const buttonSize = compactTouchLayout ? 76 : 100;
+        this.fireButton.setDisplaySize(buttonSize, buttonSize).setVisible(touchLayoutVisible).setPosition(
+            visibleRight - (compactTouchLayout ? 50 : 74),
+            visibleBottom - (compactTouchLayout ? 50 : 74)
+        );
+        this.boostButton.setDisplaySize(buttonSize, buttonSize).setVisible(touchLayoutVisible).setPosition(
+            visibleRight - (compactTouchLayout ? 142 : 186),
+            visibleBottom - (compactTouchLayout ? 50 : 74)
+        );
         if (this.joystickPointer) this.drawJoystick();
         else this.releaseJoystick();
     }

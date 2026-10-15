@@ -112,7 +112,7 @@ export const displayLabels = {
     shipServiceIconSuffix: ' system icon',
     marketCredits: 'Credits', marketCargo: 'Cargo', marketQuantity: 'Trading', commodityIconSuffix: ' commodity icon',
     marketConfirm: 'CONFIRM TRADE', marketInsufficientCash: 'INSUFFICIENT CASH',
-    marketBuy: 'BUY', marketSell: 'SELL', marketNoTrade: 'SELECT A QUANTITY',
+    marketBuy: 'BUY', marketSell: 'SELL', marketNoTrade: '0 units',
     planetStock: 'Planet stock', planetaryStockOf: 'Planetary stock of', playerStock: 'Ship stock', shipStockOf: 'Ship stock of', supply: 'Supply',
     marketProduction: 'Production', marketConsumption: 'Consumption', marketStockChange: 'Stock change',
     averageBuyPrice: 'Average buy price',
