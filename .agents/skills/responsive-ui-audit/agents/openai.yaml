@@ -1,0 +1,4 @@
+interface:
+  display_name: "Responsive UI Audit"
+  short_description: "Audit a game view at desktop and mobile sizes"
+  default_prompt: "Audit the current view for responsive layout issues."
