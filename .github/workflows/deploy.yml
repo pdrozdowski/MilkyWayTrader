@@ -60,8 +60,23 @@ jobs:
           TEST_USER_PASSWORD=playwright-ci-test-password
           EOF
 
-      - name: Validate production build
-        run: npm run validate:deployment
+      - name: Validate product tests and dependencies
+        run: |
+          npm run test:project
+          npm run audit:high
+
+      - name: Build Pages assets
+        env:
+          PRODUCTION_BUILD: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'production') }}
+          VITE_SUPABASE_URL: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'production')) && vars.VITE_SUPABASE_URL || '' }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'production')) && vars.VITE_SUPABASE_PUBLISHABLE_KEY || '' }}
+        run: |
+          if [[ "$PRODUCTION_BUILD" == "true" && ( -z "$VITE_SUPABASE_URL" || -z "$VITE_SUPABASE_PUBLISHABLE_KEY" ) ]]; then
+            echo "Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in GitHub Actions Variables before production deployment." >&2
+            exit 1
+          fi
+          npm run build-nolog
+          npm run check:pages
 
       - name: Upload UI failure evidence
         if: failure()
