@@ -69,10 +69,10 @@ jobs:
         env:
           PRODUCTION_BUILD: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'production') }}
           VITE_SUPABASE_URL: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'production')) && vars.VITE_SUPABASE_URL || '' }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'production')) && vars.VITE_SUPABASE_PUBLISHABLE_KEY || '' }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'production')) && (secrets.VITE_SUPABASE_PUBLISHABLE_KEY || vars.VITE_SUPABASE_PUBLISHABLE_KEY) || '' }}
         run: |
           if [[ "$PRODUCTION_BUILD" == "true" && ( -z "$VITE_SUPABASE_URL" || -z "$VITE_SUPABASE_PUBLISHABLE_KEY" ) ]]; then
-            echo "Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in GitHub Actions Variables before production deployment." >&2
+            echo "Set VITE_SUPABASE_URL in Actions Variables and VITE_SUPABASE_PUBLISHABLE_KEY in Actions Secrets or Variables before production deployment." >&2
             exit 1
           fi
           npm run build-nolog
