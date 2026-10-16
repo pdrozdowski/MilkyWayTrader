@@ -55,13 +55,29 @@ test('the write boundary rejects a malformed reducer result and keeps the previo
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    const openingFacilities = [
-        { facilityId: 'dairyFarm', level: 1, status: 'working' },
-        { facilityId: 'grainFarm', level: 1, status: 'working' },
-        { facilityId: 'cheeseFactory', level: 1, status: 'working' },
-        { facilityId: 'bakery', level: 0, status: 'notBuilt' },
-        { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
-    ];
+    const openingFacilities = {
+        seroton: [
+            { facilityId: 'dairyFarm', level: 0, status: 'notBuilt' },
+            { facilityId: 'grainFarm', level: 0, status: 'notBuilt' },
+            { facilityId: 'cheeseFactory', level: 1, status: 'working' },
+            { facilityId: 'bakery', level: 0, status: 'notBuilt' },
+            { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
+        ],
+        'lactozis-7c': [
+            { facilityId: 'dairyFarm', level: 0, status: 'notBuilt' },
+            { facilityId: 'grainFarm', level: 1, status: 'working' },
+            { facilityId: 'cheeseFactory', level: 0, status: 'notBuilt' },
+            { facilityId: 'bakery', level: 0, status: 'notBuilt' },
+            { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
+        ],
+        'maslo-prime': [
+            { facilityId: 'dairyFarm', level: 1, status: 'working' },
+            { facilityId: 'grainFarm', level: 0, status: 'notBuilt' },
+            { facilityId: 'cheeseFactory', level: 0, status: 'notBuilt' },
+            { facilityId: 'bakery', level: 0, status: 'notBuilt' },
+            { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
+        ]
+    };
     assert.equal(state.schemaVersion, 19);
     assert.equal(state.runId, '00000000-0000-4000-8000-000000000001');
     assert.deepEqual(state.cargoSchedule, []);
@@ -81,7 +97,7 @@ test('a new run starts with the complete S-01 authoritative state', () => {
                 { commodityId: 'bun', stock: 50 },
                 { commodityId: 'spaceRation', stock: 20 }
             ],
-            facilities: clone(openingFacilities)
+            facilities: clone(openingFacilities.seroton)
         },
         {
             planetId: 'lactozis-7c',
@@ -92,7 +108,7 @@ test('a new run starts with the complete S-01 authoritative state', () => {
                 { commodityId: 'bun', stock: 2 },
                 { commodityId: 'spaceRation', stock: 20 }
             ],
-            facilities: clone(openingFacilities)
+            facilities: clone(openingFacilities['lactozis-7c'])
         },
         {
             planetId: 'maslo-prime',
@@ -103,7 +119,7 @@ test('a new run starts with the complete S-01 authoritative state', () => {
                 { commodityId: 'bun', stock: 50 },
                 { commodityId: 'spaceRation', stock: 20 }
             ],
-            facilities: clone(openingFacilities)
+            facilities: clone(openingFacilities['maslo-prime'])
         }
     ]);
     assert(Object.isFrozen(state.markets), 'every market collection is immutable');
@@ -153,7 +169,7 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
         { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [{ ...clone(advanced.markets[0].facilities[0]), level: 4 }, ...clone(advanced.markets[0].facilities.slice(1))] }] },
         { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [{ ...clone(advanced.markets[0].facilities[0]), level: 1.5 }, ...clone(advanced.markets[0].facilities.slice(1))] }] },
         { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [{ ...clone(advanced.markets[0].facilities[0]), status: 'broken' }, ...clone(advanced.markets[0].facilities.slice(1))] }] },
-        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [{ ...clone(advanced.markets[0].facilities[0]), status: 'notBuilt' }, ...clone(advanced.markets[0].facilities.slice(1))] }] },
+        { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [...clone(advanced.markets[0].facilities.slice(0, 2)), { ...clone(advanced.markets[0].facilities[2]), status: 'notBuilt' }, ...clone(advanced.markets[0].facilities.slice(3))] }] },
         { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: [...clone(advanced.markets[0].facilities.slice(0, 3)), { ...clone(advanced.markets[0].facilities[3]), status: 'working' }, ...clone(advanced.markets[0].facilities.slice(4))] }] },
         { ...clone(advanced), markets: [...clone(advanced.markets.slice(1)), { ...clone(advanced.markets[0]), facilities: {} }] },
         { ...clone(advanced), shipStatus: { ...clone(advanced.shipStatus), currentHitPoints: 101 } },
@@ -204,9 +220,9 @@ test('v19 score spending state rejects v18 and round trips detached records', ()
     const source = clone(initialGameState);
     const detached = decodeGameState(source);
     source.markets[0].facilities[0].level = 3;
-    source.markets[0].facilities[0].status = 'notBuilt';
-    assert.equal(detached.markets[0].facilities[0].level, 1);
-    assert.equal(detached.markets[0].facilities[0].status, 'working');
+    source.markets[0].facilities[0].status = 'working';
+    assert.equal(detached.markets[0].facilities[0].level, 0);
+    assert.equal(detached.markets[0].facilities[0].status, 'notBuilt');
 });
 
 test('the codec binds every ship-service level to its balance catalogue', () => {

@@ -29,3 +29,10 @@
 - **Problem**: when text is just entered to control then in tests we also need to use exact string to get a match, it makes a need to maintain same string in two places
 - **Rule**: use constant value and use text through the reference
 - **Applies to**: implement, impl-review
+
+## Opening facility levels belong to the facility/planet pair
+
+- **Context**: planetary facility definitions, initial state, investment quotes and projections.
+- **Problem**: `PlanetFacilityDefinition.initialLevel` was one value per facility, so every planet opened with the same built facilities. The opening level is really a facility/planet property, and the initial state, the downgrade floor and the landed projection each consumed it.
+- **Rule**: the opening level lives in `planetFacilityInitialLevels` in `src/game/definitions/planetFacilityDefinitions.ts`: a facility opens at level 1 only on the planet named by its `planetFacilityModifiers` specialization and unbuilt at level 0 on every other planet. Every catalogue used by quotes or projections exposes `initialLevelOf(facilityId, planetId)` next to `modifierOf`, and `tests/domain/planetCatalog.test.mjs` binds the opening-level record to the specialization pairs.
+- **Applies to**: implement, impl-review

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { applyFacilityBuild, applyFacilityDowngrade, applyFacilityUpgrade, quoteFacilityDowngrade, quoteFacilityInvestment } from '../../src/game/application/planetFacilities.ts';
 import { landedCommodityFlow, projectLandedFacilities } from '../../src/game/application/landedFacilities.ts';
 import { GameStateProvider } from '../../src/game/application/gameStateProvider.ts';
-import { planetFacilityCatalogue, planetFacilityDefinitions, planetFacilityModifierOf, planetFacilityOutputCommodityIds } from '../../src/game/definitions/planetFacilityDefinitions.ts';
+import { planetFacilityCatalogue, planetFacilityDefinitions, planetFacilityInitialLevelOf, planetFacilityModifierOf, planetFacilityOutputCommodityIds } from '../../src/game/definitions/planetFacilityDefinitions.ts';
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
 
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -33,8 +33,9 @@ test('facility investment quotes reject the not-landed, unknown, unavailable and
 
     const seroton = landedOn('seroton');
     assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'unknownFacility', 'build').failure, 'unknown-facility');
-    assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'dairyFarm', 'build').failure, 'unavailable');
+    assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'cheeseFactory', 'build').failure, 'unavailable', 'the specializing facility Seroton opens already built cannot be built again');
     assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'bakery', 'upgrade').failure, 'unavailable');
+    assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'dairyFarm', 'build').failure, null, 'Seroton opens the dairy farm unbuilt, so it can be built');
     const maxed = withFacilityLevel(seroton, 'seroton', 'bakery', 3);
     assert.equal(quoteFacilityInvestment(maxed, planetFacilityCatalogue, 'bakery', 'upgrade').failure, 'unavailable');
 
@@ -106,14 +107,14 @@ test('building a level-zero facility pays the first price and marks it working',
 });
 
 test('upgrade steps use each step price and stop at the maximum level', () => {
-    const provider = new GameStateProvider(landedOn('seroton'));
+    const provider = new GameStateProvider(landedOn('maslo-prime'));
     const second = provider.update(state => applyFacilityUpgrade(state, planetFacilityCatalogue, 'dairyFarm'));
-    assert.equal(second.credits, initialGameState.credits - 25_000);
-    assert.equal(facilityOf(second, 'seroton', 'dairyFarm').level, 2);
+    assert.equal(second.credits, initialGameState.credits - 20_000);
+    assert.equal(facilityOf(second, 'maslo-prime', 'dairyFarm').level, 2);
 
     const third = provider.update(state => applyFacilityUpgrade(state, planetFacilityCatalogue, 'dairyFarm'));
-    assert.equal(third.credits, initialGameState.credits - 25_000 - 75_000);
-    assert.equal(facilityOf(third, 'seroton', 'dairyFarm').level, 3);
+    assert.equal(third.credits, initialGameState.credits - 20_000 - 60_000);
+    assert.equal(facilityOf(third, 'maslo-prime', 'dairyFarm').level, 3);
     assert.equal(quoteFacilityInvestment(third, planetFacilityCatalogue, 'dairyFarm', 'upgrade').failure, 'unavailable');
 
     const blocked = provider.update(state => applyFacilityUpgrade(state, planetFacilityCatalogue, 'dairyFarm'));
@@ -145,7 +146,7 @@ test('rejected investment commands return the unchanged aggregate', () => {
     assert.equal(applyFacilityUpgrade(unlanded, planetFacilityCatalogue, 'dairyFarm'), unlanded);
 
     const seroton = landedOn('seroton');
-    assert.equal(applyFacilityBuild(seroton, planetFacilityCatalogue, 'dairyFarm'), seroton);
+    assert.equal(applyFacilityBuild(seroton, planetFacilityCatalogue, 'cheeseFactory'), seroton);
     assert.equal(applyFacilityUpgrade(seroton, planetFacilityCatalogue, 'bakery'), seroton);
     assert.equal(applyFacilityBuild(seroton, planetFacilityCatalogue, 'unknownFacility'), seroton);
     const broke = { ...seroton, credits: 0 };
@@ -158,15 +159,16 @@ test('landed commodity flow aggregates per-second production, consumption and ne
     const seroton = landedOn('seroton');
     const projectionCatalogue = {
         definitions: planetFacilityDefinitions.map(definition => ({ ...definition, outputCommodityId: planetFacilityOutputCommodityIds[definition.id] })),
-        modifierOf: planetFacilityModifierOf
+        modifierOf: planetFacilityModifierOf,
+        initialLevelOf: planetFacilityInitialLevelOf
     };
     const facilities = projectLandedFacilities(seroton, projectionCatalogue);
 
-    // Seroton opens dairyFarm L1 (10 milk/s) and cheeseFactory L1 (2 * round(5 * 1.2) = 12 milk/s input, 6 cheese/s output).
-    assert.deepEqual(landedCommodityFlow(facilities, 'milk'), { productionPerSecond: 10, consumptionPerSecond: 12, netPerSecond: -2 });
+    // Seroton opens only Cheese Factory L1 (specialized: 2 * round(5 * 1.2) = 12 milk/s input, 6 cheese/s output); its farms start unbuilt.
+    assert.deepEqual(landedCommodityFlow(facilities, 'milk'), { productionPerSecond: 0, consumptionPerSecond: 12, netPerSecond: -12 });
     assert.deepEqual(landedCommodityFlow(facilities, 'cheese'), { productionPerSecond: 6, consumptionPerSecond: 0, netPerSecond: 6 });
     assert.deepEqual(landedCommodityFlow(facilities, 'spaceRation'), { productionPerSecond: 0, consumptionPerSecond: 0, netPerSecond: 0 });
 
-    const withBakery = withFacilityLevel(seroton, 'seroton', 'bakery', 1);
+    const withBakery = withFacilityLevel(withFacilityLevel(seroton, 'seroton', 'grainFarm', 1), 'seroton', 'bakery', 1);
     assert.deepEqual(landedCommodityFlow(projectLandedFacilities(withBakery, projectionCatalogue), 'grain'), { productionPerSecond: 10, consumptionPerSecond: 10, netPerSecond: 0 });
 });
