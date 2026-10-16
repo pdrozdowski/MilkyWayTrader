@@ -234,28 +234,30 @@ Snapshot zachowuje schema version 19 i dotychczasowe pola; nie dodawać migracji
 
 #### Automated
 
-- [ ] 1.1 Testy granic punktacji, terminalizacji, codec i adapterów przechodzą wraz z `test:fast` oraz `typecheck`.
-- [ ] 1.2 Lokalna integracja bazy przyjmuje trzy wyniki, odrzuca nieznany wynik i zachowuje izolację właścicieli.
+- [x] 1.1 Testy granic punktacji, terminalizacji, codec i adapterów przechodzą wraz z `test:fast` oraz `typecheck`.
+- [x] 1.2 Lokalna integracja bazy przyjmuje trzy wyniki, odrzuca nieznany wynik i zachowuje izolację właścicieli.
 
 #### Manual
 
-- [ ] 1.3 Przegląd PRD i roadmapy potwierdza próg punktowy, pierwszeństwo timeoutu i przekazanie porzucenia do S-11.
+- [x] 1.3 Przegląd PRD i roadmapy potwierdza próg punktowy, pierwszeństwo timeoutu i przekazanie porzucenia do S-11.
 
 ### Phase 2: Wprowadzenie przed startem
 
 #### Automated
 
-- [ ] 2.1 Testy przejść wprowadzenia i `typecheck` potwierdzają jeden krok na interakcję oraz pojedynczy start runu.
+- [x] 2.1 Testy przejść wprowadzenia i `typecheck` potwierdzają jeden krok na interakcję oraz pojedynczy start runu.
 
 #### Manual
 
-- [ ] 2.2 Cztery dostarczone ilustracje są kompletne i czytelne na desktopie oraz telefonie w poziomie; popup uruchamia grę od 30:00.
+- [x] 2.2 Cztery dostarczone ilustracje są kompletne i czytelne na desktopie oraz telefonie w poziomie; popup uruchamia grę od 30:00. See responsive audit; slide 3's “30 days” deadline remains a manual content review action.
 
 ### Phase 3: Wspólny ekran wyniku i integracja
 
 #### Automated
 
-- [ ] 3.1 `test:fast`, `typecheck` oraz właściwe testy UI przechodzą; inventory E2E jest aktualne.
+- [x] 3.1 `test:fast`, `typecheck` oraz właściwe testy UI przechodzą; inventory E2E jest aktualne. Full project runner PASS on 2026-10-16: all seven suites passed, including all 22 Playwright tests; report: `.cache/test-runs/2026-10-16T10-02-08.849Z-47900/results.md`.
+
+Verification note: An earlier full run exposed stale facility-cycle test expectations after the requested per-planet starting setup. The expectations were aligned with the configured starting state, `test:mechanics` passed 58/58, and the subsequent full project run passed all suites.
 
 #### Manual
 

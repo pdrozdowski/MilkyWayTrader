@@ -6,6 +6,8 @@ export interface TerminalScoreInput
     readonly facilityUpgradeSpend: number;
 }
 
+export const DEBT_SCORE_THRESHOLD = 1_000_000;
+
 export interface TerminalScoreBreakdown
 {
     readonly endingCash: number;

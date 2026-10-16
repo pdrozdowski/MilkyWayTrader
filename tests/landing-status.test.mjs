@@ -132,7 +132,7 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-average-buy-price', '#landing-status-trade-income', '#landing-status-trade-result', '#landing-status-quantity-label',
         '#landing-status-quantity', '#landing-status-quantity-value', '#landing-status-unit-price',
         '#landing-status-confirm', '#landing-status-launch', '#landing-status-market', '#landing-status-shipyard', '#landing-status-market-back',
-        '.market-commodity-icon', '#landing-status-market-heading', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
+        '.market-commodity-icon', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
         '#landing-status-title', '.landing-visual', '#landing-status-hub-back', '#landing-status-hub-clock', '#landing-status-hub-credits', '#landing-status-hub-cargo',
         '#landing-status-hub-time-control', '#landing-status-market-time-control', '#landing-status-facilities-time-control', '#landing-status-shipyard-time-control',
         '.landing-facility-position', '.landing-facility-previous', '.landing-facility-next', '.shipyard-position', '.shipyard-previous', '.shipyard-next'
@@ -171,7 +171,6 @@ test('facilities view renders five cards with levels, states, recipes and action
             '.shipyard-card-action': new FakeElement({ '.shipyard-card-action-label': new FakeElement(), '.shipyard-card-action-price': new FakeElement() })
         })
     });
-    const facilitiesHeading = new FakeElement();
     const facilitiesBack = new FakeElement();
     const facilitiesClock = new FakeElement();
     const facilitiesCredits = new FakeElement();
@@ -199,7 +198,6 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-hub-time-control': new FakeElement(),
         '#landing-status-market-view': marketView,
         '#landing-status-facilities-view': facilitiesView,
-        '#landing-status-facilities-heading': facilitiesHeading,
         '#landing-status-facilities-back': facilitiesBack,
         '#landing-status-facilities-clock': facilitiesClock,
         '#landing-status-facilities-credits': facilitiesCredits,
@@ -208,8 +206,6 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-facility-cards': facilityCardsRail,
         '#landing-status-shipyard-cards': shipyardCardsRail,
         '#landing-status-shipyard-view': shipyardView,
-        '#landing-status-shipyard-heading': new FakeElement(),
-        '#landing-status-shipyard-planet': new FakeElement(),
         '#landing-status-shipyard-back': new FakeElement(),
         '#landing-status-shipyard-clock': new FakeElement(),
         '#landing-status-shipyard-credits': new FakeElement(),
@@ -217,22 +213,21 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-shipyard-repair': new FakeElement({ '.shipyard-card-action-label': new FakeElement(), '.shipyard-card-action-price': new FakeElement() }),
         '#landing-status-catalogue > button[data-commodity-id]': [catalogueButton]
     });
-    // Synthetic render scenario, independent of the real planet opening table: the fixture needs one facility at
-    // its downgrade floor, one upgradeable, one unbuilt and one maxed so every card state is exercised.
-    const downgradeFloorOf = facilityId => facilityId === 'dairyFarm' ? 1 : 0;
+    const initialLevelOf = facilityId => facilityId === 'cheeseFactory' ? 1 : 0;
+    const downgradeFloorOf = facilityId => Math.max(initialLevelOf(facilityId), 1);
     const row = (facilityId, label, level, status, outputCommodityId, outputPerCycle, inputsPerCycle, modifier, action, buildOutputPerCycle = outputPerCycle || 5, buildInputsPerCycle = inputsPerCycle) =>
-        ({ facilityId, label, level, maxLevel: 3, status, outputCommodityId, outputPerCycle, inputsPerCycle, buildOutputPerCycle, buildInputsPerCycle, modifier, action, downgrade: { available: level > downgradeFloorOf(facilityId), targetLevel: Math.max(downgradeFloorOf(facilityId), level - 1), refund: level > downgradeFloorOf(facilityId) ? 75_000 : 0 } });
+        ({ facilityId, label, level, initialLevel: initialLevelOf(facilityId), maxLevel: 3, status, outputCommodityId, outputPerCycle, inputsPerCycle, buildOutputPerCycle, buildInputsPerCycle, modifier, action, downgrade: { available: level > downgradeFloorOf(facilityId), targetLevel: Math.max(downgradeFloorOf(facilityId), level - 1), refund: level > downgradeFloorOf(facilityId) ? 75_000 : 0 } });
     const noModifier = { upgradePriceMultiplier: 1, outputMultiplier: 1 };
     const baseFacilities = [
     row('dairyFarm', 'Dairy Farm', 1, 'working', 'milk', 10, [], noModifier, { kind: 'upgrade', targetLevel: 2, price: 25_000, affordable: true }),
-    row('grainFarm', 'Grain Farm', 1, 'insufficientResources', 'grain', 10, [], noModifier, { kind: 'upgrade', targetLevel: 2, price: 25_000, affordable: true }),
-    row('cheeseFactory', 'Cheese Factory', 1, 'working', 'cheese', 6, [{ commodityId: 'milk', quantity: 12 }], { upgradePriceMultiplier: 0.8, outputMultiplier: 1.2 }, { kind: 'upgrade', targetLevel: 2, price: 28_000, affordable: true }),
+    row('grainFarm', 'Grain Farm', 1, 'working', 'grain', 10, [], noModifier, { kind: 'upgrade', targetLevel: 2, price: 25_000, affordable: true }),
+    row('cheeseFactory', 'Cheese Factory', 1, 'insufficientResources', 'cheese', 6, [{ commodityId: 'milk', quantity: 12, missing: true }], { upgradePriceMultiplier: 0.8, outputMultiplier: 1.2 }, { kind: 'upgrade', targetLevel: 2, price: 28_000, affordable: true }),
     row('bakery', 'Bakery', 0, 'notBuilt', 'bun', 0, [], noModifier, { kind: 'build', targetLevel: 1, price: 35_000, affordable: true }, 5, [{ commodityId: 'grain', quantity: 10 }]),
     row('foodProcessor', 'Food Processor', 3, 'working', 'spaceRation', 20, [{ commodityId: 'cheese', quantity: 40 }], noModifier, { kind: 'max', targetLevel: 3, price: 0, affordable: true })
     ];
     const facilitiesSnapshot = credits => ({
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton',
-        credits, cargoUsed: 3, cargoCapacity: 20,
+        credits, cargoUsed: 3, cargoCapacity: 50,
         clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: true },
         facilities: baseFacilities.map(facility => ({ ...facility, action: { ...facility.action, affordable: facility.action.kind === 'max' || facility.action.price <= credits } }))
     });
@@ -241,12 +236,12 @@ test('facilities view renders five cards with levels, states, recipes and action
         clock: { remainingSeconds: 0, runState: 'RUNNING', playerPaused: true },
         repair: { currentHitPoints: 100, maximumHitPoints: 100, incrementHitPoints: 10, price: 1_000, failure: 'not-landed' },
         services: [],
-        booster: { owned: false, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'not-landed' }
+        booster: { owned: false, price: 75_000, available: false, affordable: false, failure: 'not-landed' }
     };
     const commodity = { commodityId: 'milk', stock: 400, stockCapacity: 400, lowerStockThreshold: 100, upperStockThreshold: 300, carriedQuantity: 0, unitPrice: 100, averageBuyPrice: 0, netPerSecond: -2 };
     const marketSnapshot = {
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000,
-        cargoUsed: 3, cargoCapacity: 20, commodities: [commodity], selectedCommodityId: 'milk', tradeQuantity: 0,
+        cargoUsed: 3, cargoCapacity: 50, commodities: [commodity], selectedCommodityId: 'milk', tradeQuantity: 0,
         selectedCommodity: commodity, plannedStockDelta: 0, plannedCargoDelta: 0, supplyLevel: 'Medium',
         clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: true },
         commodityFlow: { productionPerSecond: 10, consumptionPerSecond: 12, netPerSecond: -2 },
@@ -284,6 +279,7 @@ test('facilities view renders five cards with levels, states, recipes and action
     const timeControls = ['#landing-status-hub-time-control', '#landing-status-market-time-control', '#landing-status-facilities-time-control', '#landing-status-shipyard-time-control'].map(element);
     assert(timeControls.every(button => button.textContent === displayLabels.timePlay), 'each planet view starts with the Play action');
     marketListener({ ...marketSnapshot, clock: { ...marketSnapshot.clock, runState: 'PAUSED', playerPaused: false } });
+    assert.equal(marketView.attributes['aria-label'], displayLabels.market);
     facilitiesListener({ ...facilitiesSnapshot(1_000_000), clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: false } });
     shipyardListener({ ...emptyShipyardSnapshot, visible: true, clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: false } });
     assert(timeControls.every(button => button.textContent === displayLabels.timePause && button.attributes['aria-pressed'] === 'true'),
@@ -291,7 +287,7 @@ test('facilities view renders five cards with levels, states, recipes and action
     timeControls.forEach(button => button.click());
     assert.equal(toggles.length, 4, 'each time control routes through the shared player toggle action');
     assert.equal(element('#landing-status-hub-credits').textContent, '1,000,000');
-    assert.equal(element('#landing-status-hub-cargo').textContent, '3 / 20');
+    assert.equal(element('#landing-status-hub-cargo').textContent, '3 / 50');
     assert(element('#landing-status-hub-clock').textContent.startsWith('12:34 '), 'the hub projects the active clock');
     const landingMarkup = readFileSync('index.html', 'utf8');
     const hubHeaderMarkup = landingMarkup.match(/<header class="landing-facilities-header">([\s\S]*?)<\/header>/)?.[1] ?? '';
@@ -335,7 +331,7 @@ test('facilities view renders five cards with levels, states, recipes and action
     assert.equal(planetBar.querySelector('.market-stock-segment--high').querySelector('.market-stock-fill').style.width, '0%');
     marketListener(marketSnapshot);
     assert.equal(element('#landing-status-player-stock-bar').querySelector('.market-stock-fill').style.width, '0%');
-    assert.equal(element('#landing-status-player-stock-bar').attributes['aria-valuemax'], '20');
+    assert.equal(element('#landing-status-player-stock-bar').attributes['aria-valuemax'], '50');
     const confirmButton = element('#landing-status-confirm');
     assert.equal(confirmButton.querySelector('.market-confirm-label').textContent, displayLabels.marketConfirm);
     assert.equal(confirmButton.querySelector('.market-confirm-price').textContent, '0');
@@ -354,7 +350,7 @@ test('facilities view renders five cards with levels, states, recipes and action
     assert(element('#landing-status-stock-change').classList.values.has('market-stock-delta--negative'), 'a net decrease is flagged negative');
     assert(!element('#landing-status-stock-change').classList.values.has('market-stock-delta--positive'), 'a net decrease is not flagged positive');
     assert.equal(element('#landing-status-market-credits').textContent, (1_000_000).toLocaleString('en-US'));
-    assert.equal(element('#landing-status-market-cargo').textContent, '3 / 20');
+    assert.equal(element('#landing-status-market-cargo').textContent, '3 / 50');
     assert.equal(element('#landing-status-commodity-name').textContent, `${displayLabels.planetaryStockOf}: ${displayLabels.commodityLabels.milk}`);
     assert.equal(element('#landing-status-player-stock-heading').textContent, `${displayLabels.shipStockOf}: ${displayLabels.commodityLabels.milk}`);
     assert.equal(element('.market-commodity-icon').dataset.commodityId, marketSnapshot.selectedCommodityId);
@@ -425,9 +421,10 @@ test('facilities view renders five cards with levels, states, recipes and action
         assert.equal(status(facility.facilityId).dataset.status, facility.status);
     }
     assert.equal(status('dairyFarm').textContent, displayLabels.facilityStatusLabels.working);
-    assert.equal(status('grainFarm').textContent, displayLabels.facilityStatusLabels.insufficientResources);
-    assert.equal(textOf(output('grainFarm')), `${displayLabels.marketProduction}: +10/s ${displayLabels.facilityMissing}`);
-    assert.ok((output('grainFarm').replacedChildren ?? []).some(child => child.className === 'facility-card-missing'), 'missing resources add a visible missing marker to production');
+    assert.equal(status('cheeseFactory').textContent, displayLabels.facilityStatusLabels.insufficientResources);
+    assert.equal(textOf(output('cheeseFactory')), `${displayLabels.marketProduction}: +6/s`);
+    assert.ok((inputs('cheeseFactory').replacedChildren ?? []).some(child => child.className === 'facility-card-missing'), 'the missing ingredient is marked in the consumption recipe');
+    assert.equal((output('cheeseFactory').replacedChildren ?? []).some(child => child.className === 'facility-card-missing'), false, 'the output commodity is not marked missing when an input is unavailable');
     assert.equal(status('bakery').textContent, displayLabels.facilityStatusLabels.notBuilt);
     assert.equal(textOf(output('bakery')), `${displayLabels.marketProduction}: +5/s`);
     assert.equal(textOf(inputs('bakery')), `${displayLabels.marketConsumption}: -10/s`);
@@ -439,7 +436,7 @@ test('facilities view renders five cards with levels, states, recipes and action
     assert.deepEqual(iconIds(inputs('cheeseFactory')), ['milk'], 'the consumed commodity renders a small commodity icon');
     assert.ok(inputs('cheeseFactory').replacedChildren.some(child => child.className.includes('market-flow-icon--consumption')), 'facility input icons use the same red tint as Market consumption icons');
     assert.ok(output('dairyFarm').replacedChildren.some(child => child.className.includes('market-flow-icon')), 'facility output icons use the same commodity flow icon style as Market production');
-    assert.equal(textOf(inputs('cheeseFactory')), `${displayLabels.marketConsumption}: -12/s`);
+    assert.equal(textOf(inputs('cheeseFactory')), `${displayLabels.marketConsumption}: -12/s (MILK ${displayLabels.facilityMissing})`);
     assert.equal(modifier('dairyFarm').textContent, '');
     assert.equal(modifier('dairyFarm').hidden, true);
     assert.equal(modifier('cheeseFactory').textContent, `${displayLabels.facilityOutputBonus} +20% · ${displayLabels.facilityUpgradeDiscount} 20%`);
@@ -480,11 +477,11 @@ test('facilities view renders five cards with levels, states, recipes and action
     facilitiesListener(facilitiesSnapshot(1_000_000));
     assert.equal(facilitiesBack.textContent, displayLabels.facilitiesBackToPlanet);
     assert.equal(facilitiesBack.attributes['aria-label'], displayLabels.facilitiesBackToPlanet);
-    assert.equal(facilitiesHeading.textContent, displayLabels.facilities);
+    assert.equal(facilitiesView.attributes['aria-label'], displayLabels.facilities);
     assert.equal(facilitiesClock.textContent, `12:34 · ${displayLabels.clockPaused}`);
     assert.equal(facilitiesClock.attributes['aria-label'], `12:34 · ${displayLabels.clockPaused}`);
     assert.equal(facilitiesCredits.textContent, (1_000_000).toLocaleString('en-US'));
-    assert.equal(facilitiesCargo.textContent, '3 / 20');
+    assert.equal(facilitiesCargo.textContent, '3 / 50');
     assert.equal(cards['dairyFarm'].querySelector('.facility-card-icon').textContent, '');
     assert.equal(cards['dairyFarm'].querySelector('.facility-card-icon').attributes['aria-label'], `${displayLabels.commodityLabels.milk}${displayLabels.commodityIconSuffix}`);
 
@@ -562,11 +559,11 @@ test('the shipyard view renders repair, local service cards and the booster row 
         '#landing-status-average-buy-price', '#landing-status-trade-income', '#landing-status-trade-result', '#landing-status-quantity-label',
         '#landing-status-quantity', '#landing-status-quantity-value', '#landing-status-unit-price',
         '#landing-status-confirm', '#landing-status-launch', '#landing-status-market', '#landing-status-shipyard', '#landing-status-market-back',
-        '.market-commodity-icon', '#landing-status-market-heading', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
+        '.market-commodity-icon', '#landing-status-market-clock', '#landing-status-market-credits', '#landing-status-market-cargo',
         '#landing-status-title', '.landing-visual', '#landing-status-hub-back', '#landing-status-hub-clock', '#landing-status-hub-credits', '#landing-status-hub-cargo', '#landing-status-hub-time-control',
         '#landing-status-market-time-control', '#landing-status-facilities-time-control', '#landing-status-shipyard-time-control',
         '.landing-facility-position', '.landing-facility-previous', '.landing-facility-next', '.shipyard-position', '.shipyard-previous', '.shipyard-next',
-        '#landing-status-facilities-heading', '#landing-status-facilities-clock', '#landing-status-facilities-credits', '#landing-status-facilities-cargo', '#landing-status-facilities'];
+        '#landing-status-facilities-clock', '#landing-status-facilities-credits', '#landing-status-facilities-cargo', '#landing-status-facilities'];
     const modal = new FakeElement();
     const hub = new FakeElement();
     const marketView = new FakeElement();
@@ -594,8 +591,6 @@ test('the shipyard view renders repair, local service cards and the booster row 
         '#landing-status-facility-cards': facilityCardsRail,
         '#landing-status-shipyard-view': shipyardView,
         '#landing-status-shipyard-cards': shipyardCardsRail,
-        '#landing-status-shipyard-heading': new FakeElement(),
-        '#landing-status-shipyard-planet': new FakeElement(),
         '#landing-status-shipyard-clock': new FakeElement(),
         '#landing-status-shipyard-credits': new FakeElement(),
         '#landing-status-shipyard-cargo': new FakeElement(),
@@ -604,9 +599,9 @@ test('the shipyard view renders repair, local service cards and the booster row 
         '#landing-status-shipyard': shipyardButton
     });
     const services = [
-        { serviceId: 'cargo', label: 'Cargo Capacity', servicePlanetId: 'seroton', servicePlanetName: 'Seroton', level: 1, maximumLevel: 5, price: 15_000, available: true, affordable: true, maximum: false, failure: null, currentCapability: 40, maximumCapability: 110 },
-        { serviceId: 'engine', label: 'Engine System', servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', level: 2, maximumLevel: 5, price: 40_000, available: false, affordable: false, maximum: false, failure: 'wrong-planet', currentCapability: 110, maximumCapability: 150 },
-        { serviceId: 'weaponary', label: 'Weapon System', servicePlanetId: 'maslo-prime', servicePlanetName: 'Maslo-Prime', level: 10, maximumLevel: 10, price: 0, available: false, affordable: false, maximum: true, failure: 'wrong-planet', currentCapability: 10, maximumCapability: 10 }
+        { serviceId: 'cargo', label: 'Cargo Capacity', level: 1, maximumLevel: 5, price: 15_000, available: true, affordable: true, maximum: false, failure: null, currentCapability: 50, maximumCapability: 300 },
+        { serviceId: 'engine', label: 'Engine System', level: 2, maximumLevel: 5, price: 40_000, available: true, affordable: true, maximum: false, failure: null, currentCapability: 110, maximumCapability: 150 },
+        { serviceId: 'weaponary', label: 'Weapon System', level: 10, maximumLevel: 10, price: 0, available: false, affordable: false, maximum: true, failure: 'maximum-level', currentCapability: 10, maximumCapability: 10 }
     ];
     const healthBandOf = currentHitPoints => currentHitPoints >= 70 ? 'healthy' : currentHitPoints >= 30 ? 'warning' : 'critical';
     const repairOf = currentHitPoints => ({
@@ -618,22 +613,22 @@ test('the shipyard view renders repair, local service cards and the booster row 
         healthBand: healthBandOf(currentHitPoints)
     });
     const shipyardSnapshot = overrides => ({
-        visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000, cargoUsed: 3, cargoCapacity: 40,
+        visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000, cargoUsed: 3, cargoCapacity: 50,
         clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: true },
         repair: repairOf(75),
-        services, booster: { owned: false, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'wrong-planet' },
+        services, booster: { owned: false, price: 75_000, available: true, affordable: true, failure: null },
         ...overrides
     });
     const commodity = { commodityId: 'milk', stock: 400, stockCapacity: 400, lowerStockThreshold: 100, upperStockThreshold: 300, carriedQuantity: 0, unitPrice: 100, averageBuyPrice: 0, netPerSecond: 0 };
     const marketSnapshot = {
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton', credits: 1_000_000,
-        cargoUsed: 3, cargoCapacity: 40, commodities: [commodity], selectedCommodityId: 'milk', tradeQuantity: 0,
+        cargoUsed: 3, cargoCapacity: 50, commodities: [commodity], selectedCommodityId: 'milk', tradeQuantity: 0,
         selectedCommodity: commodity, plannedStockDelta: 0, plannedCargoDelta: 0, supplyLevel: 'Medium',
         clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: true },
         commodityFlow: { productionPerSecond: 0, consumptionPerSecond: 0, netPerSecond: 0 },
         quote: { quantity: 0, total: 0, failure: null, postTradeStock: 400, nextUnitPrice: 100 }
     };
-    const facilitiesSnapshot = { visible: false, eligible: false, planetId: null, planetName: null, credits: 1_000_000, cargoUsed: 3, cargoCapacity: 40, clock: marketSnapshot.clock, facilities: [] };
+    const facilitiesSnapshot = { visible: false, eligible: false, planetId: null, planetName: null, credits: 1_000_000, cargoUsed: 3, cargoCapacity: 50, clock: marketSnapshot.clock, facilities: [] };
     let shipyardListener = null;
     const repairs = [];
     const upgrades = [];
@@ -723,19 +718,18 @@ test('the shipyard view renders repair, local service cards and the booster row 
         `${displayLabels.shipyardRepair}: ${displayLabels.shipyardRepairAction} 10% ${displayLabels.shipyardMaxHitPoints} 1,000`);
     assert.equal(shipyardRepairButton.disabled, false);
     assert.equal(root.querySelector('#landing-status-shipyard-credits').textContent, '1,000,000', 'the shipyard balance uses the shared market header format');
-    assert.equal(root.querySelector('#landing-status-shipyard-cargo').textContent, '3 / 40');
+    assert.equal(root.querySelector('#landing-status-shipyard-cargo').textContent, '3 / 50');
     const shipyardClockText = root.querySelector('#landing-status-shipyard-clock').textContent;
     assert(shipyardClockText.startsWith('12:34 '), 'the shipyard header shows the run clock');
     assert(shipyardClockText.endsWith(` ${displayLabels.clockPaused}`), 'the shipyard clock shows the paused run state');
-    assert.equal(root.querySelector('#landing-status-shipyard-heading').textContent, displayLabels.shipyard);
+    assert.equal(shipyardView.attributes['aria-label'], displayLabels.shipyard);
     assert.equal(root.querySelector('#landing-status-shipyard-back').textContent, displayLabels.facilitiesBackToPlanet);
-    assert.equal(root.querySelector('#landing-status-shipyard-planet').textContent, 'Seroton');
 
     assert.equal(textOf(serviceCards.cargo, '.shipyard-card-name'), 'Cargo Capacity');
     assert.equal(serviceCards.cargo.querySelector('.shipyard-card-icon').attributes['aria-label'], `Cargo Capacity${displayLabels.shipServiceIconSuffix}`,
         'each service name is paired with its own placeholder icon');
     assert.equal(textOf(serviceCards.cargo, '.shipyard-card-level'), `${displayLabels.facilityLevel} 1 / 5`);
-    assert.equal(textOf(serviceCards.cargo, '.shipyard-card-capability'), `${displayLabels.shipyardCapabilityCargo} 40 ${displayLabels.shipyardCapabilityUnits}`,
+    assert.equal(textOf(serviceCards.cargo, '.shipyard-card-capability'), `${displayLabels.shipyardCapabilityCargo} 50 ${displayLabels.shipyardCapabilityUnits}`,
         'the cargo card states the current hold');
     assert.equal(textOf(serviceCards.cargo, '.shipyard-card-note'), displayLabels.shipyardNoteCargo);
     assert.equal(textOf(serviceCards.engine, '.shipyard-card-capability'), `${displayLabels.shipyardCapabilityEngine} 110${displayLabels.shipyardCapabilityPercent}`);
@@ -752,13 +746,13 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(actionOf(serviceCards.cargo).attributes['aria-label'], `Cargo Capacity: ${displayLabels.facilityUpgrade} 15,000`);
 
     const availabilityOf = card => card.querySelector('.shipyard-card-availability');
-    assert.equal(availabilityOf(serviceCards.engine).querySelector('.shipyard-card-availability-state').textContent, `${displayLabels.shipyardNotAvailable}.`);
-    assert.equal(availabilityOf(serviceCards.engine).querySelector('.shipyard-card-availability-label').textContent, `${displayLabels.shipyardServicePlanet}:`);
-    assert.equal(availabilityOf(serviceCards.engine).querySelector('.shipyard-card-availability-planet').textContent, 'Lactozis-7C');
-    assert.equal(availabilityOf(serviceCards.engine).hidden, false);
-    assert.equal(actionLabelOf(serviceCards.engine).textContent, displayLabels.shipyardNotAvailable);
-    assert.equal(actionOf(serviceCards.engine).disabled, true, 'an off-planet service is disabled');
-    assert.equal(actionOf(serviceCards.engine).hidden, true, 'a Not available button is hidden instead of shown disabled');
+    assert.equal(availabilityOf(serviceCards.engine).querySelector('.shipyard-card-availability-state').textContent, '');
+    assert.equal(availabilityOf(serviceCards.engine).querySelector('.shipyard-card-availability-label').textContent, '');
+    assert.equal(availabilityOf(serviceCards.engine).querySelector('.shipyard-card-availability-planet').textContent, '');
+    assert.equal(availabilityOf(serviceCards.engine).hidden, true);
+    assert.equal(actionLabelOf(serviceCards.engine).textContent, displayLabels.facilityUpgrade);
+    assert.equal(actionOf(serviceCards.engine).disabled, false, 'every level upgrade is purchasable at this planet');
+    assert.equal(actionOf(serviceCards.engine).hidden, false);
     assert.equal(actionLabelOf(serviceCards.weaponary).textContent, displayLabels.facilityMaxLevel);
     assert.equal(actionOf(serviceCards.weaponary).disabled, true, 'a maximum-level service is disabled');
     assert.equal(actionOf(serviceCards.weaponary).hidden, false, 'a maximum-level service keeps its MAX LEVEL button');
@@ -769,13 +763,13 @@ test('the shipyard view renders repair, local service cards and the booster row 
     assert.equal(boosterCard.querySelector('.shipyard-card-icon').attributes['aria-label'], `${displayLabels.shipyardBooster}${displayLabels.shipServiceIconSuffix}`,
         'the booster row carries its own placeholder icon');
     assert.equal(textOf(boosterCard, '.shipyard-card-effect'), displayLabels.shipyardBoosterEffect);
-    assert.equal(actionLabelOf(boosterCard).textContent, displayLabels.shipyardNotAvailable);
+    assert.equal(actionLabelOf(boosterCard).textContent, displayLabels.shipyardPurchase);
     assert.equal(actionPriceOf(boosterCard).textContent, '75,000', 'the booster price sits on its button');
-    assert.equal(availabilityOf(boosterCard).querySelector('.shipyard-card-availability-state').textContent, `${displayLabels.shipyardNotAvailable}.`);
-    assert.equal(availabilityOf(boosterCard).querySelector('.shipyard-card-availability-label').textContent, `${displayLabels.shipyardServicePlanet}:`);
-    assert.equal(availabilityOf(boosterCard).querySelector('.shipyard-card-availability-planet').textContent, 'Lactozis-7C');
-    assert.equal(actionOf(boosterCard).disabled, true);
-    assert.equal(actionOf(boosterCard).hidden, true, 'an off-planet booster button is hidden too');
+    assert.equal(availabilityOf(boosterCard).querySelector('.shipyard-card-availability-state').textContent, '');
+    assert.equal(availabilityOf(boosterCard).querySelector('.shipyard-card-availability-label').textContent, '');
+    assert.equal(availabilityOf(boosterCard).querySelector('.shipyard-card-availability-planet').textContent, '');
+    assert.equal(actionOf(boosterCard).disabled, false);
+    assert.equal(actionOf(boosterCard).hidden, false);
 
     actionOf(serviceCards.cargo).click();
     shipyardRepairButton.click();
@@ -788,11 +782,11 @@ test('the shipyard view renders repair, local service cards and the booster row 
         credits: 0,
         repair: repairOf(100),
         services: [
-            { ...services[0], price: 120_000, available: true, affordable: false, failure: 'insufficient-credits' },
-            { serviceId: 'engine', label: 'Engine System', servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', level: 1, maximumLevel: 5, price: 20_000, available: true, affordable: false, maximum: false, failure: 'insufficient-credits' },
+            { ...services[0], price: 15_000, available: true, affordable: false, failure: 'insufficient-credits' },
+            { serviceId: 'engine', label: 'Engine System', level: 1, maximumLevel: 5, price: 20_000, available: true, affordable: false, maximum: false, failure: 'insufficient-credits' },
             services[2]
         ],
-        booster: { owned: true, price: 75_000, servicePlanetId: 'lactozis-7c', servicePlanetName: 'Lactozis-7C', available: false, affordable: false, failure: 'already-owned' }
+        booster: { owned: true, price: 75_000, available: false, affordable: false, failure: 'already-owned' }
     }));
     assert.equal(textOf(repairCard, '.shipyard-repair-hp'), `${displayLabels.shipyardHull}: 100 / 100`, 'the repair readout refreshes immediately');
     assert.equal(shipyardRepairButton.disabled, true, 'a full hull disables repair');

@@ -89,6 +89,34 @@ test('OAuth return context fields must agree with the originating screen', () =>
     assert.equal(port.take(), null);
 });
 
+test('OAuth return restores each validated S-06 timeout result once', () => {
+    for (const [outcome, credits] of [['imprisonment', 999_999], ['freedom', 1_000_000]]) {
+        const storage = sessionStorageFixture();
+        const port = createBrowserAuthReturnPort(storage);
+        const snapshot = {
+            ...initialGameState,
+            credits,
+            clock: { ...initialGameState.clock, activeElapsedMs: initialGameState.clock.budgetMs },
+            terminalResult: {
+                runId: initialGameState.runId,
+                outcome,
+                activeElapsedMs: initialGameState.clock.budgetMs,
+                finalCredits: credits
+            }
+        };
+        const terminalResult = {
+            ...snapshot.terminalResult,
+            cargoValue: 0,
+            shipUpgradeSpend: snapshot.shipUpgradeSpend,
+            facilityUpgradeSpend: snapshot.facilityUpgradeSpend,
+            finalScore: credits
+        };
+        assert.equal(port.save({ snapshot, telemetryContext: null, origin: 'game-over', terminalResult }), true);
+        assert.equal(port.take().terminalResult.outcome, outcome);
+        assert.equal(port.take(), null);
+    }
+});
+
 test('telemetry return restores the original session identity and duration without another start event', async () => {
     const sent = [];
     let now = 1000;

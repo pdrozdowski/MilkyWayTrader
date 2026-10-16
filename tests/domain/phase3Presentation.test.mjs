@@ -6,6 +6,13 @@ import { projectLandedShipyard } from '../../src/game/application/landedShipyard
 import { createResultDelivery } from '../../src/game/application/results/resultDelivery.ts';
 import { runStatusIsVisible } from '../../src/ui/adapters/runStatusAdapter.ts';
 import { createBrowserGameOverReturnPort } from '../../src/ui/adapters/browserGameOverReturn.ts';
+import { terminalOutcomeBackgroundKey } from '../../src/game/application/results/terminalOutcomePresentation.ts';
+
+test('terminal outcomes select the matching end-game background', () => {
+    assert.equal(terminalOutcomeBackgroundKey('freedom'), 'game-over:debt-paid');
+    assert.equal(terminalOutcomeBackgroundKey('imprisonment'), 'game-over:debt-due');
+    assert.equal(terminalOutcomeBackgroundKey('death'), 'game-over:destroyed-ship');
+});
 
 test('health presentation has inclusive 70/69/30/29 semantic boundaries', () => {
     const band = currentHitPoints => projectRunStatus({
@@ -57,6 +64,19 @@ test('an OAuth return restores an end-game result exactly once', () => {
     returnPort.save(terminalResult);
     assert.deepEqual(returnPort.take(), terminalResult);
     assert.equal(returnPort.take(), null, 'the restored result must not reopen Game Over on a later reload');
+});
+
+test('end-game OAuth return accepts each S-06 outcome exactly once', () => {
+    const values = new Map();
+    const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) };
+    const port = createBrowserGameOverReturnPort(storage);
+    for (const outcome of ['death', 'freedom', 'imprisonment']) {
+        const result = { runId: initialGameState.runId, outcome, activeElapsedMs: 5_300, finalCredits: 456, cargoValue: 0, shipUpgradeSpend: 0, facilityUpgradeSpend: 0, finalScore: 456 };
+        port.save(result);
+        assert.deepEqual(port.take(), result);
+    }
+    values.set('milky-way-trader.game-over-return', JSON.stringify({ runId: initialGameState.runId, outcome: 'abandoned', activeElapsedMs: 1, finalCredits: 0, cargoValue: 0, shipUpgradeSpend: 0, facilityUpgradeSpend: 0, finalScore: 0 }));
+    assert.equal(port.take(), null);
 });
 
 test('result delivery persists once, then retries the same immutable terminal result only after failure', async () => {

@@ -10,12 +10,14 @@ export interface LandedFacilityProjectionInput
 {
     readonly commodityId: SerotonCommodityId;
     readonly quantity: number;
+    readonly missing?: boolean;
 }
 
 export interface LandedFacilityProjectionDefinition
 {
     readonly id: PlanetFacilityId;
     readonly label: string;
+    readonly initialLevelsByPlanet: Readonly<Record<PlanetId, number>>;
     readonly maxLevel: number;
     readonly outputCommodityId: SerotonCommodityId;
     readonly outputByLevel: readonly number[];
@@ -33,7 +35,6 @@ export interface LandedFacilityProjectionCatalogue
 {
     readonly definitions: readonly LandedFacilityProjectionDefinition[];
     readonly modifierOf: (facilityId: PlanetFacilityId, planetId: PlanetId) => LandedFacilityProjectionModifier;
-    readonly initialLevelOf: (facilityId: PlanetFacilityId, planetId: PlanetId) => number;
 }
 
 export type LandedFacilityActionKind = LandedFacilityInvestmentAction | 'max';
@@ -127,8 +128,12 @@ export function projectLandedFacilities (
         if (!facility) throw new Error(`Missing landed facility ${definition.id}.`);
         const modifier = catalogue.modifierOf(definition.id, market.planetId);
         const outputPerCycle = facility.level > 0 ? Math.round(definition.outputByLevel[facility.level - 1] * modifier.outputMultiplier) : 0;
+        const stockByCommodityId = new Map(market.commodityStocks.map(stock => [stock.commodityId, stock.stock]));
         const inputsPerCycle: LandedFacilityProjectionInput[] = facility.level > 0
-            ? definition.inputsPerOutput.map(input => Object.freeze({ commodityId: input.commodityId, quantity: input.quantity * outputPerCycle }))
+            ? definition.inputsPerOutput.map(input => {
+                const quantity = input.quantity * outputPerCycle;
+                return Object.freeze({ commodityId: input.commodityId, quantity, missing: (stockByCommodityId.get(input.commodityId) ?? 0) < quantity });
+            })
             : [];
         const buildOutputPerCycle = Math.round(definition.outputByLevel[0] * modifier.outputMultiplier);
         const buildInputsPerCycle = definition.inputsPerOutput.map(input => Object.freeze({
@@ -145,6 +150,7 @@ export function projectLandedFacilities (
             facilityId: definition.id,
             label: definition.label,
             level: facility.level,
+            initialLevel: definition.initialLevelsByPlanet[market.planetId],
             maxLevel: definition.maxLevel,
             status: facility.status,
             outputCommodityId: definition.outputCommodityId,
@@ -188,6 +194,9 @@ export function landedCommodityFlow (snapshot: LandedFacilitiesSnapshot, commodi
         for (const input of facility.inputsPerCycle) {
             if (input.commodityId === commodityId) consumptionPerSecond += input.quantity;
         }
+    }
+    if (commodityId === 'spaceRation') {
+        consumptionPerSecond += snapshot.facilities.reduce((total, facility) => total + facility.level, 0);
     }
     return Object.freeze({ productionPerSecond, consumptionPerSecond, netPerSecond: productionPerSecond - consumptionPerSecond });
 }

@@ -2,6 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { displayLabels } from '../../src/ui/components/displayLabels';
 import { resultLabels } from '../../src/game/application/results/resultLabels';
 import type { GameStateFixtureOptions } from './gameStateFixture';
+import { completeGameIntro } from './gameStateFixture';
 import { test } from './testSessionFixture';
 
 const clockName = (state: typeof displayLabels.clockRunning | typeof displayLabels.clockPaused): RegExp => new RegExp(`^\\d{2}:\\d{2} · ${state}$`);
@@ -59,12 +60,29 @@ async function expectSavedDeathResult (runStatus: Locator, resultStatus: Locator
 async function startRun (page: Page): Promise<void>
 {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('button', { name: 'New Game', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'New Game', exact: true })).toBeVisible({ timeout: 120_000 });
+    await expectCanvasToFillAppViewport(page);
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
+    await completeGameIntro(page);
     await expect(page.getByLabel('Run status')).toBeVisible();
     await expect(runStatusClock(page)).toBeVisible();
+    await expectCanvasToFillAppViewport(page);
 }
 
+async function expectCanvasToFillAppViewport (page: Page): Promise<void>
+{
+    const appBounds = await page.locator('#app').boundingBox();
+    const canvasBounds = await page.locator('#game-container canvas').boundingBox();
+    if (!appBounds || !canvasBounds) throw new Error('The app viewport and game canvas must both be visible.');
+    expect(Math.abs(canvasBounds.x - appBounds.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(canvasBounds.y - appBounds.y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(canvasBounds.width - appBounds.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(canvasBounds.height - appBounds.height)).toBeLessThanOrEqual(1);
+}
+
+// Player-visible failure: a shortened canvas leaves a black band below the game and main menu.
+// Lower-level tests cannot detect browser layout sizing against the live viewport.
+// This uniquely verifies that Phaser fills the visible app area in the menu, during play, and after returning to the menu.
 test('an anonymous player can start a new game, pause from the menu, resume, and return to the main menu', async ({ page }) => {
     await startRun(page);
 
@@ -79,6 +97,7 @@ test('an anonymous player can start a new game, pause from the menu, resume, and
     await page.getByRole('button', { name: 'Return to Main Menu' }).click();
     await expect(page.getByLabel('Main menu')).toBeVisible();
     await expect(page.getByLabel('Run status')).toBeHidden();
+    await expectCanvasToFillAppViewport(page);
 });
 
 // Player-visible risk: normal New Game startup or real planet landing can fail, preventing a player from reaching planetary services.
@@ -87,11 +106,67 @@ test('an anonymous player can start a new game, pause from the menu, resume, and
 test('an anonymous player can start a new game and land on Seroton', async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
+    await completeGameIntro(page);
     await expect(page.getByLabel('Run status')).toBeVisible();
     await page.keyboard.press('d');
     await expect(page.getByRole('dialog', { name: 'Debug menu' })).toBeVisible();
     await page.getByRole('button', { name: 'Teleport to Seroton', exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Landed status' })).toBeVisible();
+});
+
+// Player-visible failure: finishing the story and debt popup could fail to start a timed run, deliver its result, or leave the result screen without a reliable exit.
+// Lower-level tests cannot verify real story-button events, the DOM-to-Phaser start path, timeout scene transition, and result-screen navigation together in Chromium.
+// This uniquely verifies the debug cash and clock controls through the real browser UI and reaches the winning timeout balance before following the result journey.
+test('an anonymous player completes the story, reaches a timed result, and returns to the main menu', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: 'New Game', exact: true }).click();
+    const introduction = page.getByRole('dialog', { name: displayLabels.gameIntroTitle });
+    const next = page.getByRole('button', { name: displayLabels.gameIntroNext, exact: true });
+    for (let slide = 0; slide < 4; slide += 1) {
+        await expect(next).toBeVisible();
+        await next.click();
+    }
+    await expect(introduction.getByText(displayLabels.gameIntroDebtGoal)).toBeVisible();
+    await introduction.getByRole('button', { name: displayLabels.gameIntroStart, exact: true }).click();
+    await expect(page.getByLabel('Run status')).toBeVisible();
+    await page.keyboard.press('d');
+    const debugMenu = page.getByRole('dialog', { name: 'Debug menu' });
+    await expect(debugMenu).toBeVisible();
+    const credits = page.getByLabel('Run status').getByLabel('Credits', { exact: true });
+    const startingCash = Number((await credits.innerText()).replace(/,/g, ''));
+    const addCash = debugMenu.getByRole('button', { name: displayLabels.debugAddCash, exact: true });
+    for (let addition = 0; addition < 4; addition += 1) {
+        if (addition > 0) {
+            await page.keyboard.press('d');
+            await expect(debugMenu).toBeVisible();
+        }
+        await addCash.click();
+        await expect(debugMenu).toBeHidden();
+    }
+    await expect.poll(async () => Number((await credits.innerText()).replace(/,/g, '')) - startingCash).toBe(1_000_000);
+    const cashAtTimeout = Number((await credits.innerText()).replace(/,/g, ''));
+    expect(cashAtTimeout).toBeGreaterThan(1_000_000);
+    await page.keyboard.press('d');
+    await expect(debugMenu).toBeVisible();
+    await debugMenu.getByRole('button', { name: displayLabels.debugThreeSecondsRemaining, exact: true }).click();
+    await expect(debugMenu).toBeHidden();
+
+    const results = page.locator('#game-over-results');
+    await expect(results).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel('Run status')).toBeHidden();
+    await expect(page.getByLabel('Result delivery status')).toContainText(resultLabels.unsigned);
+    await expect(results).toContainText(resultLabels.finalScore);
+    await expect(results.locator('#game-over-final-cash')).toHaveText(cashAtTimeout.toLocaleString('en-US'));
+    await expect(page.getByRole('button', { name: displayLabels.gameOverMainMenu, exact: true })).toBeVisible();
+
+    const canvas = page.locator('#game-container canvas');
+    const canvasBounds = await canvas.boundingBox();
+    if (!canvasBounds) throw new Error('The game canvas was not visible at the timed result.');
+    await page.mouse.click(canvasBounds.x + 8, canvasBounds.y + 8);
+    await expect(results).toBeVisible();
+    await page.getByRole('button', { name: displayLabels.gameOverMainMenu, exact: true }).click();
+    await expect(page.getByLabel('Main menu')).toBeVisible();
+    await expect(results).toBeHidden();
 });
 
 test.describe('authenticated trading journey', () => {
@@ -166,9 +241,13 @@ test.describe('authenticated trading journey', () => {
     // Lower-level tests cannot prove browser input, Phaser event routing, DOM HP projection, the timed scene transition, and authenticated local Supabase persistence together.
     // This uniquely verifies that an accessible browser control drives all of those real boundaries without direct state mutation.
     test('a signed-in player reaches a retained death result through bounded live-asteroid collisions', async ({ page, testSession }) => {
+        test.setTimeout(240_000);
         expect(testSession.mode).toBe('authenticated');
         await page.goto('/', { waitUntil: 'domcontentloaded' });
-        await page.getByRole('button', { name: 'New Game', exact: true }).click();
+        const newGame = page.getByRole('button', { name: 'New Game', exact: true });
+        await expect(newGame).toBeVisible({ timeout: 180_000 });
+        await newGame.click();
+        await completeGameIntro(page);
         const runStatus = page.getByLabel('Run status');
         await expect(runStatus).toBeVisible();
         const healthBar = runStatus.getByRole('progressbar', { name: /HP/ });

@@ -48,6 +48,8 @@ export class Preloader extends Scene
         this.load.image('control:fire', 'button_fire.png');
         this.load.image('control:boost', 'button_boost.png');
         this.load.image('game-over:destroyed-ship', 'the_end_ship_destroyed.png');
+        this.load.image('game-over:debt-paid', 'the_end_debt_payed.png');
+        this.load.image('game-over:debt-due', 'the_end_debt_due.png');
         this.load.image('background:nebula', 'nebula_tile.png');
         this.load.image('background:starfield', 'starfield_tile.png');
         loadObjectAssets(this);

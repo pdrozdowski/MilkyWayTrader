@@ -70,7 +70,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - The end-game screen provides a button that returns the player to the main menu.
 - Final score rounds the combined amount once to the nearest whole credit. Cargo value is the sum of each carried stack's total acquisition cost.
 - Zero HP ends the run immediately with a death outcome.
-- Confirmed abandonment ends the run immediately with an abandonment outcome.
+- Confirmed abandonment ends the run immediately with an abandonment outcome; its save and result handoff belongs to S-11.
 
 ### US-02: Player navigates to a moving planet
 
@@ -88,7 +88,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - **Given** the player has landed on a planet with game time paused
 - **When** the player visits the market or shipyard
-- **Then** the player can trade, repair, and buy that planet's available upgrades while choosing whether active game time progresses
+- **Then** the player can trade, repair, and buy available ship upgrades at any planetary shipyard while choosing whether active game time progresses
 
 #### Acceptance Criteria
 
@@ -99,7 +99,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - The market shows local stock and current prices only after landing.
 - Transactions immediately update stock, cargo, credits, and subsequent prices.
 - Repairs are purchased in selectable increments of 10% maximum HP.
-- Seroton offers cargo upgrades, Lactozis-7C offers engine upgrades and the booster unlock, and Maslo-Prime offers weapon upgrades.
+- Every planetary shipyard offers cargo, engine, and weapon upgrades and the one-time booster unlock.
 
 ### US-04: Player survives hazards and salvages cargo
 
@@ -189,7 +189,7 @@ The primary persona is a casual browser player who wants a self-contained sessio
 - FR-006: A signed-in player can continue a saved active game. Priority: must-have
 - FR-007: The game can resolve the player's debt outcome when the time limit expires. Priority: must-have
 - FR-008: The game can end a run immediately when the player's ship is destroyed. Priority: must-have
-- FR-009: A player can view the outcome and final cash score of a completed run. Priority: must-have
+- FR-009: A player can view the outcome and final composite score of a completed run. Priority: must-have
 
 ### Solar system and flight
 
@@ -284,7 +284,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 
 ### Clock and outcomes
 
-- BR-001: A new run starts in orbit around Seroton with full HP, cargo capacity of 40 units, a level-one engine at 100% base speed, a level-one weapon that fires one projectile per shot, and a locked booster.
+- BR-001: A new run starts in orbit around Seroton with full HP, cargo capacity of 50 units, a level-one engine at 100% base speed, a level-one weapon that fires one projectile per shot, and a locked booster.
 - BR-001a: Selecting New Game opens four full-screen illustrated story screens in sequence. Clicking anywhere on a story screen or its Next button advances to the next screen. After the fourth screen, a separate popup states that the debt is 1,000,000 credits; the amount is not included in the artwork. Closing the popup starts the run. No run or active-time clock starts during the introduction or popup.
 - BR-002: A new run begins with 30:00 of active game time remaining and the clock state set to running.
 - BR-003: Remaining active time is continuously visible whenever an active run is open.
@@ -318,7 +318,7 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-033: Landing is available only while the ship is in the planet's orbit zone.
 - BR-034: Launching places the ship back into the planet's orbit zone.
 - BR-035: Travel uses direct ship control and has no destination-selection or automated-travel sequence.
-- BR-036: The booster is initially locked and can be purchased once for 75,000 credits at the Lactozis-7C shipyard, independently of the engine upgrade level.
+- BR-036: The booster is initially locked and can be purchased once for 75,000 credits at any planetary shipyard, independently of the engine upgrade level.
 - BR-037: An unlocked booster requires active thrust, reaches five times the level-one base speed regardless of engine upgrades, consumes no resource, and prevents firing while active; boosted speed makes collision avoidance and maneuvering more difficult.
 
 ### Damage, combat, and asteroids
@@ -356,15 +356,15 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-070: Live market stock, prices, shipyard services, and facilities are unavailable remotely.
 - BR-071: Repairs are purchased in player-selected increments of 10% maximum HP at a configured fixed cost per increment.
 - BR-072: A repair cannot exceed missing HP or available credits.
-- BR-073: Seroton sells cargo-capacity upgrades with capacities of 40 units at level one, 50 at level two, 65 at level three, 85 at level four, and 110 at level five.
-- BR-074: Lactozis-7C sells engine upgrades with normal maximum speeds of 100% at level one, 110% at level two, 120% at level three, 135% at level four, and 150% at level five.
-- BR-075: Maslo-Prime sells weapon upgrades from level one through level ten; each level adds one projectile to each shot.
-- BR-076: Cargo, engine, and weapon upgrades are independent progression paths sold at their respective planets; buying a level in one path does not require a level in another, and each path exposes its next level only after the current level is purchased.
+- BR-073: Every planetary shipyard sells cargo-capacity upgrades with capacities of 50 units at level one, 100 at level two, 150 at level three, 220 at level four, and 300 at level five.
+- BR-074: Every planetary shipyard sells engine upgrades with normal maximum speeds of 100% at level one, 110% at level two, 120% at level three, 135% at level four, and 150% at level five.
+- BR-075: Every planetary shipyard sells weapon upgrades from level one through level ten; each level adds one projectile to each shot.
+- BR-076: Cargo, engine, and weapon upgrades are independent progression paths available at every planetary shipyard; buying a level in one path does not require a level in another, and each path exposes its next level only after the current level is purchased.
 - BR-077: Ship upgrade prices are fixed as follows; each price is paid to reach the listed level.
 
 | Upgrade path | Level 2 | Level 3 | Level 4 | Level 5 | Level 6 | Level 7 | Level 8 | Level 9 | Level 10 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Cargo capacity | 15,000 cr | 30,000 cr | 60,000 cr | 120,000 cr | — | — | — | — | — |
+| Cargo capacity | 15,000 cr | 20,000 cr | 35,000 cr | 50,000 cr | — | — | — | — | — |
 | Engine speed | 20,000 cr | 40,000 cr | 80,000 cr | 160,000 cr | — | — | — | — | — |
 | Weapon system | 20,000 cr | 30,000 cr | 40,000 cr | 50,000 cr | 60,000 cr | 70,000 cr | 80,000 cr | 90,000 cr | 100,000 cr |
 - BR-078: Seroton maintains independent stock for supplies, alloys, and medicines; other planetary markets are outside the current slice.
@@ -389,6 +389,16 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-097: An operating facility changes local commodity supply or demand through its production, consumption, or transformation activity.
 - BR-098: A planet's characteristics adjust the effectiveness of each local facility.
 - BR-099: A facility operates only when its required resources are available.
+- BR-099a: Each new run initializes facility levels by planet as follows; every listed facility has a maximum level of 3.
+
+| Facility | Seroton | Lactozis-7C | Maslo-Prime | Maximum level |
+| --- | ---: | ---: | ---: | ---: |
+| Dairy Farm | 0 | 0 | 1 | 3 |
+| Grain Farm | 0 | 1 | 0 | 3 |
+| Cheese Factory | 1 | 0 | 0 | 3 |
+| Bakery | 0 | 0 | 0 | 3 |
+| Food Processor | 0 | 0 | 0 | 3 |
+- BR-099b: At each planetary facility cycle, the market consumes Space Rations equal to the sum of all facility levels on that planet; the stock cannot fall below zero from this consumption.
 
 ### Authentication, persistence, and scores
 
@@ -411,7 +421,6 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-116: Clearing personal history removes every result from the signed-in player's private history and requires the player to confirm the action; global results and unrelated player data remain unchanged.
 - BR-117: The end-game result presents each final-score component and the label `YOUR FINAL SCORE IS:` followed by the rounded score.
 - BR-118: Anonymous and signed-in players can view the global high-score table, but only signed-in players can submit results or access or change their personal result history.
-
 ## Access Control
 
 The game is available anonymously without creating an account. Anonymous players can complete the full gameplay loop and view global high scores, but their active runs and results are not persisted.

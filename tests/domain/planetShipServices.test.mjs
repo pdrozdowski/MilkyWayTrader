@@ -8,7 +8,6 @@ import {
     quoteShipBooster,
     quoteShipRepair,
     quoteShipUpgrade,
-    shipBoosterServicePlanetId,
     shipServiceDefinitions
 } from '../../src/game/application/planetShipServices.ts';
 import { GameStateProvider } from '../../src/game/application/gameStateProvider.ts';
@@ -42,7 +41,7 @@ const levelOf = (state, serviceId) => serviceId === 'cargo'
     : serviceId === 'engine' ? state.shipStatus.engineLevel : state.shipStatus.weaponLevel;
 
 const ladder = [
-    ['cargo', 'seroton', [15_000, 30_000, 60_000, 120_000]],
+    ['cargo', 'seroton', [15_000, 20_000, 35_000, 50_000]],
     ['engine', 'lactozis-7c', [20_000, 40_000, 80_000, 160_000]],
     ['weaponary', 'maslo-prime', [20_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000]]
 ];
@@ -53,22 +52,18 @@ const capabilityTables = {
     weaponary: weaponProjectileCountByLevel
 };
 
-test('each ship-service path is sold on exactly one planet with its configured maximum level', () => {
+test('each ship-service path is available at every planet with its configured maximum level', () => {
     assert.deepEqual(shipServiceDefinitions.map(definition => definition.id), ['cargo', 'engine', 'weaponary']);
-    assert.deepEqual(shipServiceDefinitions.map(definition => definition.servicePlanetId), ['seroton', 'lactozis-7c', 'maslo-prime']);
-    assert.equal(new Set(shipServiceDefinitions.map(definition => definition.servicePlanetId)).size, shipServiceDefinitions.length);
-    assert.equal(shipBoosterServicePlanetId, 'lactozis-7c');
 
-    for (const [serviceId, planetId, prices] of ladder) {
+    for (const [serviceId, , prices] of ladder) {
         const definition = shipServiceDefinitions.find(candidate => candidate.id === serviceId);
-        assert.equal(definition.servicePlanetId, planetId, serviceId);
         assert.deepEqual(definition.upgradePrices, prices, serviceId);
         assert.equal(definition.maximumLevel, prices.length + 1, serviceId);
     }
 });
 
 test('the catalogue publishes every configured level of every progression path', () => {
-    assert.deepEqual(cargoCapacityByLevel, { 1: 40, 2: 50, 3: 65, 4: 85, 5: 110 });
+    assert.deepEqual(cargoCapacityByLevel, { 1: 50, 2: 100, 3: 150, 4: 220, 5: 300 });
     assert.deepEqual(engineNormalSpeedPercentByLevel, { 1: 100, 2: 110, 3: 120, 4: 135, 5: 150 });
     assert.deepEqual(
         Object.values(weaponProjectileCountByLevel),
@@ -156,7 +151,7 @@ test('each upgrade path walks its own price ladder one level at a time', () => {
     }
 });
 
-test('upgrade quotes reject unknown, unlanded, foreign-planet and unaffordable requests', () => {
+test('upgrade quotes reject unknown, unlanded and unaffordable requests while serving every planet', () => {
     assert.equal(quoteShipUpgrade(landedOn('seroton'), 'unknownService').failure, 'unknown-service');
     const unknown = landedOn('seroton');
     assert.equal(applyShipUpgrade(unknown, 'unknownService'), unknown);
@@ -164,13 +159,10 @@ test('upgrade quotes reject unknown, unlanded, foreign-planet and unaffordable r
     for (const [serviceId, planetId, prices] of ladder) {
         assert.equal(quoteShipUpgrade(clone(initialGameState), serviceId).failure, 'not-landed', serviceId);
 
-        for (const foreignPlanetId of ['seroton', 'lactozis-7c', 'maslo-prime']) {
-            if (foreignPlanetId === planetId) continue;
-            const quote = quoteShipUpgrade(landedOn(foreignPlanetId), serviceId);
-            assert.equal(quote.failure, 'wrong-planet', `${serviceId}@${foreignPlanetId}`);
-            assert.equal(quote.price, prices[0], `${serviceId} still quotes its next price off-world`);
-            const foreign = landedOn(foreignPlanetId);
-            assert.equal(applyShipUpgrade(foreign, serviceId), foreign, `${serviceId}@${foreignPlanetId}`);
+        for (const anyPlanetId of ['seroton', 'lactozis-7c', 'maslo-prime']) {
+            const quote = quoteShipUpgrade(landedOn(anyPlanetId, prices[0]), serviceId);
+            assert.equal(quote.failure, null, `${serviceId}@${anyPlanetId}`);
+            assert.equal(quote.price, prices[0], `${serviceId} price at ${anyPlanetId}`);
         }
 
         const affordable = quoteShipUpgrade(landedOn(planetId, prices[0]), serviceId);
@@ -200,10 +192,11 @@ test('an upgrade touches only its own path, the credits and the landed planet re
     assert.deepEqual(after.planets, before.planets);
 });
 
-test('the booster is a one-time Lactozis-7C purchase independent of the engine level', () => {
+test('the booster is a one-time purchase at every planet, independent of the engine level', () => {
     assert.equal(quoteShipBooster(clone(initialGameState)).failure, 'not-landed');
-    assert.equal(quoteShipBooster(landedOn('seroton')).failure, 'wrong-planet');
-    assert.equal(quoteShipBooster(landedOn('maslo-prime')).failure, 'wrong-planet');
+    for (const planetId of ['seroton', 'lactozis-7c', 'maslo-prime']) {
+        assert.equal(quoteShipBooster(landedOn(planetId, shipBoosterCost)).failure, null, planetId);
+    }
 
     const unaffordable = quoteShipBooster(landedOn('lactozis-7c', shipBoosterCost - 1));
     assert.equal(unaffordable.failure, 'insufficient-credits');
@@ -230,10 +223,10 @@ test('the booster is a one-time Lactozis-7C purchase independent of the engine l
 });
 
 test('rejected ship-service commands return the identical aggregate through the provider', () => {
-    const provider = new GameStateProvider(landedOn('seroton'));
+    const provider = new GameStateProvider(landedOn('seroton', 1));
     const before = provider.snapshot();
     const attempted = provider.update(state => applyShipUpgrade(state, 'engine'));
-    assert.deepEqual(attempted, before, 'a foreign-planet upgrade publishes the untouched aggregate');
+    assert.deepEqual(attempted, before, 'an unaffordable upgrade publishes the untouched aggregate');
     assert.equal(attempted.shipUpgradeSpend, before.shipUpgradeSpend);
     assert.equal(attempted.shipStatus.engineLevel, 1);
     assert.equal(attempted.credits, before.credits);
@@ -269,7 +262,7 @@ test('the debug level command raises one path per call without charging or requi
         'a debug upgrade shows up in the landed shipyard view immediately');
 });
 
-test('the shipyard projection reports landed context, repair status and one local path per planet', () => {
+test('the shipyard projection reports landed context, repair status and every path on each planet', () => {
     const unlanded = projectLandedShipyard(clone(initialGameState));
     assert.equal(unlanded.visible, false);
     assert.equal(unlanded.eligible, false);
@@ -289,7 +282,7 @@ test('the shipyard projection reports landed context, repair status and one loca
         assert.equal(snapshot.planetName, initialGameState.planets.find(candidate => candidate.id === planetId).name);
         assert.equal(snapshot.credits, initialGameState.credits);
         assert.equal(snapshot.cargoUsed, 0);
-        assert.equal(snapshot.cargoCapacity, 40);
+        assert.equal(snapshot.cargoCapacity, 50);
         assert.deepEqual(snapshot.clock, { remainingSeconds: 1800, runState: 'PAUSED', playerPaused: true });
 
         assert.equal(snapshot.repair.currentHitPoints, 75);
@@ -300,7 +293,7 @@ test('the shipyard projection reports landed context, repair status and one loca
 
         assert.deepEqual(snapshot.services.map(row => row.serviceId), ['cargo', 'engine', 'weaponary']);
         assert.deepEqual(snapshot.services.map(row => row.label), ['Cargo Capacity', 'Engine System', 'Weapon System']);
-        assert.deepEqual(snapshot.services.map(row => row.available), shipServiceDefinitions.map(definition => definition.servicePlanetId === planetId));
+        assert.deepEqual(snapshot.services.map(row => row.available), [true, true, true]);
         for (const row of snapshot.services) {
             const definition = shipServiceDefinitions.find(candidate => candidate.id === row.serviceId);
             assert.equal(row.level, 1);
@@ -308,19 +301,15 @@ test('the shipyard projection reports landed context, repair status and one loca
             assert.equal(row.maximum, false);
             assert.equal(row.currentCapability, capabilityTables[row.serviceId][1], row.serviceId);
             assert.equal(row.maximumCapability, capabilityTables[row.serviceId][definition.maximumLevel], row.serviceId);
-            assert.equal(row.servicePlanetId, definition.servicePlanetId);
-            assert.equal(row.servicePlanetName, initialGameState.planets.find(candidate => candidate.id === definition.servicePlanetId).name);
             assert.equal(row.price, definition.upgradePrices[0]);
-            assert.equal(row.failure, row.available ? null : 'wrong-planet');
-            assert.equal(row.affordable, row.available);
+            assert.equal(row.failure, null);
+            assert.equal(row.affordable, true);
         }
 
         assert.equal(snapshot.booster.owned, false);
         assert.equal(snapshot.booster.price, shipBoosterCost);
-        assert.equal(snapshot.booster.servicePlanetId, 'lactozis-7c');
-        assert.equal(snapshot.booster.servicePlanetName, 'Lactozis-7C');
-        assert.equal(snapshot.booster.available, planetId === 'lactozis-7c');
-        assert.equal(snapshot.booster.affordable, planetId === 'lactozis-7c');
+        assert.equal(snapshot.booster.available, true);
+        assert.equal(snapshot.booster.affordable, true);
         assert.equal(snapshot.services.find(row => row.serviceId === serviceId).price, price);
     }
 
@@ -359,6 +348,6 @@ test('the shipyard projection quotes each system capability for every level', ()
         }
     }
     const cargo = projectLandedShipyard({ ...landedOn('seroton'), shipStatus: { ...clone(initialGameState).shipStatus, cargoLevel: 3 } }).services.find(row => row.serviceId === 'cargo');
-    assert.equal(cargo.currentCapability, 65, 'a mid-level cargo hold reports its own capacity');
-    assert.equal(cargo.maximumCapability, 110);
+    assert.equal(cargo.currentCapability, 150, 'a mid-level cargo hold reports its own capacity');
+    assert.equal(cargo.maximumCapability, 300);
 });

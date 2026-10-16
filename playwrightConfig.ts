@@ -6,8 +6,9 @@ export default defineConfig({
     fullyParallel: false,
     // Phaser startup is the limiting resource; this deliberately small journey suite runs serially.
     workers: 1,
-    timeout: 60_000,
-    globalTimeout: 15 * 60_000,
+    // Browser startup and asset loading can exceed one minute across the full serial Phaser suite.
+    timeout: 120_000,
+    globalTimeout: 20 * 60_000,
     forbidOnly: Boolean(process.env.CI),
     retries: 0,
     reporter: [

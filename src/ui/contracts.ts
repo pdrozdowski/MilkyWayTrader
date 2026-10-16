@@ -3,6 +3,11 @@ export interface UiHandle
     destroy(): void;
 }
 
+export interface GameIntroPort
+{
+    startGame(): void;
+}
+
 export type { RunStatusSnapshot } from '../game/application/runStatus';
 export type { LandedMarketSnapshot as LandingStatusSnapshot } from '../game/application/landedMarket';
 export type { LandedFacilitiesSnapshot } from '../game/application/landedFacilities';

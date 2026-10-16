@@ -3,6 +3,7 @@ import type { ResultStorePort } from '../application/results/resultStore';
 import { createResultDelivery } from '../application/results/resultDelivery';
 import type { TerminalScoreResult } from '../application/results/terminalScoreResult';
 import { mainMenuBackgroundTransform } from './mainMenuBackground';
+import { terminalOutcomeBackgroundKey } from '../application/results/terminalOutcomePresentation';
 
 export class GameOver extends Scene
 {
@@ -22,12 +23,16 @@ export class GameOver extends Scene
         this.camera = this.cameras.main;
         this.camera.setBackgroundColor(0x000000);
 
-        this.background = this.add.image(0, 0, 'game-over:destroyed-ship');
+        this.background = this.add.image(0, 0, terminalOutcomeBackgroundKey(terminalResult.outcome));
         this.layoutBackground();
         this.scale.on('resize', this.layoutBackground, this);
-        this.asteroids = [this.createAsteroid(), this.createAsteroid()];
-        this.flyAsteroid(this.asteroids[0], true);
-        this.flyAsteroid(this.asteroids[1], false);
+        if (terminalResult.outcome === 'death') {
+            this.asteroids = [this.createAsteroid(), this.createAsteroid()];
+            this.flyAsteroid(this.asteroids[0], true);
+            this.flyAsteroid(this.asteroids[1], false);
+        }
+        const returnToMainMenu = (): void => { this.scene.start('MainMenu'); };
+        this.game.events.on('game-over-main-menu', returnToMainMenu);
         this.game.events.emit('game-over-open', terminalResult);
         const store = this.registry.get('resultStore') as ResultStorePort | undefined;
         const delivery = createResultDelivery(store, terminalResult, result => {
@@ -37,15 +42,13 @@ export class GameOver extends Scene
         this.game.events.on('game-over-retry', retryPersistence);
         this.events.once('shutdown', () => {
             this.game.events.off('game-over-retry', retryPersistence);
+            this.game.events.off('game-over-main-menu', returnToMainMenu);
             this.scale.off('resize', this.layoutBackground, this);
             this.asteroids = [];
             this.game.events.emit('game-over-persistence', null);
             this.game.events.emit('game-over-close');
         });
         delivery.start();
-        this.input.on('pointerdown', (_pointer: Phaser.Input.Pointer, _x: number, _y: number) => {
-            this.scene.start('MainMenu');
-        });
     }
 
     private readonly layoutBackground = (): void =>

@@ -1,4 +1,4 @@
-import { calculateTerminalScore } from '../../domain/finalScore.ts';
+import { calculateTerminalScore, DEBT_SCORE_THRESHOLD } from '../../domain/finalScore.ts';
 import type { GameStateSnapshot } from '../../state/gameStateSnapshot.ts';
 import type { TerminalResultState } from '../../state/terminalResultState.ts';
 
@@ -8,6 +8,19 @@ export interface TerminalScoreResult extends TerminalResultState
     readonly shipUpgradeSpend: number;
     readonly facilityUpgradeSpend: number;
     readonly finalScore: number;
+}
+
+export type TimeoutOutcome = 'freedom' | 'imprisonment';
+
+export function classifyTimeoutOutcome (state: GameStateSnapshot): TimeoutOutcome
+{
+    const score = calculateTerminalScore({
+        endingCash: state.credits,
+        cargo: state.cargo,
+        shipUpgradeSpend: state.shipUpgradeSpend,
+        facilityUpgradeSpend: state.facilityUpgradeSpend
+    });
+    return score.finalScore >= DEBT_SCORE_THRESHOLD ? 'freedom' : 'imprisonment';
 }
 
 /** Combines authoritative terminal facts with the shared score for delivery and presentation. */

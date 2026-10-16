@@ -4,13 +4,19 @@ import { decodeGameState, encodeGameState } from '../../src/game/application/gam
 import { GameStateProvider } from '../../src/game/application/gameStateProvider.ts';
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
 import { advanceGameClock, pauseGameClock, resumeGameClock, setGameClockPlayerPaused } from '../../src/game/mechanics/clock/gameClock.ts';
-import { advanceGameSimulation } from '../../src/game/mechanics/gameSimulation.ts';
+import { advanceGameSimulation as simulateGame } from '../../src/game/mechanics/gameSimulation.ts';
+import { classifyTimeoutOutcome } from '../../src/game/application/results/terminalScoreResult.ts';
 import { projectRunStatus } from '../../src/game/application/runStatus.ts';
 import { applyLandedTrade, quoteLandedTrade } from '../../src/game/application/serotonMarket.ts';
 import { createLandingStatusPort } from '../../src/ui/adapters/landingStatusAdapter.ts';
 import { createCargoTransferPort, cargoFullWarning, cargoFullWarningDurationMs } from '../../src/ui/adapters/cargoTransferAdapter.ts';
 
 const clone = value => JSON.parse(JSON.stringify(value));
+
+function advanceGameSimulation (state, input, deltaMs, options = {})
+{
+    return simulateGame(state, input, deltaMs, { classifyTimeout: classifyTimeoutOutcome, ...options });
+}
 
 test('provider reads hand out the frozen authoritative state and publishes valid replacements', () => {
     const provider = new GameStateProvider(initialGameState);
@@ -55,29 +61,13 @@ test('the write boundary rejects a malformed reducer result and keeps the previo
 
 test('a new run starts with the complete S-01 authoritative state', () => {
     const state = decodeGameState(initialGameState);
-    const openingFacilities = {
-        seroton: [
-            { facilityId: 'dairyFarm', level: 0, status: 'notBuilt' },
-            { facilityId: 'grainFarm', level: 0, status: 'notBuilt' },
-            { facilityId: 'cheeseFactory', level: 1, status: 'working' },
-            { facilityId: 'bakery', level: 0, status: 'notBuilt' },
-            { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
-        ],
-        'lactozis-7c': [
-            { facilityId: 'dairyFarm', level: 0, status: 'notBuilt' },
-            { facilityId: 'grainFarm', level: 1, status: 'working' },
-            { facilityId: 'cheeseFactory', level: 0, status: 'notBuilt' },
-            { facilityId: 'bakery', level: 0, status: 'notBuilt' },
-            { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
-        ],
-        'maslo-prime': [
-            { facilityId: 'dairyFarm', level: 1, status: 'working' },
-            { facilityId: 'grainFarm', level: 0, status: 'notBuilt' },
-            { facilityId: 'cheeseFactory', level: 0, status: 'notBuilt' },
-            { facilityId: 'bakery', level: 0, status: 'notBuilt' },
-            { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
-        ]
-    };
+    const openingFacilities = levels => [
+        { facilityId: 'dairyFarm', level: levels.dairyFarm, status: levels.dairyFarm === 0 ? 'notBuilt' : 'working' },
+        { facilityId: 'grainFarm', level: levels.grainFarm, status: levels.grainFarm === 0 ? 'notBuilt' : 'working' },
+        { facilityId: 'cheeseFactory', level: levels.cheeseFactory, status: levels.cheeseFactory === 0 ? 'notBuilt' : 'working' },
+        { facilityId: 'bakery', level: 0, status: 'notBuilt' },
+        { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
+    ];
     assert.equal(state.schemaVersion, 19);
     assert.equal(state.runId, '00000000-0000-4000-8000-000000000001');
     assert.deepEqual(state.cargoSchedule, []);
@@ -97,7 +87,7 @@ test('a new run starts with the complete S-01 authoritative state', () => {
                 { commodityId: 'bun', stock: 50 },
                 { commodityId: 'spaceRation', stock: 20 }
             ],
-            facilities: clone(openingFacilities.seroton)
+            facilities: openingFacilities({ dairyFarm: 0, grainFarm: 0, cheeseFactory: 1 })
         },
         {
             planetId: 'lactozis-7c',
@@ -108,7 +98,7 @@ test('a new run starts with the complete S-01 authoritative state', () => {
                 { commodityId: 'bun', stock: 2 },
                 { commodityId: 'spaceRation', stock: 20 }
             ],
-            facilities: clone(openingFacilities['lactozis-7c'])
+            facilities: openingFacilities({ dairyFarm: 0, grainFarm: 1, cheeseFactory: 0 })
         },
         {
             planetId: 'maslo-prime',
@@ -119,7 +109,7 @@ test('a new run starts with the complete S-01 authoritative state', () => {
                 { commodityId: 'bun', stock: 50 },
                 { commodityId: 'spaceRation', stock: 20 }
             ],
-            facilities: clone(openingFacilities['maslo-prime'])
+            facilities: openingFacilities({ dairyFarm: 1, grainFarm: 0, cheeseFactory: 0 })
         }
     ]);
     assert(Object.isFrozen(state.markets), 'every market collection is immutable');
@@ -219,10 +209,10 @@ test('v19 score spending state rejects v18 and round trips detached records', ()
     }
     const source = clone(initialGameState);
     const detached = decodeGameState(source);
-    source.markets[0].facilities[0].level = 3;
-    source.markets[0].facilities[0].status = 'working';
-    assert.equal(detached.markets[0].facilities[0].level, 0);
-    assert.equal(detached.markets[0].facilities[0].status, 'notBuilt');
+    source.markets[0].facilities[2].level = 3;
+    source.markets[0].facilities[2].status = 'notBuilt';
+    assert.equal(detached.markets[0].facilities[2].level, 1);
+    assert.equal(detached.markets[0].facilities[2].status, 'working');
 });
 
 test('the codec binds every ship-service level to its balance catalogue', () => {
@@ -403,6 +393,27 @@ test('codec validates run randomness and terminal death facts as one immutable s
     ]) assert.throws(() => decodeGameState(invalid));
 });
 
+test('codec keeps schema 19 and validates timed outcomes against final composite score', () => {
+    const timedOut = {
+        ...clone(initialGameState),
+        clock: { ...clone(initialGameState.clock), activeElapsedMs: initialGameState.clock.budgetMs },
+        credits: 999_999,
+        shipUpgradeSpend: 0,
+        facilityUpgradeSpend: 0,
+        cargo: [],
+        terminalResult: { runId: initialGameState.runId, outcome: 'imprisonment', activeElapsedMs: initialGameState.clock.budgetMs, finalCredits: 999_999 }
+    };
+    const decoded = decodeGameState(timedOut);
+    assert.equal(decoded.schemaVersion, 19);
+    assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
+    assert.equal(decodeGameState({ ...timedOut, shipStatus: { ...initialGameState.shipStatus, currentHitPoints: 0 } }).terminalResult.outcome, 'imprisonment');
+    const freedom = { ...timedOut, credits: 1_000_000, terminalResult: { ...timedOut.terminalResult, outcome: 'freedom', finalCredits: 1_000_000 } };
+    assert.equal(decodeGameState(freedom).terminalResult.outcome, 'freedom');
+    assert.throws(() => decodeGameState({ ...freedom, terminalResult: { ...freedom.terminalResult, outcome: 'imprisonment' } }));
+    assert.throws(() => decodeGameState({ ...timedOut, clock: { ...timedOut.clock, activeElapsedMs: timedOut.clock.budgetMs - 1 } }));
+    assert.throws(() => decodeGameState({ ...timedOut, terminalResult: { ...timedOut.terminalResult, outcome: 'abandoned' } }));
+});
+
 test('terminal results preserve an integer millisecond fact when the active clock is fractional', () => {
     const terminal = {
         ...clone(initialGameState),
@@ -552,41 +563,41 @@ test('the landing port projects and refreshes landed ship services on every plan
 
     const land = planetId => provider.update(state => ({
         ...state,
-        shipStatus: { ...state.shipStatus, currentHitPoints: 75 },
+        credits: 1_000_000,
+        shipUpgradeSpend: 0,
+        shipStatus: { ...state.shipStatus, currentHitPoints: 75, cargoLevel: 1, engineLevel: 1, weaponLevel: 1, boosterUnlocked: false },
         clock: { ...state.clock, playerPaused: true },
         planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
     }));
-    const cases = [['seroton', 'cargo', 15_000], ['lactozis-7c', 'engine', 20_000], ['maslo-prime', 'weaponary', 20_000]];
-    for (const [planetId, serviceId, price] of cases) {
-        const before = land(planetId);
+    const cases = ['seroton', 'lactozis-7c', 'maslo-prime'];
+    for (const planetId of cases) {
+        land(planetId);
         const shown = port.getShipyardSnapshot();
         assert.equal(shown.visible, true, planetId);
         assert.equal(shown.planetId, planetId);
         assert.equal(shown.repair.currentHitPoints, 75);
         assert.equal(shown.repair.price, 1_000);
         assert.equal(shown.repair.failure, null);
-        const available = shown.services.filter(row => row.available);
-        assert.deepEqual(available.map(row => row.serviceId), [serviceId], planetId);
-        assert.equal(available[0].price, price);
-        assert.equal(available[0].affordable, true);
-        assert.equal(shown.booster.available, planetId === 'lactozis-7c');
+        assert.deepEqual(shown.services.map(row => row.available), [true, true, true], planetId);
+        assert.equal(shown.booster.available, true, planetId);
 
-        for (const row of shown.services.filter(candidate => candidate.serviceId !== serviceId)) {
-            const untouched = provider.snapshot();
+        for (const row of shown.services) {
+            const price = row.price;
+            const beforeUpgrade = provider.snapshot();
             port.upgradeShipService(row.serviceId);
-            assert.deepEqual(provider.snapshot(), untouched, `${row.serviceId} is not sold on ${planetId}`);
-            assert.equal(port.getShipyardSnapshot().services.find(candidate => candidate.serviceId === row.serviceId).available, false);
+            const purchasedUpgrade = port.getShipyardSnapshot().services.find(candidate => candidate.serviceId === row.serviceId);
+            assert.equal(purchasedUpgrade.level, beforeUpgrade.shipStatus[`${row.serviceId === 'weaponary' ? 'weapon' : row.serviceId}Level`] + 1, `${row.serviceId} on ${planetId}`);
+            assert.equal(provider.snapshot().credits, beforeUpgrade.credits - price, `${row.serviceId} price on ${planetId}`);
         }
 
-        port.upgradeShipService(serviceId);
-        const purchased = port.getShipyardSnapshot();
-        assert.equal(purchased.services.find(row => row.serviceId === serviceId).level, 2, planetId);
-        assert.equal(purchased.credits, before.credits - price);
-        assert.equal(provider.snapshot().credits, before.credits - price);
-
+        const creditsBeforeRepair = provider.snapshot().credits;
         port.repairShip();
         assert.equal(port.getShipyardSnapshot().repair.currentHitPoints, 85, planetId);
-        assert.equal(port.getShipyardSnapshot().credits, before.credits - price - 1_000);
+        assert.equal(port.getShipyardSnapshot().credits, creditsBeforeRepair - 1_000);
+        const beforeBoosterPurchase = provider.snapshot();
+        port.purchaseBooster();
+        assert.equal(port.getShipyardSnapshot().booster.owned, true, `booster on ${planetId}`);
+        assert.equal(provider.snapshot().credits, beforeBoosterPurchase.credits - 75_000, `booster price on ${planetId}`);
     }
 
     provider.update(state => ({ ...state, credits: 100_000 }));
@@ -678,8 +689,14 @@ test('purchased ship services change flight, cargo and volley behaviour through 
     land('seroton');
     port.upgradeShipService('cargo');
     assert.equal(provider.snapshot().shipStatus.cargoLevel, 2);
-    assert.equal(quoteLandedTrade(provider.snapshot(), 'grain', 50).failure, null, 'a level-two cargo hold fits 50 units');
-    assert.equal(quoteLandedTrade(provider.snapshot(), 'grain', 51).failure, 'insufficient-cargo');
+    const capacityState = {
+        ...provider.snapshot(),
+        markets: provider.snapshot().markets.map(market => market.planetId === 'seroton'
+            ? { ...market, commodityStocks: market.commodityStocks.map(stock => stock.commodityId === 'grain' ? { ...stock, stock: 101 } : stock) }
+            : market)
+    };
+    assert.equal(quoteLandedTrade(capacityState, 'grain', 100).failure, null, 'a level-two cargo hold fits 100 units');
+    assert.equal(quoteLandedTrade(capacityState, 'grain', 101).failure, 'insufficient-cargo');
 
     provider.update(state => ({ ...state, shipStatus: { ...state.shipStatus, currentHitPoints: 75 } }));
     port.repairShip();
@@ -964,7 +981,7 @@ test('run status projection derives clock, capacity and readable run values', ()
     assert.equal(initial.remainingSeconds, 1800);
     assert.equal(initial.runState, 'RUNNING');
     assert.equal(initial.cargoUsed, 2);
-    assert.equal(initial.cargoCapacity, 40);
+    assert.equal(initial.cargoCapacity, 50);
     assert.equal(initial.maximumHitPoints, 100);
     assert.deepEqual(initial.cargo, [{ commodityId: 'ore', quantity: 2, totalCost: 0 }]);
 

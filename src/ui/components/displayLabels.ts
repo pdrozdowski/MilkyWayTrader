@@ -1,6 +1,15 @@
 const commodityLabels = { milk: 'Milk', grain: 'Grain', cheese: 'Cheese', bun: 'Bun', spaceRation: 'Space Ration' } as const;
 
 export const displayLabels = {
+    gameIntroTitle: 'Introduction',
+    gameIntroNext: 'Next',
+    gameIntroPrevious: 'Previous',
+    gameIntroAdvance: 'Advance story',
+    gameIntroDebtTitle: 'Your Goal',
+    gameIntroDebtAmount: 'Your debt is 1,000,000 credits.',
+    gameIntroDebtGoal: 'Reach a final score of at least 1,000,000 points within 30 minutes of active game time to win.',
+    gameIntroStart: 'Start Game',
+    gameOverMainMenu: 'Main Menu',
     signInWithGoogle: 'Sign in with Google',
     signIn: 'Sign In',
     account: 'ACCOUNT',
@@ -118,7 +127,7 @@ export const displayLabels = {
     averageBuyPrice: 'Average buy price',
     timePlay: 'Play', timePause: 'Pause',
     tradeIncome: 'INCOME', expense: 'EXPENSE', profit: 'PROFIT', loss: 'LOSS', clockRunning: 'RUNNING', clockPaused: 'PAUSED',
-    facilitiesBackToPlanet: 'Back to Planet', facilityLevel: 'Level', facilityProduces: 'Produces', facilityConsumes: 'Consumes', facilityNoInputs: 'No inputs', facilityPerCycle: 'per second', facilityMissing: '(MISSING)',
+    facilitiesBackToPlanet: 'Back to Planet', facilityLevel: 'Level', facilityProduces: 'Produces', facilityConsumes: 'Consumes', facilityNoInputs: 'No inputs', facilityPerCycle: 'per second', facilityMissing: 'MISSING',
     facilityOutputBonus: 'Output bonus', facilityUpgradeDiscount: 'Upgrade discount', facilityPrice: 'Price',
     facilityBuild: 'BUILD', facilityUpgrade: 'UPGRADE', facilityMaxLevel: 'MAX LEVEL', facilityDowngrade: 'DOWNGRADE', facilityRefund: '75% REFUND', facilityDowngradeUnavailable: 'NOT POSSIBLE',
     facilityStatusLabels: { notBuilt: 'Not Built', working: 'Working', insufficientResources: 'Insufficient Resources' },
@@ -132,6 +141,8 @@ export const displayLabels = {
     cargoTransferCargoHeader: 'Cargo', cargoTransferCommodityHeader: 'Commodity', cargoTransferShipHeader: 'Ship',
     cargoTransferConfirm: 'Transfer',
     debugPerformanceMonitor: 'Performance monitor',
+    debugThreeSecondsRemaining: 'Set 3 seconds remaining',
+    debugAddCash: 'Add 250,000 cash',
     performanceMonitorReadout: 'Performance monitor',
     performanceMonitorColumnMetric: 'Metric', performanceMonitorColumnAverage: 'Avg', performanceMonitorColumnMinimum: 'Min', performanceMonitorColumnMaximum: 'Max',
     performanceMonitorLoopsPerSecond: 'Loops/second', performanceMonitorLoopsPerSecondUnit: '/s',

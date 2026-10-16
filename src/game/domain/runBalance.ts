@@ -2,13 +2,13 @@ export const initialCredits = 100_000;
 export const maximumShipHitPoints = 100;
 export const orbitalCargoCapacity = 20;
 
-/** Ship cargo capacity per cargo-capacity level; level one is BR-001's 40-unit starting capacity. */
+/** Ship cargo capacity per cargo-capacity level; level one is BR-001's 50-unit starting capacity. */
 export const cargoCapacityByLevel: Readonly<Record<number, number>> = {
-    1: 40,
-    2: 50,
-    3: 65,
-    4: 85,
-    5: 110
+    1: 50,
+    2: 100,
+    3: 150,
+    4: 220,
+    5: 300
 };
 
 /** Normal controlled-flight speed expressed as a percentage of the level-one base speed (BR-074). */
@@ -35,7 +35,7 @@ export const weaponProjectileCountByLevel: Readonly<Record<number, number>> = {
 };
 
 /** Price paid to reach each level above one; the first entry buys level two (BR-077). */
-export const cargoUpgradePrices: readonly number[] = [15_000, 30_000, 60_000, 120_000];
+export const cargoUpgradePrices: readonly number[] = [15_000, 20_000, 35_000, 50_000];
 export const engineUpgradePrices: readonly number[] = [20_000, 40_000, 80_000, 160_000];
 export const weaponUpgradePrices: readonly number[] = [20_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000];
 

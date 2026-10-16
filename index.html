@@ -10,6 +10,7 @@
 
 <body>
     <div id="app">
+        <div data-app-content>
         <div id="game-container"></div>
         <p id="cargo-transfer-warning" role="alert" hidden></p>
         <section id="main-menu" data-game-input="ignore" aria-label="Main menu" hidden>
@@ -21,6 +22,24 @@
                 <button id="main-menu-global-scores" class="action-button" type="button" aria-label="GLOBAL HI-SCORE"></button>
             </div>
         </section>
+        </div>
+        <section id="game-intro" data-game-input="ignore" aria-label="Game introduction" aria-modal="true" role="dialog" aria-labelledby="game-intro-title" hidden>
+            <h1 id="game-intro-title" class="visually-hidden"></h1>
+            <div id="game-intro-story" aria-live="polite">
+                <img id="game-intro-art" alt="" />
+                <p id="game-intro-story-description" class="visually-hidden"></p>
+                <button id="game-intro-story-advance" class="game-intro-hotspot" type="button"></button>
+                <button id="game-intro-previous" type="button" hidden></button>
+                <button id="game-intro-next" type="button"></button>
+            </div>
+            <div id="game-intro-debt" hidden>
+                <h2 id="game-intro-debt-title"></h2>
+                <p id="game-intro-debt-amount"></p>
+                <p id="game-intro-debt-goal"></p>
+                <button id="game-intro-start" type="button"></button>
+            </div>
+        </section>
+        <div data-app-content>
         <section id="run-status" data-game-input="ignore" aria-label="Run status" hidden>
             <div id="run-status-left">
                 <button id="game-menu-toggle" type="button" aria-expanded="false" aria-controls="game-menu"><img class="run-status-icon" src="/assets/icons/menu_32x32.png" alt="" aria-hidden="true" />Menu</button>
@@ -41,6 +60,7 @@
             </dl>
             <button id="game-over-personal-best" type="button"></button>
             <button id="game-over-global-scores" type="button"></button>
+            <button id="game-over-main-menu" type="button"></button>
         </section>
         <section id="global-high-scores" data-game-input="ignore" aria-labelledby="global-high-scores-title" aria-modal="true" role="dialog" hidden>
             <div class="global-high-scores-panel">
@@ -146,6 +166,8 @@
                 <button id="debug-mouse-movement-toggle" type="button" aria-pressed="true"></button>
                 <button id="debug-booster-toggle" type="button" aria-pressed="false"></button>
                 <button id="debug-performance-toggle" type="button" aria-pressed="false"></button>
+                <button id="debug-three-seconds-remaining" type="button"></button>
+                <button id="debug-add-cash" type="button"></button>
                 <button id="debug-teleport-seroton" type="button">Teleport to Seroton</button>
                 <button id="debug-teleport-lactozis-7c" type="button">Teleport to Lactozis-7C</button>
                 <button id="debug-teleport-maslo-prime" type="button">Teleport to Maslo-Prime</button>
@@ -171,7 +193,6 @@
                     <div class="landing-facilities-nav-left"><button id="landing-status-market-back" data-landing-back class="action-button" type="button"></button><span id="landing-status-market-clock" data-landing-clock class="landing-facilities-clock" role="timer"><img class="run-status-icon" data-landing-clock-image src="/assets/icons/clock_32x32.png" alt="" aria-hidden="true" /><span data-landing-clock-value></span></span><button id="landing-status-market-time-control" class="landing-time-control" type="button"></button></div>
                     <div class="landing-facilities-nav-right"><span id="landing-status-market-credits" data-landing-credits class="landing-resource"></span><span id="landing-status-market-cargo" data-landing-cargo class="landing-resource"></span></div>
                 </header>
-                <h2 id="landing-status-market-heading" class="landing-facilities-heading"></h2>
                 <div id="landing-status-market-controls" class="landing-market-controls">
                 <div id="landing-status-catalogue" role="group" aria-label="Seroton commodities">
                     <button type="button" data-commodity-id="milk"><span class="commodity-icon catalogue-commodity-icon" data-commodity-id="milk" aria-hidden="true"></span><span class="catalogue-commodity-name"></span></button>
@@ -193,7 +214,6 @@
                         <div class="landing-facilities-nav-right"><span id="landing-status-facilities-credits" data-landing-credits class="landing-resource"></span><span id="landing-status-facilities-cargo" data-landing-cargo class="landing-resource"></span></div>
                     </header>
                     <div class="landing-facilities-toolbar">
-                        <h2 id="landing-status-facilities-heading" class="landing-facilities-heading"></h2>
                         <nav class="landing-facility-pager" aria-label="Facility selection">
                             <button class="landing-facility-previous" type="button" aria-label="Previous facility">&#8249;</button>
                             <span class="landing-facility-position" aria-live="polite"></span>
@@ -254,14 +274,12 @@
                         <div class="landing-facilities-nav-right"><span id="landing-status-shipyard-credits" data-landing-credits class="landing-resource"></span><span id="landing-status-shipyard-cargo" data-landing-cargo class="landing-resource"></span></div>
                     </header>
                     <div class="shipyard-toolbar">
-                        <h2 id="landing-status-shipyard-heading" class="landing-facilities-heading"></h2>
                         <nav class="shipyard-pager" aria-label="Shipyard service selection">
                             <button class="shipyard-previous" type="button" aria-label="Previous shipyard service">&#8249;</button>
                             <span class="shipyard-position" aria-live="polite"></span>
                             <button class="shipyard-next" type="button" aria-label="Next shipyard service">&#8250;</button>
                         </nav>
                     </div>
-                    <p id="landing-status-shipyard-planet" class="shipyard-planet"></p>
                     <div id="landing-status-shipyard-cards" class="shipyard-cards" role="group" aria-label="Ship services">
                         <article class="shipyard-card shipyard-repair-card">
                             <div class="shipyard-card-header"><span class="shipyard-card-icon shipyard-repair-icon" role="img"></span><h3 class="shipyard-card-name"></h3></div>
@@ -376,6 +394,7 @@
                 </div>
             </div>
         </aside>
+        </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
 </body>

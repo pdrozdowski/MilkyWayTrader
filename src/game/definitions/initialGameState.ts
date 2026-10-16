@@ -3,7 +3,7 @@ import { initialCredits, maximumShipHitPoints } from '../domain/runBalance.ts';
 import { planetDefinitions } from './planetDefinitions.ts';
 import { projectPlanetPosition } from '../mechanics/planet/orbit.ts';
 import { planetMarketTunings, serotonCommodityDefinitions } from './serotonMarketDefinitions.ts';
-import { planetFacilityDefinitions, planetFacilityInitialLevelOf } from './planetFacilityDefinitions.ts';
+import { planetFacilityDefinitions } from './planetFacilityDefinitions.ts';
 import { asteroidBeltDefinition, asteroidBeltLayout, asteroidTuning } from './gameplayTuning.ts';
 
 export const ACTIVE_TIME_BUDGET_MS = 30 * 60 * 1000;
@@ -39,7 +39,7 @@ export function createInitialGameState ({ runId, randomSeed }: InitialGameStateI
         planetId: definition.id,
         commodityStocks: serotonCommodityDefinitions.map(commodity => ({ commodityId: commodity.id, stock: planetMarketTunings[definition.id][commodity.id].initialStock })),
         facilities: planetFacilityDefinitions.map(facility => {
-            const level = planetFacilityInitialLevelOf(facility.id, definition.id);
+            const level = facility.initialLevelsByPlanet[definition.id];
             return { facilityId: facility.id, level, status: level === 0 ? 'notBuilt' : 'working' };
         })
     })),

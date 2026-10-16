@@ -8,7 +8,7 @@ interface RunResultRow
 {
     readonly run_id: string;
     readonly user_id: string;
-    readonly outcome: 'death';
+    readonly outcome: 'death' | 'freedom' | 'imprisonment';
     readonly active_elapsed_ms: number;
     readonly final_credits: number;
     readonly final_score: number;
@@ -24,7 +24,7 @@ interface RunResultSeed
 {
     readonly run_id: string;
     readonly user_id: string;
-    readonly outcome: 'death';
+    readonly outcome: 'death' | 'freedom' | 'imprisonment';
     readonly active_elapsed_ms: number;
     readonly final_credits: number;
     readonly final_score: number;
@@ -40,6 +40,30 @@ test('an owner can save a result while another user and anonymous clients cannot
         body: { run_id: runId, user_id: authenticatedIdentity.userId, outcome: 'death', active_elapsed_ms: 1_234, final_credits: 5_678, final_score: 6_789 }
     });
     expect(owner.status).toBe(201);
+
+    const timedOutRuns = ['freedom', 'imprisonment'] as const;
+    const timeoutRunIds: string[] = [];
+    for (const [index, outcome] of timedOutRuns.entries()) {
+        const timeoutRunId = randomUUID();
+        timeoutRunIds.push(timeoutRunId);
+        const response = await runResultsRequest(request, supabaseTestEnvironment, authenticatedIdentity, '/run_results', {
+            method: 'POST',
+            body: { run_id: timeoutRunId, user_id: authenticatedIdentity.userId, outcome, active_elapsed_ms: 1_234 + index, final_credits: 5_678, final_score: 6_789 }
+        });
+        expect(response.status).toBe(201);
+    }
+    const timeoutFilter = `?run_id=in.(${timeoutRunIds.join(',')})&select=run_id,outcome`;
+    const savedTimeoutRows = await runResultsRequest(request, supabaseTestEnvironment, authenticatedIdentity, `/run_results${timeoutFilter}`);
+    expect(savedTimeoutRows.body).toEqual(expect.arrayContaining([{ run_id: timeoutRunIds[0], outcome: 'freedom' }, { run_id: timeoutRunIds[1], outcome: 'imprisonment' }]));
+    expect(savedTimeoutRows.body).toHaveLength(2);
+    const isolatedTimeoutRows = await runResultsRequest(request, supabaseTestEnvironment, secondaryAuthenticatedIdentity, `/run_results${timeoutFilter}`);
+    expect(isolatedTimeoutRows.body).toEqual([]);
+    expect((await runResultsRequest(request, supabaseTestEnvironment, null, `/run_results${timeoutFilter}`)).status).toBe(401);
+    const unknownOutcome = await runResultsRequest(request, supabaseTestEnvironment, authenticatedIdentity, '/run_results', {
+        method: 'POST',
+        body: { run_id: randomUUID(), user_id: authenticatedIdentity.userId, outcome: 'unknown', active_elapsed_ms: 1, final_credits: 1, final_score: 1 } as unknown as RunResultRow
+    });
+    expect(unknownOutcome.status).toBe(400);
 
     const ownerRows = await runResultsRequest(request, supabaseTestEnvironment, authenticatedIdentity, `/run_results?run_id=eq.${runId}&select=run_id,outcome,active_elapsed_ms,final_credits,final_score`);
     expect(ownerRows.status).toBe(200);

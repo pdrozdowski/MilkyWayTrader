@@ -47,12 +47,12 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-04 | s04-first-planetary-trade | User can inspect Seroton's landed market and complete a commodity trade. | S-03 | US-03, FR-019, FR-020, FR-021, FR-022, FR-023 | done |
 | S-16 | s16-planetary-facilities | User can invest resources in local facilities and see new trading opportunities. | S-04 | US-08, FR-027, FR-028, FR-029, FR-030, FR-031, FR-032 | done |
 | S-05 | s05-planet-ship-services | User can repair and upgrade the ship through planet-specific services. | S-04 | US-03, FR-013, FR-024, FR-025, FR-026, FR-036 | done |
-| S-06 | s06-timed-debt-outcome | User can abandon a run or reach timeout and see the debt outcome and final cash score. | S-01, S-04 | US-01, FR-005, FR-007, FR-009 | planning |
+| S-06 | s06-timed-debt-outcome | User can reach timeout and see the debt outcome and final composite score. | S-01, S-04 | US-01, FR-005, FR-007, FR-009 | in-progress |
 | S-07 | s07-environmental-hazards-and-death | User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed. | S-01, S-02 | US-01, US-04, FR-008, FR-038, FR-040 | done |
 | S-08 | s08-asteroid-combat | User can fire the ship weapon and fragment or destroy asteroids. | S-07 | US-04, FR-037, FR-039, FR-040 | done |
 | S-09 | s09-asteroid-salvage | User can recover commodities from asteroid salvage. | S-04, S-08 | US-04, FR-034, FR-041, FR-042, FR-043, FR-044, FR-045 | done |
 | S-10 | s10-player-sign-in-status | User can sign in, sign out, and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-046, FR-047, FR-048 | done |
-| S-11 | s11-automatic-save-and-resume | Signed-in user can see save status, preserve progress, and resume an active run. | S-06, S-09, S-10, S-16 | US-05, FR-006, FR-049, FR-050 | proposed |
+| S-11 | s11-automatic-save-and-resume | Signed-in user can abandon a run, see save status, preserve progress, and resume an active run. | S-06, S-09, S-10, S-16 | US-05, FR-006, FR-049, FR-050 | proposed |
 | S-12 | s12-personal-best-result | Signed-in user can view their personal best and paginated private run history. | S-06 | US-06, FR-052 | done |
 | S-13 | s13-global-high-scores | User can view the top global high scores and their personal best's global rank. | S-12 | US-06, FR-053 | done |
 | S-14 | s14-delete-terminal-active-save | Signed-in user retains a terminal result while its active save is removed. | S-06, S-11 | US-05, FR-051 | proposed |
@@ -150,15 +150,15 @@ No standalone foundations are required. Deployment is already present, the autho
 
 ### S-06: Resolve the timed debt run
 
-- **Outcome:** User can abandon a run or reach timeout and see the debt outcome and final cash score.
+- **Outcome:** User can reach timeout and see the debt outcome and final composite score.
 - **Change ID:** s06-timed-debt-outcome
 - **PRD refs:** US-01, FR-005, FR-007, FR-009
 - **Prerequisites:** S-01, S-04
 - **Parallel with:** S-05, S-07, S-10
 - **Blockers:** â€”
 - **Unknowns:** â€”
-- **Risk:** Every terminal path must freeze the same authoritative score and time state so early success, abandonment, and timeout cannot disagree.
-- **Status:** planning
+- **Risk:** Timeout and ship destruction must freeze the authoritative score and time state; timeout takes precedence when both occur in one step.
+- **Status:** in-progress
 
 ### S-07: Survive environmental hazards
 
@@ -210,7 +210,7 @@ No standalone foundations are required. Deployment is already present, the autho
 
 ### S-11: Preserve and resume a signed-in run
 
-- **Outcome:** Signed-in user can see save status, preserve progress, and resume an active run.
+- **Outcome:** Signed-in user can abandon a run, see save status, preserve progress, and resume an active run.
 - **Change ID:** s11-automatic-save-and-resume
 - **PRD refs:** US-05, FR-006, FR-049, FR-050
 - **Prerequisites:** S-06, S-09, S-10, S-16
@@ -290,7 +290,7 @@ No standalone foundations are required. Deployment is already present, the autho
 | S-04 | s04-first-planetary-trade | Deliver the first Seroton market transaction | no | Requires S-03 acceptance |
 | S-16 | s16-planetary-facilities | Deliver local facility investment and its market effects | no | Requires S-04 |
 | S-05 | s05-planet-ship-services | Deliver planet-specific repairs and upgrades | no | Requires S-04 |
-| S-06 | s06-timed-debt-outcome | Resolve abandonment and timed debt outcomes | no | planning |
+| S-06 | s06-timed-debt-outcome | Resolve timed debt outcomes; hand off abandonment to S-11 | no | planning |
 | S-07 | s07-environmental-hazards-and-death | Deliver environmental damage and death | no | Requires S-01 and S-02 |
 | S-08 | s08-asteroid-combat | Deliver asteroid weapon combat and fragmentation | no | Requires S-07 |
 | S-09 | s09-asteroid-salvage | Deliver collectible asteroid salvage | no | Requires S-04 and S-08 |
