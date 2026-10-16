@@ -157,24 +157,61 @@ test('rejected investment commands return the unchanged aggregate', () => {
     assert.equal(applyFacilityUpgrade(maxed, planetFacilityCatalogue, 'bakery'), maxed);
 });
 test('landed commodity flow aggregates per-second production, consumption and net across the planet facilities', () => {
-    const seroton = landedOn('seroton');
+    const state = landedOn('seroton');
+    const seroton = {
+        ...state,
+        markets: state.markets.map(market => market.planetId === 'seroton' ? {
+            ...market,
+            commodityStocks: market.commodityStocks.map(stock => stock.commodityId === 'milk' ? { ...stock, stock: 0 } : stock)
+        } : market)
+    };
     const projectionCatalogue = {
         definitions: planetFacilityDefinitions.map(definition => ({ ...definition, outputCommodityId: planetFacilityOutputCommodityIds[definition.id] })),
         modifierOf: planetFacilityModifierOf
     };
     const facilities = projectLandedFacilities(seroton, projectionCatalogue);
     assert.deepEqual(facilities.facilities.find(facility => facility.facilityId === 'cheeseFactory').inputsPerCycle, [
-        { commodityId: 'milk', quantity: 12, missing: true }
+        { commodityId: 'milk', quantity: 2, missing: true }
     ], 'an insufficient recipe identifies the missing milk input');
 
-    // Seroton opens only cheeseFactory L1 (2 * round(5 * 1.2) = 12 milk/s input, 6 cheese/s output).
-    assert.deepEqual(landedCommodityFlow(facilities, 'milk'), { productionPerSecond: 0, consumptionPerSecond: 12, netPerSecond: -12 });
-    assert.deepEqual(landedCommodityFlow(facilities, 'cheese'), { productionPerSecond: 6, consumptionPerSecond: 0, netPerSecond: 6 });
+    // Seroton opens Cheese Factory L1: 2 milk become 6 cheese, with the planet bonus rounding output to 7.
+    assert.deepEqual(landedCommodityFlow(facilities, 'milk'), { productionPerSecond: 0, consumptionPerSecond: 2, netPerSecond: -2 });
+    assert.deepEqual(landedCommodityFlow(facilities, 'cheese'), { productionPerSecond: 7, consumptionPerSecond: 0, netPerSecond: 7 });
     assert.deepEqual(landedCommodityFlow(facilities, 'spaceRation'), { productionPerSecond: 0, consumptionPerSecond: 1, netPerSecond: -1 });
 
     const withBakery = withFacilityLevel(withFacilityLevel(seroton, 'seroton', 'grainFarm', 1), 'seroton', 'bakery', 1);
-    assert.deepEqual(landedCommodityFlow(projectLandedFacilities(withBakery, projectionCatalogue), 'grain'), { productionPerSecond: 10, consumptionPerSecond: 10, netPerSecond: 0 });
+    assert.deepEqual(landedCommodityFlow(projectLandedFacilities(withBakery, projectionCatalogue), 'grain'), { productionPerSecond: 10, consumptionPerSecond: 2, netPerSecond: 8 });
     assert.deepEqual(landedCommodityFlow(projectLandedFacilities(withBakery, projectionCatalogue), 'spaceRation'), { productionPerSecond: 0, consumptionPerSecond: 3, netPerSecond: -3 });
+});
+
+test('facility simulation consumes and produces each configured level recipe once per cycle', () => {
+    const recipes = [
+        ['cheeseFactory', 'milk', [2, 4, 8], 'cheese', [6, 12, 20]],
+        ['bakery', 'grain', [2, 4, 8], 'bun', [6, 12, 20]],
+        ['foodProcessor', null, [
+            { cheese: 2, bun: 1, milk: 1 },
+            { cheese: 4, bun: 2, milk: 2 },
+            { cheese: 8, bun: 4, milk: 4 }
+        ], 'spaceRation', [6, 12, 24]]
+    ];
+    for (const [facilityId, singleInput, inputsByLevel, outputId, outputs] of recipes) {
+        for (let level = 1; level <= 3; level++) {
+            const market = clone(initialGameState.markets.find(candidate => candidate.planetId === 'lactozis-7c'));
+            market.facilities = market.facilities.map(facility => ({ ...facility, level: facility.facilityId === facilityId ? level : 0, status: facility.facilityId === facilityId ? 'working' : 'notBuilt' }));
+            const inputs = singleInput ? { [singleInput]: inputsByLevel[level - 1] } : inputsByLevel[level - 1];
+            market.commodityStocks = market.commodityStocks.map(stock => ({
+                ...stock,
+                stock: stock.commodityId === outputId ? (outputId === 'spaceRation' ? level : 0) : stock.commodityId === 'spaceRation' ? 100 : inputs[stock.commodityId] ?? 0
+            }));
+
+            const advanced = advancePlanetFacilities(market, 1);
+            assert.equal(advanced.commodityStocks.find(stock => stock.commodityId === outputId).stock, outputs[level - 1], `${facilityId} level ${level} output`);
+            for (const [commodityId, quantity] of Object.entries(inputs)) {
+                assert.equal(advanced.commodityStocks.find(stock => stock.commodityId === commodityId).stock, 0, `${facilityId} level ${level} consumes ${commodityId}`);
+            }
+            assert.equal(advanced.facilities.find(facility => facility.facilityId === facilityId).status, 'working', `${facilityId} level ${level} status`);
+        }
+    }
 });
 
 test('each planet consumes Space Rations equal to all facility levels per cycle and never below zero', () => {

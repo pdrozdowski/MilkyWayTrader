@@ -17,8 +17,9 @@ function applyFacilityOnce (
     const outputMultiplier = planetFacilityModifierOf(definition.id, economy.planetId).outputMultiplier;
     const output = Math.round((definition.outputByLevel[Math.min(level, definition.maxLevel) - 1] ?? 0) * outputMultiplier);
     const requiredByCommodity = new Map<string, number>();
-    for (const input of definition.inputsPerOutput) {
-        requiredByCommodity.set(input.commodityId, (requiredByCommodity.get(input.commodityId) ?? 0) + input.quantity * output);
+    const inputs = definition.inputsByLevel[Math.min(level, definition.maxLevel) - 1] ?? [];
+    for (const input of inputs) {
+        requiredByCommodity.set(input.commodityId, (requiredByCommodity.get(input.commodityId) ?? 0) + input.quantity);
     }
     if (![...requiredByCommodity].every(([commodityId, quantity]) => (stockById.get(commodityId) ?? 0) >= quantity)) return 'insufficientResources';
     for (const [commodityId, quantity] of requiredByCommodity) stockById.set(commodityId, (stockById.get(commodityId) ?? 0) - quantity);

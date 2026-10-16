@@ -1176,10 +1176,10 @@ test('facility cycles cross whole active seconds and apply one recipe pass per c
     assert.deepEqual(advanceGameSimulation(midSecond, quietInput, 400).markets, midSecond.markets, 'a frame inside one second attempts no cycle');
 
     const oneSecond = advanceGameSimulation(initialGameState, quietInput, 1_000);
-    assert.equal(stockOf(oneSecond, 'seroton', 'milk'), 4, 'the level-one cheese factory consumes 10 milk per second');
+    assert.equal(stockOf(oneSecond, 'seroton', 'milk'), 2, 'the level-one cheese factory consumes 2 milk per second');
     assert.equal(stockOf(oneSecond, 'seroton', 'grain'), 100, 'the planet starts without a grain farm');
-    assert.equal(stockOf(oneSecond, 'seroton', 'cheese'), 60, 'the cheese factory cannot run without its full milk input');
-    assert.equal(statusOf(oneSecond, 'seroton', 'cheeseFactory'), 'insufficientResources');
+    assert.equal(stockOf(oneSecond, 'seroton', 'cheese'), 67, 'the cheese factory produces 6 cheese plus its planet bonus');
+    assert.equal(statusOf(oneSecond, 'seroton', 'cheeseFactory'), 'working');
     assert.equal(statusOf(oneSecond, 'seroton', 'dairyFarm'), 'notBuilt');
     assert.equal(statusOf(oneSecond, 'seroton', 'bakery'), 'notBuilt', 'a level-zero facility never runs');
     assert.equal(stockOf(oneSecond, 'seroton', 'bun'), 50);
@@ -1207,15 +1207,15 @@ test('facility cycles run in their fixed order so a farm output supplies a later
     const once = advancePlanetFacilities(start, 1);
     assert.equal(facilityIn(once, 'dairyFarm').status, 'working');
     assert.equal(facilityIn(once, 'cheeseFactory').status, 'working');
-    assert.equal(stockIn(once, 'milk'), 2, 'the dairy farm adds 10 milk before the cheese factory consumes 10');
-    assert.equal(stockIn(once, 'cheese'), 55, 'a cheese-first order would have starved the factory');
+    assert.equal(stockIn(once, 'milk'), 10, 'the dairy farm adds 10 milk before the cheese factory consumes 2');
+    assert.equal(stockIn(once, 'cheese'), 56, 'a cheese-first order would have starved the factory');
 });
 
 test('an all-or-nothing shortfall leaves the stock untouched and flips the status until the input returns', () => {
-    const starved = planetMarket('seroton', { stocks: { grain: 4, bun: 50 }, levels: { bakery: 1, grainFarm: 0, dairyFarm: 1 } });
+    const starved = planetMarket('seroton', { stocks: { grain: 1, bun: 50 }, levels: { bakery: 1, grainFarm: 0, dairyFarm: 1 } });
     const afterShortfall = advancePlanetFacilities(starved, 1);
     assert.equal(facilityIn(afterShortfall, 'bakery').status, 'insufficientResources');
-    assert.equal(stockIn(afterShortfall, 'grain'), 4, 'the uncovered input is not partially consumed');
+    assert.equal(stockIn(afterShortfall, 'grain'), 1, 'the uncovered input is not partially consumed');
     assert.equal(stockIn(afterShortfall, 'bun'), 50, 'no output is produced without the full recipe');
     assert.equal(facilityIn(afterShortfall, 'grainFarm').status, 'notBuilt', 'level zero stays not built');
     assert.equal(facilityIn(afterShortfall, 'dairyFarm').status, 'working', 'other facilities keep cycling');
@@ -1223,8 +1223,8 @@ test('an all-or-nothing shortfall leaves the stock untouched and flips the statu
     const supplied = planetMarket('seroton', { stocks: { grain: 40, bun: 50 }, levels: { bakery: 1, grainFarm: 0, dairyFarm: 1 } });
     const recovered = advancePlanetFacilities(supplied, 1);
     assert.equal(facilityIn(recovered, 'bakery').status, 'working');
-    assert.equal(stockIn(recovered, 'grain'), 30);
-    assert.equal(stockIn(recovered, 'bun'), 55);
+    assert.equal(stockIn(recovered, 'grain'), 38);
+    assert.equal(stockIn(recovered, 'bun'), 56);
 
     const repeated = advancePlanetFacilities(afterShortfall, 1);
     assert.equal(facilityIn(repeated, 'bakery').status, 'insufficientResources', 'the stored status persists until the next cycle evaluates it');
@@ -1262,7 +1262,7 @@ test('facility stock and status survive an encode and restore and keep cycling',
     assert.deepEqual(advanceGameSimulation(restored, quietInput, 2_000).markets, advanceGameSimulation(advanced, quietInput, 2_000).markets,
         'restored stock continues from the stored values');
 
-    const starved = advancePlanetFacilities(planetMarket('seroton', { stocks: { grain: 4, bun: 50 }, levels: { bakery: 1, grainFarm: 0 } }), 1);
+    const starved = advancePlanetFacilities(planetMarket('seroton', { stocks: { grain: 1, bun: 50 }, levels: { bakery: 1, grainFarm: 0 } }), 1);
     const shorted = { ...advanced, markets: advanced.markets.map(market => market.planetId === 'seroton' ? starved : market) };
     assert.equal(statusOf(shorted, 'seroton', 'bakery'), 'insufficientResources', 'a starved consumer stores an insufficient-resources status');
     const restoredShortfall = decodeGameState(encodeGameState(shorted));
@@ -1271,8 +1271,8 @@ test('facility stock and status survive an encode and restore and keep cycling',
 
 test('each planet cycles its own facilities and planet modifiers in isolation', () => {
     const next = advanceGameSimulation(initialGameState, quietInput, 1_000);
-    assert.equal(stockOf(next, 'seroton', 'milk'), 4);
-    assert.equal(stockOf(next, 'seroton', 'cheese'), 60, 'the seroton cheese factory stays short of milk');
+    assert.equal(stockOf(next, 'seroton', 'milk'), 2);
+    assert.equal(stockOf(next, 'seroton', 'cheese'), 67, 'the seroton cheese factory uses its level-one recipe');
     assert.equal(stockOf(next, 'lactozis-7c', 'milk'), 100, 'the grain farm does not affect milk stock');
     assert.equal(stockOf(next, 'lactozis-7c', 'grain'), 132, 'the lactozis-7c grain farm keeps its +20% output');
     assert.equal(stockOf(next, 'maslo-prime', 'milk'), 132, 'the maslo-prime dairy farm keeps its +20% output');
