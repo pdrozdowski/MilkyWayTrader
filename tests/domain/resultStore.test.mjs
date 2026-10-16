@@ -33,6 +33,15 @@ test('signed-in persistence writes private cash and composite score and submits 
     assert.deepEqual(scores, [terminalResult.finalScore]);
 });
 
+test('result store persists each supported timeout outcome', async () => {
+    for (const outcome of ['freedom', 'imprisonment']) {
+        const fixture = clientFor();
+        const store = createBrowserResultStore(configuration, () => fixture.client, globalSuccess);
+        assert.deepEqual(await store.persist({ ...terminalResult, outcome }), { status: 'saved', message: null });
+        assert.equal(fixture.rows[0].outcome, outcome);
+    }
+});
+
 test('partial failures retry safely and saved requires both stores', async () => {
     let insertAttempts = 0;
     let globalAttempts = 0;

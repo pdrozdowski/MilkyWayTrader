@@ -35,6 +35,7 @@ function validConfiguration (configuration: PublicAuthConfiguration): configurat
 function validTerminalResult (result: TerminalScoreResult): boolean
 {
     return typeof result.runId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(result.runId)
+        && ['death', 'freedom', 'imprisonment'].includes(String(result.outcome))
         && Number.isSafeInteger(result.activeElapsedMs) && result.activeElapsedMs >= 0
         && Number.isSafeInteger(result.finalCredits) && result.finalCredits >= 0
         && Number.isFinite(result.cargoValue) && result.cargoValue >= 0

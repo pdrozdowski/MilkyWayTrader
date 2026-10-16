@@ -1,5 +1,6 @@
 import type { GamePauseReason } from '../state/gameClockState';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
+import type { TerminalOutcome } from '../state/terminalResultState';
 import type { PlanetId } from '../state/planetState';
 import type { PlanetFacilityId, PlanetFacilityStatus, SerotonCommodityId } from '../state/serotonMarketState';
 import type { AsteroidSize, AsteroidVariant } from '../state/asteroidState';
@@ -13,6 +14,7 @@ import {
 import { planetIds } from '../domain/planetCatalog.ts';
 import { planetFacilityIds, planetFacilityMaximumLevel } from '../domain/planetFacilityCatalog.ts';
 import { serotonCommodityIds } from '../domain/serotonMarketCatalog.ts';
+import { calculateTerminalScore, DEBT_SCORE_THRESHOLD } from '../domain/finalScore.ts';
 
 const asteroidMaximumHitPoints: Readonly<Record<AsteroidSize, number>> = { big: 3, medium: 2, small: 1 };
 
@@ -253,12 +255,20 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     if (!shipStatus.boosterUnlocked && ship.boosting) throw new Error('state.ship.boosting requires an unlocked booster.');
     const terminalResult = root.terminalResult === null ? null : requireRecord(root.terminalResult, 'state.terminalResult', ['runId', 'outcome', 'activeElapsedMs', 'finalCredits']);
     if (terminalResult === null && currentHitPoints === 0) throw new Error('Zero hit points requires a terminal result.');
-    if (terminalResult !== null && currentHitPoints !== 0) throw new Error('A terminal result requires zero hit points.');
     if (terminalResult !== null) {
         if (runId(terminalResult.runId, 'state.terminalResult.runId') !== decodedRunId) throw new Error('Terminal result run id must match the run.');
-        if (terminalResult.outcome !== 'death') throw new Error('state.terminalResult.outcome is unknown.');
+        const outcome = terminalResult.outcome;
+        if (outcome !== 'death' && outcome !== 'freedom' && outcome !== 'imprisonment') throw new Error('state.terminalResult.outcome is unknown.');
         if (nonNegativeSafeInteger(terminalResult.activeElapsedMs, 'state.terminalResult.activeElapsedMs') !== Math.floor(activeElapsedMs)) throw new Error('Terminal result active time must be the clock rounded down to milliseconds.');
         if (nonNegativeSafeInteger(terminalResult.finalCredits, 'state.terminalResult.finalCredits') !== credits) throw new Error('Terminal result credits must match the run.');
+        if (outcome === 'death') {
+            if (currentHitPoints !== 0) throw new Error('Death requires zero hit points.');
+        } else {
+            if (activeElapsedMs !== budgetMs) throw new Error('A timeout outcome requires the clock to reach its budget.');
+            const score = calculateTerminalScore({ endingCash: credits, cargo, shipUpgradeSpend, facilityUpgradeSpend });
+            const expected: TerminalOutcome = score.finalScore >= DEBT_SCORE_THRESHOLD ? 'freedom' : 'imprisonment';
+            if (outcome !== expected) throw new Error('Timeout outcome must match the final score.');
+        }
     }
 
     if (!Array.isArray(root.planets)) throw new Error('state.planets must be an array.');
@@ -412,7 +422,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         moolarisDamageArmed: root.moolarisDamageArmed,
         terminalResult: terminalResult === null ? null : {
             runId: decodedRunId,
-            outcome: 'death',
+            outcome: terminalResult.outcome as TerminalOutcome,
             activeElapsedMs: Math.floor(activeElapsedMs),
             finalCredits: credits
         },

@@ -1,15 +1,15 @@
 ---
 change_id: s06-timed-debt-outcome
 title: Resolve the timed debt run
-status: planned
+status: impl_reviewed
 created: 2026-10-15
-updated: 2026-10-15
+updated: 2026-10-16
 archived_at: null
 ---
 
 ## Notes
 
-User can abandon a run or reach timeout and see the debt outcome and final cash score.
+User can reach timeout and see the score-based debt outcome and final composite score. Run abandonment and its result handoff belong to S-11.
 
 Debt clarification: 1,000,000 credits.
 

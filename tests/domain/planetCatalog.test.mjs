@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { planetIds } from '../../src/game/domain/planetCatalog.ts';
 import { planetDefinitions } from '../../src/game/definitions/planetDefinitions.ts';
 import { planetMarketTunings } from '../../src/game/definitions/serotonMarketDefinitions.ts';
-import { planetFacilityDefinitionById, planetFacilityDefinitions, planetFacilityInitialLevelOf, planetFacilityInitialLevels, planetFacilityModifiers, planetFacilityOutputCommodityIds } from '../../src/game/definitions/planetFacilityDefinitions.ts';
+import { planetFacilityDefinitionById, planetFacilityDefinitions, planetFacilityModifiers, planetFacilityOutputCommodityIds } from '../../src/game/definitions/planetFacilityDefinitions.ts';
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
 import { planetFacilityIds, planetFacilityMaximumLevel } from '../../src/game/domain/planetFacilityCatalog.ts';
 import { serotonCommodityIds } from '../../src/game/domain/serotonMarketCatalog.ts';
@@ -42,27 +42,6 @@ test('the facility catalogue mirrors the planet, commodity and specialization co
     assert.deepEqual(specializedPairs, ['cheeseFactory@seroton', 'dairyFarm@maslo-prime', 'grainFarm@lactozis-7c']);
 });
 
-test('each planet opens only the facility it specializes in, at level one', () => {
-    assert.deepEqual(planetFacilityInitialLevels, {
-        dairyFarm: { 'maslo-prime': 1 },
-        grainFarm: { 'lactozis-7c': 1 },
-        cheeseFactory: { seroton: 1 },
-        bakery: {},
-        foodProcessor: {}
-    }, 'the opening-level record names exactly one specializing planet per facility');
-    for (const facilityId of planetFacilityIds) {
-        for (const planetId of planetIds) {
-            const specialized = Boolean(planetFacilityModifiers[facilityId][planetId]);
-            assert.equal(planetFacilityInitialLevelOf(facilityId, planetId), specialized ? 1 : 0, `${facilityId}@${planetId}`);
-        }
-    }
-    for (const planetId of planetIds) {
-        const builtFacilities = planetFacilityIds.filter(facilityId => planetFacilityInitialLevelOf(facilityId, planetId) === 1);
-        assert.equal(builtFacilities.length, 1, `${planetId} opens exactly one built facility`);
-        assert(planetFacilityModifiers[builtFacilities[0]][planetId], `${builtFacilities[0]}@${planetId} is the specializing pair`);
-    }
-});
-
 test('the runtime facility id catalogue mirrors the configured facility definitions', () => {
     assert.deepEqual([...planetFacilityIds], planetFacilityDefinitions.map(definition => definition.id));
     for (const definition of planetFacilityDefinitions) {
@@ -87,18 +66,18 @@ test('the facility definitions declare the configured output and input recipes',
     }
 });
 
-test('the initial game state opens every planet with its specializing facility and its statuses', () => {
-    const expectedOpenings = {
-        seroton: { levels: [0, 0, 1, 0, 0], statuses: ['notBuilt', 'notBuilt', 'working', 'notBuilt', 'notBuilt'] },
-        'lactozis-7c': { levels: [0, 1, 0, 0, 0], statuses: ['notBuilt', 'working', 'notBuilt', 'notBuilt', 'notBuilt'] },
-        'maslo-prime': { levels: [1, 0, 0, 0, 0], statuses: ['working', 'notBuilt', 'notBuilt', 'notBuilt', 'notBuilt'] }
+test('the initial game state opens every planet with the configured facility levels and statuses', () => {
+    const expectedByPlanet = {
+        seroton: [0, 0, 1, 0, 0],
+        'lactozis-7c': [0, 1, 0, 0, 0],
+        'maslo-prime': [1, 0, 0, 0, 0]
     };
     assert(initialGameState.markets.length > 0);
     for (const market of initialGameState.markets) {
-        const opening = expectedOpenings[market.planetId];
-        assert(opening, `${market.planetId} has an expected opening`);
         assert.deepEqual(market.facilities.map(facility => facility.facilityId), [...planetFacilityIds], market.planetId);
-        assert.deepEqual(market.facilities.map(facility => facility.level), opening.levels, market.planetId);
-        assert.deepEqual(market.facilities.map(facility => facility.status), opening.statuses, market.planetId);
+        const expectedLevels = expectedByPlanet[market.planetId];
+        assert.deepEqual(market.facilities.map(facility => facility.level), expectedLevels, market.planetId);
+        assert.deepEqual(market.facilities.map(facility => facility.status), expectedLevels.map(level => level === 0 ? 'notBuilt' : 'working'), market.planetId);
+        assert(planetFacilityDefinitions.every(definition => definition.maxLevel === 3), market.planetId);
     }
 });

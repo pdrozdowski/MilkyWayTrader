@@ -37,6 +37,8 @@ function advanceFacilityCycle (economy: SerotonMarketState): SerotonMarketState
         if (!facility) throw new Error(`Missing facility ${definition.id} on planet ${economy.planetId}.`);
         statusByFacilityId.set(definition.id, applyFacilityOnce(economy, definition, facility.level, stockById));
     }
+    const spaceRationDemand = economy.facilities.reduce((total, facility) => total + facility.level, 0);
+    stockById.set('spaceRation', Math.max(0, (stockById.get('spaceRation') ?? 0) - spaceRationDemand));
     return {
         ...economy,
         commodityStocks: economy.commodityStocks.map(entry => ({ commodityId: entry.commodityId, stock: stockById.get(entry.commodityId) ?? entry.stock })),

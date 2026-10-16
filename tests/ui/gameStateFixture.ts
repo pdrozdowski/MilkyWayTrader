@@ -4,8 +4,19 @@ import type { GameStateSnapshot } from '../../src/game/state/gameStateSnapshot';
 import type { PlanetId } from '../../src/game/state/planetState';
 import type { SerotonCommodityId } from '../../src/game/state/serotonMarketState';
 import { setGameClockPlayerPaused } from '../../src/game/mechanics/clock/gameClock';
+import { displayLabels } from '../../src/ui/components/displayLabels';
 
 const storageKey = 'milky-way-trader:playwright-game-state';
+
+export async function completeGameIntro (page: Page): Promise<void>
+{
+    const next = page.getByRole('button', { name: displayLabels.gameIntroNext, exact: true });
+    for (let slide = 0; slide < 4; slide += 1) {
+        await expect(next).toBeVisible();
+        await next.click();
+    }
+    await page.getByRole('button', { name: displayLabels.gameIntroStart, exact: true }).click();
+}
 
 export interface GameStateFixtureOptions
 {
@@ -47,6 +58,7 @@ export async function prepareGameState (page: Page, planet: PlanetId, options: G
     await measure('Install deterministic game-state fixture', recordTiming, () => page.evaluate(({ key, fixture }) => localStorage.setItem(key, JSON.stringify(fixture)), { key: storageKey, fixture: state }));
     await measure('New Game and run status readiness', recordTiming, async () => {
         await page.getByRole('button', { name: 'New Game', exact: true }).click();
+        await completeGameIntro(page);
         await expect(page.getByLabel('Run status')).toBeVisible();
     });
     await measure('Validate prepared landed state', recordTiming, () => expect(page.getByRole('dialog', { name: 'Landed status' })).toBeVisible());

@@ -1,5 +1,12 @@
 import type { GameClockState, GamePauseReason } from '../../state/gameClockState';
 
+export function setGameClockToThreeSecondsRemaining (clock: GameClockState): GameClockState
+{
+    const targetElapsedMs = Math.max(0, clock.budgetMs - 3_000);
+    if (clock.activeElapsedMs >= targetElapsedMs) return clock;
+    return { ...clock, activeElapsedMs: targetElapsedMs };
+}
+
 export function advanceGameClock (clock: GameClockState, deltaMs: number): GameClockState
 {
     if (!Number.isFinite(deltaMs) || deltaMs < 0) throw new Error('Clock delta must be a non-negative finite number.');

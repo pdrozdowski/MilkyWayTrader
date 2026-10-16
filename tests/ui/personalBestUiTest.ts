@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { displayLabels } from '../../src/ui/components/displayLabels';
 import { test } from './testSessionFixture';
+import { completeGameIntro } from './gameStateFixture';
 
 test.describe('authenticated Personal Best journey', () => {
     test.use({ testSessionMode: 'authenticated' });
@@ -13,6 +14,7 @@ test.describe('authenticated Personal Best journey', () => {
         await page.setViewportSize({ width: 1280, height: 720 });
         await page.goto('/', { waitUntil: 'domcontentloaded' });
         await page.getByRole('button', { name: 'New Game', exact: true }).click();
+        await completeGameIntro(page);
         await expect(page.getByLabel('Run status')).toBeVisible();
         await testSession.seedHistoryResult(77_321);
         await page.getByRole('button', { name: 'Menu', exact: true }).click();

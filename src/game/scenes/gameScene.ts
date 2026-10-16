@@ -15,6 +15,7 @@ import { LANDING_CENTRE_RADIUS } from '../mechanics/planet/landing';
 import { teleportShipToPlanet } from '../mechanics/debug/teleportShipToPlanet';
 import { teleportShipToAsteroid } from '../mechanics/debug/teleportShipToAsteroid';
 import { spawnDebugCargo } from '../mechanics/debug/spawnDebugCargo';
+import { addDebugCash } from '../mechanics/debug/addDebugCash';
 import { advanceShipServiceLevel } from '../application/planetShipServices';
 import type { ShipServiceId } from '../application/planetShipServices';
 import type { PerformanceMonitor, PerformanceStepId } from '../application/performanceMonitor';
@@ -30,7 +31,7 @@ import type { AsteroidState } from '../state/asteroidState';
 import { ObjectDepth } from '../visual/layers';
 import { gameObjectLayout, gameWorldBounds } from './gameObjects';
 import type { TelemetryPort } from '../application/telemetry/telemetry';
-import { createTerminalScoreResult } from '../application/results/terminalScoreResult';
+import { classifyTimeoutOutcome, createTerminalScoreResult } from '../application/results/terminalScoreResult';
 import type { TerminalScoreResult } from '../application/results/terminalScoreResult';
 import { cargoCapacityByLevel } from '../domain/runBalance';
 
@@ -162,6 +163,7 @@ export class Game extends Scene
         this.game.events.on('debug-teleport-to-planet', this.teleportToPlanet, this);
         this.game.events.on('debug-teleport-to-asteroid', this.teleportToAsteroid, this);
         this.game.events.on('debug-spawn-cargo', this.spawnDebugCargo, this);
+        this.game.events.on('debug-add-cash', this.addDebugCash, this);
         this.game.events.on('debug-upgrade-ship-service', this.debugUpgradeShipService, this);
         this.game.events.on('debug-performance-monitor', this.setPerformanceMonitorEnabled, this);
         window.addEventListener('blur', this.loseFocus);
@@ -186,6 +188,7 @@ export class Game extends Scene
             this.game.events.off('debug-teleport-to-planet', this.teleportToPlanet, this);
             this.game.events.off('debug-teleport-to-asteroid', this.teleportToAsteroid, this);
             this.game.events.off('debug-spawn-cargo', this.spawnDebugCargo, this);
+            this.game.events.off('debug-add-cash', this.addDebugCash, this);
             this.game.events.off('debug-upgrade-ship-service', this.debugUpgradeShipService, this);
             this.game.events.off('debug-performance-monitor', this.setPerformanceMonitorEnabled, this);
             this.detachPerformanceFrameListeners();
@@ -527,7 +530,8 @@ export class Game extends Scene
             projectileRadius: projectileTuning.radius,
             projectileSpeed: weaponTuning.projectileSpeed,
             shotIntervalMs: 1000 / weaponTuning.shotsPerSecond,
-            muzzleOffset: weaponTuning.noseOffset * this.ship.sprite.scaleX
+            muzzleOffset: weaponTuning.noseOffset * this.ship.sprite.scaleX,
+            classifyTimeout: classifyTimeoutOutcome
         }));
         this.markPerformanceStep('feedback-and-ship-sync');
         if (before.moolarisDamageArmed && !state.moolarisDamageArmed && state.terminalResult === null) this.playShipCrashFeedback(state.ship.position);
@@ -542,7 +546,15 @@ export class Game extends Scene
             }
         }
         if (before.terminalResult === null && state.terminalResult !== null) {
-            this.beginDeathTransition(createTerminalScoreResult(state), state.ship.position);
+            const terminalResult = createTerminalScoreResult(state);
+            if (terminalResult.outcome === 'death') {
+                this.beginDeathTransition(terminalResult, state.ship.position);
+            } else {
+                this.telemetry.endSession(state.credits);
+                this.clearFlightInput();
+                this.audio.silence();
+                this.scene.start('GameOver', { terminalResult });
+            }
             this.endPerformanceStep();
             return;
         }
@@ -629,6 +641,10 @@ export class Game extends Scene
 
     private readonly spawnDebugCargo = (): void => {
         this.stateProvider.update(spawnDebugCargo);
+    };
+
+    private readonly addDebugCash = (): void => {
+        this.stateProvider.update(addDebugCash);
     };
 
     private readonly debugUpgradeShipService = (serviceId: ShipServiceId): void => {

@@ -3,8 +3,9 @@ import { test } from 'node:test';
 import { applyFacilityBuild, applyFacilityDowngrade, applyFacilityUpgrade, quoteFacilityDowngrade, quoteFacilityInvestment } from '../../src/game/application/planetFacilities.ts';
 import { landedCommodityFlow, projectLandedFacilities } from '../../src/game/application/landedFacilities.ts';
 import { GameStateProvider } from '../../src/game/application/gameStateProvider.ts';
-import { planetFacilityCatalogue, planetFacilityDefinitions, planetFacilityInitialLevelOf, planetFacilityModifierOf, planetFacilityOutputCommodityIds } from '../../src/game/definitions/planetFacilityDefinitions.ts';
+import { planetFacilityCatalogue, planetFacilityDefinitions, planetFacilityModifierOf, planetFacilityOutputCommodityIds } from '../../src/game/definitions/planetFacilityDefinitions.ts';
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
+import { advancePlanetFacilities } from '../../src/game/mechanics/planetFacilitySimulation.ts';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -33,9 +34,9 @@ test('facility investment quotes reject the not-landed, unknown, unavailable and
 
     const seroton = landedOn('seroton');
     assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'unknownFacility', 'build').failure, 'unknown-facility');
-    assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'cheeseFactory', 'build').failure, 'unavailable', 'the specializing facility Seroton opens already built cannot be built again');
+    assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'cheeseFactory', 'build').failure, 'unavailable');
+    assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'dairyFarm', 'build').failure, null);
     assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'bakery', 'upgrade').failure, 'unavailable');
-    assert.equal(quoteFacilityInvestment(seroton, planetFacilityCatalogue, 'dairyFarm', 'build').failure, null, 'Seroton opens the dairy farm unbuilt, so it can be built');
     const maxed = withFacilityLevel(seroton, 'seroton', 'bakery', 3);
     assert.equal(quoteFacilityInvestment(maxed, planetFacilityCatalogue, 'bakery', 'upgrade').failure, 'unavailable');
 
@@ -51,9 +52,9 @@ test('facility investment quotes reject the not-landed, unknown, unavailable and
 
 test('discounted prices follow the specialized facility and planet pairing on both steps', () => {
     const cases = [
-        ['seroton', 'cheeseFactory', 0, 'build', 28_000],
         ['seroton', 'cheeseFactory', 1, 'upgrade', 28_000],
         ['seroton', 'cheeseFactory', 2, 'upgrade', 80_000],
+        ['lactozis-7c', 'cheeseFactory', 0, 'build', 35_000],
         ['maslo-prime', 'dairyFarm', 1, 'upgrade', 20_000],
         ['maslo-prime', 'dairyFarm', 2, 'upgrade', 60_000],
         ['lactozis-7c', 'grainFarm', 1, 'upgrade', 20_000],
@@ -159,16 +160,40 @@ test('landed commodity flow aggregates per-second production, consumption and ne
     const seroton = landedOn('seroton');
     const projectionCatalogue = {
         definitions: planetFacilityDefinitions.map(definition => ({ ...definition, outputCommodityId: planetFacilityOutputCommodityIds[definition.id] })),
-        modifierOf: planetFacilityModifierOf,
-        initialLevelOf: planetFacilityInitialLevelOf
+        modifierOf: planetFacilityModifierOf
     };
     const facilities = projectLandedFacilities(seroton, projectionCatalogue);
+    assert.deepEqual(facilities.facilities.find(facility => facility.facilityId === 'cheeseFactory').inputsPerCycle, [
+        { commodityId: 'milk', quantity: 12, missing: true }
+    ], 'an insufficient recipe identifies the missing milk input');
 
-    // Seroton opens only Cheese Factory L1 (specialized: 2 * round(5 * 1.2) = 12 milk/s input, 6 cheese/s output); its farms start unbuilt.
+    // Seroton opens only cheeseFactory L1 (2 * round(5 * 1.2) = 12 milk/s input, 6 cheese/s output).
     assert.deepEqual(landedCommodityFlow(facilities, 'milk'), { productionPerSecond: 0, consumptionPerSecond: 12, netPerSecond: -12 });
     assert.deepEqual(landedCommodityFlow(facilities, 'cheese'), { productionPerSecond: 6, consumptionPerSecond: 0, netPerSecond: 6 });
-    assert.deepEqual(landedCommodityFlow(facilities, 'spaceRation'), { productionPerSecond: 0, consumptionPerSecond: 0, netPerSecond: 0 });
+    assert.deepEqual(landedCommodityFlow(facilities, 'spaceRation'), { productionPerSecond: 0, consumptionPerSecond: 1, netPerSecond: -1 });
 
     const withBakery = withFacilityLevel(withFacilityLevel(seroton, 'seroton', 'grainFarm', 1), 'seroton', 'bakery', 1);
     assert.deepEqual(landedCommodityFlow(projectLandedFacilities(withBakery, projectionCatalogue), 'grain'), { productionPerSecond: 10, consumptionPerSecond: 10, netPerSecond: 0 });
+    assert.deepEqual(landedCommodityFlow(projectLandedFacilities(withBakery, projectionCatalogue), 'spaceRation'), { productionPerSecond: 0, consumptionPerSecond: 3, netPerSecond: -3 });
+});
+
+test('each planet consumes Space Rations equal to all facility levels per cycle and never below zero', () => {
+    for (const market of initialGameState.markets) {
+        const result = advancePlanetFacilities(market, 1);
+        assert.equal(result.commodityStocks.find(stock => stock.commodityId === 'spaceRation').stock, 19, market.planetId);
+    }
+
+    const seroton = landedOn('seroton');
+    const processorBuilt = withFacilityLevel(seroton, 'seroton', 'foodProcessor', 3);
+    const economy = processorBuilt.markets[0];
+    const resourceStarvedEconomy = {
+        ...economy,
+        commodityStocks: economy.commodityStocks.map(stock => ['milk', 'cheese', 'bun'].includes(stock.commodityId)
+            ? { ...stock, stock: 0 }
+            : stock.commodityId === 'spaceRation' ? { ...stock, stock: 2 } : stock)
+    };
+    const result = advancePlanetFacilities(resourceStarvedEconomy, 1);
+    assert.equal(result.facilities.find(facility => facility.facilityId === 'foodProcessor').status, 'insufficientResources');
+    assert.equal(result.commodityStocks.find(stock => stock.commodityId === 'spaceRation').stock, 0);
+    assert(result.commodityStocks.every(stock => stock.stock >= 0));
 });

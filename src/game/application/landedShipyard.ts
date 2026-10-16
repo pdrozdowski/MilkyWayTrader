@@ -7,12 +7,11 @@ import {
     shipRepairHitPointPercent,
     weaponProjectileCountByLevel
 } from '../domain/runBalance.ts';
-import { quoteShipBooster, quoteShipRepair, quoteShipUpgrade, shipBoosterServicePlanetId, shipServiceDefinitions, shipServiceLevelOf } from './planetShipServices.ts';
+import { quoteShipBooster, quoteShipRepair, quoteShipUpgrade, shipServiceDefinitions, shipServiceLevelOf } from './planetShipServices.ts';
 import type { ShipServiceFailure, ShipServiceId } from './planetShipServices.ts';
 import { healthBandOf } from './runStatus.ts';
 import type { HealthBand, RunState } from './runStatus.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot.ts';
-import type { PlanetId } from '../state/planetState.ts';
 
 export interface LandedShipyardClockSnapshot
 {
@@ -36,8 +35,6 @@ export interface LandedShipyardServiceSnapshot
 {
     readonly serviceId: ShipServiceId;
     readonly label: string;
-    readonly servicePlanetId: PlanetId;
-    readonly servicePlanetName: string;
     readonly level: number;
     readonly maximumLevel: number;
     /** Price of the next level; zero once the path is at its maximum level. */
@@ -55,8 +52,6 @@ export interface LandedShipyardBoosterSnapshot
 {
     readonly owned: boolean;
     readonly price: number;
-    readonly servicePlanetId: PlanetId;
-    readonly servicePlanetName: string;
     readonly available: boolean;
     readonly affordable: boolean;
     readonly failure: ShipServiceFailure | null;
@@ -119,12 +114,10 @@ export function projectLandedShipyard (state: GameStateSnapshot): LandedShipyard
         return Object.freeze({
             serviceId: definition.id,
             label: definition.label,
-            servicePlanetId: definition.servicePlanetId,
-            servicePlanetName: planetNameOf(state, definition.servicePlanetId),
             level,
             maximumLevel: definition.maximumLevel,
             price: maximum ? 0 : quote.price,
-            available: planetId === definition.servicePlanetId && !maximum,
+            available: planetId !== null && !maximum,
             affordable: quote.failure === null,
             maximum,
             failure: quote.failure,
@@ -136,9 +129,7 @@ export function projectLandedShipyard (state: GameStateSnapshot): LandedShipyard
     const booster: LandedShipyardBoosterSnapshot = {
         owned: state.shipStatus.boosterUnlocked,
         price: shipBoosterCost,
-        servicePlanetId: shipBoosterServicePlanetId,
-        servicePlanetName: planetNameOf(state, shipBoosterServicePlanetId),
-        available: planetId === shipBoosterServicePlanetId && !state.shipStatus.boosterUnlocked,
+        available: planetId !== null && !state.shipStatus.boosterUnlocked,
         affordable: boosterQuote.failure === null,
         failure: boosterQuote.failure
     };

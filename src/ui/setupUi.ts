@@ -19,6 +19,7 @@ import { formatCredits } from './components/formatCredits';
 import { mountPlayerAccount } from './components/playerAccount';
 import { mountPersonalBest } from './components/personalBest';
 import { mountGlobalHighScores } from './components/globalHighScores';
+import { mountGameIntro } from './components/gameIntro';
 import type { AuthReturnPort, AccountOrigin } from '../game/application/auth/authReturn';
 import type { AuthPort } from '../game/application/auth/auth';
 import type { TelemetryPort } from '../game/application/telemetry/telemetry';
@@ -33,6 +34,7 @@ import { bindDebugCargoControl } from './components/debugCargoControl';
 import { shipServiceDefinitions, shipServiceLevelOf } from '../game/application/planetShipServices';
 import type { ShipServiceId } from '../game/application/planetShipServices';
 import type { GameStateProvider } from '../game/application/gameStateProvider';
+import { setGameClockToThreeSecondsRemaining } from '../game/mechanics/clock/gameClock';
 
 export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort, telemetry: TelemetryPort, gameOverReturn: GameOverReturnPort, authReturn?: AuthReturnPort): UiHandle
 {
@@ -62,11 +64,13 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const gameOverFinalScoreLabel = root.querySelector<HTMLElement>('#game-over-final-score-label');
     const gameOverFinalScore = root.querySelector<HTMLElement>('#game-over-final-score');
     const gameOverPersonalBest = root.querySelector<HTMLButtonElement>('#game-over-personal-best');
+    const gameOverMainMenu = root.querySelector<HTMLButtonElement>('#game-over-main-menu');
     const gameOverStatus = root.querySelector<HTMLElement>('#game-over-status');
     const gameOverMessage = root.querySelector<HTMLElement>('#game-over-status-message');
     const gameOverRetry = root.querySelector<HTMLButtonElement>('#game-over-status-retry');
     const stateProvider = game.registry.get('gameStateProvider') as GameStateProvider;
-    if (!gameOverResults || !gameOverResultsTitle || !gameOverSurvivalTimeLabel || !gameOverSurvivalTime || !gameOverFinalCashLabel || !gameOverFinalCash || !gameOverCargoValueLabel || !gameOverCargoValue || !gameOverShipUpgradeSpendLabel || !gameOverShipUpgradeSpend || !gameOverFacilityUpgradeSpendLabel || !gameOverFacilityUpgradeSpend || !gameOverFinalScoreLabel || !gameOverFinalScore || !gameOverPersonalBest || !gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
+    if (!gameOverResults || !gameOverResultsTitle || !gameOverSurvivalTimeLabel || !gameOverSurvivalTime || !gameOverFinalCashLabel || !gameOverFinalCash || !gameOverCargoValueLabel || !gameOverCargoValue || !gameOverShipUpgradeSpendLabel || !gameOverShipUpgradeSpend || !gameOverFacilityUpgradeSpendLabel || !gameOverFacilityUpgradeSpend || !gameOverFinalScoreLabel || !gameOverFinalScore || !gameOverPersonalBest || !gameOverMainMenu || !gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
+    gameOverMainMenu.textContent = displayLabels.gameOverMainMenu;
     const renderGameOverPersistence = (result: { status: 'pending' | 'saved' | 'failed' | 'unsigned'; message: string | null } | null): void => {
         gameOverStatus.hidden = result === null;
         if (!result) return;
@@ -76,6 +80,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         gameOverRetry.textContent = resultLabels.retry;
     };
     const retryGameOverPersistence = (): void => { game.events.emit('game-over-retry'); };
+    const returnToMainMenuFromGameOver = (): void => { game.events.emit('game-over-main-menu'); };
     const showGameOverResults = (terminalResult: TerminalScoreResult): void => {
         gameOverResultsTitle.textContent = resultLabels.title;
         gameOverSurvivalTimeLabel.textContent = resultLabels.survived;
@@ -94,6 +99,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     };
     const hideGameOverResults = (): void => { gameOverResults.hidden = true; };
     gameOverRetry.addEventListener('click', retryGameOverPersistence);
+    gameOverMainMenu.addEventListener('click', returnToMainMenuFromGameOver);
     game.events.on('game-over-persistence', renderGameOverPersistence);
     game.registry.set('telemetry', telemetry);
     const landingStatus = mountLandingStatus(root, createLandingStatusPort(game));
@@ -136,6 +142,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const mouseMovementToggle = root.querySelector<HTMLButtonElement>('#debug-mouse-movement-toggle');
     const boosterToggle = root.querySelector<HTMLButtonElement>('#debug-booster-toggle');
     const performanceToggle = root.querySelector<HTMLButtonElement>('#debug-performance-toggle');
+    const threeSecondsRemaining = root.querySelector<HTMLButtonElement>('#debug-three-seconds-remaining');
+    const addCash = root.querySelector<HTMLButtonElement>('#debug-add-cash');
     const teleportSeroton = root.querySelector<HTMLButtonElement>('#debug-teleport-seroton');
     const teleportLactozis = root.querySelector<HTMLButtonElement>('#debug-teleport-lactozis-7c');
     const teleportMasloPrime = root.querySelector<HTMLButtonElement>('#debug-teleport-maslo-prime');
@@ -144,7 +152,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const upgradeCargoLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-cargo');
     const upgradeEngineLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-engine');
     const upgradeWeaponaryLevel = root.querySelector<HTMLButtonElement>('#debug-upgrade-weaponary');
-    if (!mainMenu || !mainMenuNewGame || !mainMenuSignIn || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !performanceToggle || !teleportSeroton || !teleportLactozis || !teleportMasloPrime || !teleportAsteroid || !spawnCargo || !upgradeCargoLevel || !upgradeEngineLevel || !upgradeWeaponaryLevel) throw new Error('Missing game menu controls.');
+    if (!mainMenu || !mainMenuNewGame || !mainMenuSignIn || !debugMenu || !debugClose || !touchControlsToggle || !mouseMovementToggle || !boosterToggle || !performanceToggle || !threeSecondsRemaining || !addCash || !teleportSeroton || !teleportLactozis || !teleportMasloPrime || !teleportAsteroid || !spawnCargo || !upgradeCargoLevel || !upgradeEngineLevel || !upgradeWeaponaryLevel) throw new Error('Missing game menu controls.');
     const upgradeButtons: Readonly<Record<ShipServiceId, HTMLButtonElement>> = {
         cargo: upgradeCargoLevel,
         engine: upgradeEngineLevel,
@@ -175,7 +183,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const showGameOverSignIn = (terminalResult: TerminalScoreResult): void => { currentGameOverResult = terminalResult; showGameOverResults(terminalResult); root.append(mainMenuSignIn); };
     const hideGameOverSignIn = (): void => { currentGameOverResult = null; hideGameOverResults(); mainMenu.prepend(mainMenuSignIn); };
     const startNewGame = (): void => { game.events.emit('start-new-game'); };
-    mainMenuNewGame.addEventListener('click', startNewGame);
+    const gameIntro = mountGameIntro(root, { startGame: startNewGame });
     game.events.on('main-menu-open', showMainMenu);
     game.events.on('main-menu-close', hideMainMenu);
     game.events.on('game-over-open', showGameOverSignIn);
@@ -199,6 +207,18 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         renderDebugShipServices();
     };
     const closeDebugMenu = (): void => { debugMenu.hidden = true; game.canvas.focus(); };
+    threeSecondsRemaining.textContent = displayLabels.debugThreeSecondsRemaining;
+    addCash.textContent = displayLabels.debugAddCash;
+    const grantDebugCash = (): void => {
+        if (terminalDeathTransitionActive) return;
+        game.events.emit('debug-add-cash');
+        closeDebugMenu();
+    };
+    const reduceTimeToThreeSeconds = (): void => {
+        if (terminalDeathTransitionActive) return;
+        stateProvider.update(state => ({ ...state, clock: setGameClockToThreeSecondsRemaining(state.clock) }));
+        closeDebugMenu();
+    };
     const openDebugMenu = (): void => { if (!terminalDeathTransitionActive) { debugMenu.hidden = false; renderDebugToggles(); debugClose.focus(); } };
     const toggleTouchControls = (): void => { if (!terminalDeathTransitionActive) { touchControlsEnabled = !touchControlsEnabled; game.events.emit('debug-touch-controls', touchControlsEnabled); renderDebugToggles(); } };
     const toggleMouseMovement = (): void => { if (!terminalDeathTransitionActive) { mouseMovementEnabled = !mouseMovementEnabled; game.events.emit('debug-mouse-movement', mouseMovementEnabled); renderDebugToggles(); } };
@@ -229,6 +249,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     mouseMovementToggle.addEventListener('click', toggleMouseMovement);
     boosterToggle.addEventListener('click', toggleBooster);
     performanceToggle.addEventListener('click', togglePerformanceMonitor);
+    threeSecondsRemaining.addEventListener('click', reduceTimeToThreeSeconds);
+    addCash.addEventListener('click', grantDebugCash);
     teleportSeroton.addEventListener('click', teleportToSeroton);
     teleportLactozis.addEventListener('click', teleportToLactozis);
     teleportMasloPrime.addEventListener('click', teleportToMasloPrime);
@@ -255,6 +277,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             display.destroy();
             runStatus.destroy();
             gameOverRetry.removeEventListener('click', retryGameOverPersistence);
+            gameOverMainMenu.removeEventListener('click', returnToMainMenuFromGameOver);
             game.events.off('game-over-persistence', renderGameOverPersistence);
             landingStatus.destroy();
             cargoTransfer.destroy();
@@ -262,10 +285,10 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             playerAccount.destroy();
             personalBest.destroy();
             globalHighScores.destroy();
+            gameIntro.destroy();
             auth.destroy();
             telemetry.destroy();
             unsubscribeOrientation();
-            mainMenuNewGame.removeEventListener('click', startNewGame);
             game.events.off('main-menu-open', showMainMenu);
             game.events.off('main-menu-close', hideMainMenu);
             game.events.off('game-over-open', showGameOverSignIn);
@@ -278,6 +301,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             mouseMovementToggle.removeEventListener('click', toggleMouseMovement);
             boosterToggle.removeEventListener('click', toggleBooster);
             performanceToggle.removeEventListener('click', togglePerformanceMonitor);
+            threeSecondsRemaining.removeEventListener('click', reduceTimeToThreeSeconds);
+            addCash.removeEventListener('click', grantDebugCash);
             teleportSeroton.removeEventListener('click', teleportToSeroton);
             teleportLactozis.removeEventListener('click', teleportToLactozis);
             teleportMasloPrime.removeEventListener('click', teleportToMasloPrime);

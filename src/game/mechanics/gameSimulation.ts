@@ -18,6 +18,7 @@ import { asteroidRadius, advanceAsteroidMotions, fragmentAsteroid, type Asteroid
 import { moolarisDefinition } from '../definitions/moolarisDefinition.ts';
 import { asteroidDamageRanges, moolarisDamageRange, nextRandomInteger } from './hazards/damage.ts';
 import { resolveTerminalResult } from './hazards/terminal.ts';
+import type { TimeoutClassifier } from './hazards/terminal.ts';
 import { createCargoSchedule, spawnAsteroidLoot } from './salvage/asteroidLoot.ts';
 import { advanceLooseItems, advanceOrbitalCargo } from './salvage/salvageSimulation.ts';
 import { collectLooseItem, damageOrbitalCargo } from './salvage/cargoDamage.ts';
@@ -41,9 +42,10 @@ export interface GameSimulationOptions
     readonly projectileRadius: number;
     readonly shotIntervalMs: number;
     readonly muzzleOffset: number;
+    readonly classifyTimeout: TimeoutClassifier;
 }
 
-export const defaultGameSimulationOptions: GameSimulationOptions = {
+export const defaultGameSimulationOptions: Omit<GameSimulationOptions, 'classifyTimeout'> = {
     obstacles: [],
     projectileLifetimeMs: projectileTuning.lifetime,
     projectileSpeed: weaponTuning.projectileSpeed,
@@ -73,14 +75,19 @@ export function advanceGameSimulation (
     state: GameStateSnapshot,
     input: GameSimulationInput,
     deltaMs: number,
-    overrides: Partial<GameSimulationOptions> = {}
+    overrides: Partial<Omit<GameSimulationOptions, 'classifyTimeout'>> & Pick<GameSimulationOptions, 'classifyTimeout'>
 ): GameStateSnapshot
 {
     if (state.terminalResult !== null) return state;
     const options = { ...defaultGameSimulationOptions, ...overrides };
     const clock = advanceGameClock(state.clock, deltaMs);
     const activeDeltaMs = clock.activeElapsedMs - state.clock.activeElapsedMs;
-    if (activeDeltaMs <= 0) return { ...state, clock };
+    const steppedState = { ...state, clock };
+    const classifyTimeout = overrides.classifyTimeout;
+    if (activeDeltaMs <= 0) {
+        if (clock.activeElapsedMs >= clock.budgetMs) return resolveTerminalResult(steppedState, classifyTimeout);
+        return steppedState;
+    }
     const facilityCycles = Math.floor(clock.activeElapsedMs / 1000) - Math.floor(state.clock.activeElapsedMs / 1000);
     const markets = facilityCycles > 0 ? state.markets.map(market => advancePlanetFacilities(market, facilityCycles)) : state.markets;
     const landed = state.planetLifecycle.landedPlanetId !== null;
@@ -251,7 +258,7 @@ export function advanceGameSimulation (
     const pickup = salvageState.looseItems.find(item => Math.hypot(item.position.x - impactedShip.position.x, item.position.y - impactedShip.position.y) <= asteroidTuning.salvage.looseItemPickupRadius);
     if (pickup) salvageState = collectLooseItem(salvageState, pickup.id);
     const next = tryLandAtCapturedPlanet({ ...salvageState, projectiles }, input.landingRequested === true);
-    return resolveTerminalResult(next);
+    return resolveTerminalResult(next, classifyTimeout);
 }
 
 function shipAfterAsteroidImpact (ship: GameStateSnapshot['ship'], asteroidPosition: Readonly<{ x: number; y: number }>, activeElapsedMs: number): GameStateSnapshot['ship']
