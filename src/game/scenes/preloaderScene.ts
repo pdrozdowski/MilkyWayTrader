@@ -52,6 +52,11 @@ export class Preloader extends Scene
         this.load.image('game-over:debt-due', 'the_end_debt_due.png');
         this.load.image('background:nebula', 'nebula_tile.png');
         this.load.image('background:starfield', 'starfield_tile.png');
+        this.load.image('intro:story:1', 'story_art1.png');
+        this.load.image('intro:story:2', 'story_art2.png');
+        this.load.image('intro:story:3', 'story_art3.png');
+        this.load.image('intro:story:4:desktop', 'story_art4_desktop.png');
+        this.load.image('intro:story:4:mobile', 'story_art4_mobile.png.png');
         loadObjectAssets(this);
         loadSoundAssets(this);
     }
