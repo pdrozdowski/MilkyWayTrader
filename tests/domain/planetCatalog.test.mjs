@@ -26,7 +26,7 @@ test('the facility catalogue mirrors the planet, commodity and specialization co
         assert.equal(definition.upgradePrices.length, definition.maxLevel - 1, definition.id);
         assert(serotonCommodityIds.includes(planetFacilityOutputCommodityIds[definition.id]), definition.id);
         assert.equal(planetFacilityDefinitionById[definition.id], definition, definition.id);
-        for (const input of definition.inputsPerOutput) assert(serotonCommodityIds.includes(input.commodityId), input.commodityId);
+        for (const levelInputs of definition.inputsByLevel) for (const input of levelInputs) assert(serotonCommodityIds.includes(input.commodityId), input.commodityId);
     }
     for (const [facilityId, byPlanet] of Object.entries(planetFacilityModifiers)) {
         assert(planetFacilityDefinitions.some(definition => definition.id === facilityId), facilityId);
@@ -51,18 +51,22 @@ test('the runtime facility id catalogue mirrors the configured facility definiti
 
 test('the facility definitions declare the configured output and input recipes', () => {
     const expectedRecipes = {
-        dairyFarm: { outputByLevel: [10, 20, 40], inputsPerOutput: [] },
-        grainFarm: { outputByLevel: [10, 20, 40], inputsPerOutput: [] },
-        cheeseFactory: { outputByLevel: [5, 10, 20], inputsPerOutput: [{ commodityId: 'milk', quantity: 2 }] },
-        bakery: { outputByLevel: [5, 10, 20], inputsPerOutput: [{ commodityId: 'grain', quantity: 2 }] },
+        dairyFarm: { outputByLevel: [10, 20, 40], inputsByLevel: [[], [], []] },
+        grainFarm: { outputByLevel: [10, 20, 40], inputsByLevel: [[], [], []] },
+        cheeseFactory: { outputByLevel: [6, 12, 20], inputsByLevel: [[{ commodityId: 'milk', quantity: 2 }], [{ commodityId: 'milk', quantity: 4 }], [{ commodityId: 'milk', quantity: 8 }]] },
+        bakery: { outputByLevel: [6, 12, 20], inputsByLevel: [[{ commodityId: 'grain', quantity: 2 }], [{ commodityId: 'grain', quantity: 4 }], [{ commodityId: 'grain', quantity: 8 }]] },
         foodProcessor: {
-            outputByLevel: [5, 10, 20],
-            inputsPerOutput: [{ commodityId: 'cheese', quantity: 2 }, { commodityId: 'bun', quantity: 1 }, { commodityId: 'milk', quantity: 1 }]
+            outputByLevel: [6, 12, 24],
+            inputsByLevel: [
+                [{ commodityId: 'cheese', quantity: 2 }, { commodityId: 'bun', quantity: 1 }, { commodityId: 'milk', quantity: 1 }],
+                [{ commodityId: 'cheese', quantity: 4 }, { commodityId: 'bun', quantity: 2 }, { commodityId: 'milk', quantity: 2 }],
+                [{ commodityId: 'cheese', quantity: 8 }, { commodityId: 'bun', quantity: 4 }, { commodityId: 'milk', quantity: 4 }]
+            ]
         }
     };
     for (const definition of planetFacilityDefinitions) {
         assert.deepEqual(definition.outputByLevel, expectedRecipes[definition.id].outputByLevel, definition.id);
-        assert.deepEqual(definition.inputsPerOutput, expectedRecipes[definition.id].inputsPerOutput, definition.id);
+        assert.deepEqual(definition.inputsByLevel, expectedRecipes[definition.id].inputsByLevel, definition.id);
     }
 });
 

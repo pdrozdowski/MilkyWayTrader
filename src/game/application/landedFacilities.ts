@@ -21,7 +21,7 @@ export interface LandedFacilityProjectionDefinition
     readonly maxLevel: number;
     readonly outputCommodityId: SerotonCommodityId;
     readonly outputByLevel: readonly number[];
-    readonly inputsPerOutput: readonly LandedFacilityProjectionInput[];
+    readonly inputsByLevel: readonly (readonly LandedFacilityProjectionInput[])[];
     readonly upgradePrices: readonly [number, number];
 }
 
@@ -130,15 +130,14 @@ export function projectLandedFacilities (
         const outputPerCycle = facility.level > 0 ? Math.round(definition.outputByLevel[facility.level - 1] * modifier.outputMultiplier) : 0;
         const stockByCommodityId = new Map(market.commodityStocks.map(stock => [stock.commodityId, stock.stock]));
         const inputsPerCycle: LandedFacilityProjectionInput[] = facility.level > 0
-            ? definition.inputsPerOutput.map(input => {
-                const quantity = input.quantity * outputPerCycle;
-                return Object.freeze({ commodityId: input.commodityId, quantity, missing: (stockByCommodityId.get(input.commodityId) ?? 0) < quantity });
+            ? (definition.inputsByLevel[facility.level - 1] ?? []).map(input => {
+                return Object.freeze({ commodityId: input.commodityId, quantity: input.quantity, missing: (stockByCommodityId.get(input.commodityId) ?? 0) < input.quantity });
             })
             : [];
         const buildOutputPerCycle = Math.round(definition.outputByLevel[0] * modifier.outputMultiplier);
-        const buildInputsPerCycle = definition.inputsPerOutput.map(input => Object.freeze({
+        const buildInputsPerCycle = (definition.inputsByLevel[0] ?? []).map(input => Object.freeze({
             commodityId: input.commodityId,
-            quantity: input.quantity * buildOutputPerCycle
+            quantity: input.quantity
         }));
         const action: LandedFacilityActionSnapshot = facility.level === 0
             ? investmentAction(state, catalogue, definition.id, 'build')

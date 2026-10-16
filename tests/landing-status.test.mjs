@@ -221,9 +221,9 @@ test('facilities view renders five cards with levels, states, recipes and action
     const baseFacilities = [
     row('dairyFarm', 'Dairy Farm', 1, 'working', 'milk', 10, [], noModifier, { kind: 'upgrade', targetLevel: 2, price: 25_000, affordable: true }),
     row('grainFarm', 'Grain Farm', 1, 'working', 'grain', 10, [], noModifier, { kind: 'upgrade', targetLevel: 2, price: 25_000, affordable: true }),
-    row('cheeseFactory', 'Cheese Factory', 1, 'insufficientResources', 'cheese', 6, [{ commodityId: 'milk', quantity: 12, missing: true }], { upgradePriceMultiplier: 0.8, outputMultiplier: 1.2 }, { kind: 'upgrade', targetLevel: 2, price: 28_000, affordable: true }),
-    row('bakery', 'Bakery', 0, 'notBuilt', 'bun', 0, [], noModifier, { kind: 'build', targetLevel: 1, price: 35_000, affordable: true }, 5, [{ commodityId: 'grain', quantity: 10 }]),
-    row('foodProcessor', 'Food Processor', 3, 'working', 'spaceRation', 20, [{ commodityId: 'cheese', quantity: 40 }], noModifier, { kind: 'max', targetLevel: 3, price: 0, affordable: true })
+    row('cheeseFactory', 'Cheese Factory', 1, 'insufficientResources', 'cheese', 7, [{ commodityId: 'milk', quantity: 2, missing: true }], { upgradePriceMultiplier: 0.8, outputMultiplier: 1.2 }, { kind: 'upgrade', targetLevel: 2, price: 28_000, affordable: true }),
+    row('bakery', 'Bakery', 0, 'notBuilt', 'bun', 0, [], noModifier, { kind: 'build', targetLevel: 1, price: 35_000, affordable: true }, 6, [{ commodityId: 'grain', quantity: 2 }]),
+    row('foodProcessor', 'Food Processor', 3, 'working', 'spaceRation', 24, [{ commodityId: 'cheese', quantity: 8 }, { commodityId: 'bun', quantity: 4 }, { commodityId: 'milk', quantity: 4 }], noModifier, { kind: 'max', targetLevel: 3, price: 0, affordable: true })
     ];
     const facilitiesSnapshot = credits => ({
         visible: true, eligible: true, planetId: 'seroton', planetName: 'Seroton',
@@ -422,12 +422,12 @@ test('facilities view renders five cards with levels, states, recipes and action
     }
     assert.equal(status('dairyFarm').textContent, displayLabels.facilityStatusLabels.working);
     assert.equal(status('cheeseFactory').textContent, displayLabels.facilityStatusLabels.insufficientResources);
-    assert.equal(textOf(output('cheeseFactory')), `${displayLabels.marketProduction}: +6/s`);
+    assert.equal(textOf(output('cheeseFactory')), `${displayLabels.marketProduction}: +7/s`);
     assert.ok((inputs('cheeseFactory').replacedChildren ?? []).some(child => child.className === 'facility-card-missing'), 'the missing ingredient is marked in the consumption recipe');
     assert.equal((output('cheeseFactory').replacedChildren ?? []).some(child => child.className === 'facility-card-missing'), false, 'the output commodity is not marked missing when an input is unavailable');
     assert.equal(status('bakery').textContent, displayLabels.facilityStatusLabels.notBuilt);
-    assert.equal(textOf(output('bakery')), `${displayLabels.marketProduction}: +5/s`);
-    assert.equal(textOf(inputs('bakery')), `${displayLabels.marketConsumption}: -10/s`);
+    assert.equal(textOf(output('bakery')), `${displayLabels.marketProduction}: +6/s`);
+    assert.equal(textOf(inputs('bakery')), `${displayLabels.marketConsumption}: -2/s`);
     assert.equal(textOf(output('dairyFarm')), `${displayLabels.marketProduction}: +10/s`);
     assert.equal(inputs('dairyFarm').textContent, displayLabels.facilityNoInputs);
     assert(inputs('dairyFarm').classList.values.has('facility-card-recipe-empty'), 'the No inputs message is gray');
@@ -436,7 +436,7 @@ test('facilities view renders five cards with levels, states, recipes and action
     assert.deepEqual(iconIds(inputs('cheeseFactory')), ['milk'], 'the consumed commodity renders a small commodity icon');
     assert.ok(inputs('cheeseFactory').replacedChildren.some(child => child.className.includes('market-flow-icon--consumption')), 'facility input icons use the same red tint as Market consumption icons');
     assert.ok(output('dairyFarm').replacedChildren.some(child => child.className.includes('market-flow-icon')), 'facility output icons use the same commodity flow icon style as Market production');
-    assert.equal(textOf(inputs('cheeseFactory')), `${displayLabels.marketConsumption}: -12/s (MILK ${displayLabels.facilityMissing})`);
+    assert.equal(textOf(inputs('cheeseFactory')), `${displayLabels.marketConsumption}: -2/s (MILK ${displayLabels.facilityMissing})`);
     assert.equal(modifier('dairyFarm').textContent, '');
     assert.equal(modifier('dairyFarm').hidden, true);
     assert.equal(modifier('cheeseFactory').textContent, `${displayLabels.facilityOutputBonus} +20% · ${displayLabels.facilityUpgradeDiscount} 20%`);
@@ -464,16 +464,16 @@ test('facilities view renders five cards with levels, states, recipes and action
     assert.equal(downgradeCoin('foodProcessor').hidden, false);
     assert.equal(downgradeAmount('foodProcessor').textContent, '75,000');
     const unbuiltProcessor = baseFacilities.map(facility => facility.facilityId === 'foodProcessor'
-        ? { ...facility, level: 0, status: 'notBuilt', outputPerCycle: 0, inputsPerCycle: [], buildOutputPerCycle: 5, action: { kind: 'build', targetLevel: 1, price: 75_000, affordable: true } }
+        ? { ...facility, level: 0, status: 'notBuilt', outputPerCycle: 0, inputsPerCycle: [], buildOutputPerCycle: 6, action: { kind: 'build', targetLevel: 1, price: 75_000, affordable: true } }
         : facility);
     unbuiltProcessor.find(facility => facility.facilityId === 'foodProcessor').buildInputsPerCycle = [
-        { commodityId: 'cheese', quantity: 10 },
-        { commodityId: 'bun', quantity: 5 },
-        { commodityId: 'milk', quantity: 5 }
+        { commodityId: 'cheese', quantity: 2 },
+        { commodityId: 'bun', quantity: 1 },
+        { commodityId: 'milk', quantity: 1 }
     ];
     facilitiesListener({ ...facilitiesSnapshot(1_000_000), facilities: unbuiltProcessor });
-    assert.equal(textOf(output('foodProcessor')), `${displayLabels.marketProduction}: +5/s`);
-    assert.equal(textOf(inputs('foodProcessor')), `${displayLabels.marketConsumption}: -10/s · -5/s · -5/s`);
+    assert.equal(textOf(output('foodProcessor')), `${displayLabels.marketProduction}: +6/s`);
+    assert.equal(textOf(inputs('foodProcessor')), `${displayLabels.marketConsumption}: -2/s · -1/s · -1/s`);
     facilitiesListener(facilitiesSnapshot(1_000_000));
     assert.equal(facilitiesBack.textContent, displayLabels.facilitiesBackToPlanet);
     assert.equal(facilitiesBack.attributes['aria-label'], displayLabels.facilitiesBackToPlanet);

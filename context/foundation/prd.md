@@ -399,6 +399,15 @@ Each run combines a shared active-time clock, independently evolving planetary m
 | Bakery | 0 | 0 | 0 | 3 |
 | Food Processor | 0 | 0 | 0 | 3 |
 - BR-099b: At each planetary facility cycle, the market consumes Space Rations equal to the sum of all facility levels on that planet; the stock cannot fall below zero from this consumption.
+- BR-099c: Facility recipes are applied once per active second at the built level, as specified below. Farms require no inputs.
+
+| Facility | Level 1 | Level 2 | Level 3 |
+| --- | --- | --- | --- |
+| Dairy Farm | 10 Milk | 20 Milk | 40 Milk |
+| Grain Farm | 10 Grain | 20 Grain | 40 Grain |
+| Cheese Factory | 2 Milk → 6 Cheese | 4 Milk → 12 Cheese | 8 Milk → 20 Cheese |
+| Bakery | 2 Grain → 6 Buns | 4 Grain → 12 Buns | 8 Grain → 20 Buns |
+| Food Processor | 2 Cheese + 1 Bun + 1 Milk → 6 Space Rations | 4 Cheese + 2 Buns + 2 Milk → 12 Space Rations | 8 Cheese + 4 Buns + 4 Milk → 24 Space Rations |
 
 ### Authentication, persistence, and scores
 

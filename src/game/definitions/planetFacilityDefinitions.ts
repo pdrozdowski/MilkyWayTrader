@@ -20,19 +20,23 @@ export interface PlanetFacilityDefinition
     readonly initialLevelsByPlanet: Readonly<Record<PlanetId, number>>;
     readonly maxLevel: number;
     readonly outputByLevel: readonly number[];
-    readonly inputsPerOutput: readonly PlanetFacilityInput[];
+    readonly inputsByLevel: readonly (readonly PlanetFacilityInput[])[];
     readonly upgradePrices: readonly [number, number];
 }
 
 /** A facility attempts its recipe once per active second in this fixed order. */
 export const planetFacilityDefinitions: readonly PlanetFacilityDefinition[] = [
-    { id: 'dairyFarm', label: 'Dairy Farm', initialLevelsByPlanet: { seroton: 0, 'lactozis-7c': 0, 'maslo-prime': 1 }, maxLevel: 3, outputByLevel: [10, 20, 40], inputsPerOutput: [], upgradePrices: [25_000, 75_000] },
-    { id: 'grainFarm', label: 'Grain Farm', initialLevelsByPlanet: { seroton: 0, 'lactozis-7c': 1, 'maslo-prime': 0 }, maxLevel: 3, outputByLevel: [10, 20, 40], inputsPerOutput: [], upgradePrices: [25_000, 75_000] },
-    { id: 'cheeseFactory', label: 'Cheese Factory', initialLevelsByPlanet: { seroton: 1, 'lactozis-7c': 0, 'maslo-prime': 0 }, maxLevel: 3, outputByLevel: [5, 10, 20], inputsPerOutput: [{ commodityId: 'milk', quantity: 2 }], upgradePrices: [35_000, 100_000] },
-    { id: 'bakery', label: 'Bakery', initialLevelsByPlanet: { seroton: 0, 'lactozis-7c': 0, 'maslo-prime': 0 }, maxLevel: 3, outputByLevel: [5, 10, 20], inputsPerOutput: [{ commodityId: 'grain', quantity: 2 }], upgradePrices: [35_000, 100_000] },
+    { id: 'dairyFarm', label: 'Dairy Farm', initialLevelsByPlanet: { seroton: 0, 'lactozis-7c': 0, 'maslo-prime': 1 }, maxLevel: 3, outputByLevel: [10, 20, 40], inputsByLevel: [[], [], []], upgradePrices: [25_000, 75_000] },
+    { id: 'grainFarm', label: 'Grain Farm', initialLevelsByPlanet: { seroton: 0, 'lactozis-7c': 1, 'maslo-prime': 0 }, maxLevel: 3, outputByLevel: [10, 20, 40], inputsByLevel: [[], [], []], upgradePrices: [25_000, 75_000] },
+    { id: 'cheeseFactory', label: 'Cheese Factory', initialLevelsByPlanet: { seroton: 1, 'lactozis-7c': 0, 'maslo-prime': 0 }, maxLevel: 3, outputByLevel: [6, 12, 20], inputsByLevel: [[{ commodityId: 'milk', quantity: 2 }], [{ commodityId: 'milk', quantity: 4 }], [{ commodityId: 'milk', quantity: 8 }]], upgradePrices: [35_000, 100_000] },
+    { id: 'bakery', label: 'Bakery', initialLevelsByPlanet: { seroton: 0, 'lactozis-7c': 0, 'maslo-prime': 0 }, maxLevel: 3, outputByLevel: [6, 12, 20], inputsByLevel: [[{ commodityId: 'grain', quantity: 2 }], [{ commodityId: 'grain', quantity: 4 }], [{ commodityId: 'grain', quantity: 8 }]], upgradePrices: [35_000, 100_000] },
     {
-        id: 'foodProcessor', label: 'Food Processor', initialLevelsByPlanet: { seroton: 0, 'lactozis-7c': 0, 'maslo-prime': 0 }, maxLevel: 3, outputByLevel: [5, 10, 20],
-        inputsPerOutput: [{ commodityId: 'cheese', quantity: 2 }, { commodityId: 'bun', quantity: 1 }, { commodityId: 'milk', quantity: 1 }],
+        id: 'foodProcessor', label: 'Food Processor', initialLevelsByPlanet: { seroton: 0, 'lactozis-7c': 0, 'maslo-prime': 0 }, maxLevel: 3, outputByLevel: [6, 12, 24],
+        inputsByLevel: [
+            [{ commodityId: 'cheese', quantity: 2 }, { commodityId: 'bun', quantity: 1 }, { commodityId: 'milk', quantity: 1 }],
+            [{ commodityId: 'cheese', quantity: 4 }, { commodityId: 'bun', quantity: 2 }, { commodityId: 'milk', quantity: 2 }],
+            [{ commodityId: 'cheese', quantity: 8 }, { commodityId: 'bun', quantity: 4 }, { commodityId: 'milk', quantity: 4 }]
+        ],
         upgradePrices: [50_000, 150_000]
     }
 ];
