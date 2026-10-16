@@ -3,7 +3,7 @@ project: MilkyWayTrader
 version: 1
 status: draft
 created: 2026-09-21
-updated: 2026-10-15
+updated: 2026-10-16
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -47,7 +47,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-04 | s04-first-planetary-trade | User can inspect Seroton's landed market and complete a commodity trade. | S-03 | US-03, FR-019, FR-020, FR-021, FR-022, FR-023 | done |
 | S-16 | s16-planetary-facilities | User can invest resources in local facilities and see new trading opportunities. | S-04 | US-08, FR-027, FR-028, FR-029, FR-030, FR-031, FR-032 | done |
 | S-05 | s05-planet-ship-services | User can repair and upgrade the ship through planet-specific services. | S-04 | US-03, FR-013, FR-024, FR-025, FR-026, FR-036 | done |
-| S-06 | s06-timed-debt-outcome | User can reach timeout and see the debt outcome and final composite score. | S-01, S-04 | US-01, FR-005, FR-007, FR-009 | in-progress |
+| S-06 | s06-timed-debt-outcome | User can reach timeout and see the debt outcome and final composite score. | S-01, S-04 | US-01, FR-005, FR-007, FR-009 | done |
 | S-07 | s07-environmental-hazards-and-death | User can encounter environmental hazards, take damage, and lose a run when the ship is destroyed. | S-01, S-02 | US-01, US-04, FR-008, FR-038, FR-040 | done |
 | S-08 | s08-asteroid-combat | User can fire the ship weapon and fragment or destroy asteroids. | S-07 | US-04, FR-037, FR-039, FR-040 | done |
 | S-09 | s09-asteroid-salvage | User can recover commodities from asteroid salvage. | S-04, S-08 | US-04, FR-034, FR-041, FR-042, FR-043, FR-044, FR-045 | done |
@@ -158,7 +158,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Timeout and ship destruction must freeze the authoritative score and time state; timeout takes precedence when both occur in one step.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-07: Survive environmental hazards
 
@@ -322,6 +322,8 @@ No open roadmap questions.
 ## Milestone History
 
 ## Done
+
+- **S-06: User can reach timeout and see the debt outcome and final composite score.** — Archived 2026-10-16 → `context/archive/2026-10-15-s06-timed-debt-outcome/`. Lesson: —.
 
 - **S-15: Signed-in user can delete any personal result or clear all personal history after confirmation without changing global results or unrelated player data.** — Archived 2026-10-15 → `context/archive/2026-10-14-s15-clear-personal-best/`. Lesson: —.
 
