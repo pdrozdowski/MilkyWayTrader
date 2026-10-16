@@ -1,10 +1,10 @@
 ---
 change_id: s06-timed-debt-outcome
 title: Resolve the timed debt run
-status: impl_reviewed
+status: archived
 created: 2026-10-15
 updated: 2026-10-16
-archived_at: null
+archived_at: 2026-10-16T10:11:47Z
 ---
 
 ## Notes
