@@ -28,7 +28,7 @@ function clientFor ({ result = { data: rows, count: rows.length, error: null }, 
     return { operations, client: { auth: { getSession: async () => ({ data: { session }, error: sessionError }) }, from: table => { assert.equal(table, 'run_results'); return query; } } };
 }
 
-test('history page maps rows, requests exact count and the requested five-row range in order', async () => {
+test('history page maps rows, sorts by final score descending and requests the requested five-row range', async () => {
     const fixture = clientFor({ result: { data: rows.slice(5, 10), count: 12, error: null } });
     const store = createBrowserResultHistoryStore(configuration, () => fixture.client);
 
@@ -38,6 +38,7 @@ test('history page maps rows, requests exact count and the requested five-row ra
     });
     assert.deepEqual(fixture.operations, [
         ['select', 'run_id, active_elapsed_ms, final_credits, final_score, outcome, created_at', { count: 'exact' }],
+        ['order', 'final_score', { ascending: false, nullsFirst: false }],
         ['order', 'final_credits', { ascending: false }],
         ['order', 'created_at', { ascending: false }],
         ['order', 'run_id', { ascending: true }],

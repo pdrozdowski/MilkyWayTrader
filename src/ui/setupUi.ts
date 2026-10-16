@@ -50,6 +50,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     game.events.on('toggle-fullscreen', toggleFullscreen);
     const runStatus = mountRunStatus(root, createRunStatusPort(game));
     const gameOverResults = root.querySelector<HTMLElement>('#game-over-results');
+    const gameOverScoreRows = gameOverResults ? Array.from(gameOverResults.querySelectorAll<HTMLElement>('dl > div')) : [];
     const gameOverResultsTitle = root.querySelector<HTMLElement>('#game-over-results-title');
     const gameOverSurvivalTimeLabel = root.querySelector<HTMLElement>('#game-over-survival-time-label');
     const gameOverSurvivalTime = root.querySelector<HTMLElement>('#game-over-survival-time');
@@ -64,13 +65,23 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const gameOverFinalScoreLabel = root.querySelector<HTMLElement>('#game-over-final-score-label');
     const gameOverFinalScore = root.querySelector<HTMLElement>('#game-over-final-score');
     const gameOverPersonalBest = root.querySelector<HTMLButtonElement>('#game-over-personal-best');
+    const gameOverGlobalScores = root.querySelector<HTMLButtonElement>('#game-over-global-scores');
     const gameOverMainMenu = root.querySelector<HTMLButtonElement>('#game-over-main-menu');
+    const gameOverActionButtons: HTMLButtonElement[] = [gameOverPersonalBest, gameOverGlobalScores, gameOverMainMenu].filter((button): button is HTMLButtonElement => button !== null);
     const gameOverStatus = root.querySelector<HTMLElement>('#game-over-status');
     const gameOverMessage = root.querySelector<HTMLElement>('#game-over-status-message');
     const gameOverRetry = root.querySelector<HTMLButtonElement>('#game-over-status-retry');
     const stateProvider = game.registry.get('gameStateProvider') as GameStateProvider;
-    if (!gameOverResults || !gameOverResultsTitle || !gameOverSurvivalTimeLabel || !gameOverSurvivalTime || !gameOverFinalCashLabel || !gameOverFinalCash || !gameOverCargoValueLabel || !gameOverCargoValue || !gameOverShipUpgradeSpendLabel || !gameOverShipUpgradeSpend || !gameOverFacilityUpgradeSpendLabel || !gameOverFacilityUpgradeSpend || !gameOverFinalScoreLabel || !gameOverFinalScore || !gameOverPersonalBest || !gameOverMainMenu || !gameOverStatus || !gameOverMessage || !gameOverRetry) throw new Error('Missing game-over status controls.');
+    if (!gameOverResults || !gameOverResultsTitle || !gameOverSurvivalTimeLabel || !gameOverSurvivalTime || !gameOverFinalCashLabel || !gameOverFinalCash || !gameOverCargoValueLabel || !gameOverCargoValue || !gameOverShipUpgradeSpendLabel || !gameOverShipUpgradeSpend || !gameOverFacilityUpgradeSpendLabel || !gameOverFacilityUpgradeSpend || !gameOverFinalScoreLabel || !gameOverFinalScore || !gameOverPersonalBest || !gameOverGlobalScores || !gameOverMainMenu || !gameOverStatus || !gameOverMessage || !gameOverRetry || gameOverScoreRows.length === 0) throw new Error('Missing game-over status controls.');
     gameOverMainMenu.textContent = displayLabels.gameOverMainMenu;
+    const gameOverRevealTimers: number[] = [];
+    let gameOverRevealGeneration = 0;
+    const clearGameOverRevealTimers = (): number => {
+        gameOverRevealGeneration += 1;
+        for (const timer of gameOverRevealTimers) window.clearTimeout(timer);
+        gameOverRevealTimers.length = 0;
+        return gameOverRevealGeneration;
+    };
     const renderGameOverPersistence = (result: { status: 'pending' | 'saved' | 'failed' | 'unsigned'; message: string | null } | null): void => {
         gameOverStatus.hidden = result === null;
         if (!result) return;
@@ -95,9 +106,28 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         gameOverFacilityUpgradeSpend.textContent = formatCredits(terminalResult.facilityUpgradeSpend);
         gameOverFinalScoreLabel.textContent = resultLabels.finalScore;
         gameOverFinalScore.textContent = formatCredits(terminalResult.finalScore);
-        gameOverResults.hidden = false;
+        const revealGeneration = clearGameOverRevealTimers();
+        gameOverResults.hidden = true;
+        for (const row of gameOverScoreRows) row.hidden = true;
+        for (const button of gameOverActionButtons) button.hidden = true;
+        gameOverScoreRows.forEach((row, index) => {
+            gameOverRevealTimers.push(window.setTimeout(() => {
+                if (revealGeneration !== gameOverRevealGeneration) return;
+                if (index === 0) gameOverResults.hidden = false;
+                row.hidden = false;
+            }, 1000 + index * 250));
+        });
+        gameOverRevealTimers.push(window.setTimeout(() => {
+            if (revealGeneration !== gameOverRevealGeneration) return;
+            for (const button of gameOverActionButtons) button.hidden = false;
+        }, 1000 + gameOverScoreRows.length * 250));
     };
-    const hideGameOverResults = (): void => { gameOverResults.hidden = true; };
+    const hideGameOverResults = (): void => {
+        clearGameOverRevealTimers();
+        gameOverResults.hidden = true;
+        for (const row of gameOverScoreRows) row.hidden = true;
+        for (const button of gameOverActionButtons) button.hidden = true;
+    };
     gameOverRetry.addEventListener('click', retryGameOverPersistence);
     gameOverMainMenu.addEventListener('click', returnToMainMenuFromGameOver);
     game.events.on('game-over-persistence', renderGameOverPersistence);
