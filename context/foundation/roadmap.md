@@ -57,7 +57,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-13 | s13-global-high-scores | User can view the top global high scores and their personal best's global rank. | S-12 | US-06, FR-053 | done |
 | S-14 | s14-delete-terminal-active-save | Signed-in user retains a terminal result while its active save is removed. | S-06, S-11 | US-05, FR-051 | proposed |
 | S-15 | s15-clear-personal-best | Signed-in user can delete any personal result or clear all personal history after confirmation without changing global results. | S-12, S-13 | US-06, FR-054, FR-057 | done |
-| S-17 | s17-gameplay-audio-feedback | User can hear gameplay audio feedback without interrupting a run. | S-02, S-07, S-08 | US-07, FR-055 | proposed |
+| S-17 | s17-gameplay-audio-feedback | User can hear gameplay audio feedback without interrupting a run. | S-02, S-07, S-08 | US-07, FR-055 | done |
 
 ## Baseline
 
@@ -278,7 +278,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Audio feedback must remain optional and never interfere with direct control, timing, or a playable run when audio is unavailable or muted.
-- **Status:** proposed
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -322,6 +322,8 @@ No open roadmap questions.
 ## Milestone History
 
 ## Done
+
+- **S-17: User can hear gameplay audio feedback without interrupting a run.** — Archived 2026-10-16 → `context/archive/2026-10-16-s17-gameplay-audio-feedback/`. Lesson: —.
 
 - **S-06: User can reach timeout and see the debt outcome and final composite score.** — Archived 2026-10-16 → `context/archive/2026-10-15-s06-timed-debt-outcome/`. Lesson: —.
 
