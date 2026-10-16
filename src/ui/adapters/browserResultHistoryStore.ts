@@ -16,7 +16,7 @@ interface HistoryRow
 interface HistoryQuery extends PromiseLike<{ data: HistoryRow[] | null; count?: number | null; error: { message: string } | null }>
 {
     select(columns: string, options: { count: 'exact' }): HistoryQuery;
-    order(column: string, options: { ascending: boolean }): HistoryQuery;
+    order(column: string, options: { ascending: boolean; nullsFirst?: boolean }): HistoryQuery;
     range(from: number, to: number): HistoryQuery;
     limit(count: number): HistoryQuery;
     not(column: string, operator: string, value: unknown): HistoryQuery;
@@ -88,6 +88,7 @@ export function createBrowserResultHistoryStore (configuration = browserAuthConf
                 const from = page * resultHistoryPageSize;
                 const { data, count, error } = await client.from('run_results')
                     .select('run_id, active_elapsed_ms, final_credits, final_score, outcome, created_at', { count: 'exact' })
+                    .order('final_score', { ascending: false, nullsFirst: false })
                     .order('final_credits', { ascending: false })
                     .order('created_at', { ascending: false })
                     .order('run_id', { ascending: true })
