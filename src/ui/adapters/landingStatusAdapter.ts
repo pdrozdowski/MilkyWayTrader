@@ -6,7 +6,7 @@ import { applyFacilityBuild, applyFacilityDowngrade, applyFacilityUpgrade } from
 import { projectLandedShipyard, type LandedShipyardSnapshot } from '../../game/application/landedShipyard.ts';
 import { applyShipBooster, applyShipRepair, applyShipUpgrade } from '../../game/application/planetShipServices.ts';
 import { serotonCommodityDefinitions } from '../../game/definitions/serotonMarketDefinitions.ts';
-import { planetFacilityCatalogue, planetFacilityDefinitions, planetFacilityModifierOf, planetFacilityOutputCommodityIds } from '../../game/definitions/planetFacilityDefinitions.ts';
+import { planetFacilityCatalogue, planetFacilityDefinitions, planetFacilityInitialLevelOf, planetFacilityModifierOf, planetFacilityOutputCommodityIds } from '../../game/definitions/planetFacilityDefinitions.ts';
 import { cargoCapacityByLevel } from '../../game/domain/runBalance.ts';
 import { applyLandedTrade, landedMarketOf, quoteLandedTrade, type LandedTradeQuote } from '../../game/application/serotonMarket.ts';
 import { launchFromPlanet } from '../../game/mechanics/planet/landing.ts';
@@ -27,7 +27,8 @@ export function createLandingStatusPort (game: Game): LandingStatusPort
     const shipyardListeners = new Set<(snapshot: Readonly<LandedShipyardSnapshot>) => void>();
     const facilityCatalogue: LandedFacilityProjectionCatalogue = {
         definitions: planetFacilityDefinitions.map(definition => ({ ...definition, outputCommodityId: planetFacilityOutputCommodityIds[definition.id] })),
-        modifierOf: planetFacilityModifierOf
+        modifierOf: planetFacilityModifierOf,
+        initialLevelOf: planetFacilityInitialLevelOf
     };
     let destroyed = false;
     let selectedCommodityId: SerotonCommodityId = 'milk';

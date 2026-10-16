@@ -1123,10 +1123,10 @@ test('facility cycles cross whole active seconds and apply one recipe pass per c
     assert.deepEqual(advanceGameSimulation(midSecond, quietInput, 400).markets, midSecond.markets, 'a frame inside one second attempts no cycle');
 
     const oneSecond = advanceGameSimulation(initialGameState, quietInput, 1_000);
-    assert.equal(stockOf(oneSecond, 'seroton', 'milk'), 2, 'the cheese factory consumes 12 milk per second (the same-cycle farm-to-consumer ordering is proven by the lactozis case below)');
-    assert.equal(stockOf(oneSecond, 'seroton', 'grain'), 110);
-    assert.equal(stockOf(oneSecond, 'seroton', 'cheese'), 66, 'the seroton cheese factory applies its +20% output');
-    assert.equal(statusOf(oneSecond, 'seroton', 'dairyFarm'), 'working');
+    assert.equal(stockOf(oneSecond, 'lactozis-7c', 'grain'), 132, 'the specialized lactozis-7c grain farm applies its +20% output once');
+    assert.equal(stockOf(oneSecond, 'maslo-prime', 'milk'), 132, 'the specialized maslo-prime dairy farm applies its +20% output once');
+    assert.equal(stockOf(oneSecond, 'seroton', 'milk'), 4, 'the seroton cheese factory finds no milk because its dairy farm opens unbuilt');
+    assert.equal(statusOf(oneSecond, 'seroton', 'cheeseFactory'), 'insufficientResources', 'the starved cheese factory stores its shortfall');
     assert.equal(statusOf(oneSecond, 'seroton', 'bakery'), 'notBuilt', 'a level-zero facility never runs');
     assert.equal(stockOf(oneSecond, 'seroton', 'bun'), 50);
 });
@@ -1149,7 +1149,8 @@ test('a multi-second frame equals the same span applied one second at a time', (
 });
 
 test('facility cycles run in their fixed order so a farm output supplies a later consumer in the same cycle', () => {
-    const start = planetMarket('lactozis-7c', { stocks: { milk: 2 } });
+    // No planet opens with both a farm and the consumer of its output, so the fixture builds both on Lactozis-7C.
+    const start = planetMarket('lactozis-7c', { stocks: { milk: 2 }, levels: { dairyFarm: 1, cheeseFactory: 1 } });
     const once = advancePlanetFacilities(start, 1);
     assert.equal(facilityIn(once, 'dairyFarm').status, 'working');
     assert.equal(facilityIn(once, 'cheeseFactory').status, 'working');
@@ -1158,15 +1159,15 @@ test('facility cycles run in their fixed order so a farm output supplies a later
 });
 
 test('an all-or-nothing shortfall leaves the stock untouched and flips the status until the input returns', () => {
-    const starved = planetMarket('seroton', { stocks: { grain: 4, bun: 50 }, levels: { bakery: 1, grainFarm: 0 } });
+    const starved = planetMarket('seroton', { stocks: { grain: 4, bun: 50, milk: 100 }, levels: { bakery: 1, grainFarm: 0 } });
     const afterShortfall = advancePlanetFacilities(starved, 1);
     assert.equal(facilityIn(afterShortfall, 'bakery').status, 'insufficientResources');
     assert.equal(stockIn(afterShortfall, 'grain'), 4, 'the uncovered input is not partially consumed');
     assert.equal(stockIn(afterShortfall, 'bun'), 50, 'no output is produced without the full recipe');
     assert.equal(facilityIn(afterShortfall, 'grainFarm').status, 'notBuilt', 'level zero stays not built');
-    assert.equal(facilityIn(afterShortfall, 'dairyFarm').status, 'working', 'other facilities keep cycling');
+    assert.equal(facilityIn(afterShortfall, 'cheeseFactory').status, 'working', 'other facilities keep cycling');
 
-    const supplied = planetMarket('seroton', { stocks: { grain: 40, bun: 50 }, levels: { bakery: 1, grainFarm: 0 } });
+    const supplied = planetMarket('seroton', { stocks: { grain: 40, bun: 50, milk: 100 }, levels: { bakery: 1, grainFarm: 0 } });
     const recovered = advancePlanetFacilities(supplied, 1);
     assert.equal(facilityIn(recovered, 'bakery').status, 'working');
     assert.equal(stockIn(recovered, 'grain'), 30);
@@ -1217,13 +1218,24 @@ test('facility stock and status survive an encode and restore and keep cycling',
 
 test('each planet cycles its own facilities and planet modifiers in isolation', () => {
     const next = advanceGameSimulation(initialGameState, quietInput, 1_000);
-    assert.equal(stockOf(next, 'seroton', 'milk'), 2);
-    assert.equal(stockOf(next, 'seroton', 'cheese'), 66, 'the seroton cheese factory keeps its +20% output');
-    assert.equal(stockOf(next, 'lactozis-7c', 'milk'), 100);
+    assert.equal(stockOf(next, 'seroton', 'milk'), 4, 'seroton opens only the cheese factory, which starves without a dairy farm');
+    assert.equal(statusOf(next, 'seroton', 'cheeseFactory'), 'insufficientResources');
+    assert.equal(stockOf(next, 'lactozis-7c', 'milk'), 100, 'lactozis-7c opens no dairy farm or cheese factory');
     assert.equal(stockOf(next, 'lactozis-7c', 'grain'), 132, 'the lactozis-7c grain farm keeps its +20% output');
-    assert.equal(stockOf(next, 'maslo-prime', 'milk'), 122, 'the maslo-prime dairy farm keeps its +20% output');
-    assert.equal(stockOf(next, 'maslo-prime', 'cheese'), 7);
+    assert.equal(stockOf(next, 'maslo-prime', 'milk'), 132, 'the maslo-prime dairy farm keeps its +20% output');
+    assert.equal(stockOf(next, 'maslo-prime', 'cheese'), 2, 'maslo-prime opens no cheese factory');
     assert.equal(statusOf(next, 'maslo-prime', 'bakery'), 'notBuilt');
+
+    // A supplied Seroton still shows the specialized cheese factory consuming 12 milk for 6 cheese.
+    const suppliedMilk = {
+        ...initialGameState,
+        markets: initialGameState.markets.map(market => market.planetId === 'seroton'
+            ? { ...market, commodityStocks: market.commodityStocks.map(stock => stock.commodityId === 'milk' ? { ...stock, stock: 100 } : stock) }
+            : market)
+    };
+    const stocked = advanceGameSimulation(suppliedMilk, quietInput, 1_000);
+    assert.equal(stockOf(stocked, 'seroton', 'milk'), 88, 'the seroton cheese factory consumes 12 milk per second');
+    assert.equal(stockOf(stocked, 'seroton', 'cheese'), 66, 'the seroton cheese factory applies its +20% output');
 
     const isolated = advancePlanetFacilities(marketOf(initialGameState, 'lactozis-7c'), 1);
     assert.deepEqual(isolated, marketOf(next, 'lactozis-7c'), 'advancing one planet never leaks into another');

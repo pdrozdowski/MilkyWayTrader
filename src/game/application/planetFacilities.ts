@@ -11,7 +11,6 @@ export type LandedFacilityDowngradeFailure = 'not-landed' | 'unknown-facility' |
 export interface LandedFacilityInvestmentDefinition
 {
     readonly id: PlanetFacilityId;
-    readonly initialLevel: number;
     readonly maxLevel: number;
     readonly upgradePrices: readonly [number, number];
 }
@@ -25,6 +24,7 @@ export interface LandedFacilityCatalogue
 {
     readonly definitions: readonly LandedFacilityInvestmentDefinition[];
     readonly modifierOf: (facilityId: PlanetFacilityId, planetId: PlanetId) => LandedFacilityInvestmentModifier;
+    readonly initialLevelOf: (facilityId: PlanetFacilityId, planetId: PlanetId) => number;
 }
 
 export interface LandedFacilityInvestmentQuote
@@ -118,7 +118,8 @@ export function quoteFacilityDowngrade (state: GameStateSnapshot, catalogue: Lan
     const definition = catalogue.definitions.find(candidate => candidate.id === facilityId);
     if (!definition) return { facilityId, level: 0, targetLevel: 0, refund: 0, failure: 'unknown-facility' };
     const level = facilityStateOf(market, facilityId).level;
-    if (level <= definition.initialLevel) return { facilityId, level, targetLevel: level, refund: 0, failure: 'minimum-level' };
+    const initialLevel = catalogue.initialLevelOf(facilityId, market.planetId);
+    if (level <= initialLevel) return { facilityId, level, targetLevel: level, refund: 0, failure: 'minimum-level' };
     const investedStepPrice = definition.upgradePrices[level - 2];
     if (investedStepPrice === undefined) return { facilityId, level, targetLevel: level, refund: 0, failure: 'minimum-level' };
     const actualStepPrice = Math.round(investedStepPrice * catalogue.modifierOf(facilityId, market.planetId).upgradePriceMultiplier);

@@ -217,9 +217,11 @@ test('facilities view renders five cards with levels, states, recipes and action
         '#landing-status-shipyard-repair': new FakeElement({ '.shipyard-card-action-label': new FakeElement(), '.shipyard-card-action-price': new FakeElement() }),
         '#landing-status-catalogue > button[data-commodity-id]': [catalogueButton]
     });
-    const initialLevelOf = facilityId => ['dairyFarm', 'grainFarm', 'cheeseFactory'].includes(facilityId) ? 1 : 0;
+    // Synthetic render scenario, independent of the real planet opening table: the fixture needs one facility at
+    // its downgrade floor, one upgradeable, one unbuilt and one maxed so every card state is exercised.
+    const downgradeFloorOf = facilityId => facilityId === 'dairyFarm' ? 1 : 0;
     const row = (facilityId, label, level, status, outputCommodityId, outputPerCycle, inputsPerCycle, modifier, action, buildOutputPerCycle = outputPerCycle || 5, buildInputsPerCycle = inputsPerCycle) =>
-        ({ facilityId, label, level, initialLevel: initialLevelOf(facilityId), maxLevel: 3, status, outputCommodityId, outputPerCycle, inputsPerCycle, buildOutputPerCycle, buildInputsPerCycle, modifier, action, downgrade: { available: level > initialLevelOf(facilityId), targetLevel: Math.max(initialLevelOf(facilityId), level - 1), refund: level > initialLevelOf(facilityId) ? 75_000 : 0 } });
+        ({ facilityId, label, level, maxLevel: 3, status, outputCommodityId, outputPerCycle, inputsPerCycle, buildOutputPerCycle, buildInputsPerCycle, modifier, action, downgrade: { available: level > downgradeFloorOf(facilityId), targetLevel: Math.max(downgradeFloorOf(facilityId), level - 1), refund: level > downgradeFloorOf(facilityId) ? 75_000 : 0 } });
     const noModifier = { upgradePriceMultiplier: 1, outputMultiplier: 1 };
     const baseFacilities = [
     row('dairyFarm', 'Dairy Farm', 1, 'working', 'milk', 10, [], noModifier, { kind: 'upgrade', targetLevel: 2, price: 25_000, affordable: true }),

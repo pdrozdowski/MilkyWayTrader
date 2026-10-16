@@ -16,7 +16,6 @@ export interface LandedFacilityProjectionDefinition
 {
     readonly id: PlanetFacilityId;
     readonly label: string;
-    readonly initialLevel: number;
     readonly maxLevel: number;
     readonly outputCommodityId: SerotonCommodityId;
     readonly outputByLevel: readonly number[];
@@ -34,6 +33,7 @@ export interface LandedFacilityProjectionCatalogue
 {
     readonly definitions: readonly LandedFacilityProjectionDefinition[];
     readonly modifierOf: (facilityId: PlanetFacilityId, planetId: PlanetId) => LandedFacilityProjectionModifier;
+    readonly initialLevelOf: (facilityId: PlanetFacilityId, planetId: PlanetId) => number;
 }
 
 export type LandedFacilityActionKind = LandedFacilityInvestmentAction | 'max';
