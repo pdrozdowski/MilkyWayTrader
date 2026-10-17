@@ -9,7 +9,7 @@ main_goal: speed
 top_blocker: time
 milestone_id: playable-persistent-debt-run
 milestone_seq: 1
-milestone_status: open
+milestone_status: done
 ---
 
 # Roadmap: MilkyWayTrader
@@ -20,7 +20,7 @@ milestone_status: open
 
 ## Milestone
 
-**M-1: Playable and persistent debt run** â€” Status: open
+**M-1: Playable and persistent debt run** â€” Status: done
 
 - **Intent:** Deliver the complete browser-game outcome described by the PRD: an anonymous player can finish the debt run through trading, planetary facility investment, flight, hazards, and salvage, while a signed-in player can preserve progress and compare eligible results.
 - **Source materials:** `context/foundation/prd.md` (v1)
@@ -306,6 +306,10 @@ No open roadmap questions.
 - **Deferring personal or global high scores** â€” Why parked: both are required PRD capabilities and therefore remain in this milestone (`PRD Â§Non-Goals`).
 
 ## Milestone History
+
+### Milestones
+
+- **M-1: Playable and persistent debt run** — Closed 2026-10-17 after all 16 roadmap slices reached `done` and the user confirmed the completed run was tested and working.
 
 ### Scope Changes
 
