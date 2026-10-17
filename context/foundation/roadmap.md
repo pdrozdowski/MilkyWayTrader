@@ -3,7 +3,7 @@ project: MilkyWayTrader
 version: 1
 status: draft
 created: 2026-09-21
-updated: 2026-10-16
+updated: 2026-10-17
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -54,7 +54,7 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-10 | s10-player-sign-in-status | User can sign in, sign out, and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-046, FR-047, FR-048 | done |
 | S-12 | s12-personal-best-result | Signed-in user can view their personal best and paginated private run history. | S-06 | US-06, FR-052 | done |
 | S-13 | s13-global-high-scores | User can view the top global high scores and their personal best's global rank. | S-12 | US-06, FR-053 | done |
-| S-11 | s11-automatic-save-and-resume | Signed-in profiled player can auto-save, see status, continue or abandon a run, and clear active saves after a completed result is retained. | S-06, S-09, S-10, S-12, S-13, S-16 | US-05, US-06, FR-006, FR-049, FR-050, FR-051, FR-058 | planning |
+| S-11 | s11-automatic-save-and-resume | Signed-in profiled player can auto-save, see status, continue or abandon a run, and clear active saves after a completed result is retained. | S-06, S-09, S-10, S-12, S-13, S-16 | US-05, US-06, FR-006, FR-049, FR-050, FR-051, FR-058 | done |
 | S-15 | s15-clear-personal-best | Signed-in user can delete any personal result or clear all personal history after confirmation without changing global results. | S-12, S-13 | US-06, FR-054, FR-057 | done |
 | S-17 | s17-gameplay-audio-feedback | User can hear gameplay audio feedback without interrupting a run. | S-02, S-07, S-08 | US-07, FR-055 | done |
 
@@ -241,7 +241,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Save boundaries, retry behavior, and restoration must preserve the full active-time world state, including facility changes, without blocking visible gameplay; active saves must remain until required terminal-result writes succeed, except for a player-confirmed abandonment.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-15: Delete personal results and clear history
 
@@ -313,6 +313,7 @@ No open roadmap questions.
 
 ### Done
 
+- **S-11: Signed-in player with a profile can automatically save progress, see save status, continue or confirm abandonment of an active run, and have active saves removed after a terminal result is retained.** — Archived 2026-10-17 → `context/archive/2026-10-16-s11-automatic-save-and-resume/`. Lesson: —.
 - **S-17: User can hear gameplay audio feedback without interrupting a run.** — Archived 2026-10-16 → `context/archive/2026-10-16-s17-gameplay-audio-feedback/`. Lesson: —.
 
 - **S-06: User can reach timeout and see the debt outcome and final composite score.** — Archived 2026-10-16 → `context/archive/2026-10-15-s06-timed-debt-outcome/`. Lesson: —.
