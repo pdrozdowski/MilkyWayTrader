@@ -7,7 +7,7 @@ export interface PlayerProfile
 
 export interface PlayerProfilePort
 {
-    loadOrCreate(suggestedNickname?: string): Promise<Readonly<PlayerProfile>>;
+    loadOrCreate(suggestedNickname?: string, expectedOwnerId?: string): Promise<Readonly<PlayerProfile>>;
     updateNickname(nickname: string): Promise<Readonly<PlayerProfile>>;
 }
 

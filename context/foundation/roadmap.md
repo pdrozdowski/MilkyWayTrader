@@ -241,7 +241,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Save boundaries, retry behavior, and restoration must preserve the full active-time world state, including facility changes, without blocking visible gameplay; active saves must remain until required terminal-result writes succeed, except for a player-confirmed abandonment.
-- **Status:** planning
+- **Status:** in-progress
 
 ### S-15: Delete personal results and clear history
 

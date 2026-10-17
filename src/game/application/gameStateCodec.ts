@@ -124,7 +124,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
         catch { throw new Error('Game state is not valid JSON.'); }
     }
     const root = requireRecord(source, 'state', ['schemaVersion', 'runId', 'randomState', 'cargoSchedule', 'moolarisDamageArmed', 'terminalResult', 'clock', 'credits', 'shipUpgradeSpend', 'facilityUpgradeSpend', 'cargo', 'orbitalCargo', 'looseItems', 'markets', 'ship', 'shipStatus', 'planets', 'planetLifecycle', 'weapon', 'projectiles', 'asteroids']);
-    if (root.schemaVersion !== 19) throw new Error('Unsupported game-state schema version.');
+    if (root.schemaVersion !== 20) throw new Error('Unsupported game-state schema version.');
     const decodedRunId = runId(root.runId, 'state.runId');
     const randomState = uint32(root.randomState, 'state.randomState');
     if (!Array.isArray(root.cargoSchedule) || root.cargoSchedule.length > 5) {
@@ -258,12 +258,12 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     if (terminalResult !== null) {
         if (runId(terminalResult.runId, 'state.terminalResult.runId') !== decodedRunId) throw new Error('Terminal result run id must match the run.');
         const outcome = terminalResult.outcome;
-        if (outcome !== 'death' && outcome !== 'freedom' && outcome !== 'imprisonment') throw new Error('state.terminalResult.outcome is unknown.');
+        if (outcome !== 'death' && outcome !== 'freedom' && outcome !== 'imprisonment' && outcome !== 'abandonment') throw new Error('state.terminalResult.outcome is unknown.');
         if (nonNegativeSafeInteger(terminalResult.activeElapsedMs, 'state.terminalResult.activeElapsedMs') !== Math.floor(activeElapsedMs)) throw new Error('Terminal result active time must be the clock rounded down to milliseconds.');
         if (nonNegativeSafeInteger(terminalResult.finalCredits, 'state.terminalResult.finalCredits') !== credits) throw new Error('Terminal result credits must match the run.');
         if (outcome === 'death') {
             if (currentHitPoints !== 0) throw new Error('Death requires zero hit points.');
-        } else {
+        } else if (outcome === 'freedom' || outcome === 'imprisonment') {
             if (activeElapsedMs !== budgetMs) throw new Error('A timeout outcome requires the clock to reach its budget.');
             const score = calculateTerminalScore({ endingCash: credits, cargo, shipUpgradeSpend, facilityUpgradeSpend });
             const expected: TerminalOutcome = score.finalScore >= DEBT_SCORE_THRESHOLD ? 'freedom' : 'imprisonment';
@@ -415,7 +415,7 @@ export function decodeGameState (candidate: unknown): GameStateSnapshot
     });
 
     return cloneAndFreeze({
-        schemaVersion: 19,
+        schemaVersion: 20,
         runId: decodedRunId,
         randomState,
         cargoSchedule,

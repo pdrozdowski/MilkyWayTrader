@@ -18,7 +18,7 @@ interface PlayerProfileClient
     auth: { getUser(): Promise<{ data: { user: { id: string } | null }; error: { message: string } | null }> };
     from(table: string): {
         select(columns: string): { maybeSingle(): Promise<ProfileQueryResult> };
-        insert(values: Readonly<{ nickname: string }> & { user_id?: never }): { select(columns: string): { single(): Promise<ProfileQueryResult> } };
+        insert(values: Readonly<{ nickname: string; user_id?: string }>): { select(columns: string): { single(): Promise<ProfileQueryResult> } };
         update(values: Readonly<{ nickname: string }>): { eq(column: 'user_id', value: string): { select(columns: string): { single(): Promise<ProfileQueryResult> } } };
     };
 }
@@ -32,16 +32,25 @@ function profileFrom (row: ProfileRow | null, message: string): Readonly<PlayerP
 export function createBrowserPlayerProfilePort (client: SupabaseClient): PlayerProfilePort
 {
     const profileClient = client as unknown as PlayerProfileClient;
+    const assertOwner = async (expectedOwnerId?: string): Promise<void> => {
+        if (!expectedOwnerId) return;
+        const current = await profileClient.auth.getUser();
+        if (current.error || current.data.user?.id !== expectedOwnerId) throw new Error('Player account changed while loading its profile.');
+    };
     return {
-        loadOrCreate: async (suggestedNickname?: string) => {
+        loadOrCreate: async (suggestedNickname?: string, expectedOwnerId?: string) => {
+            await assertOwner(expectedOwnerId);
             const existing = await profileClient.from('player_profiles').select('nickname').maybeSingle();
             if (existing.error) throw new Error(existing.error.message);
+            await assertOwner(expectedOwnerId);
             if (existing.data) return profileFrom(existing.data, 'Player profile is unavailable.');
 
-            const created = await profileClient.from('player_profiles').insert({ nickname: suggestedNickname ?? generateDefaultPlayerNickname() }).select('nickname').single();
+            const created = await profileClient.from('player_profiles').insert({ nickname: suggestedNickname ?? generateDefaultPlayerNickname(), ...(expectedOwnerId ? { user_id: expectedOwnerId } : {}) }).select('nickname').single();
+            await assertOwner(expectedOwnerId);
             if (!created.error) return profileFrom(created.data, 'Player profile could not be created.');
 
             const raced = await profileClient.from('player_profiles').select('nickname').maybeSingle();
+            await assertOwner(expectedOwnerId);
             if (raced.error || !raced.data) throw new Error(created.error.message);
             return profileFrom(raced.data, 'Player profile could not be created.');
         },

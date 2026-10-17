@@ -1,7 +1,7 @@
 import type { GameStateSnapshot } from '../../state/gameStateSnapshot.ts';
 import type { TerminalOutcome } from '../../state/terminalResultState.ts';
 
-export type TimeoutClassifier = (state: GameStateSnapshot) => Exclude<TerminalOutcome, 'death'>;
+export type TimeoutClassifier = (state: GameStateSnapshot) => Exclude<TerminalOutcome, 'death' | 'abandonment'>;
 
 export function resolveTerminalResult (state: GameStateSnapshot, classifyTimeout: TimeoutClassifier): GameStateSnapshot
 {
@@ -18,3 +18,4 @@ export function resolveTerminalResult (state: GameStateSnapshot, classifyTimeout
         }
     };
 }
+

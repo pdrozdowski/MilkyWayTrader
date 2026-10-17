@@ -14,6 +14,7 @@ export type { LandedFacilitiesSnapshot } from '../game/application/landedFacilit
 export type { LandedShipyardSnapshot } from '../game/application/landedShipyard';
 export type { AuthPort, AuthSnapshot } from '../game/application/auth/auth';
 export type { PlayerProfile, PlayerProfilePort } from '../game/application/playerProfile';
+export type { PlayerEligibilityPort, PlayerEligibilitySnapshot } from '../game/application/auth/playerEligibility';
 export type { AccountOrigin } from '../game/application/auth/authReturn';
 export type { PerformanceDurationSummary, PerformanceStepId, PerformanceStepSummary, PerformanceSnapshot } from '../game/application/performanceMonitor';
 export type { ResultHistoryRecord, ResultHistoryStorePort } from '../game/application/results/resultHistoryStore';

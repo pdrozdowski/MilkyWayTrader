@@ -1,4 +1,4 @@
-import type { AccountOrigin, AuthPort, AuthSnapshot, PlayerProfile, PlayerProfilePort, UiHandle } from '../contracts';
+import type { AccountOrigin, AuthPort, AuthSnapshot, PlayerEligibilityPort, PlayerEligibilitySnapshot, PlayerProfile, PlayerProfilePort, UiHandle } from '../contracts';
 import { displayLabels } from './displayLabels';
 
 function required<T extends Element> (root: HTMLElement, selector: string): T
@@ -12,6 +12,7 @@ export interface PlayerAccountOptions
 {
     auth: AuthPort;
     profilePort: PlayerProfilePort | null;
+    eligibility: PlayerEligibilityPort;
     generateDefaultNickname(): string;
     prepareSignIn(origin: 'main-menu' | 'game-over' | 'game-menu'): boolean;
     onOpenStateChange(open: boolean): void;
@@ -50,7 +51,7 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
     const gameMenuIdentity = required<HTMLElement>(root, '#game-menu-account-identity');
     const gameOverResults = required<HTMLElement>(root, '#game-over-results');
     let authSnapshot = options.auth.getSnapshot();
-    let profileAccountEmail = authSnapshot.email;
+    let profileAccountEmail = authSnapshot.ownerId;
     let profile: Readonly<PlayerProfile> | null = null;
     let suggestedNickname: string | null = null;
     let profileLoading = false;
@@ -99,23 +100,13 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
         triggerLabel.textContent = signedIn ? authSnapshot.email ?? displayLabels.accountSignedInWithoutEmail : displayLabels.signIn;
         gameMenuIdentity.textContent = signedIn ? authSnapshot.email ?? displayLabels.accountSignedInWithoutEmail : displayLabels.accountAnonymous;
     };
-    const loadProfile = async (): Promise<void> => {
-        if (authSnapshot.status !== 'signed-in' || profileLoading) return;
-        suggestedNickname ??= options.generateDefaultNickname();
-        nickname.value = suggestedNickname;
-        if (!options.profilePort) { setFeedback(`${displayLabels.profileLoadFailed} ${displayLabels.profileServiceUnavailable}`); render(); return; }
-        const operation = ++profileOperation;
-        profileLoading = true;
-        setFeedback('');
+    const onEligibilityChange = (eligibility: Readonly<PlayerEligibilitySnapshot>): void => {
+        if (eligibility.ownerId !== authSnapshot.ownerId) return;
+        profileLoading = eligibility.status === 'loading';
+        profile = eligibility.status === 'ready' ? eligibility.profile : null;
+        if (eligibility.status === 'failed') setFeedback(`${displayLabels.profileLoadFailed} ${eligibility.message ?? ''}`.trim());
+        else if (eligibility.status === 'ready') setFeedback('');
         render();
-        try {
-            const loaded = await options.profilePort.loadOrCreate(suggestedNickname);
-            if (operation === profileOperation && authSnapshot.status === 'signed-in' && authSnapshot.email === profileAccountEmail) profile = loaded;
-        } catch (error) {
-            if (operation === profileOperation) { profile = null; setFeedback(`${displayLabels.profileLoadFailed} ${error instanceof Error ? error.message : ''}`.trim()); }
-        } finally {
-            if (operation === profileOperation) { profileLoading = false; render(); }
-        }
     };
     const openFrom = (nextOrigin: typeof origin, control: HTMLElement): void => {
         if (destroyed) return;
@@ -153,7 +144,7 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
     };
     const onAuthChange = (snapshot: Readonly<AuthSnapshot>): void => {
         const prior = authSnapshot.status;
-        const accountChanged = snapshot.status === 'signed-in' && (prior !== 'signed-in' || snapshot.email !== profileAccountEmail);
+        const accountChanged = snapshot.status === 'signed-in' && (prior !== 'signed-in' || snapshot.ownerId !== profileAccountEmail);
         authSnapshot = snapshot;
         if (snapshot.status === 'error') options.clearSignInContext();
         if (snapshot.status !== 'signed-in' || accountChanged) {
@@ -163,9 +154,8 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
             profile = null;
             suggestedNickname = snapshot.status === 'signed-in' ? options.generateDefaultNickname() : null;
         }
-        profileAccountEmail = snapshot.status === 'signed-in' ? snapshot.email : null;
+        profileAccountEmail = snapshot.status === 'signed-in' ? snapshot.ownerId : null;
         render();
-        if (snapshot.status === 'signed-in' && accountChanged) void loadProfile();
         if (accountChanged && !modal.hidden) setFeedback('');
     };
     const signInClick = async (): Promise<void> => {
@@ -188,13 +178,13 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
     const updateClick = async (): Promise<void> => {
         if (!options.profilePort || !profile || update.disabled || profileSaving) return;
         const operation = profileOperation;
-        const accountEmail = profileAccountEmail;
+        const ownerId = profileAccountEmail;
         const requestedNickname = nickname.value;
         profileSaving = true;
         render();
         try {
             const updated = await options.profilePort.updateNickname(requestedNickname);
-            if (operation !== profileOperation || authSnapshot.status !== 'signed-in' || authSnapshot.email !== accountEmail) return;
+            if (operation !== profileOperation || authSnapshot.status !== 'signed-in' || authSnapshot.ownerId !== ownerId) return;
             profile = updated;
             nickname.value = profile.nickname;
             setFeedback(displayLabels.nicknameUpdated);
@@ -204,7 +194,7 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
             if (operation === profileOperation) { profileSaving = false; render(); }
         }
     };
-    const retryClick = (): void => { void loadProfile(); };
+    const retryClick = (): void => { options.eligibility.retry(); };
     const signInHandler = (): void => { void signInClick(); };
     const signOutHandler = (): void => { void signOutClick(); };
     const updateHandler = (): void => { void updateClick(); };
@@ -229,12 +219,13 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
     window.addEventListener('keydown', keydown);
     root.addEventListener('player-account-open', openOnReturn);
     const unsubscribe = options.auth.subscribe(onAuthChange);
+    const unsubscribeEligibility = options.eligibility.subscribe(onEligibilityChange);
     render();
-    if (authSnapshot.status === 'signed-in') void loadProfile();
+    onEligibilityChange(options.eligibility.getSnapshot());
     return { destroy: () => {
         if (destroyed) return;
         destroyed = true;
-        unsubscribe(); trigger.removeEventListener('click', openMainMenu); gameMenuTrigger.removeEventListener('click', openGameMenu);
+        unsubscribe(); unsubscribeEligibility(); trigger.removeEventListener('click', openMainMenu); gameMenuTrigger.removeEventListener('click', openGameMenu);
         signIn.removeEventListener('click', signInHandler); signOut.removeEventListener('click', signOutHandler); update.removeEventListener('click', updateHandler);
         retry.removeEventListener('click', retryClick); nickname.removeEventListener('input', render); close.removeEventListener('click', closeModal); window.removeEventListener('keydown', keydown);
         root.removeEventListener('player-account-open', openOnReturn);

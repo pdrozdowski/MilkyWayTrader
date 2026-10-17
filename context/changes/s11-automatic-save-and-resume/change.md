@@ -1,9 +1,9 @@
 ---
 change_id: s11-automatic-save-and-resume
 title: Automatic save and active run resume
-status: planned
+status: impl_reviewed
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 archived_at: null
 ---
 

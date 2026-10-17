@@ -11,5 +11,6 @@ export function terminalOutcomeBackgroundKey (outcome: TerminalOutcome): Termina
     case 'death': return 'game-over:destroyed-ship';
     case 'freedom': return 'game-over:debt-paid';
     case 'imprisonment': return 'game-over:debt-due';
+    case 'abandonment': return 'game-over:debt-due';
     }
 }

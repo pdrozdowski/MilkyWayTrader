@@ -1,8 +1,10 @@
-export type AuthStatus = 'unavailable' | 'unsigned' | 'signed-in' | 'error';
+export type AuthStatus = 'loading' | 'unavailable' | 'unsigned' | 'signed-in' | 'error';
 
 export interface AuthSnapshot
 {
     status: AuthStatus;
+    ownerId: string | null;
+    anonymous: boolean;
     email: string | null;
     message: string | null;
 }

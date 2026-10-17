@@ -14,7 +14,7 @@ function isTerminalResult (candidate: unknown): candidate is TerminalScoreResult
 {
     if (typeof candidate !== 'object' || candidate === null) return false;
     const result = candidate as Partial<TerminalScoreResult>;
-    return typeof result.runId === 'string' && result.runId.length > 0 && ['death', 'freedom', 'imprisonment'].includes(String(result.outcome))
+    return typeof result.runId === 'string' && result.runId.length > 0 && ['death', 'freedom', 'imprisonment', 'abandonment'].includes(String(result.outcome))
         && typeof result.activeElapsedMs === 'number' && Number.isSafeInteger(result.activeElapsedMs) && result.activeElapsedMs >= 0
         && typeof result.finalCredits === 'number' && Number.isSafeInteger(result.finalCredits) && result.finalCredits >= 0
         && typeof result.cargoValue === 'number' && Number.isFinite(result.cargoValue) && result.cargoValue >= 0

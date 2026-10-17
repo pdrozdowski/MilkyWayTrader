@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { ResultStorePersistResult, ResultStorePort } from '../../game/application/results/resultStore';
 import type { TerminalScoreResult } from '../../game/application/results/terminalScoreResult';
-import type { TerminalResultState } from '../../game/state/terminalResultState';
+import type { ResultHistoryOutcome } from '../../game/application/results/resultHistoryStore';
 import type { GlobalScoreStorePort } from '../../game/application/results/globalScoreStore.ts';
 import { createBrowserGlobalScoreStore } from './browserGlobalScoreStore.ts';
 import { browserAuthConfiguration, type PublicAuthConfiguration } from '../../game/application/auth/configuration.ts';
@@ -16,7 +16,7 @@ interface ResultRow
 {
     readonly run_id: string;
     readonly user_id: string;
-    readonly outcome: TerminalResultState['outcome'];
+    readonly outcome: ResultHistoryOutcome;
     readonly active_elapsed_ms: number;
     readonly final_credits: number;
     readonly final_score: number;
@@ -35,7 +35,7 @@ function validConfiguration (configuration: PublicAuthConfiguration): configurat
 function validTerminalResult (result: TerminalScoreResult): boolean
 {
     return typeof result.runId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(result.runId)
-        && ['death', 'freedom', 'imprisonment'].includes(String(result.outcome))
+        && ['death', 'freedom', 'imprisonment', 'abandonment'].includes(String(result.outcome))
         && Number.isSafeInteger(result.activeElapsedMs) && result.activeElapsedMs >= 0
         && Number.isSafeInteger(result.finalCredits) && result.finalCredits >= 0
         && Number.isFinite(result.cargoValue) && result.cargoValue >= 0
@@ -64,7 +64,7 @@ export function createBrowserResultStore (
                     Promise.resolve().then(() => client.from('run_results').insert({
                         run_id: terminalResult.runId,
                         user_id: userId,
-                        outcome: terminalResult.outcome,
+                        outcome: terminalResult.outcome === 'abandonment' ? 'abandoned' : terminalResult.outcome,
                         active_elapsed_ms: terminalResult.activeElapsedMs,
                         final_credits: terminalResult.finalCredits,
                         final_score: terminalResult.finalScore

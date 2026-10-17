@@ -1,4 +1,4 @@
-export type TerminalOutcome = 'death' | 'freedom' | 'imprisonment';
+export type TerminalOutcome = 'death' | 'freedom' | 'imprisonment' | 'abandonment';
 
 export interface TerminalResultState
 {

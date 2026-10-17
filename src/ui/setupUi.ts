@@ -22,6 +22,8 @@ import { mountGlobalHighScores } from './components/globalHighScores';
 import { mountGameIntro } from './components/gameIntro';
 import type { AuthReturnPort, AccountOrigin } from '../game/application/auth/authReturn';
 import type { AuthPort } from '../game/application/auth/auth';
+import type { PlayerProfilePort } from '../game/application/playerProfile';
+import type { PlayerEligibilityPort } from '../game/application/auth/playerEligibility';
 import type { TelemetryPort } from '../game/application/telemetry/telemetry';
 import { generateDefaultPlayerNickname } from '../game/application/playerProfile';
 import type { GameOverReturnPort } from '../game/application/results/gameOverReturn';
@@ -36,7 +38,7 @@ import type { ShipServiceId } from '../game/application/planetShipServices';
 import type { GameStateProvider } from '../game/application/gameStateProvider';
 import { setGameClockToThreeSecondsRemaining } from '../game/mechanics/clock/gameClock';
 
-export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort, telemetry: TelemetryPort, gameOverReturn: GameOverReturnPort, authReturn?: AuthReturnPort): UiHandle
+export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPort, telemetry: TelemetryPort, gameOverReturn: GameOverReturnPort, authReturn: AuthReturnPort | undefined, profilePort: PlayerProfilePort | null, eligibility: PlayerEligibilityPort): UiHandle
 {
     const container = root.querySelector<HTMLElement>('#game-container');
     if (!container) throw new Error('Missing game container.');
@@ -138,7 +140,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     let currentGameOverResult: TerminalScoreResult | null = null;
     const playerAccount = mountPlayerAccount(root, {
         auth,
-        profilePort: auth.createPlayerProfilePort?.() ?? null,
+        profilePort,
+        eligibility,
         generateDefaultNickname: generateDefaultPlayerNickname,
         prepareSignIn: origin => {
             const snapshot = origin === 'main-menu' ? null : stateProvider.snapshot();
@@ -152,8 +155,8 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         clearSignInContext: () => authReturn?.clear()
     });
     const resultHistoryStore = createBrowserResultHistoryStore();
-    const personalBest = mountPersonalBest(root, { store: resultHistoryStore, auth, profilePort: auth.createPlayerProfilePort?.() ?? null, openAccount: (origin, returnFocus) => root.dispatchEvent(new CustomEvent('player-account-open', { detail: { origin, returnFocus } })) });
-    const globalHighScores = mountGlobalHighScores(root, { store: createBrowserGlobalScoreStore(), history: resultHistoryStore, auth, profilePort: auth.createPlayerProfilePort?.() ?? null });
+    const personalBest = mountPersonalBest(root, { store: resultHistoryStore, auth, profilePort, openAccount: (origin, returnFocus) => root.dispatchEvent(new CustomEvent('player-account-open', { detail: { origin, returnFocus } })) });
+    const globalHighScores = mountGlobalHighScores(root, { store: createBrowserGlobalScoreStore(), history: resultHistoryStore, auth, profilePort });
     const openReturnedAccount = (origin: AccountOrigin): void => { root.dispatchEvent(new CustomEvent<AccountOrigin>('player-account-open', { detail: origin })); };
     const showAuthReturnError = (message: string): void => {
         const returnStatus = root.querySelector<HTMLElement>('#main-menu-return-status');
@@ -313,6 +316,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             cargoTransfer.destroy();
             performanceReadout.destroy();
             playerAccount.destroy();
+            eligibility.destroy();
             personalBest.destroy();
             globalHighScores.destroy();
             gameIntro.destroy();

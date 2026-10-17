@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createBrowserAuthReturnPort } from '../../src/ui/adapters/browserAuthReturn.ts';
 import { createBrowserPlayerProfilePort } from '../../src/ui/adapters/browserPlayerProfile.ts';
+import { createBrowserAuthPort } from '../../src/ui/adapters/browserAuth.ts';
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
 import { normalizePlayerNickname } from '../../src/game/application/playerProfile.ts';
 import { createTelemetryPort } from '../../src/game/application/telemetry/telemetry.ts';
@@ -22,6 +23,38 @@ test('player nicknames trim whitespace and enforce the public ASCII format', () 
     for (const invalid of ['ab', 'a'.repeat(21), 'name with spaces', 'naïve', 'name-1', '']) {
         assert.throws(() => normalizePlayerNickname(invalid));
     }
+});
+
+test('profile creation rejects a session that no longer matches its expected owner', async () => {
+    let reads = 0;
+    let inserts = 0;
+    const port = createBrowserPlayerProfilePort({
+        auth: { getUser: async () => ({ data: { user: { id: 'owner-b' } }, error: null }) },
+        from: () => {
+            reads++;
+            return { select: () => ({ maybeSingle: async () => ({ data: null, error: null }) }), insert: () => { inserts++; throw new Error('unexpected insert'); } };
+        }
+    });
+    await assert.rejects(port.loadOrCreate('Pilot_1', 'owner-a'), /account changed/u);
+    assert.equal(reads, 0);
+    assert.equal(inserts, 0);
+});
+
+test('an auth event supersedes a delayed initial session lookup', async () => {
+    let publishAuthEvent;
+    let resolveInitialSession;
+    const client = {
+        auth: {
+            onAuthStateChange: listener => { publishAuthEvent = listener; return { data: { subscription: { unsubscribe() {} } } }; },
+            getSession: () => new Promise(resolve => { resolveInitialSession = resolve; })
+        }
+    };
+    const auth = createBrowserAuthPort({ url: 'https://example.supabase.co', publishableKey: 'x'.repeat(30) }, () => client);
+    publishAuthEvent('SIGNED_IN', { user: { id: 'new-owner' } });
+    resolveInitialSession({ data: { session: { user: { id: 'old-owner' } } }, error: null });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(auth.getSnapshot().ownerId, 'new-owner');
+    auth.destroy();
 });
 
 test('profile load creates a persisted default and concurrent creation returns the winning row', async () => {

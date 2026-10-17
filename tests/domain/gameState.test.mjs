@@ -5,7 +5,8 @@ import { GameStateProvider } from '../../src/game/application/gameStateProvider.
 import { initialGameState } from '../../src/game/definitions/initialGameState.ts';
 import { advanceGameClock, pauseGameClock, resumeGameClock, setGameClockPlayerPaused } from '../../src/game/mechanics/clock/gameClock.ts';
 import { advanceGameSimulation as simulateGame } from '../../src/game/mechanics/gameSimulation.ts';
-import { classifyTimeoutOutcome } from '../../src/game/application/results/terminalScoreResult.ts';
+import { classifyTimeoutOutcome, createTerminalScoreResult } from '../../src/game/application/results/terminalScoreResult.ts';
+import { abandonGameRun } from '../../src/game/application/abandonGameRun.ts';
 import { projectRunStatus } from '../../src/game/application/runStatus.ts';
 import { applyLandedTrade, quoteLandedTrade } from '../../src/game/application/serotonMarket.ts';
 import { createLandingStatusPort } from '../../src/ui/adapters/landingStatusAdapter.ts';
@@ -68,7 +69,7 @@ test('a new run starts with the complete S-01 authoritative state', () => {
         { facilityId: 'bakery', level: 0, status: 'notBuilt' },
         { facilityId: 'foodProcessor', level: 0, status: 'notBuilt' }
     ];
-    assert.equal(state.schemaVersion, 19);
+    assert.equal(state.schemaVersion, 20);
     assert.equal(state.runId, '00000000-0000-4000-8000-000000000001');
     assert.deepEqual(state.cargoSchedule, []);
     assert.equal(state.moolarisDamageArmed, true);
@@ -194,10 +195,10 @@ test('codec round trips exact JSON-safe state and restore failures are atomic', 
     assert.deepEqual(provider.snapshot(), advanced);
 });
 
-test('v19 score spending state rejects v18 and round trips detached records', () => {
+test('v20 score spending state rejects v19 and round trips detached records', () => {
     const decoded = decodeGameState(initialGameState);
-    assert.equal(decoded.schemaVersion, 19);
-    assert.throws(() => decodeGameState({ ...clone(initialGameState), schemaVersion: 18 }));
+    assert.equal(decoded.schemaVersion, 20);
+    assert.throws(() => decodeGameState({ ...clone(initialGameState), schemaVersion: 19 }));
     const withSpending = { ...clone(decoded), shipUpgradeSpend: 95_000, facilityUpgradeSpend: 125_000 };
     const restored = decodeGameState(encodeGameState(withSpending));
     assert.equal(restored.shipUpgradeSpend, 95_000);
@@ -393,7 +394,7 @@ test('codec validates run randomness and terminal death facts as one immutable s
     ]) assert.throws(() => decodeGameState(invalid));
 });
 
-test('codec keeps schema 19 and validates timed outcomes against final composite score', () => {
+test('codec keeps schema 20 and validates timed outcomes against final composite score', () => {
     const timedOut = {
         ...clone(initialGameState),
         clock: { ...clone(initialGameState.clock), activeElapsedMs: initialGameState.clock.budgetMs },
@@ -404,7 +405,7 @@ test('codec keeps schema 19 and validates timed outcomes against final composite
         terminalResult: { runId: initialGameState.runId, outcome: 'imprisonment', activeElapsedMs: initialGameState.clock.budgetMs, finalCredits: 999_999 }
     };
     const decoded = decodeGameState(timedOut);
-    assert.equal(decoded.schemaVersion, 19);
+    assert.equal(decoded.schemaVersion, 20);
     assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
     assert.equal(decodeGameState({ ...timedOut, shipStatus: { ...initialGameState.shipStatus, currentHitPoints: 0 } }).terminalResult.outcome, 'imprisonment');
     const freedom = { ...timedOut, credits: 1_000_000, terminalResult: { ...timedOut.terminalResult, outcome: 'freedom', finalCredits: 1_000_000 } };
@@ -412,6 +413,28 @@ test('codec keeps schema 19 and validates timed outcomes against final composite
     assert.throws(() => decodeGameState({ ...freedom, terminalResult: { ...freedom.terminalResult, outcome: 'imprisonment' } }));
     assert.throws(() => decodeGameState({ ...timedOut, clock: { ...timedOut.clock, activeElapsedMs: timedOut.clock.budgetMs - 1 } }));
     assert.throws(() => decodeGameState({ ...timedOut, terminalResult: { ...timedOut.terminalResult, outcome: 'abandoned' } }));
+});
+
+test('abandonment transition is immutable, idempotent, independently valid, and preserves score inputs', () => {
+    const state = {
+        ...clone(initialGameState),
+        clock: { ...clone(initialGameState.clock), activeElapsedMs: 1234.75 },
+        credits: 450,
+        cargo: [{ commodityId: 'milk', quantity: 2, totalCost: 35 }],
+        shipUpgradeSpend: 12,
+        facilityUpgradeSpend: 8
+    };
+    const abandoned = abandonGameRun(state);
+    assert.notEqual(abandoned, state);
+    assert.equal(state.terminalResult, null);
+    assert.deepEqual(abandoned.terminalResult, { runId: state.runId, outcome: 'abandonment', activeElapsedMs: 1234, finalCredits: 450 });
+    assert.equal(abandonGameRun(abandoned), abandoned);
+    const decoded = decodeGameState(abandoned);
+    assert(Object.isFrozen(decoded.terminalResult));
+    assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
+    assert.equal(createTerminalScoreResult(decoded).cargoValue, 35);
+    assert.equal(createTerminalScoreResult(decoded).finalScore, 505);
+    assert.throws(() => decodeGameState({ ...clone(abandoned), schemaVersion: 19 }));
 });
 
 test('terminal results preserve an integer millisecond fact when the active clock is fractional', () => {
@@ -848,7 +871,7 @@ test('cargo full warning is shown only for the failure event and expires after e
     }
 });
 
-test('v19 codec preserves lifecycle JSON and rejects v18 and inconsistent lifecycle shapes', () => {
+test('v20 codec preserves lifecycle JSON and rejects v19 and inconsistent lifecycle shapes', () => {
     const planetId = initialGameState.planets[0].id;
     const landed = {
         ...clone(initialGameState),
@@ -859,9 +882,9 @@ test('v19 codec preserves lifecycle JSON and rejects v18 and inconsistent lifecy
     assert.deepEqual(decodeGameState(encodeGameState(decoded)), decoded);
     assert(Object.isFrozen(decoded.planetLifecycle));
 
-    const legacyV18 = clone(initialGameState);
-    legacyV18.schemaVersion = 18;
-    assert.throws(() => decodeGameState(legacyV18));
+    const legacyV19 = clone(initialGameState);
+    legacyV19.schemaVersion = 19;
+    assert.throws(() => decodeGameState(legacyV19));
     const landedWhileRunning = decodeGameState({
         ...clone(initialGameState),
         planetLifecycle: { capturedPlanetId: planetId, landedPlanetId: planetId, relandingLockedPlanetId: null }
@@ -911,7 +934,7 @@ test('planet projections retain continuity through restore and active-time pause
         clock: resumeGameClock(frozen.clock, 'background')
     };
     assert.deepEqual(advanceGameSimulation(restored, input, 321).planets, advanceGameSimulation(resumed, input, 321).planets);
-    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 19);
+    assert.equal(decodeGameState(encodeGameState(resumed)).schemaVersion, 20);
 });
 
 test('v14 codec validates asteroid identity, durability, finite vectors, lifecycle time, and exact orbit shape', () => {
