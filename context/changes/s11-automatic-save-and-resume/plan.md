@@ -414,17 +414,17 @@ Deploy migration before enabling the new client, under separate production autho
 
 #### Manual
 
-- [x] 4.3 An eligible player can Continue, cancel/confirm New Game, resolve a login collision and retry failed abandonment/terminal delivery; completed runs cannot resume as gameplay.
+- [x] 4.3 An eligible player can Continue, cancel/confirm New Game, resolve a login collision and retry failed abandonment/terminal delivery; completed runs cannot resume as gameplay. — 3c7b295
 
 ### Phase 5: Responsive Audit, Browser Journeys, and Complete Validation
 
 #### Automated
 
 - [ ] 5.1 All unit, mechanics, architecture, typecheck, integration and Playwright UI tests pass together with a current `cicd-run-tests` report.
-- [x] 5.2 Production build and Pages asset checks pass: `npm.cmd run build-nolog` and `npm.cmd run check:pages`.
+- [x] 5.2 Production build and Pages asset checks pass: `npm.cmd run build-nolog` and `npm.cmd run check:pages`. — 3c7b295
 - [ ] 5.3 Responsive audit passes every enumerated changed state at 1920x1080, 844x390 and 640x360 with screenshot, geometry, interaction and visual-integrity evidence.
-- [x] 5.4 Documentation and E2E inventory match implemented behavior; any PRD edit passes deterministic and semantic validation.
+- [x] 5.4 Documentation and E2E inventory match implemented behavior; any PRD edit passes deterministic and semantic validation. — 3c7b295
 
 #### Manual
 
-- [x] 5.5 Human review confirms desktop/mobile placement, wording, focus/touch behavior, Continue continuity and result recovery; implementation-review action points are reviewed before completion/archive.
+- [x] 5.5 Human review confirms desktop/mobile placement, wording, focus/touch behavior, Continue continuity and result recovery; implementation-review action points are reviewed before completion/archive. — 3c7b295
