@@ -1,5 +1,6 @@
 export const resultLabels = {
     title: '',
+    abandonedTitle: 'Run abandoned',
     survived: 'Survived',
     finalCash: 'Ending cash',
     cargoValue: 'Cargo purchases',

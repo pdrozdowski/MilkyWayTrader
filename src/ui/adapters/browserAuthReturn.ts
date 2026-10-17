@@ -37,11 +37,12 @@ function decodeContext (candidate: unknown): Readonly<AuthReturnContext>
     }
     const origin = candidate.origin as AccountOrigin;
     const result = terminalResult(candidate.terminalResult);
+    const snapshotOwnerId = candidate.snapshotOwnerId === undefined || candidate.snapshotOwnerId === null ? null : typeof candidate.snapshotOwnerId === 'string' && candidate.snapshotOwnerId.length > 0 ? candidate.snapshotOwnerId : (() => { throw new Error('Invalid saved-run owner.'); })();
     if (origin === 'main-menu' && (snapshot !== null || result !== null)) throw new Error('Invalid Main Menu account return context.');
     if (origin === 'game-menu' && (snapshot === null || snapshot.terminalResult !== null || result !== null)) throw new Error('Invalid in-game account return context.');
     const expectedResult = snapshot?.terminalResult === null || snapshot === null ? null : createTerminalScoreResult(snapshot);
     if (origin === 'game-over' && (!result || !expectedResult || expectedResult.runId !== result.runId || expectedResult.outcome !== result.outcome || expectedResult.activeElapsedMs !== result.activeElapsedMs || expectedResult.finalCredits !== result.finalCredits || expectedResult.cargoValue !== result.cargoValue || expectedResult.shipUpgradeSpend !== result.shipUpgradeSpend || expectedResult.facilityUpgradeSpend !== result.facilityUpgradeSpend || expectedResult.finalScore !== result.finalScore)) throw new Error('Invalid Game Over account return context.');
-    return Object.freeze({ snapshot, telemetryContext, origin, terminalResult: result });
+    return Object.freeze({ snapshot, telemetryContext, origin, terminalResult: result, snapshotOwnerId });
 }
 
 export function createBrowserAuthReturnPort (storage: SessionStoragePort | null = browserSessionStorage()): AuthReturnPort

@@ -3,6 +3,10 @@ import type { GameStateProvider } from '../application/gameStateProvider';
 import { createInitialGameState } from '../definitions/initialGameState';
 import type { TelemetryPort } from '../application/telemetry/telemetry';
 import { mainMenuBackgroundTransform } from './mainMenuBackground';
+import type { ActiveRunStorePort } from '../application/saves/activeRunStore.ts';
+import type { PlayerEligibilityPort } from '../application/auth/playerEligibility.ts';
+import { mainMenuSaveLabels } from './mainMenuLabels';
+import { createTerminalScoreResult } from '../application/results/terminalScoreResult.ts';
 import type { GameStateSnapshot } from '../state/gameStateSnapshot';
 
 const testGameStateStorageKey = 'milky-way-trader:playwright-game-state';
@@ -61,10 +65,77 @@ export class MainMenu extends Scene
             (this.registry.get('telemetry') as TelemetryPort).startSession(initialGameState.credits);
             this.scene.start('Game');
         };
+        const continueGame = () => {
+            const reload = this.registry.get('reloadAuthoritativeSave') as (() => Promise<boolean>) | undefined;
+            if (!reload) return;
+            const control = document.querySelector<HTMLButtonElement>('#main-menu-continue');
+            if (control) control.disabled = true;
+            void reload().then(async restored => {
+                if (restored && this.scene.isActive()) this.scene.start('Game');
+                else {
+                    if (control) control.disabled = false;
+                    const loaded = await activeRunStore?.load();
+                    if (loaded?.status === 'terminal-pending') showTerminalPending(loaded.snapshot);
+                }
+            }).catch(() => {
+                if (control) control.disabled = false;
+            });
+        };
+        const continueControl = document.querySelector<HTMLButtonElement>('#main-menu-continue');
+        const newGameControl = document.querySelector<HTMLButtonElement>('#main-menu-new-game');
+        newGameControl?.setAttribute('aria-label', mainMenuSaveLabels.newGameButton);
+        continueControl?.setAttribute('aria-label', mainMenuSaveLabels.continueButton);
+        const saveStatus = document.querySelector<HTMLElement>('#main-menu-save-status');
+        const activeRunStore = this.registry.get('activeRunStore') as ActiveRunStorePort | undefined;
+        const eligibility = this.registry.get('playerEligibility') as PlayerEligibilityPort | undefined;
+        let menuGeneration = 0;
+        let terminalRouting = false;
+        const showTerminalPending = (snapshot: GameStateSnapshot): void => {
+            if (terminalRouting || !this.scene.isActive()) return;
+            terminalRouting = true;
+            this.scene.start('GameOver', { terminalResult: createTerminalScoreResult(snapshot) });
+        };
+        const refreshContinue = async (): Promise<void> => {
+            const generation = ++menuGeneration;
+            const eligibilitySnapshot = eligibility?.getSnapshot();
+            if (!continueControl || !activeRunStore) {
+                if (continueControl) continueControl.disabled = true;
+                if (saveStatus) saveStatus.textContent = '';
+                return;
+            }
+            if (eligibilitySnapshot?.status !== 'ready') {
+                continueControl.disabled = true;
+                if (saveStatus) saveStatus.textContent = eligibilitySnapshot?.status === 'loading' ? mainMenuSaveLabels.checkingAccount
+                    : eligibilitySnapshot?.status === 'failed' ? eligibilitySnapshot.message ?? mainMenuSaveLabels.unavailableSave
+                        : mainMenuSaveLabels.continueRequiresProfile;
+                return;
+            }
+            continueControl.disabled = true;
+            if (saveStatus) saveStatus.textContent = mainMenuSaveLabels.checkingSave;
+            const loaded = await activeRunStore.load();
+            if (generation !== menuGeneration || !this.scene.isActive()) return;
+            if (loaded.status === 'active') {
+                continueControl.disabled = false;
+                if (saveStatus) saveStatus.textContent = '';
+            } else if (loaded.status === 'terminal-pending') {
+                if (saveStatus) saveStatus.textContent = mainMenuSaveLabels.pendingResults;
+                showTerminalPending(loaded.snapshot);
+            } else if (loaded.status === 'incompatible') {
+                if (saveStatus) saveStatus.textContent = mainMenuSaveLabels.incompatibleSave;
+            } else if (loaded.status === 'unavailable' || loaded.status === 'ineligible') {
+                if (saveStatus) saveStatus.textContent = loaded.message || mainMenuSaveLabels.unavailableSave;
+            } else if (saveStatus) saveStatus.textContent = '';
+        };
+        void refreshContinue();
+        const unsubscribeEligibility = eligibility?.subscribe(() => { void refreshContinue(); });
+        continueControl?.addEventListener('click', continueGame);
         this.game.events.on('start-new-game', startGame);
         this.game.events.emit('main-menu-open');
         this.events.once('shutdown', () => {
             this.game.events.off('start-new-game', startGame);
+            menuGeneration++;
+            unsubscribeEligibility?.();
+            continueControl?.removeEventListener('click', continueGame);
             this.scale.off('resize', this.layoutBackground, this);
             this.destroyFullscreenControl();
             this.game.events.emit('main-menu-close');

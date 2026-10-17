@@ -142,6 +142,7 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
         const requestedFocus = typeof detail === 'string' ? null : detail.returnFocus ?? null;
         openFrom(requestedOrigin, requestedFocus ?? (requestedOrigin === 'game-menu' ? gameMenuTrigger : trigger));
     };
+    const closeOnRequest = (): void => closeModal();
     const onAuthChange = (snapshot: Readonly<AuthSnapshot>): void => {
         const prior = authSnapshot.status;
         const accountChanged = snapshot.status === 'signed-in' && (prior !== 'signed-in' || snapshot.ownerId !== profileAccountEmail);
@@ -218,6 +219,7 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
     close.addEventListener('click', closeModal);
     window.addEventListener('keydown', keydown);
     root.addEventListener('player-account-open', openOnReturn);
+    root.addEventListener('player-account-close', closeOnRequest);
     const unsubscribe = options.auth.subscribe(onAuthChange);
     const unsubscribeEligibility = options.eligibility.subscribe(onEligibilityChange);
     render();
@@ -229,5 +231,6 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
         signIn.removeEventListener('click', signInHandler); signOut.removeEventListener('click', signOutHandler); update.removeEventListener('click', updateHandler);
         retry.removeEventListener('click', retryClick); nickname.removeEventListener('input', render); close.removeEventListener('click', closeModal); window.removeEventListener('keydown', keydown);
         root.removeEventListener('player-account-open', openOnReturn);
+            root.removeEventListener('player-account-close', closeOnRequest);
     } };
 }

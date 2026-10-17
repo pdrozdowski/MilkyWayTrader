@@ -80,23 +80,38 @@ const StartGame = (parent: string, hooks: GameBootstrapHooks = {}) => {
                         scheduler: hooks.saveScheduler,
                         createMutationId: () => crypto.randomUUID(),
                         publish: notice => game.events.emit('run-save-status', notice),
-                        publishResult: notice => game.events.emit('terminal-delivery-status', notice)
+                        publishResult: notice => {
+                            game.registry.set('terminalDeliveryStatus', notice);
+                            game.events.emit('terminal-delivery-status', notice);
+                        }
                     });
                     game.events.on('active-run-ready', runSaveCoordinator.startRun);
                     game.events.on('menu-save-request', runSaveCoordinator.requestSave);
                     game.events.on('game-over-retry', runSaveCoordinator.retryTerminal);
-                    game.events.on('reload-authoritative-save', runSaveCoordinator.reloadAuthoritative);
+                    const reloadAuthoritativeSave = (complete?: (restored: boolean) => void): void => {
+                        void runSaveCoordinator!.reloadAuthoritative().then(complete);
+                    };
+                    game.events.on('reload-authoritative-save', reloadAuthoritativeSave);
+                    game.registry.set('reloadAuthoritativeSave', (): Promise<boolean> => new Promise(resolve => {
+                        game.events.emit('reload-authoritative-save', resolve);
+                    }));
+                    game.registry.set('abandonAccountRun', runSaveCoordinator.abandonAccountRun);
+                    game.registry.set('setRestoredRunOwner', runSaveCoordinator.setRestoredRunOwner);
                     game.events.once('destroy', () => {
                         game.events.off('active-run-ready', runSaveCoordinator?.startRun);
                         game.events.off('menu-save-request', runSaveCoordinator?.requestSave);
                         game.events.off('game-over-retry', runSaveCoordinator?.retryTerminal);
-                        game.events.off('reload-authoritative-save', runSaveCoordinator?.reloadAuthoritative);
+                        game.events.off('reload-authoritative-save', reloadAuthoritativeSave);
+                        game.registry.remove('reloadAuthoritativeSave');
+                        game.registry.remove('abandonAccountRun');
+                        game.registry.remove('setRestoredRunOwner');
                         runSaveCoordinator?.destroy();
                     });
                 }
                 game.registry.set('performanceMonitor', createPerformanceMonitor({ now: () => performance.now(), windowMs: 5000 }));
                 game.registry.set('resultStore', hooks.resultStore);
                 game.registry.set('activeRunStore', hooks.activeRunStore);
+                game.registry.set('playerEligibility', hooks.eligibility);
                 game.registry.set('gameOverReturn', hooks.gameOverReturn);
                 game.registry.set('telemetry', hooks.telemetry);
                 let authReturnContext = hooks.authReturn?.take() ?? null;
@@ -107,6 +122,10 @@ const StartGame = (parent: string, hooks: GameBootstrapHooks = {}) => {
                         authReturnContext = null;
                         authReturnError = 'The previous run could not be restored. Start a new run from the Main Menu.';
                     }
+                }
+                if (runSaveCoordinator) {
+                    const setRestoredRunOwner = game.registry.get('setRestoredRunOwner') as ((ownerId: string | null) => void) | undefined;
+                    setRestoredRunOwner?.(authReturnContext?.snapshot ? authReturnContext.snapshotOwnerId ?? null : null);
                 }
                 if (authReturnContext?.telemetryContext) hooks.telemetry?.restoreSessionContext(authReturnContext.telemetryContext);
                 game.registry.set('authReturnError', authReturnError);

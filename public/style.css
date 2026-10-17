@@ -68,6 +68,15 @@ body {
 #main-menu-sign-in-preview:disabled { opacity: .55; cursor: default; }
 #main-menu-fullscreen-preview:focus-visible, #main-menu-sign-in-preview:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 #main-menu-return-status { position: absolute; bottom: 16%; width: min(560px, calc(100% - 32px)); margin: 0; padding: 10px 14px; border: 1px solid var(--ui-border); border-radius: 8px; color: #fff; background: var(--ui-surface); text-align: center; }
+#main-menu-save-status { position: absolute; bottom: 8%; width: min(560px, calc(100% - 32px)); margin: 0; color: #fff; text-align: center; text-shadow: 1px 2px 3px #000; }
+#run-save-notice { position: absolute; top: 64px; left: max(8px, env(safe-area-inset-left)); z-index: 6; max-width: min(420px, calc(100% - 16px)); margin: 0; padding: 8px 12px; border: 1px solid var(--ui-border); border-radius: 8px; color: #fff; background: var(--ui-surface); }
+#main-menu-run-save-notice { box-sizing: border-box; width: min(440px, calc(100% - 24px)); margin: 0; padding: 6px 10px; border: 1px solid var(--ui-border); border-radius: 8px; color: #fff; background: var(--ui-surface); font-size: clamp(12px, 2vw, 15px); line-height: 1.25; text-align: center; pointer-events: auto; }
+#run-save-dialog { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); background: rgb(0 0 0 / 72%); }
+#run-save-dialog[hidden] { display: none; }
+.run-save-dialog-panel { width: min(460px, 100%); padding: 22px; border: 1px solid var(--ui-border); border-radius: 12px; color: #fff; background: var(--ui-surface); text-align: center; }
+.run-save-dialog-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.run-save-dialog-actions button { min-height: 44px; padding: 9px 16px; border: 1px solid var(--ui-border); border-radius: 6px; color: #fff; background: var(--ui-action); font: inherit; cursor: pointer; }
+#run-save-dialog-error { color: #ff8a80; }
 
 #game-intro { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; overflow: hidden; background: #000; }
 #game-intro[hidden], #game-intro-story[hidden], #game-intro-previous[hidden], #game-intro-next[hidden], #game-intro-debt[hidden] { display: none; }

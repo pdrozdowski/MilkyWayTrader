@@ -47,6 +47,8 @@ export function mountGameIntro (root: HTMLElement, port: GameIntroPort): UiHandl
     let completed = false;
     let appInertBeforeOpen: boolean[] = [];
     let openTimer: number | null = null;
+    let preparing = false;
+    let destroyed = false;
 
     const render = (): void => {
         title.textContent = displayLabels.gameIntroTitle;
@@ -129,11 +131,14 @@ export function mountGameIntro (root: HTMLElement, port: GameIntroPort): UiHandl
         focusReturn = null;
     };
     const newGame = (): void => {
-        if (openTimer !== null || !dialog.hidden) return;
-        openTimer = window.setTimeout(() => {
+        if (destroyed || preparing || openTimer !== null || !dialog.hidden) return;
+        const scheduleOpen = (): void => { openTimer = window.setTimeout(() => {
             openTimer = null;
             open();
-        }, 0);
+        }, 0); };
+        if (!port.prepareNewGame) { scheduleOpen(); return; }
+        preparing = true;
+        void port.prepareNewGame().then(allowed => { if (allowed && !destroyed) scheduleOpen(); }).catch(() => undefined).finally(() => { preparing = false; });
     };
 
     story.addEventListener('click', overlayClick);
@@ -146,6 +151,7 @@ export function mountGameIntro (root: HTMLElement, port: GameIntroPort): UiHandl
     root.querySelector('#main-menu-new-game')?.addEventListener('click', newGame);
     return {
         destroy: () => {
+            destroyed = true;
             if (openTimer !== null) window.clearTimeout(openTimer);
             openTimer = null;
             story.removeEventListener('click', overlayClick);

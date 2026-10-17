@@ -401,16 +401,16 @@ Deploy migration before enabling the new client, under separate production autho
 
 #### Automated
 
-- [ ] 3.1 Deterministic autosave, retry and lifecycle tests pass: `npm.cmd run test:domain`.
-- [ ] 3.2 Simulation and projection regressions pass: `npm.cmd run test:fast`.
-- [ ] 3.3 Type checks pass: `npm.cmd run typecheck`.
+- [x] 3.1 Deterministic autosave, retry and lifecycle tests pass: `npm.cmd run test:domain`. — 0270f60
+- [x] 3.2 Simulation and projection regressions pass: `npm.cmd run test:fast`. — 0270f60
+- [x] 3.3 Type checks pass: `npm.cmd run typecheck`. — 0270f60
 
 ### Phase 4: Continue, Confirmation, Recovery, and Save Feedback UI
 
 #### Automated
 
-- [ ] 4.1 Fast UI, account, intro and persistence wiring tests pass: `npm.cmd run test:fast`.
-- [ ] 4.2 Type checks pass: `npm.cmd run typecheck`.
+- [x] 4.1 Fast UI, account, intro and persistence wiring tests pass: `npm.cmd run test:fast`.
+- [x] 4.2 Type checks pass: `npm.cmd run typecheck`.
 
 #### Manual
 

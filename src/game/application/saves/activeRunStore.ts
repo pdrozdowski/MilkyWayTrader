@@ -6,7 +6,7 @@ export type ActiveRunMutationResult = { readonly success: true; readonly acknowl
 export type ActiveRunLoadResult =
     | { readonly status: 'empty'; readonly revision: number }
     | { readonly status: 'active' | 'terminal-pending'; readonly revision: number; readonly snapshot: GameStateSnapshot }
-    | { readonly status: 'incompatible'; readonly revision: number; readonly message: string }
+    | { readonly status: 'incompatible'; readonly revision: number; readonly runId?: string; readonly message: string }
     | { readonly status: 'unavailable' | 'ineligible'; readonly message: string };
 
 export interface ActiveRunStorePort

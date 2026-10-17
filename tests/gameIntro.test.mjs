@@ -33,7 +33,7 @@ class Element {
     }
 }
 
-function setup () {
+function setup (prepareNewGame) {
     const dialog = new Element();
     dialog.hidden = true;
     const story = new Element(dialog);
@@ -74,7 +74,7 @@ function setup () {
     globalThis.document = { activeElement: ids['#main-menu-new-game'] };
     ids['#game-intro'].contains = element => element === ids['#game-intro-story-advance'] || element === ids['#game-intro-previous'] || element === ids['#game-intro-next'] || element === ids['#game-intro-start'];
     let starts = 0;
-    const handle = mountGameIntro(root, { startGame: () => { starts += 1; } });
+    const handle = mountGameIntro(root, { startGame: () => { starts += 1; }, prepareNewGame });
     return {
         ids,
         handle,
@@ -143,4 +143,29 @@ test('destroy cancels an intro opened from a click that has not finished dispatc
     view.flushTimers();
     assert.equal(view.ids['#game-intro'].hidden, true);
     assert.equal(view.ids['#app-content'].inert, false);
+});
+
+test('New Game waits for save resolution and does not open the intro after cancellation', async () => {
+    let resolvePreparation;
+    const view = setup(() => new Promise(resolve => { resolvePreparation = resolve; }));
+    view.ids['#main-menu-new-game'].click();
+    view.flushTimers();
+    assert.equal(view.ids['#game-intro'].hidden, true);
+    resolvePreparation(false);
+    await Promise.resolve();
+    await Promise.resolve();
+    view.flushTimers();
+    assert.equal(view.ids['#game-intro'].hidden, true);
+    assert.equal(view.starts(), 0);
+});
+
+test('New Game opens the intro only after save preparation succeeds', async () => {
+    let resolvePreparation;
+    const view = setup(() => new Promise(resolve => { resolvePreparation = resolve; }));
+    view.ids['#main-menu-new-game'].click();
+    resolvePreparation(true);
+    await Promise.resolve();
+    await Promise.resolve();
+    view.flushTimers();
+    assert.equal(view.ids['#game-intro'].hidden, false);
 });

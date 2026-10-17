@@ -63,7 +63,7 @@ export function createBrowserActiveRunStore (configuration = browserAuthConfigur
             try {
                 const snapshot = decodeGameState(data.snapshot);
                 return { status: data.status === 'active' ? 'active' : 'terminal-pending', revision: data.revision, snapshot };
-            } catch (error) { return { status: 'incompatible', revision: data.revision, message: error instanceof Error ? error.message : 'Saved run is incompatible.' }; }
+            } catch (error) { return { status: 'incompatible', revision: data.revision, ...(isRecord(data.snapshot) && typeof data.snapshot.runId === 'string' ? { runId: data.snapshot.runId } : {}), message: error instanceof Error ? error.message : 'Saved run is incompatible.' }; }
         } catch (error) { return { status: 'unavailable', message: errorMessage(error) }; }
     }
     async function mutate (operation: string, expectedRunId: string | null, expectedRevision: number, mutationId: string, snapshot?: GameStateSnapshot): Promise<ActiveRunMutationResult>

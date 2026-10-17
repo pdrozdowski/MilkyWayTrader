@@ -97,10 +97,13 @@ test('OAuth return storage round trips a validated run and consumes it once', ()
         snapshot: initialGameState,
         telemetryContext: { sessionId: 'session-1', sessionStartedAt: 1234 },
         origin: 'game-menu',
-        terminalResult: null
+        terminalResult: null,
+        snapshotOwnerId: 'owner-a'
     };
     assert.equal(port.save(context), true);
-    assert.equal(port.take().snapshot.runId, initialGameState.runId);
+    const restored = port.take();
+    assert.equal(restored.snapshot.runId, initialGameState.runId);
+    assert.equal(restored.snapshotOwnerId, 'owner-a');
     assert.deepEqual(port.take(), null);
 });
 

@@ -10,6 +10,7 @@ export interface AuthReturnContext
     readonly telemetryContext: Readonly<{ sessionId: string; sessionStartedAt: number }> | null;
     readonly origin: AccountOrigin;
     readonly terminalResult: TerminalScoreResult | null;
+    readonly snapshotOwnerId?: string | null;
 }
 
 export interface AuthReturnPort

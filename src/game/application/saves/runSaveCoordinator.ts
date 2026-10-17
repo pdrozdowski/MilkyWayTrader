@@ -5,6 +5,7 @@ import type { PlayerEligibilityPort, PlayerEligibilitySnapshot } from '../auth/p
 import type { ResultStorePort } from '../results/resultStore.ts';
 import type { PendingRunResultPort } from '../results/pendingRunResult.ts';
 import { createTerminalScoreResult } from '../results/terminalScoreResult.ts';
+import { abandonGameRun } from '../abandonGameRun.ts';
 import { persistOwnerResult, type OwnerResultDeliveryNotice } from '../results/resultDelivery.ts';
 
 export interface SaveSchedulerPort
@@ -48,7 +49,7 @@ export function crossedMinuteBoundary (before: number, after: number): boolean
     return Number.isFinite(before) && Number.isFinite(after) && after > before && Math.floor(after / 60_000) > Math.floor(before / 60_000);
 }
 
-export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): { requestSave(): void; startRun(): void; retryTerminal(): void; reloadAuthoritative(): void; destroy(): void }
+export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): { requestSave(): void; startRun(): void; retryTerminal(): void; reloadAuthoritative(): Promise<boolean>; abandonAccountRun(snapshot: GameStateSnapshot, expectedRevision: number, attachCurrent?: boolean): Promise<boolean>; setRestoredRunOwner(ownerId: string | null): void; destroy(): void }
 {
     const { provider, store, eligibility, scheduler } = options;
     const publish = options.publish ?? (() => undefined);
@@ -59,6 +60,8 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
     let ownerEpoch = 0;
     let revision = 0;
     let attachedRunId: string | null = null;
+    let attachedOwnerId: string | null = null;
+    let foreignRunId: string | null = null;
     let lastState = provider.snapshot();
     let landingBaseline: GameStateSnapshot | null = null;
     let latest: GameStateSnapshot | null = null;
@@ -154,6 +157,7 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
             }
             options.pendingResult.clear(capturedOwner);
             attachedRunId = null;
+            activeRun = false;
             terminalResult = null;
             terminalSnapshot = null;
             terminalMarkedOwner = null;
@@ -214,6 +218,7 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
             if (pendingMutationSnapshot === snapshot) { pendingMutationSnapshot = null; pendingMutationId = null; }
             revision = result.acknowledgement.revision;
             attachedRunId = snapshot.runId;
+            attachedOwnerId = currentOwner;
             failures = 0;
             if (latest === snapshot) {
                 latest = null;
@@ -258,17 +263,17 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
         retryTimer = clearTimer(retryTimer);
         void flush();
     };
-    const reloadAuthoritative = async (): Promise<void> => {
-        if (!owner || destroyed) return;
+    const reloadAuthoritative = async (): Promise<boolean> => {
+        if (!owner || destroyed) return false;
         const capturedOwner = owner;
         const capturedEpoch = ownerEpoch;
         let loaded: ActiveRunLoadResult;
         try { loaded = await store.load(); }
         catch (error) {
             if (isCurrent(capturedOwner, capturedEpoch)) { blocked = true; notice('failed', error instanceof Error ? error.message : 'Unable to reload the active run.'); }
-            return;
+            return false;
         }
-        if (!isCurrent(capturedOwner, capturedEpoch)) return;
+        if (!isCurrent(capturedOwner, capturedEpoch)) return false;
         retryTimer = clearTimer(retryTimer);
         latest = null;
         blocked = false;
@@ -276,15 +281,19 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
             ownerLoaded = true;
             revision = loaded.revision;
             attachedRunId = loaded.snapshot.runId;
+            attachedOwnerId = capturedOwner;
             lastState = loaded.snapshot;
             provider.restore(loaded.snapshot);
             notice('idle');
+            return true;
         } else if (loaded.status === 'empty') {
             ownerLoaded = true;
             revision = loaded.revision;
             attachedRunId = null;
-            if (activeRun) requestSave();
+            if (activeRun && foreignRunId === provider.snapshot().runId) { blocked = true; notice('conflict', 'This run belongs to another signed-in account and remains local.'); }
+            else if (activeRun) requestSave();
             else notice('idle');
+            return false;
         } else if (loaded.status === 'terminal-pending') {
             ownerLoaded = true;
             revision = loaded.revision;
@@ -294,14 +303,73 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
             terminalExpectedRevision = loaded.revision;
             terminalMarkedOwner = capturedOwner;
             void deliverTerminal();
+            return false;
         } else if (loaded.status === 'incompatible') {
             ownerLoaded = true;
             blocked = true;
             notice('conflict', loaded.message);
+            return false;
         } else if (loaded.status === 'ineligible' || loaded.status === 'unavailable') {
             ownerLoaded = true;
             blocked = true;
             notice('ineligible', loaded.message);
+            return false;
+        }
+        return false;
+    };
+    const abandonAccountRun = async (snapshot: GameStateSnapshot, expectedRevision: number, attachCurrent = true): Promise<boolean> => {
+        if (destroyed || !owner || !ownerLoaded || !options.resultStore || !options.pendingResult || snapshot.terminalResult !== null) return false;
+        const capturedOwner = owner;
+        const capturedEpoch = ownerEpoch;
+        const existing = await store.load();
+        if (!isCurrent(capturedOwner, capturedEpoch)) return false;
+        if (existing.status === 'terminal-pending' && existing.snapshot.runId === snapshot.runId && existing.snapshot.terminalResult?.outcome === 'abandonment') {
+            const terminal = createTerminalScoreResult(existing.snapshot);
+            const result = await persistOwnerResult(options.resultStore, terminal, existing.revision, capturedOwner, ++terminalDeliveryOperation, () => isCurrent(capturedOwner, capturedEpoch), options.publishResult ?? (() => undefined));
+            if (!isCurrent(capturedOwner, capturedEpoch) || result?.status !== 'saved') return false;
+            options.pendingResult.clear(capturedOwner);
+            const refreshed = await store.load();
+            if (!isCurrent(capturedOwner, capturedEpoch) || refreshed.status !== 'empty') return false;
+            revision = refreshed.revision;
+            attachedRunId = null;
+            blocked = false;
+            notice('saved');
+            if (!attachCurrent) { activeRun = false; latest = null; attachedOwnerId = null; blocked = false; return true; }
+            if (attachedOwnerId !== null && attachedOwnerId !== capturedOwner) { activeRun = false; latest = null; blocked = true; return true; }
+            latest = provider.snapshot();
+            if (activeRun) void flush();
+            return true;
+        }
+        if (existing.status !== 'active' || existing.snapshot.runId !== snapshot.runId || existing.revision !== expectedRevision) return false;
+        const terminalSnapshot = abandonGameRun(snapshot);
+        const terminal = createTerminalScoreResult(terminalSnapshot);
+        try {
+            options.pendingResult.save(capturedOwner, { terminalResult: terminal, snapshot: terminalSnapshot, expectedRevision });
+            const marked = await store.markTerminal(terminalSnapshot, expectedRevision, createMutationId());
+            if (!isCurrent(capturedOwner, capturedEpoch)) return false;
+            if (!marked.success) {
+                if (marked.kind === 'conflict') options.pendingResult.clear(capturedOwner);
+                return false;
+            }
+            const nextRevision = marked.acknowledgement.revision;
+            options.pendingResult.save(capturedOwner, { terminalResult: terminal, snapshot: terminalSnapshot, expectedRevision: nextRevision });
+            const result = await persistOwnerResult(options.resultStore, terminal, nextRevision, capturedOwner, ++terminalDeliveryOperation, () => isCurrent(capturedOwner, capturedEpoch), options.publishResult ?? (() => undefined));
+            if (!isCurrent(capturedOwner, capturedEpoch) || result?.status !== 'saved') return false;
+            options.pendingResult.clear(capturedOwner);
+            const refreshed = await store.load();
+            if (!isCurrent(capturedOwner, capturedEpoch) || refreshed.status !== 'empty') return false;
+            revision = refreshed.revision;
+            attachedRunId = null;
+            blocked = false;
+            notice('saved');
+            if (!attachCurrent) { activeRun = false; latest = null; attachedOwnerId = null; blocked = false; return true; }
+            if (attachedOwnerId !== null && attachedOwnerId !== capturedOwner) { activeRun = false; latest = null; blocked = true; return true; }
+            latest = provider.snapshot();
+            if (activeRun) void flush();
+            return true;
+        } catch (error) {
+            if (isCurrent(capturedOwner, capturedEpoch)) notice('failed', error instanceof Error ? error.message : 'Unable to abandon the account save.');
+            return false;
         }
     };
     const loadOwner = async (eligibilitySnapshot: Readonly<PlayerEligibilitySnapshot>, retry = false): Promise<void> => {
@@ -315,6 +383,7 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
         const requestedOwner = eligibilitySnapshot.ownerId;
         if (requestedOwner !== owner) {
             invalidate();
+            foreignRunId = attachedOwnerId !== null && attachedOwnerId !== requestedOwner && attachedRunId === provider.snapshot().runId ? attachedRunId : null;
             owner = requestedOwner;
             ownerLoaded = false;
             terminalMarkedOwner = null;
@@ -354,7 +423,9 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
             blocked = false;
             revision = loaded.revision;
             attachedRunId = null;
-            if (terminalResult) void deliverTerminal();
+            if (terminalResult && foreignRunId === terminalResult.runId) { blocked = true; notice('conflict', 'This completed run belongs to another signed-in account and remains local.'); }
+            else if (terminalResult) void deliverTerminal();
+            else if (activeRun && foreignRunId === provider.snapshot().runId) { blocked = true; notice('conflict', 'This run belongs to another signed-in account and remains local.'); }
             else if (activeRun) requestSave();
         } else if (loaded.status === 'active' && loaded.snapshot.runId === (terminalResult?.runId ?? provider.snapshot().runId)) {
             loadRetryTimer = clearTimer(loadRetryTimer);
@@ -363,7 +434,9 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
             blocked = false;
             revision = loaded.revision;
             attachedRunId = loaded.snapshot.runId;
-            if (terminalResult) { terminalSnapshot ??= loaded.snapshot; void deliverTerminal(); }
+            attachedOwnerId = requestedOwner;
+            if (terminalResult && foreignRunId === terminalResult.runId) { blocked = true; notice('conflict', 'This completed run belongs to another signed-in account and remains local.'); }
+            else if (terminalResult) { terminalSnapshot ??= loaded.snapshot; void deliverTerminal(); }
             else if (activeRun) requestSave();
         } else if (loaded.status === 'terminal-pending') {
             loadRetryTimer = clearTimer(loadRetryTimer);
@@ -372,6 +445,7 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
             blocked = false;
             revision = loaded.revision;
             attachedRunId = loaded.snapshot.runId;
+            attachedOwnerId = requestedOwner;
             terminalSnapshot = loaded.snapshot;
             terminalResult = createTerminalScoreResult(loaded.snapshot);
             terminalExpectedRevision = loaded.revision;
@@ -433,6 +507,12 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
             if (destroyed || activeRun) return;
             activeRun = true;
             const current = provider.snapshot();
+            if (foreignRunId !== null && foreignRunId !== current.runId) { foreignRunId = null; blocked = false; attachedOwnerId = null; }
+            else if (foreignRunId === current.runId) {
+                blocked = true;
+                notice('conflict', 'This run belongs to another signed-in account and remains local.');
+                return;
+            }
             if (current.terminalResult) { terminalSnapshot = current; terminalResult = createTerminalScoreResult(current); }
             terminalExpectedRevision = revision;
             const eligibilitySnapshot = eligibility.getSnapshot();
@@ -442,7 +522,16 @@ export function createRunSaveCoordinator (options: RunSaveCoordinatorOptions): {
             } else void loadOwner(eligibilitySnapshot);
         },
         retryTerminal: () => { if (terminalRetryAllowed) void deliverTerminal(); },
-        reloadAuthoritative: () => { void reloadAuthoritative(); },
+        reloadAuthoritative,
+        abandonAccountRun,
+        setRestoredRunOwner: restoredOwnerId => {
+            const snapshot = provider.snapshot();
+            attachedOwnerId = restoredOwnerId;
+            attachedRunId = restoredOwnerId === null ? null : snapshot.runId;
+            const currentOwnerId = eligibility.getSnapshot().ownerId;
+            foreignRunId = restoredOwnerId !== null && restoredOwnerId !== currentOwnerId ? snapshot.runId : null;
+            if (foreignRunId !== null) blocked = true;
+        },
         destroy: () => {
             if (destroyed) return;
             destroyed = true;

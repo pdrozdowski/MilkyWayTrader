@@ -6,6 +6,7 @@ export interface UiHandle
 export interface GameIntroPort
 {
     startGame(): void;
+    prepareNewGame?(): Promise<boolean>;
 }
 
 export type { RunStatusSnapshot } from '../game/application/runStatus';

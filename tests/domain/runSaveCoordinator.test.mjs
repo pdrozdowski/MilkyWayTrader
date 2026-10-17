@@ -521,3 +521,54 @@ test('failed terminal delivery keeps the intent, blocks new saves, and recovers 
     coordinator.destroy();
 });
 
+test('confirmed replacement records abandonment before allowing the next run', async () => {
+    const provider = new GameStateProvider(initialGameState);
+    const clock = scheduler();
+    const terminalWrites = [];
+    const finalizationRevisions = [];
+    const pending = [];
+    let finalized = false;
+    const store = {
+        load: async () => finalized ? { status: 'empty', revision: 5 } : { status: 'active', revision: 3, snapshot: initialGameState },
+        create: async () => ({ success: true, acknowledgement: { revision: 1 } }),
+        save: async () => ({ success: true, acknowledgement: { revision: 1 } }),
+        markTerminal: async (snapshot, revision) => { terminalWrites.push(snapshot.terminalResult.outcome); return { success: true, acknowledgement: { revision: revision + 1 } }; },
+        discard: async () => ({ success: true, acknowledgement: { revision: 1 } })
+    };
+    const coordinator = createRunSaveCoordinator({
+        provider,
+        store,
+        resultStore: { persist: async (result, revision) => { finalizationRevisions.push(revision); finalized = true; assert.equal(result.outcome, 'abandonment'); return { status: 'saved', message: null }; } },
+        pendingResult: { load: () => null, save: (_owner, intent) => pending.push(intent.terminalResult.outcome), clear: () => undefined },
+        eligibility: eligibility(),
+        scheduler: clock,
+        createMutationId: () => 'replace-run'
+    });
+    await tick();
+    assert.equal(await coordinator.abandonAccountRun(initialGameState, 3, false), true);
+    assert.deepEqual(terminalWrites, ['abandonment']);
+    assert.deepEqual(finalizationRevisions, [4]);
+    assert.deepEqual(pending, ['abandonment', 'abandonment']);
+    coordinator.destroy();
+});
+
+test('a restored run owned by another account is never attached to the current owner', async () => {
+    const provider = new GameStateProvider(initialGameState);
+    const clock = scheduler();
+    let creates = 0;
+    const store = {
+        load: async () => ({ status: 'empty', revision: 0 }),
+        create: async () => { creates++; return { success: true, acknowledgement: { revision: 1 } }; },
+        save: async () => ({ success: true, acknowledgement: { revision: 1 } }),
+        markTerminal: async () => ({ success: true, acknowledgement: { revision: 1 } }),
+        discard: async () => ({ success: true, acknowledgement: { revision: 1 } })
+    };
+    const coordinator = createRunSaveCoordinator({ provider, store, eligibility: eligibility('owner-b'), scheduler: clock, createMutationId: () => 'foreign-run' });
+    coordinator.setRestoredRunOwner('owner-a');
+    await tick();
+    coordinator.startRun();
+    await tick();
+    assert.equal(creates, 0);
+    coordinator.destroy();
+});
+

@@ -102,6 +102,11 @@ export class Game extends Scene
         this.game.events.emit('debug-controls-reset');
         this.audio = getAudioService(this.game).createScope(this);
         this.stateProvider = this.registry.get('gameStateProvider') as GameStateProvider;
+        const documentIsActive = document.visibilityState === 'visible' && document.hasFocus();
+        this.stateProvider.update(state => {
+            const pauseReasons = state.clock.pauseReasons.filter(reason => reason !== 'menu' && (reason !== 'background' || !documentIsActive));
+            return { ...state, clock: { ...state.clock, pauseReasons: documentIsActive ? pauseReasons : Array.from(new Set([...pauseReasons, 'background' as const])) } };
+        });
         this.telemetry = this.registry.get('telemetry') as TelemetryPort;
         this.performanceMonitor = this.registry.get('performanceMonitor') as PerformanceMonitor;
         this.performanceMonitor.setEnabled(false);
@@ -170,6 +175,7 @@ export class Game extends Scene
         this.game.events.on('debug-performance-monitor', this.setPerformanceMonitorEnabled, this);
         window.addEventListener('blur', this.loseFocus);
         window.addEventListener('focus', this.gainFocus);
+        document.addEventListener('visibilitychange', this.reconcileDocumentVisibility);
         window.addEventListener('touchcancel', this.cancelTouch);
         window.addEventListener('keydown', this.flightKeyDown);
         window.addEventListener('keyup', this.flightKeyUp);
@@ -199,6 +205,7 @@ export class Game extends Scene
             this.game.events.emit('performance-monitor-sample');
             window.removeEventListener('blur', this.loseFocus);
             window.removeEventListener('focus', this.gainFocus);
+            document.removeEventListener('visibilitychange', this.reconcileDocumentVisibility);
             window.removeEventListener('touchcancel', this.cancelTouch);
             window.removeEventListener('keydown', this.flightKeyDown);
             window.removeEventListener('keyup', this.flightKeyUp);
@@ -455,7 +462,12 @@ export class Game extends Scene
     };
 
     private readonly gainFocus = (): void => {
-        if (this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: resumeGameClock(state.clock, 'background') }));
+        if (document.visibilityState === 'visible' && document.hasFocus() && this.stateProvider) this.stateProvider.update(state => ({ ...state, clock: resumeGameClock(state.clock, 'background') }));
+    };
+
+    private readonly reconcileDocumentVisibility = (): void => {
+        if (document.visibilityState === 'visible' && document.hasFocus()) this.gainFocus();
+        else this.loseFocus();
     };
 
     private readonly exitToGameOver = (): void => {
