@@ -27,7 +27,7 @@ export const displayLabels = {
     runSaveKeepCurrent: 'Keep this run',
     runSaveCollisionFailed: 'The account run could not be resolved. Both runs are preserved; retry.',
     runSaveConfirmAccountAbandon: 'Abandon the account run and keep current progress?',
-    gameOverMainMenu: 'Main Menu',
+    gameOverMainMenu: 'MAIN MENU',
     runSaveSucceeded: 'Auto-save successful',
     runSaveFailed: 'Auto-save failed',
     runSaveTemporaryProblem: 'Saving is temporarily unavailable. Your progress will retry automatically.',

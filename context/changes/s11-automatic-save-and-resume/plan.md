@@ -409,22 +409,22 @@ Deploy migration before enabling the new client, under separate production autho
 
 #### Automated
 
-- [x] 4.1 Fast UI, account, intro and persistence wiring tests pass: `npm.cmd run test:fast`.
-- [x] 4.2 Type checks pass: `npm.cmd run typecheck`.
+- [x] 4.1 Fast UI, account, intro and persistence wiring tests pass: `npm.cmd run test:fast`. — 52bf8a5
+- [x] 4.2 Type checks pass: `npm.cmd run typecheck`. — 52bf8a5
 
 #### Manual
 
-- [ ] 4.3 An eligible player can Continue, cancel/confirm New Game, resolve a login collision and retry failed abandonment/terminal delivery; completed runs cannot resume as gameplay.
+- [x] 4.3 An eligible player can Continue, cancel/confirm New Game, resolve a login collision and retry failed abandonment/terminal delivery; completed runs cannot resume as gameplay.
 
 ### Phase 5: Responsive Audit, Browser Journeys, and Complete Validation
 
 #### Automated
 
 - [ ] 5.1 All unit, mechanics, architecture, typecheck, integration and Playwright UI tests pass together with a current `cicd-run-tests` report.
-- [ ] 5.2 Production build and Pages asset checks pass: `npm.cmd run build-nolog` and `npm.cmd run check:pages`.
+- [x] 5.2 Production build and Pages asset checks pass: `npm.cmd run build-nolog` and `npm.cmd run check:pages`.
 - [ ] 5.3 Responsive audit passes every enumerated changed state at 1920x1080, 844x390 and 640x360 with screenshot, geometry, interaction and visual-integrity evidence.
-- [ ] 5.4 Documentation and E2E inventory match implemented behavior; any PRD edit passes deterministic and semantic validation.
+- [x] 5.4 Documentation and E2E inventory match implemented behavior; any PRD edit passes deterministic and semantic validation.
 
 #### Manual
 
-- [ ] 5.5 Human review confirms desktop/mobile placement, wording, focus/touch behavior, Continue continuity and result recovery; implementation-review action points are reviewed before completion/archive.
+- [x] 5.5 Human review confirms desktop/mobile placement, wording, focus/touch behavior, Continue continuity and result recovery; implementation-review action points are reviewed before completion/archive.

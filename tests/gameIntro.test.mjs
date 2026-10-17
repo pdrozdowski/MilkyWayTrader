@@ -169,3 +169,12 @@ test('New Game opens the intro only after save preparation succeeds', async () =
     view.flushTimers();
     assert.equal(view.ids['#game-intro'].hidden, false);
 });
+
+test('New Game proceeds for an anonymous session without persistent-save eligibility', async () => {
+    const view = setup(async () => true);
+    view.ids['#main-menu-new-game'].click();
+    await Promise.resolve();
+    await Promise.resolve();
+    view.flushTimers();
+    assert.equal(view.ids['#game-intro'].hidden, false);
+});

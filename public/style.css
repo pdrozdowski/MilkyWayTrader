@@ -515,6 +515,7 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 .landing-image-button img { display: block; width: 100%; height: auto; }
 .landing-image-button:disabled { opacity: .55; }
 .landing-actions .landing-launch { margin-top: auto; }
+.landing-actions .landing-launch { position: fixed; top: calc(max(8px, env(safe-area-inset-top)) + 112px); left: max(12px, env(safe-area-inset-left)); z-index: 4; width: min(24vw, 230px); }
 .landing-actions button:disabled { color: var(--ui-disabled); }
 #landing-status-market-view { position: relative; display: block; background: var(--ui-surface) center / cover; }
 #landing-status-market-view::after, #landing-status-facilities-view::after, #landing-status-shipyard-view::after { position: absolute; right: 0; bottom: 0; left: 0; z-index: 0; height: 25%; content: ''; background: linear-gradient(to bottom, transparent, #07111b); pointer-events: none; }
@@ -612,6 +613,7 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
 @media (max-width: 520px) {
     .landing-time-control { min-height: 38px; min-width: 64px; padding: 5px 8px; }
     .landing-actions { top: calc(max(8px, env(safe-area-inset-top)) + 112px); }
+    .landing-actions .landing-launch { top: calc(max(8px, env(safe-area-inset-top)) + 108px); width: min(25vw, 170px); }
     #landing-status-hub > .landing-facilities-header { position: absolute; }
 }
 
@@ -981,4 +983,20 @@ progress[data-health-band]::-moz-progress-bar { background: var(--ui-health-fill
     .landing-facilities-header .landing-resource { min-height: 36px; padding: 5px 8px; font-size: 12px; }
     #landing-status-hub > .landing-facilities-header { position: absolute; }
     .landing-actions { top: calc(max(8px, env(safe-area-inset-top)) + 128px); }
+    .landing-actions .landing-launch { top: calc(max(8px, env(safe-area-inset-top)) + 108px); }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+    .personal-best-panel { gap: 4px; padding: 6px 12px; }
+    .personal-best-panel header { padding-bottom: 4px; }
+    .personal-best-best-card { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 8px; }
+    .personal-best-best-label { font-size: 10px; }
+    #personal-best-high-score { font-size: 20px; line-height: 1.1; }
+    #personal-best-best-date { font-size: 10px; }
+    .personal-best-history-heading h3 { font-size: 13px; }
+    .personal-best-table-wrap { flex: 0 0 auto; }
+    #personal-best-table th, #personal-best-table td { padding-top: 2px; padding-bottom: 2px; }
+    .personal-best-pages button { min-height: 28px; padding: 3px 10px; }
+    .personal-best-footer { padding-top: 4px; }
+    .personal-best-close { min-height: 30px; padding: 4px 10px; }
 }

@@ -473,7 +473,9 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     game.events.on('show-terminal-pending', routeTerminalPending);
     const prepareNewGame = async (): Promise<boolean> => {
         const activeRunStore = game.registry.get('activeRunStore') as import('../game/application/saves/activeRunStore').ActiveRunStorePort | undefined;
-        if (!activeRunStore || eligibility.getSnapshot().status !== 'ready') return false;
+        const eligibilitySnapshot = eligibility.getSnapshot();
+        if (eligibilitySnapshot.status === 'unsigned' || eligibilitySnapshot.anonymous) return true;
+        if (!activeRunStore || eligibilitySnapshot.status !== 'ready') return false;
         let loaded = await activeRunStore.load();
         if (loaded.status === 'empty') return true;
         if (loaded.status === 'terminal-pending') {
