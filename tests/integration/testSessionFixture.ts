@@ -10,6 +10,7 @@ const { createRank100CutoffSeed } = require('./tests/integration/globalScoreRank
 
 export interface AuthenticatedTestIdentity
 {
+    readonly sessionId: string;
     readonly testRunId: string;
     readonly userId: string;
     readonly accessToken: string;
@@ -47,5 +48,5 @@ function identityFrom (artifact: SessionArtifact): AuthenticatedTestIdentity
 {
     const session = artifact.authSession as { readonly access_token?: unknown } | null;
     if (!artifact.userId || !session || typeof session.access_token !== 'string') throw new Error('Authenticated test setup returned no usable identity.');
-    return Object.freeze({ testRunId: artifact.testRunId, userId: artifact.userId, accessToken: session.access_token });
+    return Object.freeze({ sessionId: artifact.id, testRunId: artifact.testRunId, userId: artifact.userId, accessToken: session.access_token });
 }

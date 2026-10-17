@@ -385,9 +385,9 @@ Deploy migration before enabling the new client, under separate production autho
 
 #### Automated
 
-- [x] 1.1 Domain tests pass for eligibility, abandonment, schema 20, atomic restore and scoring: `npm.cmd run test:domain`.
-- [x] 1.2 Clock and terminal mechanics regressions pass: `npm.cmd run test:mechanics`.
-- [x] 1.3 Type and architecture checks pass: `npm.cmd run typecheck` and `npm.cmd run test:architecture`.
+- [x] 1.1 Domain tests pass for eligibility, abandonment, schema 20, atomic restore and scoring: `npm.cmd run test:domain`. — 1a2284a
+- [x] 1.2 Clock and terminal mechanics regressions pass: `npm.cmd run test:mechanics`. — 1a2284a
+- [x] 1.3 Type and architecture checks pass: `npm.cmd run typecheck` and `npm.cmd run test:architecture`. — 1a2284a
 
 ### Phase 2: Transactional Save Storage and Adapters
 

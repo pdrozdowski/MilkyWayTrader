@@ -8,6 +8,7 @@ import { initializeGameAudio } from './audio/gameAudio';
 import { GameStateProvider } from './application/gameStateProvider';
 import { createPerformanceMonitor } from './application/performanceMonitor';
 import type { ResultStorePort } from './application/results/resultStore';
+import type { ActiveRunStorePort } from './application/saves/activeRunStore';
 import type { GameOverReturnPort } from './application/results/gameOverReturn';
 import type { AuthReturnPort } from './application/auth/authReturn';
 import type { TelemetryPort } from './application/telemetry/telemetry';
@@ -17,6 +18,7 @@ export interface GameBootstrapHooks
 {
     onReady?(game: Game): void;
     resultStore?: ResultStorePort;
+    activeRunStore?: ActiveRunStorePort;
     gameOverReturn?: GameOverReturnPort;
     authReturn?: AuthReturnPort;
     telemetry?: TelemetryPort;
@@ -61,6 +63,7 @@ const StartGame = (parent: string, hooks: GameBootstrapHooks = {}) => {
                 game.registry.set('gameStateProvider', new GameStateProvider(initialGameState));
                 game.registry.set('performanceMonitor', createPerformanceMonitor({ now: () => performance.now(), windowMs: 5000 }));
                 game.registry.set('resultStore', hooks.resultStore);
+                game.registry.set('activeRunStore', hooks.activeRunStore);
                 game.registry.set('gameOverReturn', hooks.gameOverReturn);
                 game.registry.set('telemetry', hooks.telemetry);
                 let authReturnContext = hooks.authReturn?.take() ?? null;

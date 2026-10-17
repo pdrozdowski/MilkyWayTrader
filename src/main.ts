@@ -3,6 +3,7 @@ import { setupApplicationUi } from './ui/setupUi';
 import { createBrowserAuthPort } from './ui/adapters/browserAuth';
 import { createBrowserTelemetryPort } from './ui/adapters/browserTelemetry';
 import { createBrowserResultStore } from './ui/adapters/browserResultStore';
+import { createBrowserActiveRunStore } from './ui/adapters/browserActiveRunStore';
 import { createBrowserGameOverReturnPort } from './ui/adapters/browserGameOverReturn';
 import { createBrowserAuthReturnPort } from './ui/adapters/browserAuthReturn';
 import { createPlayerEligibility } from './game/application/auth/playerEligibility';
@@ -17,8 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const eligibility = createPlayerEligibility(auth, profilePort, generateDefaultPlayerNickname);
     const telemetry = createBrowserTelemetryPort(auth);
     const resultStore = createBrowserResultStore();
+    const activeRunStore = createBrowserActiveRunStore();
     const gameOverReturn = createBrowserGameOverReturnPort();
     const authReturn = createBrowserAuthReturnPort();
-    StartGame('game-container', { resultStore, gameOverReturn, authReturn, telemetry, onReady: game => setupApplicationUi(root, game, auth, telemetry, gameOverReturn, authReturn, profilePort, eligibility) });
+    StartGame('game-container', { resultStore, activeRunStore, gameOverReturn, authReturn, telemetry, onReady: game => setupApplicationUi(root, game, auth, telemetry, gameOverReturn, authReturn, profilePort, eligibility) });
 
 });

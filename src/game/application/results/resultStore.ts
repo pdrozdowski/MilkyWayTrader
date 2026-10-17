@@ -10,5 +10,5 @@ export interface ResultStorePersistResult
 
 export interface ResultStorePort
 {
-    persist(terminalResult: TerminalScoreResult): Promise<ResultStorePersistResult>;
+    persist(terminalResult: TerminalScoreResult, expectedRevision?: number): Promise<ResultStorePersistResult>;
 }
