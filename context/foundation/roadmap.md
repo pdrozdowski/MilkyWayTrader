@@ -25,7 +25,7 @@ milestone_status: open
 - **Intent:** Deliver the complete browser-game outcome described by the PRD: an anonymous player can finish the debt run through trading, planetary facility investment, flight, hazards, and salvage, while a signed-in player can preserve progress and compare eligible results.
 - **Source materials:** `context/foundation/prd.md` (v1)
 - **Done when:** every S-NN below is `done` and the complete PRD-defined run is usable end to end.
-- **Scope anchors:** US-01â€“US-08 and FR-001â€“FR-058.
+- **Scope anchors:** US-01â€“US-08 and FR-001â€“FR-059.
 
 ## Vision recap
 
@@ -52,10 +52,9 @@ A casual browser player gets a focused thirty-minute space-trading challenge wit
 | S-08 | s08-asteroid-combat | User can fire the ship weapon and fragment or destroy asteroids. | S-07 | US-04, FR-037, FR-039, FR-040 | done |
 | S-09 | s09-asteroid-salvage | User can recover commodities from asteroid salvage. | S-04, S-08 | US-04, FR-034, FR-041, FR-042, FR-043, FR-044, FR-045 | done |
 | S-10 | s10-player-sign-in-status | User can sign in, sign out, and inspect authentication status. | Selected identity-provider test projects configured | US-05, FR-046, FR-047, FR-048 | done |
-| S-11 | s11-automatic-save-and-resume | Signed-in user can abandon a run, see save status, preserve progress, and resume an active run. | S-06, S-09, S-10, S-16 | US-05, FR-006, FR-049, FR-050 | proposed |
 | S-12 | s12-personal-best-result | Signed-in user can view their personal best and paginated private run history. | S-06 | US-06, FR-052 | done |
 | S-13 | s13-global-high-scores | User can view the top global high scores and their personal best's global rank. | S-12 | US-06, FR-053 | done |
-| S-14 | s14-delete-terminal-active-save | Signed-in user retains a terminal result while its active save is removed. | S-06, S-11 | US-05, FR-051 | proposed |
+| S-11 | s11-automatic-save-and-resume | Signed-in profiled player can auto-save, see status, continue or abandon a run, and clear active saves after a completed result is retained. | S-06, S-09, S-10, S-12, S-13, S-16 | US-05, US-06, FR-006, FR-049, FR-050, FR-051, FR-058 | planning |
 | S-15 | s15-clear-personal-best | Signed-in user can delete any personal result or clear all personal history after confirmation without changing global results. | S-12, S-13 | US-06, FR-054, FR-057 | done |
 | S-17 | s17-gameplay-audio-feedback | User can hear gameplay audio feedback without interrupting a run. | S-02, S-07, S-08 | US-07, FR-055 | done |
 
@@ -208,18 +207,6 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Risk:** Identity integration must preserve complete anonymous play and must not expose one player's private state to another account.
 - **Status:** done
 
-### S-11: Preserve and resume a signed-in run
-
-- **Outcome:** Signed-in user can abandon a run, see save status, preserve progress, and resume an active run.
-- **Change ID:** s11-automatic-save-and-resume
-- **PRD refs:** US-05, FR-006, FR-049, FR-050
-- **Prerequisites:** S-06, S-09, S-10, S-16
-- **Parallel with:** â€”
-- **Blockers:** â€”
-- **Unknowns:** â€”
-- **Risk:** Save boundaries, retry behavior, and restoration must preserve the full active-time world state, including facility changes, without blocking visible gameplay.
-- **Status:** proposed
-
 ### S-12: View a personal best
 
 - **Outcome:** Signed-in user can view their personal best and paginated private run history across retained outcomes.
@@ -238,23 +225,23 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Change ID:** s13-global-high-scores
 - **PRD refs:** US-06, FR-053
 - **Prerequisites:** S-12
-- **Parallel with:** S-11
+- **Parallel with:** â€”
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Public results must enforce the PRD's eligibility rule without exposing private run history or accepting ineligible outcomes.
 - **Status:** done
 
-### S-14: Remove the terminal active save
+### S-11: Preserve, resume, and clean up a signed-in run
 
-- **Outcome:** Signed-in user retains a terminal result while its active save is removed.
-- **Change ID:** s14-delete-terminal-active-save
-- **PRD refs:** US-05, FR-051
-- **Prerequisites:** S-06, S-11
-- **Parallel with:** S-12, S-13
+- **Outcome:** Signed-in player with a profile can automatically save progress, see save status, continue or confirm abandonment of an active run, and have active saves removed after a terminal result is retained.
+- **Change ID:** s11-automatic-save-and-resume
+- **PRD refs:** US-05, US-06, FR-006, FR-049, FR-050, FR-051, FR-058
+- **Prerequisites:** S-06, S-09, S-10, S-12, S-13, S-16
+- **Parallel with:** â€”
 - **Blockers:** â€”
 - **Unknowns:** â€”
-- **Risk:** A terminal result must be durably retained before its active save is removed, so a failed deletion cannot erase the score or leave a resumable terminal run.
-- **Status:** proposed
+- **Risk:** Save boundaries, retry behavior, and restoration must preserve the full active-time world state, including facility changes, without blocking visible gameplay; active saves must remain until required terminal-result writes succeed, except for a player-confirmed abandonment.
+- **Status:** planning
 
 ### S-15: Delete personal results and clear history
 
@@ -262,7 +249,7 @@ No standalone foundations are required. Deployment is already present, the autho
 - **Change ID:** s15-clear-personal-best
 - **PRD refs:** US-06, FR-054, FR-057
 - **Prerequisites:** S-12, S-13
-- **Parallel with:** S-14
+- **Parallel with:** â€”
 - **Blockers:** â€”
 - **Unknowns:** â€”
 - **Risk:** Clearing a personal result must affect only its owner; the next retained result must become the personal best without changing public eligible scores.
@@ -295,10 +282,9 @@ No standalone foundations are required. Deployment is already present, the autho
 | S-08 | s08-asteroid-combat | Deliver asteroid weapon combat and fragmentation | no | Requires S-07 |
 | S-09 | s09-asteroid-salvage | Deliver collectible asteroid salvage | no | Requires S-04 and S-08 |
 | S-10 | s10-player-sign-in-status | Deliver player sign-in, sign-out, and authentication status | no | Complete external setup |
-| S-11 | s11-automatic-save-and-resume | Deliver automatic save and run resume | no | Requires S-06, S-09, S-10, and S-16 |
 | S-12 | s12-personal-best-result | Deliver the signed-in player's personal best and private run history | no | Requires S-06 |
 | S-13 | s13-global-high-scores | Deliver composite-score global high scores and personal best rank | no | Requires S-12 |
-| S-14 | s14-delete-terminal-active-save | Remove the terminal active save after retaining its result | no | Requires S-06 and S-11 |
+| S-11 | s11-automatic-save-and-resume | Deliver profile-based auto-save, run resume, and terminal save cleanup | no | Requires S-06, S-09, S-10, S-12, S-13, and S-16 |
 | S-15 | s15-clear-personal-best | Allow the owner to delete any personal result or clear all personal history after confirmation | no | Requires S-12 and S-13 |
 | S-17 | s17-gameplay-audio-feedback | Deliver optional gameplay audio feedback | no | Requires S-02, S-07, and S-08 |
 
@@ -321,7 +307,11 @@ No open roadmap questions.
 
 ## Milestone History
 
-## Done
+### Scope Changes
+
+- **S-14 terminal active-save cleanup folded into S-11** — 2026-10-16, per user direction. S-11 now owns deleting the player's active saves after personal result retention and successful global score submission; no separate S-14 change remains.
+
+### Done
 
 - **S-17: User can hear gameplay audio feedback without interrupting a run.** — Archived 2026-10-16 → `context/archive/2026-10-16-s17-gameplay-audio-feedback/`. Lesson: —.
 

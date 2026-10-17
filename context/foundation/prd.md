@@ -126,9 +126,14 @@ The primary persona is a casual browser player who wants a self-contained sessio
 
 - Signing in during an anonymous run immediately attaches and saves that run.
 - Landing triggers a save.
+- While a signed-in run is active, each complete minute that elapses on the remaining-time clock triggers an automatic save.
 - Departure triggers another save only when trading, repairs, or upgrades changed persisted state while landed.
+- Returning to the Main Menu automatically saves the signed-in active run.
+- After an automatic save succeeds or fails, a brief message appears immediately for two seconds below the in-game `Menu` button during gameplay or below the controls on the Main Menu: `Auto-save successful` or `Auto-save failed`, respectively.
+- When a signed-in active save is available, the Main Menu offers a `Continue` action that restores the saved state and resumes that run.
+- When `Continue` is available and the player selects New Game, the game asks the player to confirm abandoning the saved run. Confirming abandons the run and deletes its saved active-run progress; cancelling preserves the saved run.
+- After the completed run's result is saved to personal history and its score submission succeeds, all active-run saves belonging to that player are deleted.
 - Freedom, imprisonment, death, and abandonment outcomes are retained.
-- After the final result is retained, its active-run save is removed and cannot be resumed.
 - An active saved run resumes with its saved remaining active time and world state.
 - A completed run cannot be resumed as active gameplay.
 
@@ -412,15 +417,15 @@ Each run combines a shared active-time clock, independently evolving planetary m
 ### Authentication, persistence, and scores
 
 - BR-100: Anonymous play does not create persistent saves, personal results, or global submissions.
-- BR-101: Successful sign-in during an anonymous active run immediately attaches that run to the player and saves it.
+- BR-101: When a player signs in during an anonymous active run, the run is attached and saved after that player's profile is created.
 - BR-102: A signed-in run saves when the player lands.
 - BR-103: Departure saves only when trading, repairs, upgrades, facility construction, or facility improvements changed persisted state while landed since the landing save.
-- BR-104: Unsaved flight progress after the last successful save boundary may be lost when the application closes.
+- BR-104: Progress made after the most recent successful save may be lost if the application closes before another save succeeds.
 - BR-105: Freedom, imprisonment, death, and abandonment outcomes are always persisted for a signed-in player.
-- BR-106: Starting a new signed-in run while another run remains active first abandons and retains the previous run.
+- BR-106: When a signed-in player selects New Game while Continue is available, the game asks for confirmation; confirming abandons the saved run, retains its abandonment result, and deletes its active-run progress, while cancelling preserves the saved run.
 - BR-107: A resumed run restores the saved remaining active time and all state required to continue consistently.
 - BR-108: A completed run cannot be resumed as active gameplay.
-- BR-109: After a signed-in run reaches a terminal outcome and its result is retained, its active save is removed.
+- BR-109: After a signed-in run reaches a terminal outcome, its result is retained in personal history, and its score submission succeeds, all active-run saves belonging to that player are removed.
 - BR-110: Personal history retains every signed-in result across all outcomes except results the player explicitly deletes or clears.
 - BR-111: Personal best is the retained result with the highest final score regardless of outcome.
 - BR-112: Deleting an individual result removes only that result from the signed-in player's personal history; the highest remaining retained result becomes the personal best, or no personal best is shown when none remains.
@@ -430,11 +435,17 @@ Each run combines a shared active-time clock, independently evolving planetary m
 - BR-116: Clearing personal history removes every result from the signed-in player's private history and requires the player to confirm the action; global results and unrelated player data remain unchanged.
 - BR-117: The end-game result presents each final-score component and the label `YOUR FINAL SCORE IS:` followed by the rounded score.
 - BR-118: Anonymous and signed-in players can view the global high-score table, but only signed-in players can submit results or access or change their personal result history.
+- BR-119: While a signed-in run is active, each time the remaining-time clock crosses another complete-minute boundary, the current run is automatically saved.
+- BR-120: Returning to the Main Menu from a signed-in active run triggers an automatic save.
+- BR-121: When a signed-in active save is available, the Main Menu offers `Continue`; selecting it restores the saved state and resumes that run.
+- BR-122: After an automatic save succeeds or fails, the game immediately shows the corresponding `Auto-save successful` or `Auto-save failed` message for two seconds below the in-game `Menu` button during gameplay or below the Main Menu controls while the Main Menu is open.
 ## Access Control
 
 The game is available anonymously without creating an account. Anonymous players can complete the full gameplay loop and view global high scores, but their active runs and results are not persisted.
 
-Google OAuth is the only sign-in method. Sign-in may occur before a run or during an anonymous active run. A successful mid-run sign-in attaches and saves the current run immediately. Signed-in players can access only their own active save, result history, and personal best. They cannot read or modify another player's private data.
+Only a signed-in player with a created player profile can create, read, update, or resume persistent active-game saves. Anonymous players cannot access saved game state.
+
+Google OAuth is the only sign-in method. Sign-in may occur before a run or during an anonymous active run. A successful mid-run sign-in attaches and saves the current run after the player's profile is created. Signed-in players can access only their own active save, result history, and personal best. They cannot read or modify another player's private data.
 
 A signed-in player can sign out from the main menu without deleting their saved data. A signed-in player can delete any individual result in, or clear all of, only their own private result history. Both actions require confirmation and cannot change another player's records, global results, active saves, profile data, or nickname data.
 
