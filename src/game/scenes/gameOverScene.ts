@@ -1,6 +1,4 @@
 import { Scene, Math as PhaserMath } from 'phaser';
-import type { ResultStorePort } from '../application/results/resultStore';
-import { createResultDelivery } from '../application/results/resultDelivery';
 import type { TerminalScoreResult } from '../application/results/terminalScoreResult';
 import { mainMenuBackgroundTransform } from './mainMenuBackground';
 import { terminalOutcomeBackgroundKey } from '../application/results/terminalOutcomePresentation';
@@ -34,21 +32,13 @@ export class GameOver extends Scene
         const returnToMainMenu = (): void => { this.scene.start('MainMenu'); };
         this.game.events.on('game-over-main-menu', returnToMainMenu);
         this.game.events.emit('game-over-open', terminalResult);
-        const store = this.registry.get('resultStore') as ResultStorePort | undefined;
-        const delivery = createResultDelivery(store, terminalResult, result => {
-            if (this.sys.isActive()) this.game.events.emit('game-over-persistence', result);
-        });
-        const retryPersistence = (): void => { delivery.retry(); };
-        this.game.events.on('game-over-retry', retryPersistence);
         this.events.once('shutdown', () => {
-            this.game.events.off('game-over-retry', retryPersistence);
             this.game.events.off('game-over-main-menu', returnToMainMenu);
             this.scale.off('resize', this.layoutBackground, this);
             this.asteroids = [];
             this.game.events.emit('game-over-persistence', null);
             this.game.events.emit('game-over-close');
         });
-        delivery.start();
     }
 
     private readonly layoutBackground = (): void =>

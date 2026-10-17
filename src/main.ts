@@ -8,6 +8,8 @@ import { createBrowserGameOverReturnPort } from './ui/adapters/browserGameOverRe
 import { createBrowserAuthReturnPort } from './ui/adapters/browserAuthReturn';
 import { createPlayerEligibility } from './game/application/auth/playerEligibility';
 import { generateDefaultPlayerNickname } from './game/application/playerProfile';
+import { createBrowserSaveScheduler } from './ui/adapters/browserSaveScheduler';
+import { createBrowserPendingRunResult } from './ui/adapters/browserPendingRunResult';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -21,6 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeRunStore = createBrowserActiveRunStore();
     const gameOverReturn = createBrowserGameOverReturnPort();
     const authReturn = createBrowserAuthReturnPort();
-    StartGame('game-container', { resultStore, activeRunStore, gameOverReturn, authReturn, telemetry, onReady: game => setupApplicationUi(root, game, auth, telemetry, gameOverReturn, authReturn, profilePort, eligibility) });
+    StartGame('game-container', { resultStore, activeRunStore, gameOverReturn, authReturn, telemetry, eligibility, saveScheduler: createBrowserSaveScheduler(), pendingRunResult: createBrowserPendingRunResult(), onReady: game => setupApplicationUi(root, game, auth, telemetry, gameOverReturn, authReturn, profilePort, eligibility) });
 
 });

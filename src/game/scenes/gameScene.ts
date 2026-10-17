@@ -76,6 +76,7 @@ export class Game extends Scene
     private mouseMovementEnabled = true;
     private destruction: ShipDestruction | null = null;
     private deathTransitionStarted = false;
+    private initialSaveRequested = false;
     private lastItemCollectedAtMs = Number.NEGATIVE_INFINITY;
     private lastItemBlockedAtMs = Number.NEGATIVE_INFINITY;
     private performanceMonitor: PerformanceMonitor;
@@ -95,6 +96,7 @@ export class Game extends Scene
         this.touchControlsVisible = false;
         this.mouseMovementEnabled = true;
         this.deathTransitionStarted = false;
+        this.initialSaveRequested = false;
         this.lastItemCollectedAtMs = Number.NEGATIVE_INFINITY;
         this.lastItemBlockedAtMs = Number.NEGATIVE_INFINITY;
         this.game.events.emit('debug-controls-reset');
@@ -459,6 +461,7 @@ export class Game extends Scene
     private readonly exitToGameOver = (): void => {
         this.telemetry.endSession(this.stateProvider.snapshot().credits);
         this.loseFocus();
+        this.game.events.emit('menu-save-request');
         this.scene.start('MainMenu');
     };
 
@@ -533,6 +536,10 @@ export class Game extends Scene
             muzzleOffset: weaponTuning.noseOffset * this.ship.sprite.scaleX,
             classifyTimeout: classifyTimeoutOutcome
         }));
+        if (!this.initialSaveRequested && state.terminalResult === null) {
+            this.initialSaveRequested = true;
+            this.game.events.emit('active-run-ready');
+        }
         this.markPerformanceStep('feedback-and-ship-sync');
         if (before.moolarisDamageArmed && !state.moolarisDamageArmed && state.terminalResult === null) this.playShipCrashFeedback(state.ship.position);
         const failedPickup = before.looseItems.some(item => Math.hypot(item.position.x - before.ship.position.x, item.position.y - before.ship.position.y) <= asteroidTuning.salvage.looseItemPickupRadius)

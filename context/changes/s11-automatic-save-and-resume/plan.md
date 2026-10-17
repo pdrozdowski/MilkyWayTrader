@@ -393,9 +393,9 @@ Deploy migration before enabling the new client, under separate production autho
 
 #### Automated
 
-- [ ] 2.1 Local migrations and focused persistence/RLS integration tests pass: `npm.cmd run test:ui -- --grep "active run persistence"`.
-- [ ] 2.2 Adapter and result contract tests pass: `npm.cmd run test:domain`.
-- [ ] 2.3 Type and architecture checks pass: `npm.cmd run typecheck` and `npm.cmd run test:architecture`.
+- [x] 2.1 Local migrations and focused persistence/RLS integration tests pass: `npm.cmd run test:ui -- --grep "active run persistence"`. — c5cf28c
+- [x] 2.2 Adapter and result contract tests pass: `npm.cmd run test:domain`. — c5cf28c
+- [x] 2.3 Type and architecture checks pass: `npm.cmd run typecheck` and `npm.cmd run test:architecture`. — c5cf28c
 
 ### Phase 3: Autosave and Durable Completion Coordinator
 
