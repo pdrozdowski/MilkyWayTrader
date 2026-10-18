@@ -113,7 +113,9 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     let wasVisible = false;
     let view: 'hub' | 'market' | 'facilities' | 'shipyard' = 'hub';
     let landedBadgeFrame = 0;
+    let destroyed = false;
     const updateLandedBadge = (): void => {
+        if (destroyed || modal.hidden) return;
         landedBadgeFrame = landedBadgeFrame === 0 ? 1 : 0;
         if (landedBadge) landedBadge.src = `/assets/banner_landed_0${landedBadgeFrame + 1}.png`;
     };
@@ -367,6 +369,9 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     };
     const render = (snapshot: Readonly<LandingStatusSnapshot>): void => {
         modal.hidden = !snapshot.visible;
+        modal.inert = !snapshot.visible;
+        modal.setAttribute('aria-hidden', String(!snapshot.visible));
+        modal.style.display = snapshot.visible ? 'block' : 'none';
         if (snapshot.visible && !wasVisible) view = 'hub';
         hub.hidden = view !== 'hub';
         marketView.hidden = view !== 'market';
@@ -584,7 +589,7 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     const shipyardHeader = mountLandingMenuHeader(shipyardBack, shipyardClockElement, shipyardCredits, shipyardCargo, shipyardTimeControl, () => !shipyardView.hidden && !modal.hidden, returnFromShipyard, port.togglePlayerPause);
     const hubHeader = mountLandingMenuHeader(hubBack, hubClockElement, hubCredits, hubCargo, hubTimeControl, () => !hub.hidden && !modal.hidden, () => {}, port.togglePlayerPause);
     const keydown = (event: KeyboardEvent): void => {
-        if (event.key !== 'Tab' || modal.hidden) return;
+        if (event.key !== 'Tab' || modal.hidden || modal.inert) return;
         const controls = focusable(); const first = controls[0]; const last = controls[controls.length - 1];
         if (!first || !last) return;
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
@@ -612,7 +617,6 @@ export function mountLandingStatus (root: HTMLElement, port: LandingStatusPort):
     window.addEventListener('keydown', keydown);
     updateFacilityPager();
     updateShipyardPager();
-    let destroyed = false;
     return { destroy: () => {
         if (destroyed) return;
         destroyed = true;

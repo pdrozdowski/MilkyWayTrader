@@ -138,7 +138,11 @@ test('global score RPC keeps the strict best, exposes a safe ranked projection, 
     await profileRequest(request, supabaseTestEnvironment, authenticatedIdentity, nickname);
     await profileRequest(request, supabaseTestEnvironment, secondaryAuthenticatedIdentity, secondNickname);
 
-    const first = await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'submit_global_score', { submitted_score: 500 });
+    const existingScores = await globalRows(request, supabaseTestEnvironment, null);
+    const testScore = (existingScores[0]?.score ?? 0) + 1_000_000;
+    expect(Number.isSafeInteger(testScore)).toBe(true);
+
+    const first = await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'submit_global_score', { submitted_score: testScore });
     expect(first.status).toBe(204);
     const initial = await globalRows(request, supabaseTestEnvironment, null);
     const ownerRow = initial.find(row => row.nickname === nickname);
@@ -148,22 +152,23 @@ test('global score RPC keeps the strict best, exposes a safe ranked projection, 
     await profileRequest(request, supabaseTestEnvironment, authenticatedIdentity, currentNickname);
     expect((await globalRows(request, supabaseTestEnvironment, null)).some(row => row.nickname === currentNickname)).toBe(true);
 
-    expect((await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'submit_global_score', { submitted_score: 500 })).status).toBe(204);
-    expect((await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'submit_global_score', { submitted_score: 400 })).status).toBe(204);
+    expect((await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'submit_global_score', { submitted_score: testScore })).status).toBe(204);
+    expect((await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'submit_global_score', { submitted_score: testScore - 100 })).status).toBe(204);
     const unchanged = (await globalRows(request, supabaseTestEnvironment, null)).find(row => row.nickname === currentNickname);
-    expect(unchanged?.score).toBe(500);
+    expect(unchanged?.score).toBe(testScore);
     expect(unchanged?.achieved_at).toBe(achievedAt);
 
-    await rpcRequest(request, supabaseTestEnvironment, secondaryAuthenticatedIdentity, 'submit_global_score', { submitted_score: 500 });
+    await rpcRequest(request, supabaseTestEnvironment, secondaryAuthenticatedIdentity, 'submit_global_score', { submitted_score: testScore });
     const tied = await globalRows(request, supabaseTestEnvironment, null);
     expect(tied.find(row => row.nickname === currentNickname)?.rank).toBe(tied.find(row => row.nickname === secondNickname)?.rank);
     expect(tied.every(row => Object.keys(row).sort().join(',') === 'achieved_at,nickname,rank,score')).toBe(true);
     expect(tied.filter(row => row.nickname === currentNickname)).toHaveLength(1);
-    expect((await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'global_score_rank', { personal_score: 450 })).body).toBe(2);
-    expect((await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'global_score_rank', { personal_score: 500 })).body).toBe(1);
-    await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'submit_global_score', { submitted_score: 700 });
+    const actualRank = (score: number): Promise<RestResult> => rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'global_score_rank', { personal_score: score });
+    expect((await actualRank(testScore - 1)).body).toBe(2);
+    expect((await actualRank(testScore)).body).toBe(1);
+    await rpcRequest(request, supabaseTestEnvironment, authenticatedIdentity, 'submit_global_score', { submitted_score: testScore + 200 });
     const improved = (await globalRows(request, supabaseTestEnvironment, null)).find(row => row.nickname === currentNickname);
-    expect(improved?.score).toBe(700);
+    expect(improved?.score).toBe(testScore + 200);
     expect(improved?.achieved_at).not.toBe(achievedAt);
     expect((await rpcRequest(request, supabaseTestEnvironment, null, 'global_score_rank', { personal_score: 500 })).status).toBeGreaterThanOrEqual(400);
     expect((await rpcRequest(request, supabaseTestEnvironment, null, 'submit_global_score', { submitted_score: 900 })).status).toBeGreaterThanOrEqual(400);

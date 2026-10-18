@@ -165,6 +165,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
         auth,
         profilePort,
         eligibility,
+        returnContext: (game.registry.get('authReturnContext') as { origin?: import('../game/application/auth/authReturn').AccountOrigin } | null)?.origin ?? null,
         generateDefaultNickname: generateDefaultPlayerNickname,
         prepareSignIn: origin => {
             const snapshot = origin === 'main-menu' ? null : stateProvider.snapshot();

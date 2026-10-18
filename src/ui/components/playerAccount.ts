@@ -17,6 +17,7 @@ export interface PlayerAccountOptions
     prepareSignIn(origin: 'main-menu' | 'game-over' | 'game-menu'): boolean;
     onOpenStateChange(open: boolean): void;
     clearSignInContext(): void;
+    readonly returnContext?: AccountOrigin | null;
 }
 
 export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOptions): UiHandle
@@ -136,6 +137,7 @@ export function mountPlayerAccount (root: HTMLElement, options: PlayerAccountOpt
     };
     const openMainMenu = (): void => openFrom(gameOverResults.hidden ? 'main-menu' : 'game-over', trigger);
     const openGameMenu = (): void => openFrom('game-menu', gameMenuTrigger);
+    if (options.returnContext) openFrom(options.returnContext, options.returnContext === 'game-menu' ? gameMenuTrigger : trigger);
     const openOnReturn = (event: Event): void => {
         const detail = (event as CustomEvent<AccountOrigin | { origin: AccountOrigin; returnFocus?: HTMLElement }>).detail;
         const requestedOrigin = typeof detail === 'string' ? detail : detail.origin;

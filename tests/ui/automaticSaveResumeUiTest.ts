@@ -4,9 +4,9 @@ import { displayLabels } from '../../src/ui/components/displayLabels';
 import { test } from './testSessionFixture';
 
 // seed: tests/ui/testSessionFixture.ts and tests/ui/gameStateFixture.ts.
-// Player-visible failure: a saved, landed run is lost or Continue returns to the introduction after a browser reload.
+// Player-visible failure: a landed run cannot be launched and saved, or Continue fails to restore its gameplay controls after reload.
 // Lower-level tests cannot expose the browser storage, authenticated startup, save adapter, and Phaser scene restore wiring together.
-// This uniquely verifies a persisted landed run resumes with its credits and gameplay controls through the real browser application.
+// This uniquely verifies browser storage, authenticated startup, and Phaser restore keep the run's credits and controls through reload.
 // The fixture seeds once before first navigation; page.reload() must read the server save and never re-inject fixture state.
 test.describe('authenticated automatic save and resume', () => {
     test.use({
@@ -18,12 +18,15 @@ test.describe('authenticated automatic save and resume', () => {
         }
     });
 
-    test('a landed run survives reload and Continue restores usable gameplay', async ({ page, testSession }) => {
+    test('a landed run can be launched, saved across reload, and resumed with usable gameplay', async ({ page, testSession }) => {
         expect(testSession.mode).toBe('authenticated');
         const runStatus = page.getByLabel('Run status');
         await expect(runStatus).toBeVisible();
         await expect(page.getByRole('dialog', { name: 'Landed status' })).toBeVisible();
         await expect(runStatus.getByLabel('Credits', { exact: true })).toContainText('87,500');
+
+        await page.getByRole('button', { name: 'LAUNCH', exact: true }).click();
+        await expect(page.getByRole('dialog', { name: 'Landed status' })).toBeHidden();
 
         // Returning to the Main Menu is a qualifying save action. Wait until the account save is discoverable there.
         await page.getByRole('button', { name: 'Menu', exact: true }).click();
@@ -40,10 +43,10 @@ test.describe('authenticated automatic save and resume', () => {
         await continueGame.click();
 
         await expect(runStatus).toBeVisible();
-        await expect(page.getByRole('dialog', { name: 'Landed status' })).toBeVisible();
+        await expect(page.getByRole('dialog', { name: 'Landed status' })).toBeHidden();
         await expect(runStatus.getByLabel('Credits', { exact: true })).toContainText('87,500');
         await expect(runStatus.getByRole('button', { name: 'Cargo Info', exact: true })).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Launch', exact: true })).toBeEnabled();
+        await expect(runStatus.getByRole('button', { name: 'Menu', exact: true })).toBeVisible();
     });
 
     // Player-visible failure: cancelling New Game can destroy the only saved progress, or confirmation can start the introduction before finalization.
@@ -52,6 +55,9 @@ test.describe('authenticated automatic save and resume', () => {
     test('New Game cancellation preserves a saved run and confirmation opens the introduction', async ({ page, testSession }) => {
         expect(testSession.mode).toBe('authenticated');
         await expect(page.getByRole('dialog', { name: 'Landed status' })).toBeVisible();
+
+        await page.getByRole('button', { name: 'LAUNCH', exact: true }).click();
+        await expect(page.getByRole('dialog', { name: 'Landed status' })).toBeHidden();
 
         await page.getByRole('button', { name: 'Menu', exact: true }).click();
         await expect(page.getByRole('dialog', { name: 'Game menu' })).toBeVisible();

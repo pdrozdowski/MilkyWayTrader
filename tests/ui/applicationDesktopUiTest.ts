@@ -154,7 +154,7 @@ test('an anonymous player completes the story, reaches a timed result, and retur
     const results = page.locator('#game-over-results');
     await expect(results).toBeVisible({ timeout: 10_000 });
     await expect(page.getByLabel('Run status')).toBeHidden();
-    await expect(page.getByLabel('Result delivery status')).toContainText(resultLabels.unsigned);
+    await expect(page.getByLabel('Result delivery status')).toBeHidden();
     await expect(results).toContainText(resultLabels.finalScore);
     await expect(results.locator('#game-over-final-cash')).toHaveText(cashAtTimeout.toLocaleString('en-US'));
     await expect(page.getByRole('button', { name: displayLabels.gameOverMainMenu, exact: true })).toBeVisible();

@@ -66,9 +66,13 @@ export async function createRank100CutoffSeed ()
         const { error: profileError } = await admin.from('player_profiles').insert(profiles);
         if (profileError) throw new Error('Unable to provision local rank-cutoff test profiles.');
 
+        const existingScores = await admin.from('global_player_scores').select('score');
+        if (existingScores.error) throw new Error('Unable to inspect local global scores before rank-cutoff seeding.');
+        const baseline = Math.max(0, ...existingScores.data.map(row => Number(row.score)));
+        const cutoffScore = baseline + 10_000;
         const scores = users.map((user, index) => ({
             user_id: user.id,
-            score: index < 99 ? 20_000 - index : 10_000
+            score: index < 99 ? cutoffScore + 99 - index : cutoffScore
         }));
         const { error: scoreError } = await admin.from('global_player_scores').insert(scores);
         if (scoreError) throw new Error('Unable to provision local rank-cutoff test scores.');

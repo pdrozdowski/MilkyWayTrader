@@ -56,6 +56,7 @@ class FakeElement {
         this.title = '';
         this.disabled = false;
         this.hidden = false;
+        this.inert = false;
         this.style = {};
         this.dataset = {};
         this.className = '';
@@ -85,6 +86,10 @@ class FakeElement {
 
     setAttribute (name, value) {
         this.attributes[name] = value;
+    }
+
+    removeAttribute (name) {
+        delete this.attributes[name];
     }
 
     removeEventListener (type, listener) {
@@ -278,6 +283,17 @@ test('facilities view renders five cards with levels, states, recipes and action
     const element = selector => root.querySelector(selector);
     const timeControls = ['#landing-status-hub-time-control', '#landing-status-market-time-control', '#landing-status-facilities-time-control', '#landing-status-shipyard-time-control'].map(element);
     assert(timeControls.every(button => button.textContent === displayLabels.timePlay), 'each planet view starts with the Play action');
+    assert.equal(modal.inert, false, 'visible landing services remain interactive');
+    assert.equal(modal.style.display, 'block', 'the visible landing dialog has a rendered display state');
+    marketListener({ ...marketSnapshot, visible: false, eligible: false, planetId: null, planetName: null });
+    assert.equal(modal.hidden, true, 'the landing modal is hidden after leaving a planet');
+    assert.equal(modal.inert, true, 'hidden landing services cannot receive focus or input');
+    assert.equal(modal.style.display, 'none', 'the hidden landing dialog is removed from hit testing');
+    assert.equal(modal.attributes['aria-hidden'], 'true', 'the hidden landing dialog is removed from the accessibility tree');
+    marketListener(marketSnapshot);
+    assert.equal(modal.hidden, false, 'landing services return on the next landing');
+    assert.equal(modal.inert, false, 'landing services become interactive again on the next landing');
+    assert.equal(modal.style.display, 'block', 'landing dialog is rendered on the next landing');
     marketListener({ ...marketSnapshot, clock: { ...marketSnapshot.clock, runState: 'PAUSED', playerPaused: false } });
     assert.equal(marketView.attributes['aria-label'], displayLabels.market);
     facilitiesListener({ ...facilitiesSnapshot(1_000_000), clock: { remainingSeconds: 754, runState: 'PAUSED', playerPaused: false } });

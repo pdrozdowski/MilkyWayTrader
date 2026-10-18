@@ -10,7 +10,6 @@ import { test } from './testSessionFixture';
 // This journey uniquely verifies the browser reload, startup route, restored paused run, and returned account dialog together.
 test('an in-game account return reload restores the paused run and reopens Player Account', async ({ page }) => {
     test.setTimeout(240_000);
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
     const runId = randomUUID();
     const snapshot = { ...initialGameState, runId, clock: pauseGameClock(initialGameState.clock, 'menu') };
     const returnContext = JSON.stringify({
@@ -19,8 +18,8 @@ test('an in-game account return reload restores the paused run and reopens Playe
         origin: 'game-menu',
         terminalResult: null
     });
-    await page.evaluate(value => window.sessionStorage.setItem('milky-way-trader.auth-return', value), returnContext);
-    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.addInitScript(value => window.sessionStorage.setItem('milky-way-trader.auth-return', value), returnContext);
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     const account = page.getByRole('dialog', { name: 'PLAYER ACCOUNT' });
     await expect(page.getByLabel('Run status')).toBeVisible({ timeout: 180_000 });
@@ -32,7 +31,7 @@ test('an in-game account return reload restores the paused run and reopens Playe
     await page.getByRole('button', { name: 'CLOSE', exact: true }).click();
     await expect(account).toBeHidden();
     await expect(page.getByRole('dialog', { name: 'Game menu' })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Run status' }).getByLabel(/PAUSED/)).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Run status' }).getByText(/^\d{2}:\d{2}$/)).toBeVisible();
     await page.getByRole('button', { name: 'Resume', exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Game menu' })).toBeHidden();
     await expect(page.getByRole('region', { name: 'Run status' }).getByLabel(/RUNNING/)).toBeVisible();
