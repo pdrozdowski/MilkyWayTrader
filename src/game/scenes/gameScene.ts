@@ -38,6 +38,7 @@ import { cargoCapacityByLevel } from '../domain/runBalance';
 export class Game extends Scene
 {
     camera: Phaser.Cameras.Scene2D.Camera;
+    private uiCamera: Phaser.Cameras.Scene2D.Camera;
     nebulaBackground: GameObjects.TileSprite;
     starfieldBackground: GameObjects.TileSprite;
     asteroids: AsteroidProjection;
@@ -155,6 +156,23 @@ export class Game extends Scene
         });
         this.exit.setVisible(false).disableInteractive();
         this.createTouchControls();
+        const touchControls = new Set<GameObjects.GameObject>([this.joystickBase, this.joystickStick, this.joystickZone, this.fireButton, this.boostButton]);
+        this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height)
+            .setScroll(0, 0)
+            .setZoom(1);
+        this.camera.ignore(Array.from(touchControls));
+        this.uiCamera.ignore(this.children.list.filter(gameObject => !touchControls.has(gameObject)));
+        this.sys.displayList.events.on('addedtoscene', this.excludeFromUiCamera, this);
+        let boosterUnlocked = this.stateProvider.snapshot().shipStatus.boosterUnlocked;
+        const unsubscribeState = this.stateProvider.subscribe(snapshot => {
+            if (boosterUnlocked === snapshot.shipStatus.boosterUnlocked) return;
+            boosterUnlocked = snapshot.shipStatus.boosterUnlocked;
+            this.boostButton.setVisible(
+                !this.deathTransitionStarted
+                && (this.sys.game.device.input.touch || this.touchControlsVisible)
+                && boosterUnlocked
+            );
+        });
         this.layoutScreenSpace();
         this.input.on('pointerdown', this.startSteering, this);
         this.input.on('pointerup', this.endSteering, this);
@@ -180,12 +198,15 @@ export class Game extends Scene
         window.addEventListener('keydown', this.flightKeyDown);
         window.addEventListener('keyup', this.flightKeyUp);
         this.events.once('shutdown', () => {
+            unsubscribeState();
             this.game.events.emit('terminal-death-transition', false);
             this.loseFocus();
             this.input.off('pointerdown', this.startSteering, this);
             this.input.off('pointerup', this.endSteering, this);
             this.input.off('pointerupoutside', this.endSteering, this);
             this.scale.off('resize', this.layoutScreenSpace, this);
+            this.sys.displayList.events.off('addedtoscene', this.excludeFromUiCamera, this);
+            this.cameras.remove(this.uiCamera);
             this.game.events.off('blur', this.loseFocus, this);
             this.game.events.off('game-pause-reason-added', this.clearInputForPause, this);
             this.game.events.off('landing-modal-transition', this.clearFlightInput, this);
@@ -223,6 +244,10 @@ export class Game extends Scene
     }
 
     private readonly performanceFrameStarted = (): void => { this.performanceMonitor.frameStarted(); };
+
+    private readonly excludeFromUiCamera = (gameObject: GameObjects.GameObject): void => {
+        this.uiCamera.ignore(gameObject);
+    };
 
     private readonly performanceUpdatePhaseEnded = (): void => { this.performanceMonitor.updatePhaseEnded(); };
 
@@ -407,6 +432,7 @@ export class Game extends Scene
         const visibleLeft = viewport.left;
         const visibleRight = viewport.right;
         const visibleBottom = viewport.bottom;
+        this.uiCamera.setViewport(0, 0, width, height).setScroll(0, 0).setZoom(1);
         this.nebulaBackground.setSize(width, height);
         this.starfieldBackground.setSize(width, height);
         this.lossOfControl.setPosition(width / 2, height / 3);
@@ -424,7 +450,8 @@ export class Game extends Scene
             visibleRight - (compactTouchLayout ? 50 : 74),
             visibleBottom - (compactTouchLayout ? 50 : 74)
         );
-        this.boostButton.setDisplaySize(buttonSize, buttonSize).setVisible(touchLayoutVisible).setPosition(
+        const boosterUnlocked = this.stateProvider.snapshot().shipStatus.boosterUnlocked;
+        this.boostButton.setDisplaySize(buttonSize, buttonSize).setVisible(touchLayoutVisible && boosterUnlocked).setPosition(
             visibleRight - (compactTouchLayout ? 142 : 186),
             visibleBottom - (compactTouchLayout ? 50 : 74)
         );
