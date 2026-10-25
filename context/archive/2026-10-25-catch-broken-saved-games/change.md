@@ -1,10 +1,10 @@
 ---
 change_id: catch-broken-saved-games
 title: Preserve unreadable saved game state
-status: implemented
+status: archived
 created: 2026-10-25
 updated: 2026-10-25
-archived_at: null
+archived_at: 2026-10-25T15:37:10Z
 ---
 
 ## Notes
