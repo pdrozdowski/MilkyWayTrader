@@ -85,11 +85,11 @@ export class MainMenu extends Scene
         const newGameControl = document.querySelector<HTMLButtonElement>('#main-menu-new-game');
         newGameControl?.setAttribute('aria-label', mainMenuSaveLabels.newGameButton);
         continueControl?.setAttribute('aria-label', mainMenuSaveLabels.continueButton);
-        const saveStatus = document.querySelector<HTMLElement>('#main-menu-save-status');
         const activeRunStore = this.registry.get('activeRunStore') as ActiveRunStorePort | undefined;
         const eligibility = this.registry.get('playerEligibility') as PlayerEligibilityPort | undefined;
         let menuGeneration = 0;
         let terminalRouting = false;
+        const publishMainMenuStatus = (text: string): void => { this.game.events.emit('main-menu-status', text); };
         const showTerminalPending = (snapshot: GameStateSnapshot): void => {
             if (terminalRouting || !this.scene.isActive()) return;
             terminalRouting = true;
@@ -100,31 +100,31 @@ export class MainMenu extends Scene
             const eligibilitySnapshot = eligibility?.getSnapshot();
             if (!continueControl || !activeRunStore) {
                 if (continueControl) continueControl.disabled = true;
-                if (saveStatus) saveStatus.textContent = '';
+                publishMainMenuStatus('');
                 return;
             }
             if (eligibilitySnapshot?.status !== 'ready') {
                 continueControl.disabled = true;
-                if (saveStatus) saveStatus.textContent = eligibilitySnapshot?.status === 'loading' ? mainMenuSaveLabels.checkingAccount
-                    : eligibilitySnapshot?.status === 'failed' ? eligibilitySnapshot.message ?? mainMenuSaveLabels.unavailableSave
-                        : mainMenuSaveLabels.continueRequiresProfile;
+                publishMainMenuStatus(eligibilitySnapshot?.status === 'loading' ? mainMenuSaveLabels.checkingAccount
+                    : eligibilitySnapshot?.status === 'failed' ? mainMenuSaveLabels.unavailableProfile
+                        : mainMenuSaveLabels.continueRequiresProfile);
                 return;
             }
             continueControl.disabled = true;
-            if (saveStatus) saveStatus.textContent = mainMenuSaveLabels.checkingSave;
+            publishMainMenuStatus(mainMenuSaveLabels.checkingSave);
             const loaded = await activeRunStore.load();
             if (generation !== menuGeneration || !this.scene.isActive()) return;
             if (loaded.status === 'active') {
                 continueControl.disabled = false;
-                if (saveStatus) saveStatus.textContent = '';
+                publishMainMenuStatus('');
             } else if (loaded.status === 'terminal-pending') {
-                if (saveStatus) saveStatus.textContent = mainMenuSaveLabels.pendingResults;
+                publishMainMenuStatus(mainMenuSaveLabels.pendingResults);
                 showTerminalPending(loaded.snapshot);
             } else if (loaded.status === 'incompatible') {
-                if (saveStatus) saveStatus.textContent = mainMenuSaveLabels.incompatibleSave;
+                publishMainMenuStatus(mainMenuSaveLabels.incompatibleSave);
             } else if (loaded.status === 'unavailable' || loaded.status === 'ineligible') {
-                if (saveStatus) saveStatus.textContent = loaded.message || mainMenuSaveLabels.unavailableSave;
-            } else if (saveStatus) saveStatus.textContent = '';
+                publishMainMenuStatus(mainMenuSaveLabels.unavailableSave);
+            } else publishMainMenuStatus('');
         };
         void refreshContinue();
         const unsubscribeEligibility = eligibility?.subscribe(() => { void refreshContinue(); });

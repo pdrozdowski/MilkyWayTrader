@@ -58,19 +58,18 @@ body {
 #main-menu-controls #main-menu-continue:disabled { background-image: url('/assets/button_continue_game_disabled.png'); }
 #main-menu-controls #main-menu-global-scores { background-image: url('/assets/button_hiscores.png'); }
 #main-menu-fullscreen-preview, #main-menu-sign-in-preview { position: absolute; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 999px; color: #fff; background: rgb(5 17 52 / 78%); font: 700 clamp(12px, 1.2vw, 16px) / 1.1 Arial, sans-serif; text-align: left; text-shadow: 1px 2px 3px rgb(0 0 0 / 75%); cursor: pointer; pointer-events: auto; }
-#main-menu-fullscreen-preview { right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); }
+#main-menu-fullscreen-preview { top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); }
 #main-menu-sign-in-preview { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 1; width: max-content; max-width: calc(100% - 24px); white-space: nowrap !important; }
 #main-menu-sign-in-preview::before { display: block; width: 22px; min-width: 22px; height: 22px; flex: 0 0 22px; content: ''; background: #fff; mask: url('/assets/ui/userIcon.svg') center / contain no-repeat; filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
 #main-menu-sign-in-preview-label { display: block; min-width: max-content; white-space: nowrap !important; word-break: keep-all; }
 #main-menu-fullscreen-preview-label { white-space: pre-line; }
 #main-menu-fullscreen-preview-icon { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; color: #fff; font-family: 'Segoe UI Symbol', sans-serif; font-size: 42px; line-height: 1; transform: scale(1.5); filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 65%)); }
-#main-menu-sign-in-preview-icon { display: none; }
+.main-menu-sign-in-preview-icon { display: none; }
 #main-menu-sign-in-preview:disabled { opacity: .55; cursor: default; }
 #main-menu-fullscreen-preview:focus-visible, #main-menu-sign-in-preview:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 #main-menu-return-status { position: absolute; bottom: 16%; width: min(560px, calc(100% - 32px)); margin: 0; padding: 10px 14px; border: 1px solid var(--ui-border); border-radius: 8px; color: #fff; background: var(--ui-surface); text-align: center; }
-#main-menu-save-status { position: absolute; bottom: 8%; width: min(560px, calc(100% - 32px)); margin: 0; color: #fff; text-align: center; text-shadow: 1px 2px 3px #000; }
 #run-save-notice { position: absolute; top: 64px; left: max(8px, env(safe-area-inset-left)); z-index: 6; max-width: min(420px, calc(100% - 16px)); margin: 0; padding: 8px 12px; border: 1px solid var(--ui-border); border-radius: 8px; color: #fff; background: var(--ui-surface); }
-#main-menu-run-save-notice { box-sizing: border-box; width: min(440px, calc(100% - 24px)); margin: 0; padding: 6px 10px; border: 1px solid var(--ui-border); border-radius: 8px; color: #fff; background: var(--ui-surface); font-size: clamp(12px, 2vw, 15px); line-height: 1.25; text-align: center; pointer-events: auto; }
+#main-menu-run-save-notice { position: absolute; bottom: max(8px, env(safe-area-inset-bottom)); left: 50%; box-sizing: border-box; width: min(440px, calc(100% - 24px)); margin: 0; padding: 6px 10px; transform: translateX(-50%); border: 1px solid var(--ui-border); border-radius: 8px; color: #fff; background: var(--ui-surface); font-size: clamp(12px, 2vw, 15px); line-height: 1.25; text-align: center; pointer-events: auto; }
 #run-save-dialog { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); background: rgb(0 0 0 / 72%); }
 #run-save-dialog[hidden] { display: none; }
 .run-save-dialog-panel { width: min(460px, 100%); padding: 22px; border: 1px solid var(--ui-border); border-radius: 12px; color: #fff; background: var(--ui-surface); text-align: center; }
@@ -103,10 +102,17 @@ body {
 }
 
 @media (orientation: landscape) and (max-height: 599px) {
-    #main-menu-controls { top: 58%; gap: clamp(2px, .7vh, 4px); }
+    #main-menu-controls { top: 51.5%; gap: clamp(2px, .7vh, 4px); }
     #main-menu-controls #main-menu-new-game,
     #main-menu-controls #main-menu-continue,
     #main-menu-controls #main-menu-global-scores { width: min(374px, 76vw, 38vh); }
+    #main-menu-run-save-notice { width: min(440px, calc(100% - 24px)); max-height: 22vh; overflow-y: auto; }
+    #main-menu-sign-in-preview { box-sizing: border-box; width: min(max-content, calc(100% - 24px)); min-width: 0; white-space: normal !important; }
+    #main-menu-sign-in-preview-label { min-width: 0; white-space: normal !important; overflow-wrap: anywhere; }
+}
+
+@media (orientation: landscape) and (max-height: 599px) and (max-width: 700px) {
+    #main-menu-controls { top: 51%; }
 }
 
 #run-status { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 36vw) minmax(0, 1fr); align-items: start; gap: 8px; pointer-events: none; color: #fff; font-size: clamp(12px, 1.7vw, 16px); }

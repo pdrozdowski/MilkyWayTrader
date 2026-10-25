@@ -57,19 +57,26 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
     const mainMenuSaveContainer = root.querySelector<HTMLElement>('#main-menu');
     if (!runSaveNotice || !mainMenuRunSaveNotice || !mainMenuSaveContainer) throw new Error('Missing run-save notice.');
     let latestRunSaveNotice: { status: string; message: string | null } = { status: 'idle', message: null };
+    let mainMenuProfileStatus = '';
     const renderRunSaveNotice = (notice: { status: string; message: string | null }): void => {
         latestRunSaveNotice = notice;
         const text = notice.status === 'saved' ? displayLabels.runSaveSucceeded
             : notice.status === 'temporary-problem' ? displayLabels.runSaveTemporaryProblem
-                : notice.status === 'failed' || notice.status === 'conflict' ? notice.message ?? displayLabels.runSaveFailed
+                : notice.status === 'failed' || notice.status === 'conflict' ? displayLabels.runSaveFailed
                     : '';
         runSaveNotice.textContent = text;
         const mainMenuVisible = !mainMenuSaveContainer.hidden;
         runSaveNotice.hidden = text.length === 0 || mainMenuVisible;
-        mainMenuRunSaveNotice.textContent = text;
-        mainMenuRunSaveNotice.hidden = text.length === 0 || !mainMenuVisible;
+        const mainMenuText = mainMenuProfileStatus || text;
+        mainMenuRunSaveNotice.textContent = mainMenuText;
+        mainMenuRunSaveNotice.hidden = mainMenuText.length === 0 || !mainMenuVisible;
+    };
+    const renderMainMenuStatus = (status: string): void => {
+        mainMenuProfileStatus = status;
+        renderRunSaveNotice(latestRunSaveNotice);
     };
     game.events.on('run-save-status', renderRunSaveNotice);
+    game.events.on('main-menu-status', renderMainMenuStatus);
     const gameOverResults = root.querySelector<HTMLElement>('#game-over-results');
     const gameOverScoreRows = gameOverResults ? Array.from(gameOverResults.querySelectorAll<HTMLElement>('dl > div')) : [];
     const gameOverResultsTitle = root.querySelector<HTMLElement>('#game-over-results-title');
@@ -613,6 +620,7 @@ export function setupApplicationUi (root: HTMLElement, game: Game, auth: AuthPor
             display.destroy();
             runStatus.destroy();
             game.events.off('run-save-status', renderRunSaveNotice);
+            game.events.off('main-menu-status', renderMainMenuStatus);
             gameOverRetry.removeEventListener('click', retryGameOverPersistence);
             gameOverMainMenu.removeEventListener('click', returnToMainMenuFromGameOver);
             game.events.off('game-over-persistence', renderGameOverPersistence);

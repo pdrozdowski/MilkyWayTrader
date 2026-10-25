@@ -19,7 +19,7 @@ export function mountAuthControls (root: HTMLElement, port: AuthPort, beforeSign
         const signedIn = snapshot.status === 'signed-in';
         signIn.disabled = unavailable;
         signIn.title = unavailable ? displayLabels.authUnavailable : '';
-        signInLabel.textContent = signedIn ? snapshot.email ?? displayLabels.unsigned : 'Sign In';
+        signInLabel.textContent = signedIn ? snapshot.email ?? displayLabels.unsigned : displayLabels.connectivitySignIn;
     };
     const signInClick = (): void => {
         if (currentSnapshot.status === 'signed-in') void port.signOut();
