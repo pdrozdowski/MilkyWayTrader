@@ -136,8 +136,8 @@ The migration is additive: it creates the archive table and RPC and replaces the
 
 #### Automated
 
-- [x] 1.1 Adapter regression tests pass for exact archive request, trigger exclusions, non-blocking behavior, and silenced failures.
-- [x] 1.2 TypeScript typecheck passes.
+- [x] 1.1 Adapter regression tests pass for exact archive request, trigger exclusions, non-blocking behavior, and silenced failures. — ecb1e10
+- [x] 1.2 TypeScript typecheck passes. — ecb1e10
 
 #### Manual
 
