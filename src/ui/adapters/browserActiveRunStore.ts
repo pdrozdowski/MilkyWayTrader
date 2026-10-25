@@ -57,13 +57,27 @@ export function createBrowserActiveRunStore (configuration = browserAuthConfigur
             const { data, error } = await client.rpc('load_active_run');
             if (error) return { status: failureKind(error) === 'ineligible' ? 'ineligible' : 'unavailable', message: error.message };
             if (!await currentOwner(owner)) return { status: 'unavailable', message: 'Account changed while loading the saved run.' };
-            if (!isRecord(data) || typeof data.revision !== 'number' || !Number.isSafeInteger(data.revision)) return { status: 'unavailable', message: 'Invalid active-save response.' };
+            if (!isRecord(data) || data.owner_id !== owner.id || typeof data.revision !== 'number' || !Number.isSafeInteger(data.revision)) return { status: 'unavailable', message: 'Invalid active-save response.' };
             if (data.status === 'empty') return { status: 'empty', revision: data.revision };
-            if ((data.status !== 'active' && data.status !== 'terminal_pending') || data.snapshot === null) return { status: 'unavailable', message: 'Invalid active-save response.' };
+            if ((data.status !== 'active' && data.status !== 'terminal_pending') || data.snapshot === null
+                || typeof data.run_id !== 'string' || typeof data.schema_version !== 'number'
+                || typeof data.updated_at !== 'string' || !Array.isArray(data.replay_metadata)) return { status: 'unavailable', message: 'Invalid active-save response.' };
             try {
                 const snapshot = decodeGameState(data.snapshot);
                 return { status: data.status === 'active' ? 'active' : 'terminal-pending', revision: data.revision, snapshot };
-            } catch (error) { return { status: 'incompatible', revision: data.revision, ...(isRecord(data.snapshot) && typeof data.snapshot.runId === 'string' ? { runId: data.snapshot.runId } : {}), message: error instanceof Error ? error.message : 'Saved run is incompatible.' }; }
+            } catch (error) {
+                void Promise.resolve().then(() => client.rpc('save_broken_run', {
+                    owner_id: owner.id,
+                    run_id: data.run_id,
+                    revision: data.revision,
+                    status: data.status,
+                    snapshot: data.snapshot,
+                    schema_version: data.schema_version,
+                    updated_at: data.updated_at,
+                    replay_metadata: data.replay_metadata
+                })).then(() => undefined, () => undefined);
+                return { status: 'incompatible', revision: data.revision, ...(isRecord(data.snapshot) && typeof data.snapshot.runId === 'string' ? { runId: data.snapshot.runId } : {}), message: error instanceof Error ? error.message : 'Saved run is incompatible.' };
+            }
         } catch (error) { return { status: 'unavailable', message: errorMessage(error) }; }
     }
     async function mutate (operation: string, expectedRunId: string | null, expectedRevision: number, mutationId: string, snapshot?: GameStateSnapshot): Promise<ActiveRunMutationResult>
