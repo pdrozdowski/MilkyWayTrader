@@ -84,11 +84,10 @@ None. No state shape or persistence changes are planned.
 
 #### Automated
 
-- [x] 1.1 TypeScript typecheck passes with `npm.cmd run typecheck`.
-
+- [x] 1.1 TypeScript typecheck passes with `npm.cmd run typecheck`. — cf26cda
 #### Manual
 
-- [x] 1.2 Touch viewport hides the locked booster button and shows it after purchase without resize or scene restart.
-- [x] 1.3 When the booster is owned, hiding touch controls hides the boost button; showing them restores it.
-- [x] 1.4 The fire button remains unchanged.
-- [x] 1.5 Desktop keyboard boost behavior remains unchanged.
+- [x] 1.2 Touch viewport hides the locked booster button and shows it after purchase without resize or scene restart. — cf26cda
+- [x] 1.3 When the booster is owned, hiding touch controls hides the boost button; showing them restores it. — cf26cda
+- [x] 1.4 The fire button remains unchanged. — cf26cda
+- [x] 1.5 Desktop keyboard boost behavior remains unchanged. — cf26cda

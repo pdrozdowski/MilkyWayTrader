@@ -103,12 +103,11 @@ None. This changes transient scene presentation only; no saved state or snapshot
 
 #### Automated
 
-- [x] 1.1 TypeScript typecheck passes with `npm.cmd run typecheck`.
-- [x] 1.2 Focused fast checks pass with `npm.cmd run test:fast`.
-
+- [x] 1.1 TypeScript typecheck passes with `npm.cmd run typecheck`. — cf26cda
+- [x] 1.2 Focused fast checks pass with `npm.cmd run test:fast`. — cf26cda
 #### Manual
 
-- [x] 1.3 On a mobile touch viewport, compare the joystick and fire/unlocked-booster controls before, during, and after boost zoom; their screen positions and display sizes do not change.
-- [x] 1.4 During boost zoom, the joystick steers, fire activates, and the booster button activates/releases boost; visible controls and touch targets remain aligned.
-- [x] 1.5 The booster button remains hidden while locked and appears after purchase; desktop keyboard boost behavior remains unchanged.
-- [x] 1.6 Return to the menu and start another run; the touch HUD renders once and responds without duplicate camera or input behavior.
+- [x] 1.3 On a mobile touch viewport, compare the joystick and fire/unlocked-booster controls before, during, and after boost zoom; their screen positions and display sizes do not change. — cf26cda
+- [x] 1.4 During boost zoom, the joystick steers, fire activates, and the booster button activates/releases boost; visible controls and touch targets remain aligned. — cf26cda
+- [x] 1.5 The booster button remains hidden while locked and appears after purchase; desktop keyboard boost behavior remains unchanged. — cf26cda
+- [x] 1.6 Return to the menu and start another run; the touch HUD renders once and responds without duplicate camera or input behavior. — cf26cda
